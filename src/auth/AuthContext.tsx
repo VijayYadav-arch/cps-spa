@@ -62,8 +62,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       { email, password }
     );
     const token = data.data.token;
+    const user = decodeToken(token);  // throws first if malformed
     sessionStorage.setItem('cps_token', token);
-    setAuth({ isAuthenticated: true, user: decodeToken(token) });
+    setAuth({ isAuthenticated: true, user });
   };
 
   const logout = () => {
