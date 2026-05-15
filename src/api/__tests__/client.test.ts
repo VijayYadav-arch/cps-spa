@@ -8,12 +8,13 @@ vi.mock('axios', async (importOriginal) => {
 /** Minimal headers stub that mimics AxiosHeaders for testing purposes. */
 function makeHeaders(): Record<string, string> & { set(name: string, value: string): void } {
   const store: Record<string, string> = {};
-  return {
+  const obj = {
     ...store,
     set(name: string, value: string) {
-      (this as Record<string, string>)[name] = value;
+      (obj as unknown as Record<string, string>)[name] = value;
     },
   };
+  return obj as unknown as Record<string, string> & { set(name: string, value: string): void };
 }
 
 describe('apiClient interceptors', () => {
