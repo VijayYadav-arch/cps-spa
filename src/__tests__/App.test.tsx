@@ -20,6 +20,20 @@ vi.mock('@/pages/Claims/ClaimsList', () => ({ ClaimsList: () => <div>Claims List
 vi.mock('@/pages/Claims/ClaimDetail', () => ({ ClaimDetail: () => <div>Claim Detail</div> }));
 vi.mock('@/pages/Patients/PatientsList', () => ({ PatientsList: () => <div>Patients</div> }));
 vi.mock('@/pages/Patients/PatientDetail', () => ({ PatientDetail: () => <div>Patient Detail</div> }));
+vi.mock('@/pages/Patients/PatientHistory', () => ({ PatientHistory: () => <div>Patient History</div> }));
+vi.mock('@/pages/Patients/PatientsRoutes', () => {
+  const { Routes, Route, Navigate } = require('react-router-dom');
+  return {
+    PatientsRoutes: () => (
+      <Routes>
+        <Route index element={<div>Patients</div>} />
+        <Route path=":id" element={<div>Patient Detail</div>} />
+        <Route path=":id/history" element={<div>Patient History</div>} />
+        <Route path="*" element={<Navigate to="/patients" replace />} />
+      </Routes>
+    ),
+  };
+});
 vi.mock('@/pages/Billing/BillingDashboard', () => ({ BillingDashboard: () => <div>Billing</div> }));
 vi.mock('@/pages/Clinical/ClinicalOverview', () => ({ ClinicalOverview: () => <div>Clinical</div> }));
 vi.mock('@/pages/Documents/DocumentsList', () => ({ DocumentsList: () => <div>Documents</div> }));
@@ -56,5 +70,16 @@ describe('App routing', () => {
     // Layout sidebar nav has a "Dashboard" link + the stub page renders <div>Dashboard</div>
     const dashboardEls = screen.getAllByText('Dashboard');
     expect(dashboardEls.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('renders PatientHistory page at /patients/1/history', () => {
+    const makeToken = (payload: object) => {
+      const body = btoa(JSON.stringify(payload));
+      return `header.${body}.sig`;
+    };
+    sessionStorage.setItem('cps_token', makeToken({ userId: 1, organizationId: 5, rbac_role: 'billing_admin' }));
+    window.history.pushState({}, '', '/patients/1/history');
+    render(<App />);
+    expect(screen.getByText('Patient History')).toBeInTheDocument();
   });
 });

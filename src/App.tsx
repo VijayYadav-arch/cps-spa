@@ -6,8 +6,7 @@ import { Login } from '@/pages/Login';
 import { Dashboard } from '@/pages/Dashboard';
 import { ClaimsList } from '@/pages/Claims/ClaimsList';
 import { ClaimDetail } from '@/pages/Claims/ClaimDetail';
-import { PatientsList } from '@/pages/Patients/PatientsList';
-import { PatientDetail } from '@/pages/Patients/PatientDetail';
+import { PatientsRoutes } from '@/pages/Patients/PatientsRoutes';
 import { BillingDashboard } from '@/pages/Billing/BillingDashboard';
 import { ClinicalOverview } from '@/pages/Clinical/ClinicalOverview';
 import { DocumentsList } from '@/pages/Documents/DocumentsList';
@@ -31,8 +30,7 @@ export default function App() {
             <Route index element={<Dashboard />} />
             <Route path="claims" element={<ClaimsList />} />
             <Route path="claims/:id" element={<ClaimDetail />} />
-            <Route path="patients" element={<PatientsList />} />
-            <Route path="patients/:id" element={<PatientDetail />} />
+            <Route path="patients/*" element={<PatientsRoutes />} />
             <Route path="billing/*" element={<BillingDashboard />} />
             <Route path="clinical/*" element={<ClinicalOverview />} />
             <Route path="documents/*" element={<DocumentsList />} />

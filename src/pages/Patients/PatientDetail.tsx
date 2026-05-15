@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getPatient, type PatientDetail as PatientDetailType } from '@/api/patients';
 
 export function PatientDetail() {
@@ -30,9 +30,24 @@ export function PatientDetail() {
   return (
     <div>
       <button onClick={() => navigate('/patients')} style={{ marginBottom: 16 }}>← Back to Patients</button>
-      <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 16 }}>
-        {patient.firstName} {patient.lastName}
-      </h2>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700 }}>
+          {patient.firstName} {patient.lastName}
+        </h2>
+        <Link
+          to={`/patients/${id}/history`}
+          style={{
+            padding: '4px 12px',
+            borderRadius: 4,
+            border: '1px solid #2563eb',
+            color: '#2563eb',
+            textDecoration: 'none',
+            fontSize: 14,
+          }}
+        >
+          View History
+        </Link>
+      </div>
       <dl style={{ display: 'grid', gridTemplateColumns: '160px 1fr', gap: '8px 16px' }}>
         <dt style={{ fontWeight: 500 }}>Date of Birth</dt>
         <dd>{new Date(patient.dateOfBirth).toLocaleDateString()}</dd>
