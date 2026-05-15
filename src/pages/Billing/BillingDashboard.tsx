@@ -71,7 +71,9 @@ export function BillingDashboard() {
                   <td style={{ padding: '6px 10px' }}>{d.payerName}</td>
                   <td style={{ padding: '6px 10px' }}>{d.denialCode}</td>
                   <td style={{ padding: '6px 10px' }}>{d.status}</td>
-                  <td style={{ padding: '6px 10px' }}>{new Date(d.denialDate).toLocaleDateString()}</td>
+                  <td style={{ padding: '6px 10px' }}>
+                    {(() => { const dt = new Date(d.denialDate); return isNaN(dt.getTime()) ? d.denialDate : dt.toLocaleDateString(); })()}
+                  </td>
                 </tr>
               ))}
             </tbody>
