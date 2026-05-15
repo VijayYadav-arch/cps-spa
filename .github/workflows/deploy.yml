@@ -1,0 +1,55 @@
+name: Deploy SPA
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, closed]
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    name: Build and Deploy
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          lfs: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate API types
+        # Skipped in CI unless DOTNET_API_URL is set; types.ts stub is already committed.
+        # To generate from live API: set DOTNET_API_URL secret and update command below.
+        run: |
+          if [ -n "${{ secrets.DOTNET_API_URL }}" ]; then
+            npx openapi-typescript ${{ secrets.DOTNET_API_URL }}/swagger/v1/swagger.json -o src/api/types.ts
+          else
+            echo "DOTNET_API_URL not set; using committed stub src/api/types.ts"
+          fi
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Deploy to Azure Static Web Apps
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.SWA_DEPLOY_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: upload
+          app_location: /
+          output_location: dist
+        env:
+          NODE_VERSION: '20'
