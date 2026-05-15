@@ -11,12 +11,17 @@ export function ClaimDetail() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!id) return;
+    if (!id) {
+      setIsLoading(false);
+      return;
+    }
+    let cancelled = false;
     setIsLoading(true);
-    getClaim(Number(id))
-      .then(setClaim)
-      .catch(() => setError('Claim not found.'))
-      .finally(() => setIsLoading(false));
+    getClaim(parseInt(id, 10))
+      .then((c) => { if (!cancelled) setClaim(c); })
+      .catch(() => { if (!cancelled) setError('Claim not found.'); })
+      .finally(() => { if (!cancelled) setIsLoading(false); });
+    return () => { cancelled = true; };
   }, [id]);
 
   const handleSubmit = async () => {
