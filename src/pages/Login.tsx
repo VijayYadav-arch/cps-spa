@@ -69,6 +69,7 @@ export function Login() {
           <button
             type="submit"
             disabled={isLoading}
+            aria-busy={isLoading}
             style={{
               width: '100%',
               padding: '10px 0',

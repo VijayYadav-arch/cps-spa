@@ -80,6 +80,7 @@ describe('Login page', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toBeInTheDocument();
+      expect(screen.getByRole('alert')).toHaveTextContent('Invalid email or password');
     });
   });
 });
