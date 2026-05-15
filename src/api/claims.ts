@@ -63,5 +63,5 @@ export const submitClaim = (id: number): Promise<ClaimDetail> =>
 // DELETE /api/v2/claims/{id}/service-lines/{lineId}
 export const deleteServiceLine = (claimId: number, lineId: number): Promise<void> =>
   apiClient
-    .delete(`/claims/${claimId}/service-lines/${lineId}`)
+    .delete<void>(`/claims/${claimId}/service-lines/${lineId}`)
     .then(() => undefined);

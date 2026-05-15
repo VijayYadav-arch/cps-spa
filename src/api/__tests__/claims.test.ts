@@ -10,6 +10,7 @@ vi.mock('@/api/client', () => ({
 
 describe('claims API', () => {
   beforeEach(() => {
+    vi.resetModules();
     vi.clearAllMocks();
   });
 
