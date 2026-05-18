@@ -56,7 +56,8 @@ export interface WorkQueueItem {
     | 'NoeOverdue'
     | 'HopeOverdue'
     | 'IdgOverdue'
-    | 'CarePlanReviewDue';
+    | 'CarePlanReviewDue'
+    | 'AddendumDue';
   electionId: number;
   patientId: number;
   patientName: string;
@@ -101,6 +102,7 @@ export interface WorkQueueResponse {
   carePlanReviewsDue: WorkQueueItem[];
   bereavementFollowUps: BereavementQueueItem[];
   bereavementOverdueContact: BereavementQueueItem[];
+  addendumDue: WorkQueueItem[];
 }
 
 export const createElection = (req: CreateElectionRequest): Promise<HospiceElection> =>
@@ -819,3 +821,127 @@ export const previewSia = (electionId: number): Promise<SiaResult | null> =>
       if (err?.response?.status === 204) return null;
       throw err;
     });
+
+// ─── Regulatory: Election Statement Addendum (42 CFR 418.24(c)) ─────────────
+
+export type HospiceElectionAddendumStatus =
+  | 'Draft'
+  | 'Issued'
+  | 'Acknowledged'
+  | 'RefusedToSign'
+  | 'Superseded';
+
+export interface HospiceElectionAddendumItem {
+  category: string;
+  description: string;
+  clinicalExplanation: string;
+  relatedCondition: string | null;
+}
+
+export interface HospiceElectionAddendum {
+  id: number;
+  electionId: number;
+  version: number;
+  status: HospiceElectionAddendumStatus;
+  issuedDate: string | null;
+  issuedByUserId: number | null;
+  supersededByAddendumId: number | null;
+  items: HospiceElectionAddendumItem[];
+  acknowledgedBySignerName: string | null;
+  acknowledgedBySignerRelationship: string | null;
+  acknowledgedAt: string | null;
+  refusalReason: string | null;
+  hospiceContactInfo: string | null;
+  createdAt: string;
+}
+
+export interface DraftAddendumRequest {
+  items: HospiceElectionAddendumItem[];
+  hospiceContactInfo: string | null;
+}
+
+export interface IssueAddendumRequest {
+  issuedDate: string;
+  hospiceContactInfo: string | null;
+}
+
+export interface AcknowledgeAddendumRequest {
+  signerName: string;
+  signerRelationship: string | null;
+  acknowledgedAt: string;
+}
+
+export interface RefuseAddendumRequest {
+  reason: string;
+  refusedAt: string;
+}
+
+export interface ReviseAddendumRequest {
+  items: HospiceElectionAddendumItem[];
+  hospiceContactInfo: string | null;
+  issuedDate: string;
+}
+
+export const listAddenda = (
+  electionId: number,
+): Promise<{ data: HospiceElectionAddendum[] }> =>
+  apiClient
+    .get<{ data: HospiceElectionAddendum[] }>(`/hospice/elections/${electionId}/addenda`)
+    .then((r) => r.data);
+
+export const getCurrentAddendum = (
+  electionId: number,
+): Promise<HospiceElectionAddendum | null> =>
+  apiClient
+    .get<HospiceElectionAddendum>(`/hospice/elections/${electionId}/addenda/current`)
+    .then((r) => r.data)
+    .catch((err) => {
+      // 204 No Content → no addendum yet → null
+      if (err?.response?.status === 204) return null;
+      throw err;
+    });
+
+export const getAddendum = (addendumId: number): Promise<HospiceElectionAddendum> =>
+  apiClient
+    .get<HospiceElectionAddendum>(`/hospice/addenda/${addendumId}`)
+    .then((r) => r.data);
+
+export const draftAddendum = (
+  electionId: number,
+  req: DraftAddendumRequest,
+): Promise<HospiceElectionAddendum> =>
+  apiClient
+    .post<HospiceElectionAddendum>(`/hospice/elections/${electionId}/addenda`, req)
+    .then((r) => r.data);
+
+export const issueAddendum = (
+  addendumId: number,
+  req: IssueAddendumRequest,
+): Promise<HospiceElectionAddendum> =>
+  apiClient
+    .post<HospiceElectionAddendum>(`/hospice/addenda/${addendumId}/issue`, req)
+    .then((r) => r.data);
+
+export const acknowledgeAddendum = (
+  addendumId: number,
+  req: AcknowledgeAddendumRequest,
+): Promise<HospiceElectionAddendum> =>
+  apiClient
+    .post<HospiceElectionAddendum>(`/hospice/addenda/${addendumId}/acknowledge`, req)
+    .then((r) => r.data);
+
+export const refuseAddendum = (
+  addendumId: number,
+  req: RefuseAddendumRequest,
+): Promise<HospiceElectionAddendum> =>
+  apiClient
+    .post<HospiceElectionAddendum>(`/hospice/addenda/${addendumId}/refuse`, req)
+    .then((r) => r.data);
+
+export const reviseAddendum = (
+  electionId: number,
+  req: ReviseAddendumRequest,
+): Promise<HospiceElectionAddendum> =>
+  apiClient
+    .post<HospiceElectionAddendum>(`/hospice/elections/${electionId}/addenda/revise`, req)
+    .then((r) => r.data);

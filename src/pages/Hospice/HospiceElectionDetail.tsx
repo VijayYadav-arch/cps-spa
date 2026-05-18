@@ -276,6 +276,20 @@ export function HospiceElectionDetail() {
           >
             Bereavement Programs
           </button>
+          <button
+            onClick={() =>
+              navigate(`/hospice/elections/${election.id}/addendum`)
+            }
+            style={{
+              background: '#ecfeff',
+              color: '#0e7490',
+              border: '1px solid #a5f3fc',
+              padding: '8px 16px',
+              borderRadius: 4,
+            }}
+          >
+            Election Addendum
+          </button>
         </div>
       )}
 
