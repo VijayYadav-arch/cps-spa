@@ -224,6 +224,34 @@ export function HospiceElectionDetail() {
           </button>
           <button
             onClick={() =>
+              navigate(`/patients/${patientId}/hospice/${election.id}/hope`)
+            }
+            style={{
+              background: '#fdf4ff',
+              color: '#a21caf',
+              border: '1px solid #f5d0fe',
+              padding: '8px 16px',
+              borderRadius: 4,
+            }}
+          >
+            Start HOPE Assessment
+          </button>
+          <button
+            onClick={() =>
+              navigate(`/patients/${patientId}/hospice/${election.id}/idg`)
+            }
+            style={{
+              background: '#fffbeb',
+              color: '#92400e',
+              border: '1px solid #fde68a',
+              padding: '8px 16px',
+              borderRadius: 4,
+            }}
+          >
+            Schedule IDG Meeting
+          </button>
+          <button
+            onClick={() =>
               navigate(`/patients/${patientId}/hospice/${election.id}/revoke`)
             }
             style={{

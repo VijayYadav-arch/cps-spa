@@ -7,6 +7,10 @@ import { HospiceElectionDetail } from '@/pages/Hospice/HospiceElectionDetail';
 import { HospiceRevocation } from '@/pages/Hospice/HospiceRevocation';
 import { HospiceAttendanceGrid } from '@/pages/Hospice/HospiceAttendanceGrid';
 import { HospicePerDiemClaim } from '@/pages/Hospice/HospicePerDiemClaim';
+import { HospiceHopeForm } from '@/pages/Hospice/HospiceHopeForm';
+import { HospiceIdgScheduler } from '@/pages/Hospice/HospiceIdgScheduler';
+import { HospiceCarePlanReviewLog } from '@/pages/Hospice/HospiceCarePlanReviewLog';
+import { HospiceCertificationSignPanel } from '@/pages/Hospice/HospiceCertificationSignPanel';
 
 export function PatientsRoutes() {
   return (
@@ -19,6 +23,11 @@ export function PatientsRoutes() {
       <Route path=":id/hospice/:electionId/revoke" element={<HospiceRevocation />} />
       <Route path=":id/hospice/:electionId/attendance" element={<HospiceAttendanceGrid />} />
       <Route path=":id/hospice/:electionId/per-diem-claim" element={<HospicePerDiemClaim />} />
+      <Route path=":id/hospice/:electionId/hope" element={<HospiceHopeForm />} />
+      <Route path=":id/hospice/:electionId/hope/:assessmentId" element={<HospiceHopeForm />} />
+      <Route path=":id/hospice/:electionId/idg" element={<HospiceIdgScheduler />} />
+      <Route path=":id/hospice/:electionId/care-plan-reviews/:carePlanId" element={<HospiceCarePlanReviewLog />} />
+      <Route path=":id/hospice/:electionId/certifications/:certId" element={<HospiceCertificationSignPanel />} />
       <Route path="*" element={<Navigate to="/patients" replace />} />
     </Routes>
   );

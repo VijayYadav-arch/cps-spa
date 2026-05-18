@@ -192,4 +192,145 @@ describe('hospice API', () => {
       params: { as_of: '2026-01-01' },
     });
   });
+
+  // ─── Sub-system C ────────────────────────────────────────────────────────
+
+  it('startHopeAssessment() POSTs to /hospice/elections/{id}/hope', async () => {
+    const { apiClient } = await import('@/api/client');
+    const { startHopeAssessment } = await import('@/api/hospice');
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { id: 1 } });
+    await startHopeAssessment(7, {
+      submissionType: 'Admission',
+      targetDate: '2026-05-01',
+      initialPayload: null,
+    });
+    expect(apiClient.post).toHaveBeenCalledWith('/hospice/elections/7/hope', expect.objectContaining({
+      submissionType: 'Admission',
+    }));
+  });
+
+  it('signHopeAssessment() POSTs to /hospice/hope/{id}/sign', async () => {
+    const { apiClient } = await import('@/api/client');
+    const { signHopeAssessment } = await import('@/api/hospice');
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { id: 1, status: 'Signed' } });
+    await signHopeAssessment(11);
+    expect(apiClient.post).toHaveBeenCalledWith('/hospice/hope/11/sign', {});
+  });
+
+  it('submitHopeAssessment() POSTs to /hospice/hope/{id}/submit', async () => {
+    const { apiClient } = await import('@/api/client');
+    const { submitHopeAssessment } = await import('@/api/hospice');
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { id: 11, status: 'Submitted' } });
+    await submitHopeAssessment(11);
+    expect(apiClient.post).toHaveBeenCalledWith('/hospice/hope/11/submit', {});
+  });
+
+  it('listHopeOverdue() GETs /hospice/hope/overdue', async () => {
+    const { apiClient } = await import('@/api/client');
+    const { listHopeOverdue } = await import('@/api/hospice');
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ data: { data: [] } });
+    await listHopeOverdue();
+    expect(apiClient.get).toHaveBeenCalledWith('/hospice/hope/overdue');
+  });
+
+  it('scheduleIdgMeeting() POSTs to /hospice/idg-meetings', async () => {
+    const { apiClient } = await import('@/api/client');
+    const { scheduleIdgMeeting } = await import('@/api/hospice');
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { id: 1 } });
+    await scheduleIdgMeeting({
+      meetingDate: '2026-05-20T09:00:00Z',
+      hospiceElectionId: 7,
+      facilitatorUserId: 1,
+      attendees: [
+        { userId: 1, role: 'physician' },
+        { userId: 2, role: 'rn' },
+        { userId: 3, role: 'social_worker' },
+        { userId: 4, role: 'chaplain' },
+      ],
+      patientsReviewed: [10],
+      notes: null,
+    });
+    expect(apiClient.post).toHaveBeenCalledWith('/hospice/idg-meetings', expect.objectContaining({
+      hospiceElectionId: 7,
+    }));
+  });
+
+  it('completeIdgMeeting() POSTs to /hospice/idg-meetings/{id}/complete', async () => {
+    const { apiClient } = await import('@/api/client');
+    const { completeIdgMeeting } = await import('@/api/hospice');
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { id: 5 } });
+    await completeIdgMeeting(5, {
+      patientsReviewed: [10, 11],
+      notes: 'Done',
+      actionItems: null,
+      nextMeetingDate: null,
+    });
+    expect(apiClient.post).toHaveBeenCalledWith('/hospice/idg-meetings/5/complete', expect.objectContaining({
+      patientsReviewed: [10, 11],
+    }));
+  });
+
+  it('cancelIdgMeeting() POSTs to /hospice/idg-meetings/{id}/cancel with reason', async () => {
+    const { apiClient } = await import('@/api/client');
+    const { cancelIdgMeeting } = await import('@/api/hospice');
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { id: 5 } });
+    await cancelIdgMeeting(5, 'no-show');
+    expect(apiClient.post).toHaveBeenCalledWith('/hospice/idg-meetings/5/cancel', {
+      reason: 'no-show',
+    });
+  });
+
+  it('recordCarePlanReview() POSTs to /hospice/care-plans/{id}/reviews', async () => {
+    const { apiClient } = await import('@/api/client');
+    const { recordCarePlanReview } = await import('@/api/hospice');
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { id: 1 } });
+    await recordCarePlanReview(20, {
+      reviewDate: '2026-05-10',
+      idgMeetingId: 5,
+      outcome: 'NoChange',
+      changesSummary: null,
+    });
+    expect(apiClient.post).toHaveBeenCalledWith('/hospice/care-plans/20/reviews', expect.objectContaining({
+      outcome: 'NoChange',
+    }));
+  });
+
+  it('countersignCertification() POSTs with physician id', async () => {
+    const { apiClient } = await import('@/api/client');
+    const { countersignCertification } = await import('@/api/hospice');
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { id: 9, status: 'Countersigned' } });
+    await countersignCertification(9, 200);
+    expect(apiClient.post).toHaveBeenCalledWith('/hospice/certifications/9/countersign', {
+      countersigningPhysicianId: 200,
+    });
+  });
+
+  it('previewSia() GETs /hospice/elections/{id}/sia-preview', async () => {
+    const { apiClient } = await import('@/api/client');
+    const { previewSia } = await import('@/api/hospice');
+    vi.mocked(apiClient.get).mockResolvedValueOnce({
+      data: {
+        electionId: 7,
+        deathDate: '2026-05-14',
+        windowFrom: '2026-05-08',
+        windowTo: '2026-05-14',
+        qualifyingDayCount: 2,
+        units: 2,
+        perVisitRate: 100,
+        charges: 200,
+        qualifyingVisitNoteIds: [1, 2],
+      },
+    });
+    const result = await previewSia(7);
+    expect(apiClient.get).toHaveBeenCalledWith('/hospice/elections/7/sia-preview');
+    expect(result?.units).toBe(2);
+  });
+
+  it('previewSia() returns null on 204', async () => {
+    const { apiClient } = await import('@/api/client');
+    const { previewSia } = await import('@/api/hospice');
+    vi.mocked(apiClient.get).mockRejectedValueOnce({ response: { status: 204 } });
+    const result = await previewSia(7);
+    expect(result).toBeNull();
+  });
 });
