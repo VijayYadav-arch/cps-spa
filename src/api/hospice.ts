@@ -127,3 +127,133 @@ export const getNoe = (id: number): Promise<NoticeOfElection> =>
 
 export const getWorkQueue = (): Promise<WorkQueueResponse> =>
   apiClient.get<WorkQueueResponse>('/hospice/work-queue').then((r) => r.data);
+
+// ─── Sub-system B: Per-Diem Billing ────────────────────────────────────────
+
+export type HospiceLevelOfCare =
+  | 'RoutineHomeCare'
+  | 'ContinuousHomeCare'
+  | 'InpatientRespiteCare'
+  | 'GeneralInpatient';
+
+export type HospicePerDiemRateTier =
+  | 'NotApplicable'
+  | 'RoutineTier1Days1To60'
+  | 'RoutineTier2Days61Plus';
+
+export type HospicePerDiemRateUnit = 'Day' | 'Hour';
+
+export interface HospiceAttendanceDay {
+  id: number;
+  hospiceElectionId: number;
+  serviceDate: string;
+  levelOfCare: HospiceLevelOfCare;
+  chcHoursOfCare: number | null;
+  primaryNurseUserId: number | null;
+  facilityName: string | null;
+  notes: string | null;
+  claimId: number | null;
+  recordedAt: string;
+  recordedByUserId: number;
+}
+
+export interface HospicePerDiemRate {
+  id: number;
+  organizationId: number | null;
+  effectiveFrom: string;
+  effectiveTo: string | null;
+  levelOfCare: HospiceLevelOfCare;
+  tier: HospicePerDiemRateTier;
+  rateUnit: HospicePerDiemRateUnit;
+  perDiemAmount: number;
+  source: string;
+}
+
+export interface HospicePerDiemClaimLine {
+  levelOfCare: HospiceLevelOfCare;
+  tier: HospicePerDiemRateTier;
+  revenueCode: string;
+  units: number;
+  unitAmount: number;
+  lineCharges: number;
+  serviceDateFrom: string;
+  serviceDateTo: string;
+}
+
+export interface HospicePerDiemClaimDraft {
+  claimId: number;
+  claimNumber: string;
+  totalCharges: number;
+  lines: HospicePerDiemClaimLine[];
+  attendanceDayIds: number[];
+  warnings: string[];
+}
+
+export interface RecordAttendanceRequest {
+  serviceDate: string;
+  levelOfCare: HospiceLevelOfCare;
+  chcHoursOfCare: number | null;
+  primaryNurseUserId: number | null;
+  facilityName: string | null;
+  notes: string | null;
+}
+
+export interface UpdateAttendanceRequest {
+  levelOfCare: HospiceLevelOfCare;
+  chcHoursOfCare: number | null;
+  primaryNurseUserId: number | null;
+  facilityName: string | null;
+  notes: string | null;
+}
+
+export interface BuildPerDiemClaimRequest {
+  from: string;
+  to: string;
+}
+
+export const recordAttendance = (
+  electionId: number,
+  req: RecordAttendanceRequest,
+): Promise<HospiceAttendanceDay> =>
+  apiClient
+    .post<HospiceAttendanceDay>(`/hospice/elections/${electionId}/attendance`, req)
+    .then((r) => r.data);
+
+export const getAttendance = (
+  electionId: number,
+  params?: { from?: string; to?: string; page?: number; pageSize?: number },
+): Promise<{ data: HospiceAttendanceDay[]; total: number }> =>
+  apiClient
+    .get<{ data: HospiceAttendanceDay[]; total: number }>(
+      `/hospice/elections/${electionId}/attendance`,
+      { params },
+    )
+    .then((r) => r.data);
+
+export const updateAttendance = (
+  id: number,
+  req: UpdateAttendanceRequest,
+): Promise<HospiceAttendanceDay> =>
+  apiClient
+    .put<HospiceAttendanceDay>(`/hospice/attendance/${id}`, req)
+    .then((r) => r.data);
+
+export const deleteAttendance = (id: number): Promise<void> =>
+  apiClient.delete<void>(`/hospice/attendance/${id}`).then((r) => r.data);
+
+export const buildPerDiemClaim = (
+  electionId: number,
+  req: BuildPerDiemClaimRequest,
+): Promise<HospicePerDiemClaimDraft> =>
+  apiClient
+    .post<HospicePerDiemClaimDraft>(`/hospice/elections/${electionId}/per-diem-claim`, req)
+    .then((r) => r.data);
+
+export const getPerDiemRates = (
+  asOf?: string,
+): Promise<{ data: HospicePerDiemRate[]; asOf: string }> =>
+  apiClient
+    .get<{ data: HospicePerDiemRate[]; asOf: string }>(`/hospice/per-diem-rates`, {
+      params: asOf ? { as_of: asOf } : undefined,
+    })
+    .then((r) => r.data);
