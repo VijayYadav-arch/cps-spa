@@ -7,6 +7,7 @@ const navItems = [
   { to: '/patients', label: 'Patients' },
   { to: '/billing', label: 'Billing' },
   { to: '/clinical', label: 'Clinical' },
+  { to: '/hospice/work-queue', label: 'Hospice' },
   { to: '/documents', label: 'Documents' },
   { to: '/platform', label: 'Platform' },
   { to: '/admin', label: 'Admin' },
