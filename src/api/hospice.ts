@@ -81,6 +81,9 @@ export interface SubmitNoeRequest {
 export interface WorkQueueResponse {
   recertsDue: WorkQueueItem[];
   noeOverdue: WorkQueueItem[];
+  hopeOverdue: WorkQueueItem[];
+  idgOverdue: WorkQueueItem[];
+  carePlanReviewsDue: WorkQueueItem[];
 }
 
 export const createElection = (req: CreateElectionRequest): Promise<HospiceElection> =>
@@ -257,3 +260,274 @@ export const getPerDiemRates = (
       params: asOf ? { as_of: asOf } : undefined,
     })
     .then((r) => r.data);
+
+// ─── Sub-system C: Clinical Operations ─────────────────────────────────────
+
+export type HopeSubmissionType =
+  | 'Admission'
+  | 'Update'
+  | 'Recertification'
+  | 'Discharge';
+
+export type HopeAssessmentStatus =
+  | 'Draft'
+  | 'Signed'
+  | 'Submitted'
+  | 'Accepted'
+  | 'Rejected';
+
+export type CarePlanReviewOutcome =
+  | 'NoChange'
+  | 'MinorRevision'
+  | 'MajorRevision'
+  | 'Discontinued';
+
+export type IdgMeetingStatus = 'Scheduled' | 'Completed' | 'Cancelled';
+
+export type HospiceCertificationStatus = 'Draft' | 'Signed' | 'Countersigned';
+
+export interface HopeAssessment {
+  id: number;
+  hospiceElectionId: number;
+  submissionType: HopeSubmissionType;
+  targetDate: string;
+  status: HopeAssessmentStatus;
+  payload: string;
+  schemaVersion: string;
+  signedByUserId: number | null;
+  signedAt: string | null;
+  submittedAt: string | null;
+  cmsConfirmation: string | null;
+  rejectionReason: string | null;
+  deadlineDate: string;
+  daysUntilDeadline: number;
+  createdAt: string;
+}
+
+export interface IdgAttendee {
+  userId: number;
+  role: string;
+}
+
+export interface IdgMeeting {
+  id: number;
+  meetingDate: string;
+  hospiceElectionId: number | null;
+  facilitatorUserId: number | null;
+  status: IdgMeetingStatus;
+  attendees: string;
+  patientsReviewed: string;
+  notes: string | null;
+  actionItems: string | null;
+  nextMeetingDate: string | null;
+}
+
+export interface CarePlanReview {
+  id: number;
+  carePlanId: number;
+  idgMeetingId: number | null;
+  reviewDate: string;
+  reviewedByUserId: number;
+  outcome: CarePlanReviewOutcome;
+  changesSummary: string | null;
+  nextReviewDate: string;
+  createdAt: string;
+}
+
+export interface HospiceCertification {
+  id: number;
+  electionId: number;
+  periodId: number;
+  certifyingPhysicianId: number;
+  status: HospiceCertificationStatus;
+  signedAt: string | null;
+  narrativeText: string | null;
+  createdAt: string;
+}
+
+export interface SiaResult {
+  electionId: number;
+  deathDate: string;
+  windowFrom: string;
+  windowTo: string;
+  qualifyingDayCount: number;
+  units: number;
+  perVisitRate: number;
+  charges: number;
+  qualifyingVisitNoteIds: number[];
+}
+
+export interface StartHopeRequest {
+  submissionType: HopeSubmissionType;
+  targetDate: string;
+  initialPayload: string | null;
+}
+
+export interface UpdateHopePayloadRequest {
+  payload: string;
+}
+
+export interface ScheduleIdgRequest {
+  meetingDate: string;
+  hospiceElectionId: number | null;
+  facilitatorUserId: number | null;
+  attendees: IdgAttendee[];
+  patientsReviewed: number[] | null;
+  notes: string | null;
+}
+
+export interface CompleteIdgRequest {
+  patientsReviewed: number[] | null;
+  notes: string | null;
+  actionItems: string | null;
+  nextMeetingDate: string | null;
+}
+
+export interface RecordCarePlanReviewRequest {
+  reviewDate: string;
+  idgMeetingId: number | null;
+  outcome: CarePlanReviewOutcome;
+  changesSummary: string | null;
+}
+
+export interface StartCertRequest {
+  certifyingPhysicianId: number;
+  narrativeText: string | null;
+}
+
+// HOPE
+export const startHopeAssessment = (
+  electionId: number,
+  req: StartHopeRequest,
+): Promise<HopeAssessment> =>
+  apiClient
+    .post<HopeAssessment>(`/hospice/elections/${electionId}/hope`, req)
+    .then((r) => r.data);
+
+export const listHopeByElection = (
+  electionId: number,
+): Promise<{ data: HopeAssessment[] }> =>
+  apiClient
+    .get<{ data: HopeAssessment[] }>(`/hospice/elections/${electionId}/hope`)
+    .then((r) => r.data);
+
+export const getHopeAssessment = (assessmentId: number): Promise<HopeAssessment> =>
+  apiClient.get<HopeAssessment>(`/hospice/hope/${assessmentId}`).then((r) => r.data);
+
+export const updateHopePayload = (
+  assessmentId: number,
+  req: UpdateHopePayloadRequest,
+): Promise<HopeAssessment> =>
+  apiClient
+    .put<HopeAssessment>(`/hospice/hope/${assessmentId}/payload`, req)
+    .then((r) => r.data);
+
+export const signHopeAssessment = (assessmentId: number): Promise<HopeAssessment> =>
+  apiClient
+    .post<HopeAssessment>(`/hospice/hope/${assessmentId}/sign`, {})
+    .then((r) => r.data);
+
+export const submitHopeAssessment = (assessmentId: number): Promise<HopeAssessment> =>
+  apiClient
+    .post<HopeAssessment>(`/hospice/hope/${assessmentId}/submit`, {})
+    .then((r) => r.data);
+
+export const listHopeOverdue = (): Promise<{ data: HopeAssessment[] }> =>
+  apiClient
+    .get<{ data: HopeAssessment[] }>(`/hospice/hope/overdue`)
+    .then((r) => r.data);
+
+// IDG
+export const scheduleIdgMeeting = (req: ScheduleIdgRequest): Promise<IdgMeeting> =>
+  apiClient.post<IdgMeeting>(`/hospice/idg-meetings`, req).then((r) => r.data);
+
+export const listUpcomingIdg = (params?: {
+  electionId?: number;
+  upTo?: string;
+}): Promise<{ data: IdgMeeting[] }> =>
+  apiClient
+    .get<{ data: IdgMeeting[] }>(`/hospice/idg-meetings/upcoming`, { params })
+    .then((r) => r.data);
+
+export const getIdgMeeting = (meetingId: number): Promise<IdgMeeting> =>
+  apiClient.get<IdgMeeting>(`/hospice/idg-meetings/${meetingId}`).then((r) => r.data);
+
+export const completeIdgMeeting = (
+  meetingId: number,
+  req: CompleteIdgRequest,
+): Promise<IdgMeeting> =>
+  apiClient
+    .post<IdgMeeting>(`/hospice/idg-meetings/${meetingId}/complete`, req)
+    .then((r) => r.data);
+
+export const cancelIdgMeeting = (
+  meetingId: number,
+  reason: string,
+): Promise<IdgMeeting> =>
+  apiClient
+    .post<IdgMeeting>(`/hospice/idg-meetings/${meetingId}/cancel`, { reason })
+    .then((r) => r.data);
+
+// CarePlan reviews
+export const recordCarePlanReview = (
+  carePlanId: number,
+  req: RecordCarePlanReviewRequest,
+): Promise<CarePlanReview> =>
+  apiClient
+    .post<CarePlanReview>(`/hospice/care-plans/${carePlanId}/reviews`, req)
+    .then((r) => r.data);
+
+export const listCarePlanReviews = (
+  carePlanId: number,
+): Promise<{ data: CarePlanReview[] }> =>
+  apiClient
+    .get<{ data: CarePlanReview[] }>(`/hospice/care-plans/${carePlanId}/reviews`)
+    .then((r) => r.data);
+
+// Certifications
+export const startCertification = (
+  electionId: number,
+  periodId: number,
+  req: StartCertRequest,
+): Promise<HospiceCertification> =>
+  apiClient
+    .post<HospiceCertification>(
+      `/hospice/elections/${electionId}/periods/${periodId}/certifications`,
+      req,
+    )
+    .then((r) => r.data);
+
+export const signCertification = (certId: number): Promise<HospiceCertification> =>
+  apiClient
+    .post<HospiceCertification>(`/hospice/certifications/${certId}/sign`, {})
+    .then((r) => r.data);
+
+export const countersignCertification = (
+  certId: number,
+  countersigningPhysicianId: number,
+): Promise<HospiceCertification> =>
+  apiClient
+    .post<HospiceCertification>(`/hospice/certifications/${certId}/countersign`, {
+      countersigningPhysicianId,
+    })
+    .then((r) => r.data);
+
+export const listCertificationsByElection = (
+  electionId: number,
+): Promise<{ data: HospiceCertification[] }> =>
+  apiClient
+    .get<{ data: HospiceCertification[] }>(
+      `/hospice/elections/${electionId}/certifications`,
+    )
+    .then((r) => r.data);
+
+// SIA preview
+export const previewSia = (electionId: number): Promise<SiaResult | null> =>
+  apiClient
+    .get<SiaResult>(`/hospice/elections/${electionId}/sia-preview`)
+    .then((r) => r.data)
+    .catch((err) => {
+      // 204 No Content → no qualifying visits → null
+      if (err?.response?.status === 204) return null;
+      throw err;
+    });

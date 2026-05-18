@@ -13,6 +13,8 @@ import { DocumentsList } from '@/pages/Documents/DocumentsList';
 import { PlatformDashboard } from '@/pages/Platform/PlatformDashboard';
 import { AdminDashboard } from '@/pages/Admin/AdminDashboard';
 import { HospiceWorkQueue } from '@/pages/Hospice/HospiceWorkQueue';
+import { HospiceHopeOverdue } from '@/pages/Hospice/HospiceHopeOverdue';
+import { HospiceIdgMeeting } from '@/pages/Hospice/HospiceIdgMeeting';
 
 export default function App() {
   return (
@@ -38,6 +40,8 @@ export default function App() {
             <Route path="platform/*" element={<PlatformDashboard />} />
             <Route path="admin/*" element={<AdminDashboard />} />
             <Route path="hospice/work-queue" element={<HospiceWorkQueue />} />
+            <Route path="hospice/hope/overdue" element={<HospiceHopeOverdue />} />
+            <Route path="hospice/idg-meetings/:meetingId" element={<HospiceIdgMeeting />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>

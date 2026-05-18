@@ -2,11 +2,22 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getWorkQueue, type WorkQueueItem } from '@/api/hospice';
 
-type Tab = 'recerts' | 'noe';
+type Tab = 'recerts' | 'noe' | 'hope' | 'idg' | 'reviews';
+
+const TAB_META: Record<Tab, { label: string; emptyMessage: string }> = {
+  recerts: { label: 'Recerts Due', emptyMessage: 'No recerts due in the next 15 days.' },
+  noe: { label: 'NOE Overdue', emptyMessage: 'No overdue NOEs.' },
+  hope: { label: 'HOPE Overdue', emptyMessage: 'No overdue HOPE assessments.' },
+  idg: { label: 'IDG Overdue', emptyMessage: 'No elections with overdue IDG meetings.' },
+  reviews: { label: 'Care Plan Reviews Due', emptyMessage: 'No care plan reviews past due.' },
+};
 
 export function HospiceWorkQueue() {
   const [recerts, setRecerts] = useState<WorkQueueItem[]>([]);
   const [noe, setNoe] = useState<WorkQueueItem[]>([]);
+  const [hope, setHope] = useState<WorkQueueItem[]>([]);
+  const [idg, setIdg] = useState<WorkQueueItem[]>([]);
+  const [reviews, setReviews] = useState<WorkQueueItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('recerts');
@@ -18,6 +29,9 @@ export function HospiceWorkQueue() {
       .then((res) => {
         setRecerts(res.recertsDue);
         setNoe(res.noeOverdue);
+        setHope(res.hopeOverdue ?? []);
+        setIdg(res.idgOverdue ?? []);
+        setReviews(res.carePlanReviewsDue ?? []);
       })
       .catch(() => setError('Failed to load work queue.'))
       .finally(() => setIsLoading(false));
@@ -26,11 +40,9 @@ export function HospiceWorkQueue() {
   if (isLoading) return <div role="status">Loading work queue…</div>;
   if (error) return <div role="alert">{error}</div>;
 
-  const items = tab === 'recerts' ? recerts : noe;
-  const emptyMessage =
-    tab === 'recerts'
-      ? 'No items due in the next 15 days.'
-      : 'No overdue NOEs.';
+  const lists: Record<Tab, WorkQueueItem[]> = { recerts, noe, hope, idg, reviews };
+  const items = lists[tab];
+  const meta = TAB_META[tab];
 
   return (
     <div style={{ padding: 24, maxWidth: 900 }}>
@@ -47,40 +59,28 @@ export function HospiceWorkQueue() {
           marginBottom: 16,
         }}
       >
-        <button
-          role="tab"
-          aria-selected={tab === 'recerts'}
-          onClick={() => setTab('recerts')}
-          style={{
-            padding: '8px 16px',
-            border: 'none',
-            background: 'none',
-            borderBottom: tab === 'recerts' ? '2px solid #2563eb' : 'none',
-            marginBottom: -2,
-            fontWeight: tab === 'recerts' ? 700 : 400,
-          }}
-        >
-          Recerts Due ({recerts.length})
-        </button>
-        <button
-          role="tab"
-          aria-selected={tab === 'noe'}
-          onClick={() => setTab('noe')}
-          style={{
-            padding: '8px 16px',
-            border: 'none',
-            background: 'none',
-            borderBottom: tab === 'noe' ? '2px solid #2563eb' : 'none',
-            marginBottom: -2,
-            fontWeight: tab === 'noe' ? 700 : 400,
-          }}
-        >
-          NOE Overdue ({noe.length})
-        </button>
+        {(Object.keys(TAB_META) as Tab[]).map((t) => (
+          <button
+            key={t}
+            role="tab"
+            aria-selected={tab === t}
+            onClick={() => setTab(t)}
+            style={{
+              padding: '8px 16px',
+              border: 'none',
+              background: 'none',
+              borderBottom: tab === t ? '2px solid #2563eb' : 'none',
+              marginBottom: -2,
+              fontWeight: tab === t ? 700 : 400,
+            }}
+          >
+            {TAB_META[t].label} ({lists[t].length})
+          </button>
+        ))}
       </div>
 
       {items.length === 0 ? (
-        <p style={{ color: '#64748b' }}>{emptyMessage}</p>
+        <p style={{ color: '#64748b' }}>{meta.emptyMessage}</p>
       ) : (
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
@@ -97,15 +97,17 @@ export function HospiceWorkQueue() {
             </tr>
           </thead>
           <tbody>
-            {items.map((item) => (
+            {items.map((item, idx) => (
               <tr
-                key={`${item.type}-${item.electionId}`}
+                key={`${item.type}-${item.electionId}-${idx}`}
                 style={{ borderBottom: '1px solid #f1f5f9' }}
               >
                 <td style={{ padding: '8px 12px' }}>
-                  <Link to={`/patients/${item.patientId}`}>
-                    {item.patientName}
-                  </Link>
+                  {item.patientName ? (
+                    <Link to={`/patients/${item.patientId}`}>{item.patientName}</Link>
+                  ) : (
+                    <span style={{ color: '#64748b' }}>Patient #{item.patientId}</span>
+                  )}
                 </td>
                 <td style={{ padding: '8px 12px' }}>{item.dueDate}</td>
                 <td style={{ padding: '8px 12px' }}>
@@ -115,11 +117,13 @@ export function HospiceWorkQueue() {
                   <td style={{ padding: '8px 12px' }}>{item.periodNumber}</td>
                 )}
                 <td style={{ padding: '8px 12px' }}>
-                  <Link
-                    to={`/patients/${item.patientId}/hospice/${item.electionId}`}
-                  >
-                    View
-                  </Link>
+                  {item.electionId > 0 ? (
+                    <Link to={`/patients/${item.patientId}/hospice/${item.electionId}`}>
+                      View
+                    </Link>
+                  ) : (
+                    <Link to={`/patients/${item.patientId}`}>Open Patient</Link>
+                  )}
                 </td>
               </tr>
             ))}

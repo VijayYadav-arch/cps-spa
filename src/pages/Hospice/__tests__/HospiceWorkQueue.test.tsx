@@ -27,17 +27,22 @@ describe('HospiceWorkQueue', () => {
     expect(screen.getByRole('status')).toBeInTheDocument();
   });
 
-  it('renders both tabs with empty state when no items', async () => {
-    vi.mocked(getWorkQueue).mockResolvedValueOnce({ recertsDue: [], noeOverdue: [] });
+  it('renders all five tabs with empty state when no items', async () => {
+    vi.mocked(getWorkQueue).mockResolvedValueOnce({
+      recertsDue: [],
+      noeOverdue: [],
+      hopeOverdue: [],
+      idgOverdue: [],
+      carePlanReviewsDue: [],
+    });
     renderPage();
     await waitFor(() => {
-      expect(
-        screen.getByRole('tab', { name: /Recerts Due/i }),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole('tab', { name: /NOE Overdue/i }),
-      ).toBeInTheDocument();
-      expect(screen.getByText(/No items due/i)).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /Recerts Due/i })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /NOE Overdue/i })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /HOPE Overdue/i })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /IDG Overdue/i })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /Care Plan Reviews Due/i })).toBeInTheDocument();
+      expect(screen.getByText(/No recerts due/i)).toBeInTheDocument();
     });
   });
 
@@ -67,6 +72,9 @@ describe('HospiceWorkQueue', () => {
           periodNumber: null,
         },
       ],
+      hopeOverdue: [],
+      idgOverdue: [],
+      carePlanReviewsDue: [],
     });
     const user = userEvent.setup();
     renderPage();
