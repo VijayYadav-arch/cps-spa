@@ -193,20 +193,50 @@ export function HospiceElectionDetail() {
       )}
 
       {election.status === 'Active' && (
-        <button
-          onClick={() =>
-            navigate(`/patients/${patientId}/hospice/${election.id}/revoke`)
-          }
-          style={{
-            background: '#fef2f2',
-            color: '#b91c1c',
-            border: '1px solid #fecaca',
-            padding: '8px 16px',
-            borderRadius: 4,
-          }}
-        >
-          Revoke Election
-        </button>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button
+            onClick={() =>
+              navigate(`/patients/${patientId}/hospice/${election.id}/attendance`)
+            }
+            style={{
+              background: '#eff6ff',
+              color: '#1d4ed8',
+              border: '1px solid #bfdbfe',
+              padding: '8px 16px',
+              borderRadius: 4,
+            }}
+          >
+            Record Attendance
+          </button>
+          <button
+            onClick={() =>
+              navigate(`/patients/${patientId}/hospice/${election.id}/per-diem-claim`)
+            }
+            style={{
+              background: '#ecfdf5',
+              color: '#047857',
+              border: '1px solid #a7f3d0',
+              padding: '8px 16px',
+              borderRadius: 4,
+            }}
+          >
+            Generate Per-Diem Claim
+          </button>
+          <button
+            onClick={() =>
+              navigate(`/patients/${patientId}/hospice/${election.id}/revoke`)
+            }
+            style={{
+              background: '#fef2f2',
+              color: '#b91c1c',
+              border: '1px solid #fecaca',
+              padding: '8px 16px',
+              borderRadius: 4,
+            }}
+          >
+            Revoke Election
+          </button>
+        </div>
       )}
 
       {showNoeModal && (
