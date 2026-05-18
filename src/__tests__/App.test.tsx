@@ -39,6 +39,7 @@ vi.mock('@/pages/Clinical/ClinicalOverview', () => ({ ClinicalOverview: () => <d
 vi.mock('@/pages/Documents/DocumentsList', () => ({ DocumentsList: () => <div>Documents</div> }));
 vi.mock('@/pages/Platform/PlatformDashboard', () => ({ PlatformDashboard: () => <div>Platform</div> }));
 vi.mock('@/pages/Admin/AdminDashboard', () => ({ AdminDashboard: () => <div>Admin</div> }));
+vi.mock('@/pages/Hospice/HospiceWorkQueue', () => ({ HospiceWorkQueue: () => <div>Hospice Work Queue Page</div> }));
 
 import App from '@/App';
 
@@ -81,5 +82,16 @@ describe('App routing', () => {
     window.history.pushState({}, '', '/patients/1/history');
     render(<App />);
     expect(screen.getByText('Patient History')).toBeInTheDocument();
+  });
+
+  it('renders HospiceWorkQueue at /hospice/work-queue', () => {
+    const makeToken = (payload: object) => {
+      const body = btoa(JSON.stringify(payload));
+      return `header.${body}.sig`;
+    };
+    sessionStorage.setItem('cps_token', makeToken({ userId: 1, organizationId: 5, rbac_role: 'billing_manager' }));
+    window.history.pushState({}, '', '/hospice/work-queue');
+    render(<App />);
+    expect(screen.getByText('Hospice Work Queue Page')).toBeInTheDocument();
   });
 });
