@@ -13,7 +13,8 @@ type Tab =
   | 'idg'
   | 'reviews'
   | 'bereavementFollowUps'
-  | 'bereavementOverdueContact';
+  | 'bereavementOverdueContact'
+  | 'addendum';
 
 const TAB_META: Record<Tab, { label: string; emptyMessage: string }> = {
   recerts: { label: 'Recerts Due', emptyMessage: 'No recerts due in the next 15 days.' },
@@ -29,6 +30,10 @@ const TAB_META: Record<Tab, { label: string; emptyMessage: string }> = {
     label: 'Bereavement Overdue',
     emptyMessage: 'All active bereavement programs are within the 30-day cadence.',
   },
+  addendum: {
+    label: 'Addendum Due',
+    emptyMessage: 'All active elections have an issued addendum within the 5-day window.',
+  },
 };
 
 export function HospiceWorkQueue() {
@@ -43,6 +48,7 @@ export function HospiceWorkQueue() {
   const [bereavementOverdueContact, setBereavementOverdueContact] = useState<
     BereavementQueueItem[]
   >([]);
+  const [addendum, setAddendum] = useState<WorkQueueItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('recerts');
@@ -59,6 +65,7 @@ export function HospiceWorkQueue() {
         setReviews(res.carePlanReviewsDue ?? []);
         setBereavementFollowUps(res.bereavementFollowUps ?? []);
         setBereavementOverdueContact(res.bereavementOverdueContact ?? []);
+        setAddendum(res.addendumDue ?? []);
       })
       .catch(() => setError('Failed to load work queue.'))
       .finally(() => setIsLoading(false));
@@ -68,9 +75,9 @@ export function HospiceWorkQueue() {
   if (error) return <div role="alert">{error}</div>;
 
   const electionLists: Record<
-    'recerts' | 'noe' | 'hope' | 'idg' | 'reviews',
+    'recerts' | 'noe' | 'hope' | 'idg' | 'reviews' | 'addendum',
     WorkQueueItem[]
-  > = { recerts, noe, hope, idg, reviews };
+  > = { recerts, noe, hope, idg, reviews, addendum };
   const bereavementLists: Record<
     'bereavementFollowUps' | 'bereavementOverdueContact',
     BereavementQueueItem[]
@@ -83,6 +90,7 @@ export function HospiceWorkQueue() {
     reviews: reviews.length,
     bereavementFollowUps: bereavementFollowUps.length,
     bereavementOverdueContact: bereavementOverdueContact.length,
+    addendum: addendum.length,
   };
   const meta = TAB_META[tab];
   const isBereavementTab =
@@ -176,38 +184,42 @@ export function HospiceWorkQueue() {
             </tr>
           </thead>
           <tbody>
-            {electionLists[tab as 'recerts' | 'noe' | 'hope' | 'idg' | 'reviews'].map(
-              (item, idx) => (
-                <tr
-                  key={`${item.type}-${item.electionId}-${idx}`}
-                  style={{ borderBottom: '1px solid #f1f5f9' }}
-                >
-                  <td style={{ padding: '8px 12px' }}>
-                    {item.patientName ? (
-                      <Link to={`/patients/${item.patientId}`}>{item.patientName}</Link>
-                    ) : (
-                      <span style={{ color: '#64748b' }}>Patient #{item.patientId}</span>
-                    )}
-                  </td>
-                  <td style={{ padding: '8px 12px' }}>{item.dueDate}</td>
-                  <td style={{ padding: '8px 12px' }}>
-                    {tab === 'recerts' ? item.daysUntilDue : item.daysOverdue}
-                  </td>
-                  {tab === 'recerts' && (
-                    <td style={{ padding: '8px 12px' }}>{item.periodNumber}</td>
+            {electionLists[
+              tab as 'recerts' | 'noe' | 'hope' | 'idg' | 'reviews' | 'addendum'
+            ].map((item, idx) => (
+              <tr
+                key={`${item.type}-${item.electionId}-${idx}`}
+                style={{ borderBottom: '1px solid #f1f5f9' }}
+              >
+                <td style={{ padding: '8px 12px' }}>
+                  {item.patientName ? (
+                    <Link to={`/patients/${item.patientId}`}>{item.patientName}</Link>
+                  ) : (
+                    <span style={{ color: '#64748b' }}>Patient #{item.patientId}</span>
                   )}
-                  <td style={{ padding: '8px 12px' }}>
-                    {item.electionId > 0 ? (
-                      <Link to={`/patients/${item.patientId}/hospice/${item.electionId}`}>
-                        View
-                      </Link>
-                    ) : (
-                      <Link to={`/patients/${item.patientId}`}>Open Patient</Link>
-                    )}
-                  </td>
-                </tr>
-              ),
-            )}
+                </td>
+                <td style={{ padding: '8px 12px' }}>{item.dueDate}</td>
+                <td style={{ padding: '8px 12px' }}>
+                  {tab === 'recerts' ? item.daysUntilDue : item.daysOverdue}
+                </td>
+                {tab === 'recerts' && (
+                  <td style={{ padding: '8px 12px' }}>{item.periodNumber}</td>
+                )}
+                <td style={{ padding: '8px 12px' }}>
+                  {tab === 'addendum' ? (
+                    <Link to={`/hospice/elections/${item.electionId}/addendum`}>
+                      Open Addendum
+                    </Link>
+                  ) : item.electionId > 0 ? (
+                    <Link to={`/patients/${item.patientId}/hospice/${item.electionId}`}>
+                      View
+                    </Link>
+                  ) : (
+                    <Link to={`/patients/${item.patientId}`}>Open Patient</Link>
+                  )}
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       )}
