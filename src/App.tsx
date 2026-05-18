@@ -15,6 +15,9 @@ import { AdminDashboard } from '@/pages/Admin/AdminDashboard';
 import { HospiceWorkQueue } from '@/pages/Hospice/HospiceWorkQueue';
 import { HospiceHopeOverdue } from '@/pages/Hospice/HospiceHopeOverdue';
 import { HospiceIdgMeeting } from '@/pages/Hospice/HospiceIdgMeeting';
+import { HospiceBereavementList } from '@/pages/Hospice/HospiceBereavementList';
+import { HospiceBereavementProgramDetail } from '@/pages/Hospice/HospiceBereavementProgramDetail';
+import { HospiceBereavementEligible } from '@/pages/Hospice/HospiceBereavementEligible';
 
 export default function App() {
   return (
@@ -42,6 +45,18 @@ export default function App() {
             <Route path="hospice/work-queue" element={<HospiceWorkQueue />} />
             <Route path="hospice/hope/overdue" element={<HospiceHopeOverdue />} />
             <Route path="hospice/idg-meetings/:meetingId" element={<HospiceIdgMeeting />} />
+            <Route
+              path="hospice/bereavement"
+              element={<HospiceBereavementList />}
+            />
+            <Route
+              path="hospice/bereavement/eligible"
+              element={<HospiceBereavementEligible />}
+            />
+            <Route
+              path="hospice/bereavement/:programId"
+              element={<HospiceBereavementProgramDetail />}
+            />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>

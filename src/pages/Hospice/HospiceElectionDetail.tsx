@@ -264,6 +264,18 @@ export function HospiceElectionDetail() {
           >
             Revoke Election
           </button>
+          <button
+            onClick={() => navigate('/hospice/bereavement')}
+            style={{
+              background: '#f5f3ff',
+              color: '#6d28d9',
+              border: '1px solid #ddd6fe',
+              padding: '8px 16px',
+              borderRadius: 4,
+            }}
+          >
+            Bereavement Programs
+          </button>
         </div>
       )}
 

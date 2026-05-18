@@ -51,7 +51,12 @@ export interface HospiceRevocation {
 }
 
 export interface WorkQueueItem {
-  type: 'RecertDue' | 'NoeOverdue';
+  type:
+    | 'RecertDue'
+    | 'NoeOverdue'
+    | 'HopeOverdue'
+    | 'IdgOverdue'
+    | 'CarePlanReviewDue';
   electionId: number;
   patientId: number;
   patientName: string;
@@ -59,6 +64,16 @@ export interface WorkQueueItem {
   daysUntilDue: number | null;
   daysOverdue: number | null;
   periodNumber: number | null;
+}
+
+export interface BereavementQueueItem {
+  type: 'BereavementFollowUp' | 'BereavementOverdueContact';
+  programId: number;
+  patientId: number;
+  patientName: string;
+  dueDate: string;
+  daysUntilDue: number | null;
+  daysOverdue: number | null;
 }
 
 export interface CreateElectionRequest {
@@ -84,6 +99,8 @@ export interface WorkQueueResponse {
   hopeOverdue: WorkQueueItem[];
   idgOverdue: WorkQueueItem[];
   carePlanReviewsDue: WorkQueueItem[];
+  bereavementFollowUps: BereavementQueueItem[];
+  bereavementOverdueContact: BereavementQueueItem[];
 }
 
 export const createElection = (req: CreateElectionRequest): Promise<HospiceElection> =>
@@ -519,6 +536,277 @@ export const listCertificationsByElection = (
     .get<{ data: HospiceCertification[] }>(
       `/hospice/elections/${electionId}/certifications`,
     )
+    .then((r) => r.data);
+
+// ─── Sub-system D: Bereavement ─────────────────────────────────────────────
+
+export type BereavementProgramStatus = 'Active' | 'Completed' | 'Closed';
+export type BereavementContactRelationship =
+  | 'Spouse'
+  | 'Child'
+  | 'Parent'
+  | 'Sibling'
+  | 'Friend'
+  | 'Other';
+export type BereavementContactPreference = 'Phone' | 'Email' | 'Mail' | 'InPerson';
+export type BereavementEncounterType =
+  | 'Phone'
+  | 'Visit'
+  | 'GroupSession'
+  | 'Letter'
+  | 'Card'
+  | 'Email'
+  | 'Other';
+export type BereavementRiskLevel = 'Low' | 'Moderate' | 'High';
+
+export interface BereavementProgram {
+  id: number;
+  patientId: number;
+  dateOfDeath: string;
+  programEndDate: string;
+  daysUntilProgramEnd: number;
+  status: BereavementProgramStatus;
+  coordinatorUserId: number | null;
+  initialAssessmentDate: string | null;
+  initialRiskLevel: string | null;
+  riskHistory: string;
+  closureReason: string | null;
+  createdAt: string;
+}
+
+export interface BereavementContact {
+  id: number;
+  bereavementProgramId: number;
+  firstName: string;
+  lastName: string;
+  relationship: string;
+  contactPreference: string;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  isPrimaryContact: boolean;
+  optedOut: boolean;
+  optedOutAt: string | null;
+  notes: string | null;
+}
+
+export interface BereavementEncounter {
+  id: number;
+  bereavementProgramId: number;
+  contactId: number | null;
+  encounterDate: string;
+  encounterType: string;
+  durationMinutes: number | null;
+  clinicianUserId: number;
+  notes: string;
+  followUpRequired: boolean;
+  followUpByDate: string | null;
+  createdAt: string;
+}
+
+export interface StartBereavementProgramRequest {
+  dateOfDeath: string;
+  coordinatorUserId: number | null;
+}
+
+export interface AddRiskAssessmentRequest {
+  riskLevel: BereavementRiskLevel;
+  factors: string[] | null;
+  notes: string | null;
+}
+
+export interface AddContactRequest {
+  firstName: string;
+  lastName: string;
+  relationship: BereavementContactRelationship;
+  contactPreference: BereavementContactPreference;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  isPrimaryContact: boolean;
+  notes: string | null;
+}
+
+export interface UpdateContactRequest {
+  firstName: string;
+  lastName: string;
+  relationship: BereavementContactRelationship;
+  contactPreference: BereavementContactPreference;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  notes: string | null;
+}
+
+export interface RecordEncounterRequest {
+  contactId: number | null;
+  encounterDate: string;
+  encounterType: BereavementEncounterType;
+  durationMinutes: number | null;
+  notes: string;
+  followUpRequired: boolean;
+  followUpByDate: string | null;
+}
+
+export interface UpdateEncounterRequest {
+  contactId: number | null;
+  encounterType: BereavementEncounterType;
+  durationMinutes: number | null;
+  notes: string;
+  followUpRequired: boolean;
+  followUpByDate: string | null;
+}
+
+// Programs
+export const startBereavementProgram = (
+  patientId: number,
+  req: StartBereavementProgramRequest,
+): Promise<BereavementProgram> =>
+  apiClient
+    .post<BereavementProgram>('/hospice/bereavement/programs', req, {
+      params: { patientId },
+    })
+    .then((r) => r.data);
+
+export const listBereavementPrograms = (
+  status?: BereavementProgramStatus,
+): Promise<{ data: BereavementProgram[] }> =>
+  apiClient
+    .get<{ data: BereavementProgram[] }>('/hospice/bereavement/programs', {
+      params: status ? { status } : undefined,
+    })
+    .then((r) => r.data);
+
+export const getBereavementProgram = (id: number): Promise<BereavementProgram> =>
+  apiClient
+    .get<BereavementProgram>(`/hospice/bereavement/programs/${id}`)
+    .then((r) => r.data);
+
+export const completeBereavementProgram = (
+  id: number,
+): Promise<BereavementProgram> =>
+  apiClient
+    .post<BereavementProgram>(`/hospice/bereavement/programs/${id}/complete`, {})
+    .then((r) => r.data);
+
+export const closeBereavementProgram = (
+  id: number,
+  reason: string,
+): Promise<BereavementProgram> =>
+  apiClient
+    .post<BereavementProgram>(`/hospice/bereavement/programs/${id}/close`, { reason })
+    .then((r) => r.data);
+
+export const addRiskAssessment = (
+  programId: number,
+  req: AddRiskAssessmentRequest,
+): Promise<BereavementProgram> =>
+  apiClient
+    .post<BereavementProgram>(
+      `/hospice/bereavement/programs/${programId}/risk-assessments`,
+      req,
+    )
+    .then((r) => r.data);
+
+export const listEligibleForCompletion = (): Promise<{ data: BereavementProgram[] }> =>
+  apiClient
+    .get<{ data: BereavementProgram[] }>(
+      '/hospice/bereavement/programs/eligible-for-completion',
+    )
+    .then((r) => r.data);
+
+// Contacts
+export const createBereavementContact = (
+  programId: number,
+  req: AddContactRequest,
+): Promise<BereavementContact> =>
+  apiClient
+    .post<BereavementContact>(
+      `/hospice/bereavement/programs/${programId}/contacts`,
+      req,
+    )
+    .then((r) => r.data);
+
+export const listBereavementContacts = (
+  programId: number,
+): Promise<{ data: BereavementContact[] }> =>
+  apiClient
+    .get<{ data: BereavementContact[] }>(
+      `/hospice/bereavement/programs/${programId}/contacts`,
+    )
+    .then((r) => r.data);
+
+export const updateBereavementContact = (
+  contactId: number,
+  req: UpdateContactRequest,
+): Promise<BereavementContact> =>
+  apiClient
+    .put<BereavementContact>(`/hospice/bereavement/contacts/${contactId}`, req)
+    .then((r) => r.data);
+
+export const setPrimaryContact = (
+  contactId: number,
+): Promise<BereavementContact> =>
+  apiClient
+    .post<BereavementContact>(
+      `/hospice/bereavement/contacts/${contactId}/set-primary`,
+      {},
+    )
+    .then((r) => r.data);
+
+export const optOutContact = (
+  contactId: number,
+  reason: string | null,
+): Promise<BereavementContact> =>
+  apiClient
+    .post<BereavementContact>(
+      `/hospice/bereavement/contacts/${contactId}/opt-out`,
+      { reason },
+    )
+    .then((r) => r.data);
+
+export const deleteBereavementContact = (contactId: number): Promise<void> =>
+  apiClient.delete<void>(`/hospice/bereavement/contacts/${contactId}`).then((r) => r.data);
+
+// Encounters
+export const recordBereavementEncounter = (
+  programId: number,
+  req: RecordEncounterRequest,
+): Promise<BereavementEncounter> =>
+  apiClient
+    .post<BereavementEncounter>(
+      `/hospice/bereavement/programs/${programId}/encounters`,
+      req,
+    )
+    .then((r) => r.data);
+
+export const listBereavementEncounters = (
+  programId: number,
+  type?: BereavementEncounterType,
+): Promise<{ data: BereavementEncounter[] }> =>
+  apiClient
+    .get<{ data: BereavementEncounter[] }>(
+      `/hospice/bereavement/programs/${programId}/encounters`,
+      { params: type ? { type } : undefined },
+    )
+    .then((r) => r.data);
+
+export const updateBereavementEncounter = (
+  encounterId: number,
+  req: UpdateEncounterRequest,
+): Promise<BereavementEncounter> =>
+  apiClient
+    .put<BereavementEncounter>(`/hospice/bereavement/encounters/${encounterId}`, req)
+    .then((r) => r.data);
+
+export const deleteBereavementEncounter = (encounterId: number): Promise<void> =>
+  apiClient
+    .delete<void>(`/hospice/bereavement/encounters/${encounterId}`)
+    .then((r) => r.data);
+
+export const listBereavementFollowUpsDue = (): Promise<{ data: BereavementEncounter[] }> =>
+  apiClient
+    .get<{ data: BereavementEncounter[] }>('/hospice/bereavement/follow-ups/due')
     .then((r) => r.data);
 
 // SIA preview

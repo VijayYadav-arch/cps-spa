@@ -27,13 +27,15 @@ describe('HospiceWorkQueue', () => {
     expect(screen.getByRole('status')).toBeInTheDocument();
   });
 
-  it('renders all five tabs with empty state when no items', async () => {
+  it('renders all seven tabs with empty state when no items', async () => {
     vi.mocked(getWorkQueue).mockResolvedValueOnce({
       recertsDue: [],
       noeOverdue: [],
       hopeOverdue: [],
       idgOverdue: [],
       carePlanReviewsDue: [],
+      bereavementFollowUps: [],
+      bereavementOverdueContact: [],
     });
     renderPage();
     await waitFor(() => {
@@ -42,6 +44,8 @@ describe('HospiceWorkQueue', () => {
       expect(screen.getByRole('tab', { name: /HOPE Overdue/i })).toBeInTheDocument();
       expect(screen.getByRole('tab', { name: /IDG Overdue/i })).toBeInTheDocument();
       expect(screen.getByRole('tab', { name: /Care Plan Reviews Due/i })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /Bereavement Follow-Ups/i })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /Bereavement Overdue/i })).toBeInTheDocument();
       expect(screen.getByText(/No recerts due/i)).toBeInTheDocument();
     });
   });
@@ -75,6 +79,8 @@ describe('HospiceWorkQueue', () => {
       hopeOverdue: [],
       idgOverdue: [],
       carePlanReviewsDue: [],
+      bereavementFollowUps: [],
+      bereavementOverdueContact: [],
     });
     const user = userEvent.setup();
     renderPage();
