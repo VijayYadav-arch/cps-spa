@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 
 // Mock all API calls to prevent network requests in routing tests
 vi.mock('@/api/client', () => ({
@@ -21,19 +22,16 @@ vi.mock('@/pages/Claims/ClaimDetail', () => ({ ClaimDetail: () => <div>Claim Det
 vi.mock('@/pages/Patients/PatientsList', () => ({ PatientsList: () => <div>Patients</div> }));
 vi.mock('@/pages/Patients/PatientDetail', () => ({ PatientDetail: () => <div>Patient Detail</div> }));
 vi.mock('@/pages/Patients/PatientHistory', () => ({ PatientHistory: () => <div>Patient History</div> }));
-vi.mock('@/pages/Patients/PatientsRoutes', () => {
-  const { Routes, Route, Navigate } = require('react-router-dom');
-  return {
-    PatientsRoutes: () => (
-      <Routes>
-        <Route index element={<div>Patients</div>} />
-        <Route path=":id" element={<div>Patient Detail</div>} />
-        <Route path=":id/history" element={<div>Patient History</div>} />
-        <Route path="*" element={<Navigate to="/patients" replace />} />
-      </Routes>
-    ),
-  };
-});
+vi.mock('@/pages/Patients/PatientsRoutes', () => ({
+  PatientsRoutes: () => (
+    <Routes>
+      <Route index element={<div>Patients</div>} />
+      <Route path=":id" element={<div>Patient Detail</div>} />
+      <Route path=":id/history" element={<div>Patient History</div>} />
+      <Route path="*" element={<Navigate to="/patients" replace />} />
+    </Routes>
+  ),
+}));
 vi.mock('@/pages/Billing/BillingDashboard', () => ({ BillingDashboard: () => <div>Billing</div> }));
 vi.mock('@/pages/Clinical/ClinicalOverview', () => ({ ClinicalOverview: () => <div>Clinical</div> }));
 vi.mock('@/pages/Documents/DocumentsList', () => ({ DocumentsList: () => <div>Documents</div> }));
