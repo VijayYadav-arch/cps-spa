@@ -26,6 +26,7 @@ const navItems: NavEntry[] = [
     items: [
       { kind: 'leaf', to: '/billing', label: 'Dashboard' },
       { kind: 'leaf', to: '/billing/denials', label: 'Denial Queue' },
+      { kind: 'leaf', to: '/billing/ar', label: 'AR Follow-Up' },
     ],
   },
   { kind: 'leaf', to: '/clinical', label: 'Clinical' },
