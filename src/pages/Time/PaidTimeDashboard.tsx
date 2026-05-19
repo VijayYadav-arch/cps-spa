@@ -1,11 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/auth/useAuth';
 import {
   getPaidTimeSummary,
+  importPaidTimeCsv,
   listPaidTime,
   logPaidTime,
   type EmployeePaidTimeLog,
   type EmployeeTimeActivityType,
+  type PaidTimeCsvImportResult,
   type PaidTimeSummary,
 } from '@/api/time';
 
@@ -64,6 +66,12 @@ export function PaidTimeDashboard() {
   const [description, setDescription] = useState('');
   const [isLogging, setIsLogging] = useState(false);
 
+  // CSV import
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [importResult, setImportResult] = useState<PaidTimeCsvImportResult | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
+
   async function refresh() {
     setIsLoading(true);
     setError(null);
@@ -120,6 +128,23 @@ export function PaidTimeDashboard() {
       setActionError(extractError(err, 'Failed to log time.'));
     } finally {
       setIsLogging(false);
+    }
+  }
+
+  async function handleCsvUpload(file: File) {
+    setImportError(null);
+    setImportResult(null);
+    setIsImporting(true);
+    try {
+      const text = await file.text();
+      const result = await importPaidTimeCsv(text);
+      setImportResult(result);
+      if (result.importedCount > 0) await refresh();
+    } catch (err) {
+      setImportError(extractError(err, 'CSV import failed.'));
+    } finally {
+      setIsImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   }
 
@@ -223,6 +248,80 @@ export function PaidTimeDashboard() {
             {isLogging ? 'Saving…' : 'Log Time'}
           </button>
         </form>
+      </section>
+
+      <section style={{ display: 'grid', gap: 8, maxWidth: 600 }}>
+        <h3 style={{ fontSize: 16, fontWeight: 600 }}>Bulk Import (CSV)</h3>
+        <p style={{ color: '#64748b', fontSize: 13, margin: 0 }}>
+          Header row required. Columns:{' '}
+          <code>userId, serviceDate, hours, activityType, description?, patientId?</code>.
+          Each row imports independently — bad rows are reported with line numbers.
+        </p>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".csv,text/csv,text/plain"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) void handleCsvUpload(file);
+          }}
+          disabled={isImporting}
+        />
+        {isImporting && <div role="status">Importing…</div>}
+        {importError && (
+          <div role="alert" style={{ color: '#b91c1c' }}>
+            {importError}
+          </div>
+        )}
+        {importResult && (
+          <div
+            style={{
+              padding: 10,
+              borderRadius: 6,
+              background: importResult.failedCount === 0 ? '#f0fdf4' : '#fef9c3',
+              border: '1px solid #e2e8f0',
+            }}
+          >
+            <p style={{ margin: 0 }}>
+              <strong>{importResult.importedCount}</strong> imported ·{' '}
+              <strong>{importResult.failedCount}</strong> failed
+            </p>
+            {importResult.errors.length > 0 && (
+              <details style={{ marginTop: 8 }}>
+                <summary>Error detail ({importResult.errors.length})</summary>
+                <table style={{ width: '100%', marginTop: 8 }}>
+                  <thead>
+                    <tr>
+                      <th style={{ textAlign: 'left', padding: '4px 6px' }}>Line</th>
+                      <th style={{ textAlign: 'left', padding: '4px 6px' }}>Error</th>
+                      <th style={{ textAlign: 'left', padding: '4px 6px' }}>Raw</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {importResult.errors.map((e, i) => (
+                      <tr key={i}>
+                        <td style={{ padding: '4px 6px' }}>{e.lineNumber}</td>
+                        <td style={{ padding: '4px 6px', color: '#b91c1c' }}>
+                          {e.error}
+                        </td>
+                        <td
+                          style={{
+                            padding: '4px 6px',
+                            color: '#64748b',
+                            fontFamily: 'monospace',
+                            fontSize: 12,
+                          }}
+                        >
+                          {e.rawLine}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </details>
+            )}
+          </div>
+        )}
       </section>
 
       <section style={{ display: 'grid', gap: 12 }}>
