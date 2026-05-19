@@ -15,7 +15,8 @@ type Tab =
   | 'bereavementFollowUps'
   | 'bereavementOverdueContact'
   | 'addendum'
-  | 'notr';
+  | 'notr'
+  | 'ftf';
 
 const TAB_META: Record<Tab, { label: string; emptyMessage: string }> = {
   recerts: { label: 'Recerts Due', emptyMessage: 'No recerts due in the next 15 days.' },
@@ -39,6 +40,11 @@ const TAB_META: Record<Tab, { label: string; emptyMessage: string }> = {
     label: 'NOTR Overdue',
     emptyMessage: 'No NOTR (8XB) filings past the 5-day deadline.',
   },
+  ftf: {
+    label: 'FTF Due',
+    emptyMessage:
+      'No Face-to-Face encounters due (period 3+ within 30-day window).',
+  },
 };
 
 export function HospiceWorkQueue() {
@@ -55,6 +61,7 @@ export function HospiceWorkQueue() {
   >([]);
   const [addendum, setAddendum] = useState<WorkQueueItem[]>([]);
   const [notr, setNotr] = useState<WorkQueueItem[]>([]);
+  const [ftf, setFtf] = useState<WorkQueueItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('recerts');
@@ -73,6 +80,7 @@ export function HospiceWorkQueue() {
         setBereavementOverdueContact(res.bereavementOverdueContact ?? []);
         setAddendum(res.addendumDue ?? []);
         setNotr(res.notrOverdue ?? []);
+        setFtf(res.ftfDue ?? []);
       })
       .catch(() => setError('Failed to load work queue.'))
       .finally(() => setIsLoading(false));
@@ -82,9 +90,9 @@ export function HospiceWorkQueue() {
   if (error) return <div role="alert">{error}</div>;
 
   const electionLists: Record<
-    'recerts' | 'noe' | 'hope' | 'idg' | 'reviews' | 'addendum' | 'notr',
+    'recerts' | 'noe' | 'hope' | 'idg' | 'reviews' | 'addendum' | 'notr' | 'ftf',
     WorkQueueItem[]
-  > = { recerts, noe, hope, idg, reviews, addendum, notr };
+  > = { recerts, noe, hope, idg, reviews, addendum, notr, ftf };
   const bereavementLists: Record<
     'bereavementFollowUps' | 'bereavementOverdueContact',
     BereavementQueueItem[]
@@ -99,6 +107,7 @@ export function HospiceWorkQueue() {
     bereavementOverdueContact: bereavementOverdueContact.length,
     addendum: addendum.length,
     notr: notr.length,
+    ftf: ftf.length,
   };
   const meta = TAB_META[tab];
   const isBereavementTab =
@@ -183,9 +192,11 @@ export function HospiceWorkQueue() {
               <th style={{ padding: '8px 12px' }}>Patient</th>
               <th style={{ padding: '8px 12px' }}>Due Date</th>
               <th style={{ padding: '8px 12px' }}>
-                {tab === 'recerts' ? 'Days Until Due' : 'Days Overdue'}
+                {tab === 'recerts' || tab === 'ftf'
+                  ? 'Days Until Due'
+                  : 'Days Overdue'}
               </th>
-              {tab === 'recerts' && (
+              {(tab === 'recerts' || tab === 'ftf') && (
                 <th style={{ padding: '8px 12px' }}>Period</th>
               )}
               <th style={{ padding: '8px 12px' }}>Action</th>
@@ -193,7 +204,15 @@ export function HospiceWorkQueue() {
           </thead>
           <tbody>
             {electionLists[
-              tab as 'recerts' | 'noe' | 'hope' | 'idg' | 'reviews' | 'addendum' | 'notr'
+              tab as
+                | 'recerts'
+                | 'noe'
+                | 'hope'
+                | 'idg'
+                | 'reviews'
+                | 'addendum'
+                | 'notr'
+                | 'ftf'
             ].map((item, idx) => (
               <tr
                 key={`${item.type}-${item.electionId}-${idx}`}
@@ -208,9 +227,11 @@ export function HospiceWorkQueue() {
                 </td>
                 <td style={{ padding: '8px 12px' }}>{item.dueDate}</td>
                 <td style={{ padding: '8px 12px' }}>
-                  {tab === 'recerts' ? item.daysUntilDue : item.daysOverdue}
+                  {tab === 'recerts' || tab === 'ftf'
+                    ? item.daysUntilDue
+                    : item.daysOverdue}
                 </td>
-                {tab === 'recerts' && (
+                {(tab === 'recerts' || tab === 'ftf') && (
                   <td style={{ padding: '8px 12px' }}>{item.periodNumber}</td>
                 )}
                 <td style={{ padding: '8px 12px' }}>
