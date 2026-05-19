@@ -1134,3 +1134,127 @@ export const getMedicareCapReconciliation = (
       `/hospice/medicare-cap/reconciliation/${capYear}`,
     )
     .then((r) => r.data);
+
+// ─── Hospice volunteers (42 CFR 418.78 — 5% rule) ──────────────────────────
+
+export type VolunteerActivityType =
+  | 'DirectPatientCare'
+  | 'Administrative'
+  | 'Excluded';
+
+export interface HospiceVolunteer {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string | null;
+  phone: string | null;
+  orientationCompletedDate: string | null;
+  isActive: boolean;
+  notes: string | null;
+  createdAt: string;
+}
+
+export interface HospiceVolunteerHoursLog {
+  id: number;
+  volunteerId: number;
+  volunteerName: string;
+  serviceDate: string;
+  hours: number;
+  activityType: string;
+  description: string | null;
+  patientId: number | null;
+  createdAt: string;
+}
+
+export interface CreateVolunteerRequest {
+  firstName: string;
+  lastName: string;
+  email: string | null;
+  phone: string | null;
+  orientationCompletedDate: string | null;
+  notes: string | null;
+}
+
+export interface UpdateVolunteerRequest {
+  firstName: string;
+  lastName: string;
+  email: string | null;
+  phone: string | null;
+  orientationCompletedDate: string | null;
+  isActive: boolean;
+  notes: string | null;
+}
+
+export interface LogVolunteerHoursRequest {
+  volunteerId: number;
+  serviceDate: string;
+  hours: number;
+  activityType: VolunteerActivityType;
+  description: string | null;
+  patientId: number | null;
+}
+
+export interface VolunteerComplianceReport {
+  from: string;
+  to: string;
+  totalQualifyingVolunteerHours: number;
+  excludedVolunteerHours: number;
+  paidPatientCareHours: number;
+  compliancePercentage: number;
+  meetsThreshold: boolean;
+  thresholdPercentage: number;
+  volunteerCount: number;
+  caveats: string[];
+}
+
+export const listVolunteers = (
+  activeOnly: boolean,
+): Promise<{ data: HospiceVolunteer[] }> =>
+  apiClient
+    .get<{ data: HospiceVolunteer[] }>('/hospice/volunteers', {
+      params: { activeOnly },
+    })
+    .then((r) => r.data);
+
+export const createVolunteer = (
+  req: CreateVolunteerRequest,
+): Promise<HospiceVolunteer> =>
+  apiClient
+    .post<HospiceVolunteer>('/hospice/volunteers', req)
+    .then((r) => r.data);
+
+export const updateVolunteer = (
+  id: number,
+  req: UpdateVolunteerRequest,
+): Promise<HospiceVolunteer> =>
+  apiClient
+    .put<HospiceVolunteer>(`/hospice/volunteers/${id}`, req)
+    .then((r) => r.data);
+
+export const logVolunteerHours = (
+  req: LogVolunteerHoursRequest,
+): Promise<HospiceVolunteerHoursLog> =>
+  apiClient
+    .post<HospiceVolunteerHoursLog>('/hospice/volunteers/hours', req)
+    .then((r) => r.data);
+
+export const listVolunteerHours = (
+  from: string,
+  to: string,
+): Promise<{ data: HospiceVolunteerHoursLog[] }> =>
+  apiClient
+    .get<{ data: HospiceVolunteerHoursLog[] }>('/hospice/volunteers/hours', {
+      params: { from, to },
+    })
+    .then((r) => r.data);
+
+export const getVolunteerCompliance = (
+  from: string,
+  to: string,
+  paidPatientCareHours: number,
+): Promise<VolunteerComplianceReport> =>
+  apiClient
+    .get<VolunteerComplianceReport>('/hospice/volunteers/compliance', {
+      params: { from, to, paidPatientCareHours },
+    })
+    .then((r) => r.data);
