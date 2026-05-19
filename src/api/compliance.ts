@@ -135,3 +135,66 @@ export const listPhiReviews = (
 
 export const getPhiRetentionStatus = (): Promise<RetentionStatus> =>
   apiClient.get<RetentionStatus>(`${BASE}/retention-status`).then((r) => r.data);
+
+// ─── Reg-10: Surveyor Evidence Bundle ────────────────────────────────────
+
+export interface SurveyorBundleEntry {
+  fileName: string;
+  contentType: string;
+  rowCount: number;
+}
+
+export interface SurveyorBundleManifest {
+  generatedAtUtc: string;
+  patientId: number;
+  patientName: string;
+  medicareId: string | null;
+  admittedAt: string | null;
+  dateOfDeath: string | null;
+  windowFrom: string;
+  windowTo: string;
+  electionCount: number;
+  certificationCount: number;
+  faceToFaceCount: number;
+  carePlanReviewCount: number;
+  idgMeetingCount: number;
+  volunteerHoursTotal: number;
+  files: SurveyorBundleEntry[];
+}
+
+const BUNDLE_BASE = '/compliance/surveyor-bundle';
+
+export const getSurveyorBundleManifest = (
+  patientId: number, from?: string, to?: string,
+): Promise<SurveyorBundleManifest> =>
+  apiClient
+    .get<SurveyorBundleManifest>(`${BUNDLE_BASE}/${patientId}/manifest`, {
+      params: { from, to },
+    })
+    .then((r) => r.data);
+
+/**
+ * Triggers a browser download of the ZIP bundle. Returns the suggested file
+ * name so the caller can show a confirmation.
+ */
+export async function downloadSurveyorBundle(
+  patientId: number, from?: string, to?: string,
+): Promise<string> {
+  const res = await apiClient.get<Blob>(`${BUNDLE_BASE}/${patientId}`, {
+    params: { from, to },
+    responseType: 'blob',
+  });
+  const cd = (res.headers as { 'content-disposition'?: string })['content-disposition'];
+  const match = cd?.match(/filename="?([^";]+)"?/);
+  const fileName = match?.[1]
+    ?? `surveyor-bundle-patient-${patientId}.zip`;
+  const url = URL.createObjectURL(res.data);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  return fileName;
+}

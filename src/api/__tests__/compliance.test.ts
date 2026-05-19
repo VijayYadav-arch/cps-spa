@@ -99,4 +99,55 @@ describe('compliance API', () => {
     await getPhiRetentionStatus();
     expect(apiClient.get).toHaveBeenCalledWith('/compliance/phi-access/retention-status');
   });
+
+  // ─── Surveyor evidence bundle ────────────────────────────────────────
+
+  it('getSurveyorBundleManifest() GETs /compliance/surveyor-bundle/{id}/manifest', async () => {
+    const { apiClient } = await import('@/api/client');
+    const { getSurveyorBundleManifest } = await import('@/api/compliance');
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ data: { patientId: 100 } });
+    await getSurveyorBundleManifest(100, '2026-01-01', '2026-05-19');
+    expect(apiClient.get).toHaveBeenCalledWith(
+      '/compliance/surveyor-bundle/100/manifest',
+      { params: { from: '2026-01-01', to: '2026-05-19' } },
+    );
+  });
+
+  it('downloadSurveyorBundle() requests the ZIP as a blob', async () => {
+    const { apiClient } = await import('@/api/client');
+    const { downloadSurveyorBundle } = await import('@/api/compliance');
+
+    // jsdom: stub URL.createObjectURL + click side-effects
+    const originalCreate = URL.createObjectURL;
+    const originalRevoke = URL.revokeObjectURL;
+    URL.createObjectURL = vi.fn(() => 'blob:zzz');
+    URL.revokeObjectURL = vi.fn();
+    const click = vi.fn();
+    const origCreate = document.createElement.bind(document);
+    vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
+      const el = origCreate(tag);
+      if (tag === 'a') (el as HTMLAnchorElement).click = click;
+      return el;
+    });
+
+    vi.mocked(apiClient.get).mockResolvedValueOnce({
+      data: new Blob(['zip-bytes']),
+      headers: { 'content-disposition': 'attachment; filename="bundle.zip"' },
+    } as never);
+
+    const name = await downloadSurveyorBundle(100, '2026-01-01', '2026-05-19');
+    expect(apiClient.get).toHaveBeenCalledWith(
+      '/compliance/surveyor-bundle/100',
+      expect.objectContaining({
+        params: { from: '2026-01-01', to: '2026-05-19' },
+        responseType: 'blob',
+      }),
+    );
+    expect(name).toBe('bundle.zip');
+    expect(click).toHaveBeenCalled();
+
+    URL.createObjectURL = originalCreate;
+    URL.revokeObjectURL = originalRevoke;
+    vi.restoreAllMocks();
+  });
 });

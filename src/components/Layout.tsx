@@ -48,6 +48,7 @@ const navItems: NavEntry[] = [
     label: 'Compliance',
     items: [
       { kind: 'leaf', to: '/compliance/phi-access', label: 'PHI Access Review' },
+      { kind: 'leaf', to: '/compliance/surveyor-bundle', label: 'Surveyor Bundle' },
     ],
   },
   { kind: 'leaf', to: '/platform', label: 'Platform' },
