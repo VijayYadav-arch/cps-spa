@@ -32,6 +32,7 @@ import { SurveyorBundlePage } from '@/pages/Compliance/SurveyorBundlePage';
 import { BreachWorkflowPage } from '@/pages/Compliance/BreachWorkflowPage';
 import { OrgRollupPage } from '@/pages/Admin/OrgRollupPage';
 import { BranchesPage } from '@/pages/Admin/BranchesPage';
+import { PortalPaymentPage } from '@/pages/Portal/PortalPaymentPage';
 
 export default function App() {
   return (
@@ -39,6 +40,7 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/portal/pay/:runId" element={<PortalPaymentPage />} />
           <Route
             path="/*"
             element={
