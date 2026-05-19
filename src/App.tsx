@@ -20,6 +20,7 @@ import { HospiceBereavementProgramDetail } from '@/pages/Hospice/HospiceBereavem
 import { HospiceBereavementEligible } from '@/pages/Hospice/HospiceBereavementEligible';
 import { HospiceAddendumPage } from '@/pages/Hospice/HospiceAddendumPage';
 import { HospiceFtfPage } from '@/pages/Hospice/HospiceFtfPage';
+import { HospiceHqrpDashboard } from '@/pages/Hospice/HospiceHqrpDashboard';
 
 export default function App() {
   return (
@@ -67,6 +68,7 @@ export default function App() {
               path="hospice/elections/:electionId/periods/:periodId/ftf"
               element={<HospiceFtfPage />}
             />
+            <Route path="hospice/hqrp" element={<HospiceHqrpDashboard />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>

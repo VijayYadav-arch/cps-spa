@@ -1059,3 +1059,44 @@ export const listFtfForElection = (
   apiClient
     .get<{ data: HospiceFaceToFaceEncounter[] }>(`/hospice/elections/${electionId}/ftf`)
     .then((r) => r.data);
+
+// ─── Regulatory: HQRP timeliness (90% HOPE within 30 days) ──────────────────
+
+export interface HqrpTimelinessSummary {
+  from: string;
+  to: string;
+  totalAssessments: number;
+  onTimeCount: number;
+  lateCount: number;
+  notYetSubmittedCount: number;
+  rejectedCount: number;
+  timelinessPercentage: number;
+  meetsThreshold: boolean;
+  thresholdPercentage: number;
+}
+
+export interface HqrpLateAssessment {
+  id: number;
+  hospiceElectionId: number;
+  patientId: number;
+  patientName: string;
+  submissionType: string;
+  targetDate: string;
+  deadlineDate: string;
+  submittedAt: string | null;
+  daysLate: number;
+  status: string;
+}
+
+export interface HqrpTimelinessReport {
+  summary: HqrpTimelinessSummary;
+  lateOrPending: HqrpLateAssessment[];
+}
+
+export const getHqrpTimeliness = (
+  from: string,
+  to: string,
+): Promise<HqrpTimelinessReport> =>
+  apiClient
+    .get<HqrpTimelinessReport>(`/hospice/hqrp/timeliness`, { params: { from, to } })
+    .then((r) => r.data);
