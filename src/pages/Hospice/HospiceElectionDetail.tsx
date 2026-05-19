@@ -6,6 +6,7 @@ import {
   type HospiceElection,
   type NoeSubmissionMode,
 } from '@/api/hospice';
+import { HospiceNotrCard } from '@/components/HospiceNotrCard';
 
 function badgeStyle(color: string): CSSProperties {
   return {
@@ -292,6 +293,10 @@ export function HospiceElectionDetail() {
           </button>
         </div>
       )}
+
+      <div style={{ marginTop: 24 }}>
+        <HospiceNotrCard electionId={election.id} />
+      </div>
 
       {showNoeModal && (
         <div

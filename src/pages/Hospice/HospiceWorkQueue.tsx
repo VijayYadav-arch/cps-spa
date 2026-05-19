@@ -14,7 +14,8 @@ type Tab =
   | 'reviews'
   | 'bereavementFollowUps'
   | 'bereavementOverdueContact'
-  | 'addendum';
+  | 'addendum'
+  | 'notr';
 
 const TAB_META: Record<Tab, { label: string; emptyMessage: string }> = {
   recerts: { label: 'Recerts Due', emptyMessage: 'No recerts due in the next 15 days.' },
@@ -34,6 +35,10 @@ const TAB_META: Record<Tab, { label: string; emptyMessage: string }> = {
     label: 'Addendum Due',
     emptyMessage: 'All active elections have an issued addendum within the 5-day window.',
   },
+  notr: {
+    label: 'NOTR Overdue',
+    emptyMessage: 'No NOTR (8XB) filings past the 5-day deadline.',
+  },
 };
 
 export function HospiceWorkQueue() {
@@ -49,6 +54,7 @@ export function HospiceWorkQueue() {
     BereavementQueueItem[]
   >([]);
   const [addendum, setAddendum] = useState<WorkQueueItem[]>([]);
+  const [notr, setNotr] = useState<WorkQueueItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('recerts');
@@ -66,6 +72,7 @@ export function HospiceWorkQueue() {
         setBereavementFollowUps(res.bereavementFollowUps ?? []);
         setBereavementOverdueContact(res.bereavementOverdueContact ?? []);
         setAddendum(res.addendumDue ?? []);
+        setNotr(res.notrOverdue ?? []);
       })
       .catch(() => setError('Failed to load work queue.'))
       .finally(() => setIsLoading(false));
@@ -75,9 +82,9 @@ export function HospiceWorkQueue() {
   if (error) return <div role="alert">{error}</div>;
 
   const electionLists: Record<
-    'recerts' | 'noe' | 'hope' | 'idg' | 'reviews' | 'addendum',
+    'recerts' | 'noe' | 'hope' | 'idg' | 'reviews' | 'addendum' | 'notr',
     WorkQueueItem[]
-  > = { recerts, noe, hope, idg, reviews, addendum };
+  > = { recerts, noe, hope, idg, reviews, addendum, notr };
   const bereavementLists: Record<
     'bereavementFollowUps' | 'bereavementOverdueContact',
     BereavementQueueItem[]
@@ -91,6 +98,7 @@ export function HospiceWorkQueue() {
     bereavementFollowUps: bereavementFollowUps.length,
     bereavementOverdueContact: bereavementOverdueContact.length,
     addendum: addendum.length,
+    notr: notr.length,
   };
   const meta = TAB_META[tab];
   const isBereavementTab =
@@ -185,7 +193,7 @@ export function HospiceWorkQueue() {
           </thead>
           <tbody>
             {electionLists[
-              tab as 'recerts' | 'noe' | 'hope' | 'idg' | 'reviews' | 'addendum'
+              tab as 'recerts' | 'noe' | 'hope' | 'idg' | 'reviews' | 'addendum' | 'notr'
             ].map((item, idx) => (
               <tr
                 key={`${item.type}-${item.electionId}-${idx}`}
