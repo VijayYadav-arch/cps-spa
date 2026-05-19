@@ -26,6 +26,7 @@ import { HospiceVolunteersDashboard } from '@/pages/Hospice/HospiceVolunteersDas
 import { HospiceCahpsDashboard } from '@/pages/Hospice/HospiceCahpsDashboard';
 import { PaidTimeDashboard } from '@/pages/Time/PaidTimeDashboard';
 import { MyTimeDashboard } from '@/pages/Time/MyTimeDashboard';
+import { PhiAccessReviewDashboard } from '@/pages/Compliance/PhiAccessReviewDashboard';
 
 export default function App() {
   return (
@@ -85,6 +86,10 @@ export default function App() {
             <Route path="hospice/cahps" element={<HospiceCahpsDashboard />} />
             <Route path="time" element={<PaidTimeDashboard />} />
             <Route path="me/time" element={<MyTimeDashboard />} />
+            <Route
+              path="compliance/phi-access"
+              element={<PhiAccessReviewDashboard />}
+            />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
