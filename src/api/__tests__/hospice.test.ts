@@ -434,4 +434,51 @@ describe('hospice API', () => {
       '/hospice/cahps/compliance/2026/q/2',
     );
   });
+
+  // ─── 837I Hospice Claim Export ────────────────────────────────────────
+
+  it('exportHospice837I() POSTs to /hospice/claims/{id}/export-837i', async () => {
+    const { apiClient } = await import('@/api/client');
+    const { exportHospice837I } = await import('@/api/hospice');
+    vi.mocked(apiClient.post).mockResolvedValueOnce({
+      data: { submissionId: 1, edi837: 'ISA*...', controlNumber: '000000001', typeOfBill: '0811', lineCount: 1, totalCharges: 720, warnings: [] },
+    });
+    await exportHospice837I(7, {
+      clearinghouse: 'availity',
+      priorAuthorizationNumber: null,
+      claimNote: null,
+    });
+    expect(apiClient.post).toHaveBeenCalledWith('/hospice/claims/7/export-837i', {
+      clearinghouse: 'availity',
+      priorAuthorizationNumber: null,
+      claimNote: null,
+    });
+  });
+
+  it('listClaimSubmissions() GETs /hospice/claims/{id}/submissions', async () => {
+    const { apiClient } = await import('@/api/client');
+    const { listClaimSubmissions } = await import('@/api/hospice');
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ data: { data: [] } });
+    await listClaimSubmissions(7);
+    expect(apiClient.get).toHaveBeenCalledWith('/hospice/claims/7/submissions');
+  });
+
+  it('getClaimSubmission() GETs /hospice/claim-submissions/{id}', async () => {
+    const { apiClient } = await import('@/api/client');
+    const { getClaimSubmission } = await import('@/api/hospice');
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ data: { id: 1 } });
+    await getClaimSubmission(1);
+    expect(apiClient.get).toHaveBeenCalledWith('/hospice/claim-submissions/1');
+  });
+
+  it('markClaimSubmissionSubmitted() POSTs to /mark-submitted', async () => {
+    const { apiClient } = await import('@/api/client');
+    const { markClaimSubmissionSubmitted } = await import('@/api/hospice');
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { id: 1, status: 'submitted' } });
+    await markClaimSubmissionSubmitted(1, 'TRACK-123');
+    expect(apiClient.post).toHaveBeenCalledWith(
+      '/hospice/claim-submissions/1/mark-submitted',
+      { clearinghouseTrackingId: 'TRACK-123' },
+    );
+  });
 });
