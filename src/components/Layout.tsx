@@ -28,6 +28,7 @@ const navItems: NavEntry[] = [
       { kind: 'leaf', to: '/billing/denials', label: 'Denial Queue' },
       { kind: 'leaf', to: '/billing/ar', label: 'AR Follow-Up' },
       { kind: 'leaf', to: '/billing/secondary', label: 'Secondary Claims' },
+      { kind: 'leaf', to: '/billing/statements', label: 'Patient Statements' },
     ],
   },
   { kind: 'leaf', to: '/clinical', label: 'Clinical' },

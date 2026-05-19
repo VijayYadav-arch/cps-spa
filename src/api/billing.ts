@@ -218,3 +218,104 @@ export const buildSecondary837 = (
   apiClient
     .post<Secondary837Result>(`/billing/secondary-claims/${claimId}/build`, { clearinghouse })
     .then((r) => r.data);
+
+// ─── Patient statement workflow ──────────────────────────────────────────
+
+export type StatementRunStatus =
+  | 'draft'
+  | 'sent'
+  | 'paid'
+  | 'partial-pay'
+  | 'written-off';
+
+export interface StatementLineSnapshot {
+  claimId: number | null;
+  claimNumber: string | null;
+  serviceDate: string;
+  description: string;
+  chargeAmount: number;
+  paidAmount: number;
+  adjustmentAmount: number;
+  patientBalance: number;
+}
+
+export interface StatementRun {
+  id: number;
+  patientId: number;
+  patientName: string;
+  status: StatementRunStatus;
+  dunningCycle: number;
+  statementDate: string;
+  dueDate: string;
+  totalCharges: number;
+  totalPayments: number;
+  totalAdjustments: number;
+  patientBalance: number;
+  amountPaid: number;
+  sentAt: string | null;
+  paidAt: string | null;
+  previousRunId: number | null;
+  lineItems: StatementLineSnapshot[];
+}
+
+export interface DunningQueueEntry {
+  runId: number;
+  patientId: number;
+  patientName: string;
+  currentCycle: number;
+  nextCycle: number;
+  sentAt: string;
+  daysSinceSent: number;
+  patientBalance: number;
+}
+
+export interface DunningQueueResponse {
+  asOfUtc: string;
+  cycle2Eligible: number;
+  cycle3Eligible: number;
+  entries: DunningQueueEntry[];
+}
+
+export const listStatementRuns = (
+  status?: StatementRunStatus,
+): Promise<{ data: StatementRun[] }> =>
+  apiClient
+    .get<{ data: StatementRun[] }>('/billing/statements/runs', {
+      params: status ? { status } : undefined,
+    })
+    .then((r) => r.data);
+
+export const getStatementRun = (id: number): Promise<StatementRun> =>
+  apiClient.get<StatementRun>(`/billing/statements/runs/${id}`).then((r) => r.data);
+
+export const generateStatementRun = (patientId: number): Promise<StatementRun> =>
+  apiClient
+    .post<StatementRun>('/billing/statements/runs/generate', { patientId })
+    .then((r) => r.data);
+
+export const markStatementSent = (id: number): Promise<StatementRun> =>
+  apiClient
+    .post<StatementRun>(`/billing/statements/runs/${id}/mark-sent`, {})
+    .then((r) => r.data);
+
+export const recordStatementPayment = (
+  id: number, amount: number,
+): Promise<StatementRun> =>
+  apiClient
+    .post<StatementRun>(`/billing/statements/runs/${id}/record-payment`, { amount })
+    .then((r) => r.data);
+
+export const writeOffStatement = (id: number): Promise<StatementRun> =>
+  apiClient
+    .post<StatementRun>(`/billing/statements/runs/${id}/write-off`, {})
+    .then((r) => r.data);
+
+export const escalateStatement = (id: number): Promise<StatementRun> =>
+  apiClient
+    .post<StatementRun>(`/billing/statements/runs/${id}/escalate`, {})
+    .then((r) => r.data);
+
+export const getStatementDunningQueue = (): Promise<DunningQueueResponse> =>
+  apiClient
+    .get<DunningQueueResponse>('/billing/statements/runs/dunning-queue')
+    .then((r) => r.data);
