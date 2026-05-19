@@ -1392,3 +1392,85 @@ export const getCahpsCompliance = (
   apiClient
     .get<CahpsComplianceSummary>(`/hospice/cahps/compliance/${year}/q/${quarter}`)
     .then((r) => r.data);
+
+// ─── Reg-9: 837I Hospice Claim Export + Submission Tracking ─────────────────
+
+export type Clearinghouse =
+  | 'availity'
+  | 'change-healthcare'
+  | 'waystar'
+  | 'ability-network'
+  | 'office-ally'
+  | 'mock';
+
+export type ClaimSubmissionStatus =
+  | 'pending'
+  | 'submitted'
+  | 'accepted'
+  | 'rejected'
+  | 'paid';
+
+export interface Hospice837IExportResult {
+  submissionId: number;
+  edi837: string;
+  controlNumber: string;
+  typeOfBill: string;
+  lineCount: number;
+  totalCharges: number;
+  warnings: string[];
+}
+
+export interface ClaimSubmissionSummary {
+  id: number;
+  claimId: number;
+  clearinghouse: Clearinghouse;
+  status: ClaimSubmissionStatus;
+  trackingId: string | null;
+  clearinghouseTrackingId: string | null;
+  ackStatus: string | null;
+  submittedAt: string | null;
+  lastStatusCheckedAt: string | null;
+  createdAt: string;
+}
+
+export interface ClaimSubmissionDetail extends ClaimSubmissionSummary {
+  ackMessage: string | null;
+  edi837: string | null;
+}
+
+export interface ExportHospice837IRequest {
+  clearinghouse: Clearinghouse;
+  priorAuthorizationNumber?: string | null;
+  claimNote?: string | null;
+}
+
+export const exportHospice837I = (
+  claimId: number,
+  req: ExportHospice837IRequest,
+): Promise<Hospice837IExportResult> =>
+  apiClient
+    .post<Hospice837IExportResult>(`/hospice/claims/${claimId}/export-837i`, req)
+    .then((r) => r.data);
+
+export const listClaimSubmissions = (
+  claimId: number,
+): Promise<{ data: ClaimSubmissionSummary[] }> =>
+  apiClient
+    .get<{ data: ClaimSubmissionSummary[] }>(`/hospice/claims/${claimId}/submissions`)
+    .then((r) => r.data);
+
+export const getClaimSubmission = (id: number): Promise<ClaimSubmissionDetail> =>
+  apiClient
+    .get<ClaimSubmissionDetail>(`/hospice/claim-submissions/${id}`)
+    .then((r) => r.data);
+
+export const markClaimSubmissionSubmitted = (
+  id: number,
+  clearinghouseTrackingId: string | null,
+): Promise<ClaimSubmissionSummary> =>
+  apiClient
+    .post<ClaimSubmissionSummary>(
+      `/hospice/claim-submissions/${id}/mark-submitted`,
+      { clearinghouseTrackingId },
+    )
+    .then((r) => r.data);

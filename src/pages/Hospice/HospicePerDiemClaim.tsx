@@ -169,7 +169,14 @@ export function HospicePerDiemClaim() {
             </tbody>
           </table>
 
-          <button onClick={() => navigate(`/claims/${draft.claimId}`)}>View Claim</button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={() => navigate(`/claims/${draft.claimId}`)}>View Claim</button>
+            <button
+              onClick={() => navigate(`/hospice/claims/${draft.claimId}/submissions`)}
+            >
+              Submit 837I →
+            </button>
+          </div>
         </section>
       )}
     </div>
