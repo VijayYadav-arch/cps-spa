@@ -23,6 +23,7 @@ import { HospiceFtfPage } from '@/pages/Hospice/HospiceFtfPage';
 import { HospiceHqrpDashboard } from '@/pages/Hospice/HospiceHqrpDashboard';
 import { HospiceMedicareCapDashboard } from '@/pages/Hospice/HospiceMedicareCapDashboard';
 import { HospiceVolunteersDashboard } from '@/pages/Hospice/HospiceVolunteersDashboard';
+import { HospiceCahpsDashboard } from '@/pages/Hospice/HospiceCahpsDashboard';
 import { PaidTimeDashboard } from '@/pages/Time/PaidTimeDashboard';
 import { MyTimeDashboard } from '@/pages/Time/MyTimeDashboard';
 
@@ -81,6 +82,7 @@ export default function App() {
               path="hospice/volunteers"
               element={<HospiceVolunteersDashboard />}
             />
+            <Route path="hospice/cahps" element={<HospiceCahpsDashboard />} />
             <Route path="time" element={<PaidTimeDashboard />} />
             <Route path="me/time" element={<MyTimeDashboard />} />
             <Route path="*" element={<Navigate to="/" replace />} />

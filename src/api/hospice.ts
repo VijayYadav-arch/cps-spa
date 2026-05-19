@@ -1270,3 +1270,125 @@ export const getVolunteerCompliance = (
     .get<VolunteerComplianceReport>('/hospice/volunteers/compliance', { params })
     .then((r) => r.data);
 };
+
+// ─── Reg-7: CAHPS Hospice Survey ───────────────────────────────────────────
+
+export type CahpsCaseStatus =
+  | 'Pending'
+  | 'Eligible'
+  | 'Ineligible'
+  | 'SubmittedToVendor'
+  | 'Excluded';
+
+export interface HospiceCahpsCase {
+  id: number;
+  patientId: number;
+  hospiceElectionId: number;
+  dateOfDeath: string;
+  admittedAt: string;
+  daysOnHospice: number;
+  ageAtDeath: number;
+  status: CahpsCaseStatus;
+  ineligibleReason: string | null;
+  exclusionReason: string | null;
+  caregiverName: string | null;
+  caregiverAddress: string | null;
+  caregiverPhone: string | null;
+  caregiverIsFamilial: boolean | null;
+  submittedToVendorAt: string | null;
+  vendorName: string | null;
+  vendorConfirmation: string | null;
+  notes: string | null;
+  createdAt: string;
+}
+
+export interface EnsureCahpsCaseRequest {
+  patientId: number;
+  hospiceElectionId: number;
+  dateOfDeath: string;
+  admittedAt: string;
+  ageAtDeath: number;
+}
+
+export interface UpdateCaregiverRequest {
+  caregiverName: string | null;
+  caregiverAddress: string | null;
+  caregiverPhone: string | null;
+  caregiverIsFamilial: boolean | null;
+  notes: string | null;
+}
+
+export interface SubmitToVendorRequest {
+  vendorName: string;
+  vendorConfirmation: string | null;
+  submittedAt: string | null;
+}
+
+export interface ExcludeCahpsCaseRequest {
+  reason: string;
+}
+
+export interface CahpsComplianceSummary {
+  calendarYear: number;
+  quarter: number;
+  quarterFrom: string;
+  quarterTo: string;
+  totalDecedents: number;
+  eligibleCount: number;
+  ineligibleCount: number;
+  excludedCount: number;
+  submittedCount: number;
+  pendingCount: number;
+  notYetSubmittedCount: number;
+  submissionRatePercentage: number;
+}
+
+export const listCahpsCases = (
+  from?: string,
+  to?: string,
+): Promise<{ data: HospiceCahpsCase[] }> =>
+  apiClient
+    .get<{ data: HospiceCahpsCase[] }>('/hospice/cahps', {
+      params: from && to ? { from, to } : undefined,
+    })
+    .then((r) => r.data);
+
+export const getCahpsCase = (id: number): Promise<HospiceCahpsCase> =>
+  apiClient.get<HospiceCahpsCase>(`/hospice/cahps/${id}`).then((r) => r.data);
+
+export const ensureCahpsCase = (
+  req: EnsureCahpsCaseRequest,
+): Promise<HospiceCahpsCase> =>
+  apiClient.post<HospiceCahpsCase>('/hospice/cahps', req).then((r) => r.data);
+
+export const updateCahpsCaregiver = (
+  id: number,
+  req: UpdateCaregiverRequest,
+): Promise<HospiceCahpsCase> =>
+  apiClient
+    .patch<HospiceCahpsCase>(`/hospice/cahps/${id}/caregiver`, req)
+    .then((r) => r.data);
+
+export const submitCahpsCase = (
+  id: number,
+  req: SubmitToVendorRequest,
+): Promise<HospiceCahpsCase> =>
+  apiClient
+    .post<HospiceCahpsCase>(`/hospice/cahps/${id}/submit`, req)
+    .then((r) => r.data);
+
+export const excludeCahpsCase = (
+  id: number,
+  req: ExcludeCahpsCaseRequest,
+): Promise<HospiceCahpsCase> =>
+  apiClient
+    .post<HospiceCahpsCase>(`/hospice/cahps/${id}/exclude`, req)
+    .then((r) => r.data);
+
+export const getCahpsCompliance = (
+  year: number,
+  quarter: number,
+): Promise<CahpsComplianceSummary> =>
+  apiClient
+    .get<CahpsComplianceSummary>(`/hospice/cahps/compliance/${year}/q/${quarter}`)
+    .then((r) => r.data);
