@@ -98,3 +98,26 @@ export const getMyPaidTimeSummary = (
   apiClient
     .get<PaidTimeSummary>('/time/me/summary', { params: { from, to } })
     .then((r) => r.data);
+
+// ─── CSV import ──────────────────────────────────────────────────────────
+
+export interface PaidTimeCsvRowError {
+  lineNumber: number;
+  rawLine: string;
+  error: string;
+}
+
+export interface PaidTimeCsvImportResult {
+  importedCount: number;
+  failedCount: number;
+  errors: PaidTimeCsvRowError[];
+}
+
+export const importPaidTimeCsv = (
+  csv: string,
+): Promise<PaidTimeCsvImportResult> =>
+  apiClient
+    .post<PaidTimeCsvImportResult>('/time/import', csv, {
+      headers: { 'Content-Type': 'text/csv' },
+    })
+    .then((r) => r.data);
