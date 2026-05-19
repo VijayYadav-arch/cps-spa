@@ -57,7 +57,8 @@ export interface WorkQueueItem {
     | 'HopeOverdue'
     | 'IdgOverdue'
     | 'CarePlanReviewDue'
-    | 'AddendumDue';
+    | 'AddendumDue'
+    | 'NotrOverdue';
   electionId: number;
   patientId: number;
   patientName: string;
@@ -103,6 +104,7 @@ export interface WorkQueueResponse {
   bereavementFollowUps: BereavementQueueItem[];
   bereavementOverdueContact: BereavementQueueItem[];
   addendumDue: WorkQueueItem[];
+  notrOverdue: WorkQueueItem[];
 }
 
 export const createElection = (req: CreateElectionRequest): Promise<HospiceElection> =>
@@ -944,4 +946,64 @@ export const reviseAddendum = (
 ): Promise<HospiceElectionAddendum> =>
   apiClient
     .post<HospiceElectionAddendum>(`/hospice/elections/${electionId}/addenda/revise`, req)
+    .then((r) => r.data);
+
+// ─── Regulatory: Notice of Termination/Revocation (NOTR) ────────────────────
+
+export type NotrTerminationReason = 'Revocation' | 'Transfer' | 'Discharge' | 'Death';
+export type NotrStatus = 'Pending' | 'Submitted' | 'ManualOverride' | 'Late';
+
+export interface NoticeOfTerminationOrRevocation {
+  id: number;
+  electionId: number;
+  reason: NotrTerminationReason;
+  eventDate: string;
+  deadlineDate: string;
+  daysUntilDeadline: number;
+  status: NotrStatus;
+  submittedAt: string | null;
+  clearinghouseConfirmation: string | null;
+  documentUrl: string | null;
+  payerCode: string;
+  notes: string | null;
+  createdAt: string;
+}
+
+export interface CreateNotrCommand {
+  reason: NotrTerminationReason;
+  eventDate: string;
+  payerCode: string;
+  notes: string | null;
+}
+
+export interface SubmitNotrCommand {
+  mode: NoeSubmissionMode;
+  manualDocumentUrl: string | null;
+}
+
+export const getNotrForElection = (
+  electionId: number,
+): Promise<NoticeOfTerminationOrRevocation | null> =>
+  apiClient
+    .get<NoticeOfTerminationOrRevocation>(`/hospice/elections/${electionId}/notr`)
+    .then((r) => r.data)
+    .catch((err) => {
+      if (err?.response?.status === 204) return null;
+      throw err;
+    });
+
+export const createNotr = (
+  electionId: number,
+  cmd: CreateNotrCommand,
+): Promise<NoticeOfTerminationOrRevocation> =>
+  apiClient
+    .post<NoticeOfTerminationOrRevocation>(`/hospice/elections/${electionId}/notr`, cmd)
+    .then((r) => r.data);
+
+export const submitNotr = (
+  notrId: number,
+  cmd: SubmitNotrCommand,
+): Promise<NoticeOfTerminationOrRevocation> =>
+  apiClient
+    .post<NoticeOfTerminationOrRevocation>(`/hospice/notr/${notrId}/submit`, cmd)
     .then((r) => r.data);
