@@ -33,7 +33,14 @@ const navItems: NavEntry[] = [
       { kind: 'leaf', to: '/hospice/medicare-cap', label: 'Medicare Cap' },
     ],
   },
-  { kind: 'leaf', to: '/time', label: 'Time' },
+  {
+    kind: 'group',
+    label: 'Time',
+    items: [
+      { kind: 'leaf', to: '/me/time', label: 'My Time' },
+      { kind: 'leaf', to: '/time', label: 'Team (admin)' },
+    ],
+  },
   { kind: 'leaf', to: '/documents', label: 'Documents' },
   { kind: 'leaf', to: '/platform', label: 'Platform' },
   { kind: 'leaf', to: '/admin', label: 'Admin' },
