@@ -48,3 +48,31 @@ export const getUsers = (params?: {
   apiClient
     .get<{ data: UserSummary[]; pagination: PaginationMeta }>('/admin/users', { params })
     .then((r) => r.data);
+
+// ─── Reg-11: Parent-org rollup ───────────────────────────────────────────
+
+export interface OrgRollupChild {
+  id: number;
+  name: string;
+  slug: string;
+  patientCount: number;
+  activeElectionCount: number;
+  openClaimCount: number;
+  openBreachCount: number;
+  claimAmountSubmitted: number;
+}
+
+export interface OrgRollupSummary {
+  parentOrganizationId: number;
+  parentName: string;
+  childOrgCount: number;
+  totalPatientCount: number;
+  totalActiveElectionCount: number;
+  totalOpenClaimCount: number;
+  totalOpenBreachCount: number;
+  totalClaimAmountSubmitted: number;
+  children: OrgRollupChild[];
+}
+
+export const getOrgRollup = (): Promise<OrgRollupSummary> =>
+  apiClient.get<OrgRollupSummary>('/org/rollup').then((r) => r.data);
