@@ -1248,13 +1248,25 @@ export const listVolunteerHours = (
     })
     .then((r) => r.data);
 
+/**
+ * Get the volunteer compliance report. When `paidPatientCareHoursOverride` is
+ * undefined or 0, the backend auto-computes the denominator from paid-time logs
+ * (PatientCare activity in the window). Pass a positive value to override with
+ * a payroll-derived total.
+ */
 export const getVolunteerCompliance = (
   from: string,
   to: string,
-  paidPatientCareHours: number,
-): Promise<VolunteerComplianceReport> =>
-  apiClient
-    .get<VolunteerComplianceReport>('/hospice/volunteers/compliance', {
-      params: { from, to, paidPatientCareHours },
-    })
+  paidPatientCareHoursOverride?: number,
+): Promise<VolunteerComplianceReport> => {
+  const params: Record<string, string | number> = { from, to };
+  if (
+    paidPatientCareHoursOverride !== undefined
+    && paidPatientCareHoursOverride > 0
+  ) {
+    params.paidPatientCareHours = paidPatientCareHoursOverride;
+  }
+  return apiClient
+    .get<VolunteerComplianceReport>('/hospice/volunteers/compliance', { params })
     .then((r) => r.data);
+};
