@@ -58,7 +58,8 @@ export interface WorkQueueItem {
     | 'IdgOverdue'
     | 'CarePlanReviewDue'
     | 'AddendumDue'
-    | 'NotrOverdue';
+    | 'NotrOverdue'
+    | 'FtfDue';
   electionId: number;
   patientId: number;
   patientName: string;
@@ -105,6 +106,7 @@ export interface WorkQueueResponse {
   bereavementOverdueContact: BereavementQueueItem[];
   addendumDue: WorkQueueItem[];
   notrOverdue: WorkQueueItem[];
+  ftfDue: WorkQueueItem[];
 }
 
 export const createElection = (req: CreateElectionRequest): Promise<HospiceElection> =>
@@ -1006,4 +1008,54 @@ export const submitNotr = (
 ): Promise<NoticeOfTerminationOrRevocation> =>
   apiClient
     .post<NoticeOfTerminationOrRevocation>(`/hospice/notr/${notrId}/submit`, cmd)
+    .then((r) => r.data);
+
+// ─── Regulatory: Face-to-Face recert encounter (42 CFR 418.22(a)(4)) ────────
+
+export type FtfClinicianType = 'Physician' | 'NursePractitioner';
+
+export interface HospiceFaceToFaceEncounter {
+  id: number;
+  electionId: number;
+  periodId: number;
+  periodNumber: number;
+  encounterDate: string;
+  clinicianUserId: number;
+  clinicianType: FtfClinicianType;
+  attestationText: string;
+  createdAt: string;
+}
+
+export interface RecordFtfRequest {
+  periodId: number;
+  encounterDate: string;
+  clinicianUserId: number;
+  clinicianType: FtfClinicianType;
+  attestationText: string;
+}
+
+export const recordFtf = (
+  electionId: number,
+  req: RecordFtfRequest,
+): Promise<HospiceFaceToFaceEncounter> =>
+  apiClient
+    .post<HospiceFaceToFaceEncounter>(`/hospice/elections/${electionId}/ftf`, req)
+    .then((r) => r.data);
+
+export const getFtfForPeriod = (
+  periodId: number,
+): Promise<HospiceFaceToFaceEncounter | null> =>
+  apiClient
+    .get<HospiceFaceToFaceEncounter>(`/hospice/periods/${periodId}/ftf`)
+    .then((r) => r.data)
+    .catch((err) => {
+      if (err?.response?.status === 204) return null;
+      throw err;
+    });
+
+export const listFtfForElection = (
+  electionId: number,
+): Promise<{ data: HospiceFaceToFaceEncounter[] }> =>
+  apiClient
+    .get<{ data: HospiceFaceToFaceEncounter[] }>(`/hospice/elections/${electionId}/ftf`)
     .then((r) => r.data);

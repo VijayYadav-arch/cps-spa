@@ -19,6 +19,7 @@ import { HospiceBereavementList } from '@/pages/Hospice/HospiceBereavementList';
 import { HospiceBereavementProgramDetail } from '@/pages/Hospice/HospiceBereavementProgramDetail';
 import { HospiceBereavementEligible } from '@/pages/Hospice/HospiceBereavementEligible';
 import { HospiceAddendumPage } from '@/pages/Hospice/HospiceAddendumPage';
+import { HospiceFtfPage } from '@/pages/Hospice/HospiceFtfPage';
 
 export default function App() {
   return (
@@ -61,6 +62,10 @@ export default function App() {
             <Route
               path="hospice/elections/:electionId/addendum"
               element={<HospiceAddendumPage />}
+            />
+            <Route
+              path="hospice/elections/:electionId/periods/:periodId/ftf"
+              element={<HospiceFtfPage />}
             />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
