@@ -183,3 +183,38 @@ export const logArCall = (
   apiClient
     .post<{ data: unknown }>(`/billing/ar-followup/claims/${claimId}/notes`, req)
     .then((r) => r.data);
+
+// ─── Secondary payer COB submission ──────────────────────────────────────
+
+export interface SecondaryEligibleClaim {
+  claimId: number;
+  claimNumber: string;
+  patientName: string;
+  primaryPayer: string;
+  secondaryPayer: string;
+  chargeAmount: number;
+  primaryPaidAmount: number;
+  balanceForSecondary: number;
+  serviceDate: string;
+}
+
+export interface Secondary837Result {
+  submissionId: number;
+  edi837: string;
+  controlNumber: string;
+  primaryPaidAmount: number;
+  secondaryClaimAmount: number;
+  warnings: string[];
+}
+
+export const listEligibleSecondary = (): Promise<{ data: SecondaryEligibleClaim[] }> =>
+  apiClient
+    .get<{ data: SecondaryEligibleClaim[] }>('/billing/secondary-claims/eligible')
+    .then((r) => r.data);
+
+export const buildSecondary837 = (
+  claimId: number, clearinghouse: string,
+): Promise<Secondary837Result> =>
+  apiClient
+    .post<Secondary837Result>(`/billing/secondary-claims/${claimId}/build`, { clearinghouse })
+    .then((r) => r.data);
