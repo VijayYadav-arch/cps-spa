@@ -1,17 +1,53 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/auth/useAuth';
 
-const navItems = [
-  { to: '/', label: 'Dashboard', exact: true },
-  { to: '/claims', label: 'Claims' },
-  { to: '/patients', label: 'Patients' },
-  { to: '/billing', label: 'Billing' },
-  { to: '/clinical', label: 'Clinical' },
-  { to: '/hospice/work-queue', label: 'Hospice' },
-  { to: '/documents', label: 'Documents' },
-  { to: '/platform', label: 'Platform' },
-  { to: '/admin', label: 'Admin' },
+interface NavLeaf {
+  kind: 'leaf';
+  to: string;
+  label: string;
+  exact?: boolean;
+}
+
+interface NavGroup {
+  kind: 'group';
+  label: string;
+  items: NavLeaf[];
+}
+
+type NavEntry = NavLeaf | NavGroup;
+
+const navItems: NavEntry[] = [
+  { kind: 'leaf', to: '/', label: 'Dashboard', exact: true },
+  { kind: 'leaf', to: '/claims', label: 'Claims' },
+  { kind: 'leaf', to: '/patients', label: 'Patients' },
+  { kind: 'leaf', to: '/billing', label: 'Billing' },
+  { kind: 'leaf', to: '/clinical', label: 'Clinical' },
+  {
+    kind: 'group',
+    label: 'Hospice',
+    items: [
+      { kind: 'leaf', to: '/hospice/work-queue', label: 'Work Queue' },
+      { kind: 'leaf', to: '/hospice/bereavement', label: 'Bereavement' },
+      { kind: 'leaf', to: '/hospice/hqrp', label: 'HQRP Timeliness' },
+      { kind: 'leaf', to: '/hospice/medicare-cap', label: 'Medicare Cap' },
+    ],
+  },
+  { kind: 'leaf', to: '/documents', label: 'Documents' },
+  { kind: 'leaf', to: '/platform', label: 'Platform' },
+  { kind: 'leaf', to: '/admin', label: 'Admin' },
 ];
+
+function leafStyle({ isActive }: { isActive: boolean }, indented = false): React.CSSProperties {
+  return {
+    display: 'block',
+    padding: indented ? '8px 20px 8px 36px' : '10px 20px',
+    color: isActive ? '#f8fafc' : '#94a3b8',
+    background: isActive ? '#2563eb' : 'transparent',
+    textDecoration: 'none',
+    fontSize: indented ? 13 : 14,
+    fontWeight: isActive ? 600 : 400,
+  };
+}
 
 export function Layout() {
   const { auth, logout } = useAuth();
@@ -42,25 +78,46 @@ export function Layout() {
         </div>
 
         <ul style={{ listStyle: 'none', padding: '16px 0', margin: 0, flex: 1 }}>
-          {navItems.map(({ to, label, exact }) => (
-            <li key={to}>
-              <NavLink
-                to={to}
-                end={exact}
-                style={({ isActive }) => ({
-                  display: 'block',
-                  padding: '10px 20px',
-                  color: isActive ? '#f8fafc' : '#94a3b8',
-                  background: isActive ? '#2563eb' : 'transparent',
-                  textDecoration: 'none',
-                  fontSize: 14,
-                  fontWeight: isActive ? 600 : 400,
-                })}
-              >
-                {label}
-              </NavLink>
-            </li>
-          ))}
+          {navItems.map((entry) =>
+            entry.kind === 'leaf' ? (
+              <li key={entry.to}>
+                <NavLink
+                  to={entry.to}
+                  end={entry.exact}
+                  style={(s) => leafStyle(s)}
+                >
+                  {entry.label}
+                </NavLink>
+              </li>
+            ) : (
+              <li key={entry.label}>
+                <div
+                  style={{
+                    padding: '10px 20px 4px',
+                    color: '#cbd5e1',
+                    fontSize: 11,
+                    fontWeight: 700,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  {entry.label}
+                </div>
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                  {entry.items.map((sub) => (
+                    <li key={sub.to}>
+                      <NavLink
+                        to={sub.to}
+                        style={(s) => leafStyle(s, true)}
+                      >
+                        {sub.label}
+                      </NavLink>
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            ),
+          )}
         </ul>
 
         <div style={{ padding: '16px 20px', borderTop: '1px solid #334155' }}>
