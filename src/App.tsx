@@ -31,6 +31,7 @@ import { PhiAccessReviewDashboard } from '@/pages/Compliance/PhiAccessReviewDash
 import { SurveyorBundlePage } from '@/pages/Compliance/SurveyorBundlePage';
 import { BreachWorkflowPage } from '@/pages/Compliance/BreachWorkflowPage';
 import { OrgRollupPage } from '@/pages/Admin/OrgRollupPage';
+import { BranchesPage } from '@/pages/Admin/BranchesPage';
 
 export default function App() {
   return (
@@ -107,6 +108,7 @@ export default function App() {
               element={<BreachWorkflowPage />}
             />
             <Route path="org/rollup" element={<OrgRollupPage />} />
+            <Route path="admin/branches" element={<BranchesPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
