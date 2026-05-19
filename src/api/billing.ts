@@ -130,3 +130,56 @@ export const assignDenial = (
   denialId: number, userId: number,
 ): Promise<{ data: unknown }> =>
   apiClient.put<{ data: unknown }>(`/billing/denials/${denialId}/assign`, { userId }).then((r) => r.data);
+
+// ─── AR Dashboard ────────────────────────────────────────────────────────
+
+export interface ArActionQueueItem {
+  claimId: number;
+  claimNumber: string;
+  patientName: string;
+  payer: string;
+  amount: number;
+  daysAged: number;
+  nextFollowUpDate: string;
+  daysUntilFollowUp: number;
+  lastContactedAt: string | null;
+}
+
+export interface ArByPayerBucket {
+  payer: string;
+  claimCount: number;
+  totalAmount: number;
+  bucket0To30Count: number;
+  bucket31To60Count: number;
+  bucket61To90Count: number;
+  over90Count: number;
+  over90Amount: number;
+}
+
+export interface ArDashboardSummary {
+  asOfUtc: string;
+  totalFollowUpClaims: number;
+  totalAmount: number;
+  amountOver90Days: number;
+  actionsDueToday: number;
+  actionsOverdue: number;
+  actionQueue: ArActionQueueItem[];
+  byPayer: ArByPayerBucket[];
+}
+
+export const getArDashboard = (): Promise<ArDashboardSummary> =>
+  apiClient.get<ArDashboardSummary>('/billing/ar-followup/dashboard').then((r) => r.data);
+
+export interface LogArCallRequest {
+  contactName: string;
+  outcome: string;
+  note: string;
+  nextFollowUpDate?: string | null;
+}
+
+export const logArCall = (
+  claimId: number, req: LogArCallRequest,
+): Promise<{ data: unknown }> =>
+  apiClient
+    .post<{ data: unknown }>(`/billing/ar-followup/claims/${claimId}/notes`, req)
+    .then((r) => r.data);
