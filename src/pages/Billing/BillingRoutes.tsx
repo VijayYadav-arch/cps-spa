@@ -4,6 +4,7 @@ import { DenialQueuePage } from './DenialQueuePage';
 import { ArDashboardPage } from './ArDashboardPage';
 import { SecondaryClaimsPage } from './SecondaryClaimsPage';
 import { StatementsPage } from './StatementsPage';
+import { EligibilityPage } from './EligibilityPage';
 
 export function BillingRoutes() {
   return (
@@ -13,6 +14,7 @@ export function BillingRoutes() {
       <Route path="ar" element={<ArDashboardPage />} />
       <Route path="secondary" element={<SecondaryClaimsPage />} />
       <Route path="statements" element={<StatementsPage />} />
+      <Route path="eligibility" element={<EligibilityPage />} />
       <Route path="*" element={<Navigate to="/billing" replace />} />
     </Routes>
   );

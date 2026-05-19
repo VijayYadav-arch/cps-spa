@@ -170,4 +170,45 @@ describe('billing API', () => {
     await getStatementDunningQueue();
     expect(apiClient.get).toHaveBeenCalledWith('/billing/statements/runs/dunning-queue');
   });
+
+  // ─── Eligibility ────────────────────────────────────────────────────
+
+  it('verifyEligibility() POSTs to /billing/eligibility/verify', async () => {
+    const { apiClient } = await import('@/api/client');
+    const { verifyEligibility } = await import('@/api/billing');
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { id: 1 } });
+    await verifyEligibility({
+      patientId: 100,
+      payerId: '00100',
+      memberId: 'M-1',
+      memberFirstName: 'A',
+      memberLastName: 'B',
+      memberDob: '1940-03-14',
+      providerNpi: null,
+      serviceTypeCode: '30',
+      clearinghouse: 'mock',
+    });
+    expect(apiClient.post).toHaveBeenCalledWith(
+      '/billing/eligibility/verify',
+      expect.objectContaining({ payerId: '00100', memberId: 'M-1' }),
+    );
+  });
+
+  it('listRecentEligibility() GETs /billing/eligibility/recent', async () => {
+    const { apiClient } = await import('@/api/client');
+    const { listRecentEligibility } = await import('@/api/billing');
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ data: { data: [] } });
+    await listRecentEligibility(25);
+    expect(apiClient.get).toHaveBeenCalledWith('/billing/eligibility/recent', {
+      params: { limit: 25 },
+    });
+  });
+
+  it('listEligibilityForPatient() GETs by-patient', async () => {
+    const { apiClient } = await import('@/api/client');
+    const { listEligibilityForPatient } = await import('@/api/billing');
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ data: { data: [] } });
+    await listEligibilityForPatient(100);
+    expect(apiClient.get).toHaveBeenCalledWith('/billing/eligibility/by-patient/100');
+  });
 });

@@ -319,3 +319,58 @@ export const getStatementDunningQueue = (): Promise<DunningQueueResponse> =>
   apiClient
     .get<DunningQueueResponse>('/billing/statements/runs/dunning-queue')
     .then((r) => r.data);
+
+// ─── Eligibility (270/271) verification ──────────────────────────────────
+
+export interface VerifyEligibilityRequest {
+  patientId: number | null;
+  payerId: string;
+  memberId: string;
+  memberFirstName: string;
+  memberLastName: string;
+  memberDob: string;
+  providerNpi: string | null;
+  serviceTypeCode: string | null;
+  clearinghouse: string | null;
+}
+
+export interface EligibilityCheck {
+  id: number;
+  patientId: number | null;
+  payerId: string;
+  payerName: string;
+  memberId: string;
+  memberFirstName: string;
+  memberLastName: string;
+  memberDob: string;
+  clearinghouse: string;
+  eligible: boolean | null;
+  planName: string | null;
+  coverageStart: string | null;
+  coverageEnd: string | null;
+  errorMessage: string | null;
+  checkedAtUtc: string;
+  checkedByEmail: string;
+}
+
+export const verifyEligibility = (
+  req: VerifyEligibilityRequest,
+): Promise<EligibilityCheck> =>
+  apiClient.post<EligibilityCheck>('/billing/eligibility/verify', req).then((r) => r.data);
+
+export const getEligibilityCheck = (id: number): Promise<EligibilityCheck> =>
+  apiClient.get<EligibilityCheck>(`/billing/eligibility/${id}`).then((r) => r.data);
+
+export const listEligibilityForPatient = (
+  patientId: number,
+): Promise<{ data: EligibilityCheck[] }> =>
+  apiClient
+    .get<{ data: EligibilityCheck[] }>(`/billing/eligibility/by-patient/${patientId}`)
+    .then((r) => r.data);
+
+export const listRecentEligibility = (
+  limit = 50,
+): Promise<{ data: EligibilityCheck[] }> =>
+  apiClient
+    .get<{ data: EligibilityCheck[] }>('/billing/eligibility/recent', { params: { limit } })
+    .then((r) => r.data);
