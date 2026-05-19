@@ -24,6 +24,7 @@ import { HospiceHqrpDashboard } from '@/pages/Hospice/HospiceHqrpDashboard';
 import { HospiceMedicareCapDashboard } from '@/pages/Hospice/HospiceMedicareCapDashboard';
 import { HospiceVolunteersDashboard } from '@/pages/Hospice/HospiceVolunteersDashboard';
 import { PaidTimeDashboard } from '@/pages/Time/PaidTimeDashboard';
+import { MyTimeDashboard } from '@/pages/Time/MyTimeDashboard';
 
 export default function App() {
   return (
@@ -81,6 +82,7 @@ export default function App() {
               element={<HospiceVolunteersDashboard />}
             />
             <Route path="time" element={<PaidTimeDashboard />} />
+            <Route path="me/time" element={<MyTimeDashboard />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>

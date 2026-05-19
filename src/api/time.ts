@@ -67,3 +67,34 @@ export const getPaidTimeSummary = (
   apiClient
     .get<PaidTimeSummary>('/time/summary', { params: { from, to } })
     .then((r) => r.data);
+
+// ─── Personal endpoints (current authenticated user) ───────────────────────
+
+export interface LogMyPaidTimeRequest {
+  serviceDate: string;
+  hours: number;
+  activityType: EmployeeTimeActivityType;
+  description: string | null;
+  patientId: number | null;
+}
+
+export const logMyPaidTime = (
+  req: LogMyPaidTimeRequest,
+): Promise<EmployeePaidTimeLog> =>
+  apiClient.post<EmployeePaidTimeLog>('/time/me/logs', req).then((r) => r.data);
+
+export const listMyPaidTime = (
+  from: string,
+  to: string,
+): Promise<{ data: EmployeePaidTimeLog[] }> =>
+  apiClient
+    .get<{ data: EmployeePaidTimeLog[] }>('/time/me/logs', { params: { from, to } })
+    .then((r) => r.data);
+
+export const getMyPaidTimeSummary = (
+  from: string,
+  to: string,
+): Promise<PaidTimeSummary> =>
+  apiClient
+    .get<PaidTimeSummary>('/time/me/summary', { params: { from, to } })
+    .then((r) => r.data);
