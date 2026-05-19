@@ -173,6 +173,103 @@ export const getSurveyorBundleManifest = (
     })
     .then((r) => r.data);
 
+// ─── Reg-12: HIPAA Breach Notification Workflow ──────────────────────────
+
+export type BreachStatus =
+  | 'draft'
+  | 'confirmed'
+  | 'assessed'
+  | 'notifying'
+  | 'hhs_notified'
+  | 'closed'
+  | 'overdue';
+
+export type BreachRiskLevel = 'Low' | 'Moderate' | 'High';
+
+export interface BreachWorkflowSummary {
+  id: number;
+  status: BreachStatus;
+  discoveredAt: string;
+  confirmedAt: string | null;
+  riskAssessmentAt: string | null;
+  riskLevel: BreachRiskLevel | null;
+  patientNotificationsSentAt: string | null;
+  mediaNoticeSentAt: string | null;
+  mediaNoticeRequired: boolean;
+  hhsNotifiedAt: string | null;
+  closedAt: string | null;
+  affectedPatientCount: number | null;
+  description: string | null;
+  daysUntilDeadline: number | null;
+  isOverdue: boolean;
+}
+
+export interface BreachActivity {
+  id: number;
+  occurredAtUtc: string;
+  eventType: string;
+  actorUserId: number;
+  actorEmail: string;
+  notes: string | null;
+}
+
+export interface AssessRiskRequest {
+  riskLevel: BreachRiskLevel;
+  notes: string | null;
+  affectedPatientCount: number | null;
+  mediaNoticeRequired: boolean;
+}
+
+const BREACH_BASE = '/compliance/breaches/workflow';
+
+export const listBreachesWorkflow = (): Promise<{ data: BreachWorkflowSummary[] }> =>
+  apiClient.get<{ data: BreachWorkflowSummary[] }>(BREACH_BASE).then((r) => r.data);
+
+export const getBreachWorkflow = (id: number): Promise<BreachWorkflowSummary> =>
+  apiClient.get<BreachWorkflowSummary>(`${BREACH_BASE}/${id}`).then((r) => r.data);
+
+export const getBreachActivity = (
+  id: number,
+): Promise<{ data: BreachActivity[] }> =>
+  apiClient
+    .get<{ data: BreachActivity[] }>(`${BREACH_BASE}/${id}/activity`)
+    .then((r) => r.data);
+
+export const assessBreachRisk = (
+  id: number, req: AssessRiskRequest,
+): Promise<BreachWorkflowSummary> =>
+  apiClient
+    .post<BreachWorkflowSummary>(`${BREACH_BASE}/${id}/assess-risk`, req)
+    .then((r) => r.data);
+
+export const sendBreachPatientNotifications = (
+  id: number, notes: string | null,
+): Promise<BreachWorkflowSummary> =>
+  apiClient
+    .post<BreachWorkflowSummary>(`${BREACH_BASE}/${id}/send-patient-notifications`, { notes })
+    .then((r) => r.data);
+
+export const sendBreachMediaNotice = (
+  id: number, notes: string | null,
+): Promise<BreachWorkflowSummary> =>
+  apiClient
+    .post<BreachWorkflowSummary>(`${BREACH_BASE}/${id}/send-media-notice`, { notes })
+    .then((r) => r.data);
+
+export const sendBreachHhsNotification = (
+  id: number, notes: string | null,
+): Promise<BreachWorkflowSummary> =>
+  apiClient
+    .post<BreachWorkflowSummary>(`${BREACH_BASE}/${id}/send-hhs-notification`, { notes })
+    .then((r) => r.data);
+
+export const closeBreach = (
+  id: number, notes: string | null,
+): Promise<BreachWorkflowSummary> =>
+  apiClient
+    .post<BreachWorkflowSummary>(`${BREACH_BASE}/${id}/close`, { notes })
+    .then((r) => r.data);
+
 /**
  * Triggers a browser download of the ZIP bundle. Returns the suggested file
  * name so the caller can show a confirmation.

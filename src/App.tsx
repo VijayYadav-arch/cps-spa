@@ -29,6 +29,7 @@ import { PaidTimeDashboard } from '@/pages/Time/PaidTimeDashboard';
 import { MyTimeDashboard } from '@/pages/Time/MyTimeDashboard';
 import { PhiAccessReviewDashboard } from '@/pages/Compliance/PhiAccessReviewDashboard';
 import { SurveyorBundlePage } from '@/pages/Compliance/SurveyorBundlePage';
+import { BreachWorkflowPage } from '@/pages/Compliance/BreachWorkflowPage';
 
 export default function App() {
   return (
@@ -99,6 +100,10 @@ export default function App() {
             <Route
               path="compliance/surveyor-bundle"
               element={<SurveyorBundlePage />}
+            />
+            <Route
+              path="compliance/breaches"
+              element={<BreachWorkflowPage />}
             />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>

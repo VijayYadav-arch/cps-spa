@@ -113,6 +113,58 @@ describe('compliance API', () => {
     );
   });
 
+  // ─── Breach workflow ─────────────────────────────────────────────────
+
+  it('listBreachesWorkflow() GETs /compliance/breaches/workflow', async () => {
+    const { apiClient } = await import('@/api/client');
+    const { listBreachesWorkflow } = await import('@/api/compliance');
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ data: { data: [] } });
+    await listBreachesWorkflow();
+    expect(apiClient.get).toHaveBeenCalledWith('/compliance/breaches/workflow');
+  });
+
+  it('assessBreachRisk() POSTs to /assess-risk', async () => {
+    const { apiClient } = await import('@/api/client');
+    const { assessBreachRisk } = await import('@/api/compliance');
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { id: 1 } });
+    await assessBreachRisk(1, {
+      riskLevel: 'Moderate',
+      notes: 'Limited exposure',
+      affectedPatientCount: 100,
+      mediaNoticeRequired: false,
+    });
+    expect(apiClient.post).toHaveBeenCalledWith(
+      '/compliance/breaches/workflow/1/assess-risk',
+      {
+        riskLevel: 'Moderate',
+        notes: 'Limited exposure',
+        affectedPatientCount: 100,
+        mediaNoticeRequired: false,
+      },
+    );
+  });
+
+  it('closeBreach() POSTs to /close', async () => {
+    const { apiClient } = await import('@/api/client');
+    const { closeBreach } = await import('@/api/compliance');
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { id: 1 } });
+    await closeBreach(1, 'all done');
+    expect(apiClient.post).toHaveBeenCalledWith(
+      '/compliance/breaches/workflow/1/close',
+      { notes: 'all done' },
+    );
+  });
+
+  it('getBreachActivity() GETs /activity', async () => {
+    const { apiClient } = await import('@/api/client');
+    const { getBreachActivity } = await import('@/api/compliance');
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ data: { data: [] } });
+    await getBreachActivity(1);
+    expect(apiClient.get).toHaveBeenCalledWith(
+      '/compliance/breaches/workflow/1/activity',
+    );
+  });
+
   it('downloadSurveyorBundle() requests the ZIP as a blob', async () => {
     const { apiClient } = await import('@/api/client');
     const { downloadSurveyorBundle } = await import('@/api/compliance');
