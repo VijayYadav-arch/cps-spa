@@ -5,6 +5,7 @@ vi.mock('@/api/client', () => ({
     get: vi.fn(),
     post: vi.fn(),
     put: vi.fn(),
+    patch: vi.fn(),
     delete: vi.fn(),
   },
 }));
@@ -332,5 +333,105 @@ describe('hospice API', () => {
     vi.mocked(apiClient.get).mockRejectedValueOnce({ response: { status: 204 } });
     const result = await previewSia(7);
     expect(result).toBeNull();
+  });
+
+  // ─── CAHPS Hospice Survey ────────────────────────────────────────────────
+
+  it('listCahpsCases() GETs /hospice/cahps with optional date range', async () => {
+    const { apiClient } = await import('@/api/client');
+    const { listCahpsCases } = await import('@/api/hospice');
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ data: { data: [] } });
+    await listCahpsCases('2026-04-01', '2026-06-30');
+    expect(apiClient.get).toHaveBeenCalledWith('/hospice/cahps', {
+      params: { from: '2026-04-01', to: '2026-06-30' },
+    });
+  });
+
+  it('listCahpsCases() omits params when no range given', async () => {
+    const { apiClient } = await import('@/api/client');
+    const { listCahpsCases } = await import('@/api/hospice');
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ data: { data: [] } });
+    await listCahpsCases();
+    expect(apiClient.get).toHaveBeenCalledWith('/hospice/cahps', {
+      params: undefined,
+    });
+  });
+
+  it('ensureCahpsCase() POSTs to /hospice/cahps', async () => {
+    const { apiClient } = await import('@/api/client');
+    const { ensureCahpsCase } = await import('@/api/hospice');
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { id: 1 } });
+    await ensureCahpsCase({
+      patientId: 1,
+      hospiceElectionId: 5,
+      dateOfDeath: '2026-04-20',
+      admittedAt: '2026-03-01',
+      ageAtDeath: 75,
+    });
+    expect(apiClient.post).toHaveBeenCalledWith('/hospice/cahps', {
+      patientId: 1,
+      hospiceElectionId: 5,
+      dateOfDeath: '2026-04-20',
+      admittedAt: '2026-03-01',
+      ageAtDeath: 75,
+    });
+  });
+
+  it('updateCahpsCaregiver() PATCHes /hospice/cahps/{id}/caregiver', async () => {
+    const { apiClient } = await import('@/api/client');
+    const { updateCahpsCaregiver } = await import('@/api/hospice');
+    vi.mocked(apiClient.patch).mockResolvedValueOnce({ data: { id: 7 } });
+    await updateCahpsCaregiver(7, {
+      caregiverName: 'Jane Doe',
+      caregiverAddress: null,
+      caregiverPhone: null,
+      caregiverIsFamilial: true,
+      notes: null,
+    });
+    expect(apiClient.patch).toHaveBeenCalledWith('/hospice/cahps/7/caregiver', {
+      caregiverName: 'Jane Doe',
+      caregiverAddress: null,
+      caregiverPhone: null,
+      caregiverIsFamilial: true,
+      notes: null,
+    });
+  });
+
+  it('submitCahpsCase() POSTs to /hospice/cahps/{id}/submit', async () => {
+    const { apiClient } = await import('@/api/client');
+    const { submitCahpsCase } = await import('@/api/hospice');
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { id: 7 } });
+    await submitCahpsCase(7, {
+      vendorName: 'V',
+      vendorConfirmation: 'C1',
+      submittedAt: null,
+    });
+    expect(apiClient.post).toHaveBeenCalledWith('/hospice/cahps/7/submit', {
+      vendorName: 'V',
+      vendorConfirmation: 'C1',
+      submittedAt: null,
+    });
+  });
+
+  it('excludeCahpsCase() POSTs to /hospice/cahps/{id}/exclude', async () => {
+    const { apiClient } = await import('@/api/client');
+    const { excludeCahpsCase } = await import('@/api/hospice');
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { id: 7 } });
+    await excludeCahpsCase(7, { reason: 'declined' });
+    expect(apiClient.post).toHaveBeenCalledWith('/hospice/cahps/7/exclude', {
+      reason: 'declined',
+    });
+  });
+
+  it('getCahpsCompliance() GETs /hospice/cahps/compliance/{year}/q/{quarter}', async () => {
+    const { apiClient } = await import('@/api/client');
+    const { getCahpsCompliance } = await import('@/api/hospice');
+    vi.mocked(apiClient.get).mockResolvedValueOnce({
+      data: { calendarYear: 2026, quarter: 2 },
+    });
+    await getCahpsCompliance(2026, 2);
+    expect(apiClient.get).toHaveBeenCalledWith(
+      '/hospice/cahps/compliance/2026/q/2',
+    );
   });
 });

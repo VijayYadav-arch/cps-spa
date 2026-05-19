@@ -31,6 +31,7 @@ const navItems: NavEntry[] = [
       { kind: 'leaf', to: '/hospice/volunteers', label: 'Volunteers' },
       { kind: 'leaf', to: '/hospice/hqrp', label: 'HQRP Timeliness' },
       { kind: 'leaf', to: '/hospice/medicare-cap', label: 'Medicare Cap' },
+      { kind: 'leaf', to: '/hospice/cahps', label: 'CAHPS Survey' },
     ],
   },
   {
