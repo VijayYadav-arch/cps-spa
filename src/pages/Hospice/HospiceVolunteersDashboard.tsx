@@ -50,7 +50,8 @@ export function HospiceVolunteersDashboard() {
   const [hoursLogs, setHoursLogs] = useState<HospiceVolunteerHoursLog[]>([]);
   const [compliance, setCompliance] = useState<VolunteerComplianceReport | null>(null);
   const [range, setRange] = useState(defaultRange);
-  const [paidHours, setPaidHours] = useState<string>('1000');
+  // Empty string = auto-compute from paid-time logs; a positive number overrides.
+  const [paidHours, setPaidHours] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -76,7 +77,11 @@ export function HospiceVolunteersDashboard() {
       const [vols, hours, comp] = await Promise.all([
         listVolunteers(false),
         listVolunteerHours(range.from, range.to),
-        getVolunteerCompliance(range.from, range.to, Number(paidHours) || 0),
+        getVolunteerCompliance(
+          range.from,
+          range.to,
+          paidHours.trim() === '' ? undefined : Number(paidHours),
+        ),
       ]);
       setVolunteers(vols.data);
       setHoursLogs(hours.data);
@@ -191,11 +196,14 @@ export function HospiceVolunteersDashboard() {
           />
         </label>
         <label style={{ display: 'grid', gap: 4 }}>
-          <span>Paid patient-care hours (from payroll)</span>
+          <span>
+            Paid patient-care hours (leave blank to auto-compute from time logs)
+          </span>
           <input
             type="number"
             value={paidHours}
             onChange={(e) => setPaidHours(e.target.value)}
+            placeholder="auto-compute"
             min={0}
             step="0.25"
           />
