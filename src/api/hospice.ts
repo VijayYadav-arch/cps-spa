@@ -1100,3 +1100,37 @@ export const getHqrpTimeliness = (
   apiClient
     .get<HqrpTimelinessReport>(`/hospice/hqrp/timeliness`, { params: { from, to } })
     .then((r) => r.data);
+
+// ─── Regulatory: Medicare hospice cap reconciliation (42 CFR 418.309) ───────
+
+export interface MedicareCapBeneficiary {
+  patientId: number;
+  patientName: string;
+  electionDaysInCapYear: number;
+  paidInCapYear: number;
+  capAllowance: number;
+  excessLiability: number;
+}
+
+export interface MedicareCapReconciliation {
+  capYear: number;
+  capYearFrom: string;
+  capYearTo: string;
+  capAmountPerBeneficiary: number;
+  methodology: string;
+  beneficiaryCount: number;
+  totalPaidInCapYear: number;
+  totalCapAllowance: number;
+  totalExcessLiability: number;
+  beneficiaries: MedicareCapBeneficiary[];
+  caveats: string[];
+}
+
+export const getMedicareCapReconciliation = (
+  capYear: number,
+): Promise<MedicareCapReconciliation> =>
+  apiClient
+    .get<MedicareCapReconciliation>(
+      `/hospice/medicare-cap/reconciliation/${capYear}`,
+    )
+    .then((r) => r.data);

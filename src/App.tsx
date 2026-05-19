@@ -21,6 +21,7 @@ import { HospiceBereavementEligible } from '@/pages/Hospice/HospiceBereavementEl
 import { HospiceAddendumPage } from '@/pages/Hospice/HospiceAddendumPage';
 import { HospiceFtfPage } from '@/pages/Hospice/HospiceFtfPage';
 import { HospiceHqrpDashboard } from '@/pages/Hospice/HospiceHqrpDashboard';
+import { HospiceMedicareCapDashboard } from '@/pages/Hospice/HospiceMedicareCapDashboard';
 
 export default function App() {
   return (
@@ -69,6 +70,10 @@ export default function App() {
               element={<HospiceFtfPage />}
             />
             <Route path="hospice/hqrp" element={<HospiceHqrpDashboard />} />
+            <Route
+              path="hospice/medicare-cap"
+              element={<HospiceMedicareCapDashboard />}
+            />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
