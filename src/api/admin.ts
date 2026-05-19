@@ -76,3 +76,61 @@ export interface OrgRollupSummary {
 
 export const getOrgRollup = (): Promise<OrgRollupSummary> =>
   apiClient.get<OrgRollupSummary>('/org/rollup').then((r) => r.data);
+
+// ─── Intra-org Branches ───────────────────────────────────────────────────
+
+export interface Branch {
+  id: number;
+  name: string;
+  code: string;
+  ccnNumber: string | null;
+  addressLine1: string | null;
+  addressLine2: string | null;
+  city: string | null;
+  state: string | null;
+  zipCode: string | null;
+  phone: string | null;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface CreateBranchRequest {
+  name: string;
+  code: string;
+  ccnNumber: string | null;
+  addressLine1: string | null;
+  addressLine2: string | null;
+  city: string | null;
+  state: string | null;
+  zipCode: string | null;
+  phone: string | null;
+}
+
+export interface UpdateBranchRequest {
+  name: string;
+  ccnNumber: string | null;
+  addressLine1: string | null;
+  addressLine2: string | null;
+  city: string | null;
+  state: string | null;
+  zipCode: string | null;
+  phone: string | null;
+  isActive: boolean;
+}
+
+export const listBranches = (activeOnly = false): Promise<{ data: Branch[] }> =>
+  apiClient
+    .get<{ data: Branch[] }>('/branches', { params: { activeOnly } })
+    .then((r) => r.data);
+
+export const getBranch = (id: number): Promise<Branch> =>
+  apiClient.get<Branch>(`/branches/${id}`).then((r) => r.data);
+
+export const createBranch = (req: CreateBranchRequest): Promise<Branch> =>
+  apiClient.post<Branch>('/branches', req).then((r) => r.data);
+
+export const updateBranch = (id: number, req: UpdateBranchRequest): Promise<Branch> =>
+  apiClient.put<Branch>(`/branches/${id}`, req).then((r) => r.data);
+
+export const deleteBranch = (id: number): Promise<void> =>
+  apiClient.delete<void>(`/branches/${id}`).then(() => undefined);
