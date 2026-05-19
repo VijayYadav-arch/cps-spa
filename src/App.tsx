@@ -28,6 +28,7 @@ import { HospiceClaimSubmissionsPage } from '@/pages/Hospice/HospiceClaimSubmiss
 import { PaidTimeDashboard } from '@/pages/Time/PaidTimeDashboard';
 import { MyTimeDashboard } from '@/pages/Time/MyTimeDashboard';
 import { PhiAccessReviewDashboard } from '@/pages/Compliance/PhiAccessReviewDashboard';
+import { SurveyorBundlePage } from '@/pages/Compliance/SurveyorBundlePage';
 
 export default function App() {
   return (
@@ -94,6 +95,10 @@ export default function App() {
             <Route
               path="compliance/phi-access"
               element={<PhiAccessReviewDashboard />}
+            />
+            <Route
+              path="compliance/surveyor-bundle"
+              element={<SurveyorBundlePage />}
             />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
