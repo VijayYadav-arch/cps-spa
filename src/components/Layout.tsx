@@ -43,6 +43,13 @@ const navItems: NavEntry[] = [
     ],
   },
   { kind: 'leaf', to: '/documents', label: 'Documents' },
+  {
+    kind: 'group',
+    label: 'Compliance',
+    items: [
+      { kind: 'leaf', to: '/compliance/phi-access', label: 'PHI Access Review' },
+    ],
+  },
   { kind: 'leaf', to: '/platform', label: 'Platform' },
   { kind: 'leaf', to: '/admin', label: 'Admin' },
 ];
