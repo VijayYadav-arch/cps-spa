@@ -43,6 +43,7 @@ const navItems: NavEntry[] = [
     ],
   },
   { kind: 'leaf', to: '/documents', label: 'Documents' },
+  { kind: 'leaf', to: '/org/rollup', label: 'Parent-Org Rollup' },
   {
     kind: 'group',
     label: 'Compliance',

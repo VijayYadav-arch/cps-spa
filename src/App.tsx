@@ -30,6 +30,7 @@ import { MyTimeDashboard } from '@/pages/Time/MyTimeDashboard';
 import { PhiAccessReviewDashboard } from '@/pages/Compliance/PhiAccessReviewDashboard';
 import { SurveyorBundlePage } from '@/pages/Compliance/SurveyorBundlePage';
 import { BreachWorkflowPage } from '@/pages/Compliance/BreachWorkflowPage';
+import { OrgRollupPage } from '@/pages/Admin/OrgRollupPage';
 
 export default function App() {
   return (
@@ -105,6 +106,7 @@ export default function App() {
               path="compliance/breaches"
               element={<BreachWorkflowPage />}
             />
+            <Route path="org/rollup" element={<OrgRollupPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
