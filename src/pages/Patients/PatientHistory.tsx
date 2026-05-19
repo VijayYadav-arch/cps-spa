@@ -8,7 +8,31 @@ const TYPE_FILTERS = [
   { value: 'visit', label: 'Visits' },
   { value: 'medication', label: 'Medications' },
   { value: 'admission', label: 'Admissions' },
+  { value: 'hospice', label: 'Hospice (all)' },
+  { value: 'hospice-election', label: 'Elections' },
+  { value: 'hospice-noe', label: 'NOEs' },
+  { value: 'hospice-hope', label: 'HOPE' },
+  { value: 'hospice-cert', label: 'Certifications' },
+  { value: 'hospice-ftf', label: 'FTF' },
+  { value: 'hospice-addendum', label: 'Addenda' },
+  { value: 'hospice-notr', label: 'NOTR' },
+  { value: 'bereavement', label: 'Bereavement' },
 ];
+
+const TYPE_BADGE_COLOR: Record<string, string> = {
+  encounter: '#0e7490',
+  visit: '#7c3aed',
+  medication: '#15803d',
+  admission: '#b45309',
+  'hospice-election': '#1d4ed8',
+  'hospice-noe': '#1d4ed8',
+  'hospice-hope': '#1d4ed8',
+  'hospice-cert': '#1d4ed8',
+  'hospice-ftf': '#1d4ed8',
+  'hospice-addendum': '#1d4ed8',
+  'hospice-notr': '#b91c1c',
+  bereavement: '#6d28d9',
+};
 
 function formatDate(iso: string) {
   const dt = new Date(iso);
@@ -52,7 +76,7 @@ export function PatientHistory() {
       </button>
       <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 16 }}>Patient History</h2>
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
         {TYPE_FILTERS.map((t) => (
           <button
             key={t.value}
@@ -91,7 +115,21 @@ export function PatientHistory() {
             {events.map((e) => (
               <tr key={`${e.type}-${e.id}`} style={{ borderBottom: '1px solid #f1f5f9' }}>
                 <td style={{ padding: '8px 12px', whiteSpace: 'nowrap' }}>{formatDate(e.date)}</td>
-                <td style={{ padding: '8px 12px', textTransform: 'capitalize' }}>{e.type}</td>
+                <td style={{ padding: '8px 12px' }}>
+                  <span
+                    style={{
+                      display: 'inline-block',
+                      padding: '2px 8px',
+                      borderRadius: 4,
+                      background: TYPE_BADGE_COLOR[e.type] ?? '#64748b',
+                      color: '#fff',
+                      fontSize: 12,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {e.type}
+                  </span>
+                </td>
                 <td style={{ padding: '8px 12px' }}>{e.summary}</td>
               </tr>
             ))}
