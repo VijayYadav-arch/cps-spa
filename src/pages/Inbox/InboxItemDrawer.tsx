@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import {
   getWorkItemEvents,
+  getWorkItemTiming,
+  formatDuration,
+  type WorkItemTiming,
   type WorkQueueItem,
   type WorkQueueItemEvent,
 } from '@/api/billing';
@@ -58,16 +61,23 @@ export interface InboxItemDrawerProps {
  */
 export function InboxItemDrawer({ item, onClose }: InboxItemDrawerProps) {
   const [events, setEvents] = useState<WorkQueueItemEvent[] | null>(null);
+  const [timing, setTiming] = useState<WorkItemTiming | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
+    // Two independent reads. Timing populates a small badge strip while
+    // events populate the longer activity list — they're parallel so a
+    // slow event-list load doesn't delay the badges.
     getWorkItemEvents(item.id)
       .then((evs) => { if (!cancelled) setEvents(evs); })
       .catch((e: unknown) => {
         if (cancelled) return;
         setError(e instanceof Error ? e.message : 'Failed to load timeline');
       });
+    getWorkItemTiming(item.id)
+      .then((t) => { if (!cancelled) setTiming(t); })
+      .catch(() => { /* timing badges stay hidden */ });
     return () => { cancelled = true; };
   }, [item.id]);
 
@@ -136,6 +146,30 @@ export function InboxItemDrawer({ item, onClose }: InboxItemDrawerProps) {
             </div>
           )}
         </div>
+
+        {/* Timing badges — render only when a duration is known. */}
+        {timing && (timing.timeToClaim || timing.timeToComplete) && (
+          <div
+            aria-label="Item timing"
+            style={{
+              display: 'flex', gap: 12, marginBottom: 16, fontSize: 13,
+              background: '#f8fafc', padding: 10, borderRadius: 6,
+            }}
+          >
+            {timing.timeToClaim && (
+              <span>
+                <span style={{ color: '#64748b', fontSize: 11, display: 'block' }}>Claimed in</span>
+                <strong style={{ color: '#0f172a' }}>{formatDuration(timing.timeToClaim)}</strong>
+              </span>
+            )}
+            {timing.timeToComplete && (
+              <span>
+                <span style={{ color: '#64748b', fontSize: 11, display: 'block' }}>Completed in</span>
+                <strong style={{ color: '#16a34a' }}>{formatDuration(timing.timeToComplete)}</strong>
+              </span>
+            )}
+          </div>
+        )}
 
         <h3 style={{ fontSize: 14, color: '#334155', marginBottom: 8, marginTop: 0 }}>
           Activity

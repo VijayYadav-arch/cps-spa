@@ -4,11 +4,23 @@ import userEvent from '@testing-library/user-event';
 import { InboxItemDrawer } from '@/pages/Inbox/InboxItemDrawer';
 import type { WorkQueueItem } from '@/api/billing';
 
-vi.mock('@/api/billing', () => ({
-  getWorkItemEvents: vi.fn(),
-}));
+vi.mock('@/api/billing', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/api/billing')>();
+  return {
+    ...actual,
+    getWorkItemEvents: vi.fn(),
+    getWorkItemTiming: vi.fn().mockResolvedValue({
+      itemId: 1,
+      createdAtUtc: '2026-05-19T12:00:00Z',
+      firstClaimedAtUtc: null,
+      completedAtUtc: null,
+      timeToClaim: null,
+      timeToComplete: null,
+    }),
+  };
+});
 
-import { getWorkItemEvents } from '@/api/billing';
+import { getWorkItemEvents, getWorkItemTiming } from '@/api/billing';
 
 function item(over: Partial<WorkQueueItem> = {}): WorkQueueItem {
   return {
@@ -106,8 +118,34 @@ describe('InboxItemDrawer', () => {
     vi.mocked(getWorkItemEvents).mockResolvedValue([]);
     const past = '2020-01-01T00:00:00Z';
     render(<InboxItemDrawer item={item({ snoozeUntilUtc: past })} onClose={vi.fn()} />);
-    // Loaded state should never include the "Snoozed until" header
     await screen.findByText(/No activity recorded yet/i);
     expect(screen.queryByText(/Snoozed until/i)).not.toBeInTheDocument();
+  });
+
+  it('renders timing badges when timing API returns durations', async () => {
+    vi.mocked(getWorkItemEvents).mockResolvedValue([]);
+    vi.mocked(getWorkItemTiming).mockResolvedValueOnce({
+      itemId: 1,
+      createdAtUtc: '2026-05-19T12:00:00Z',
+      firstClaimedAtUtc: '2026-05-19T13:00:00Z',
+      completedAtUtc: '2026-05-19T15:30:00Z',
+      timeToClaim: '01:00:00',
+      timeToComplete: '03:30:00',
+    });
+    render(<InboxItemDrawer item={item()} onClose={vi.fn()} />);
+
+    expect(await screen.findByText(/Claimed in/i)).toBeInTheDocument();
+    expect(screen.getByText(/Completed in/i)).toBeInTheDocument();
+    expect(screen.getByText('1h 0m')).toBeInTheDocument();
+    expect(screen.getByText('3h 30m')).toBeInTheDocument();
+  });
+
+  it('hides timing badges when no durations are known', async () => {
+    vi.mocked(getWorkItemEvents).mockResolvedValue([]);
+    // Default mock returns nulls for the durations
+    render(<InboxItemDrawer item={item()} onClose={vi.fn()} />);
+    await screen.findByText(/No activity recorded yet/i);
+    expect(screen.queryByText(/Claimed in/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Completed in/i)).not.toBeInTheDocument();
   });
 });
