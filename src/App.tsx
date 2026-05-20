@@ -30,6 +30,7 @@ import { MyTimeDashboard } from '@/pages/Time/MyTimeDashboard';
 import { PhiAccessReviewDashboard } from '@/pages/Compliance/PhiAccessReviewDashboard';
 import { SurveyorBundlePage } from '@/pages/Compliance/SurveyorBundlePage';
 import { BreachWorkflowPage } from '@/pages/Compliance/BreachWorkflowPage';
+import { FhirFeedPage } from '@/pages/Integrations/FhirFeedPage';
 import { OrgRollupPage } from '@/pages/Admin/OrgRollupPage';
 import { BranchesPage } from '@/pages/Admin/BranchesPage';
 import { PortalPaymentPage } from '@/pages/Portal/PortalPaymentPage';
@@ -129,6 +130,10 @@ export default function App() {
             <Route
               path="compliance/breaches"
               element={<BreachWorkflowPage />}
+            />
+            <Route
+              path="integrations/fhir-feed"
+              element={<FhirFeedPage />}
             />
             <Route path="org/rollup" element={<OrgRollupPage />} />
             <Route path="admin/branches" element={<BranchesPage />} />
