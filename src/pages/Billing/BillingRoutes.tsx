@@ -6,6 +6,7 @@ import { SecondaryClaimsPage } from './SecondaryClaimsPage';
 import { StatementsPage } from './StatementsPage';
 import { EligibilityPage } from './EligibilityPage';
 import { PriorAuthPage } from './PriorAuthPage';
+import { ChargeEntryPage } from './ChargeEntryPage';
 
 export function BillingRoutes() {
   return (
@@ -17,6 +18,7 @@ export function BillingRoutes() {
       <Route path="statements" element={<StatementsPage />} />
       <Route path="eligibility" element={<EligibilityPage />} />
       <Route path="prior-auth" element={<PriorAuthPage />} />
+      <Route path="charges" element={<ChargeEntryPage />} />
       <Route path="*" element={<Navigate to="/billing" replace />} />
     </Routes>
   );
