@@ -412,6 +412,52 @@ export const logArCall = (
     .post<{ data: unknown }>(`/billing/ar-followup/claims/${claimId}/notes`, req)
     .then((r) => r.data);
 
+// ─── Tickler queue + bulk log-call ───────────────────────────────────────
+
+export type TicklerStatus = 'overdue' | 'today' | 'upcoming' | 'all';
+
+export interface ArTicklerRow {
+  claimId: number;
+  claimNumber: string;
+  patientName: string;
+  payer: string;
+  amount: number;
+  submittedDate: string | null;
+  daysAged: number;
+  nextFollowUpDate: string;
+  daysUntilFollowUp: number;
+  lastContactedAt: string | null;
+}
+
+export const getArTicklers = (
+  status: TicklerStatus = 'overdue', limit = 50,
+): Promise<{ data: ArTicklerRow[] }> =>
+  apiClient
+    .get<{ data: ArTicklerRow[] }>('/billing/ar-followup/ticklers', {
+      params: { status, limit },
+    })
+    .then((r) => r.data);
+
+export interface BulkLogArCallRequest {
+  claimIds: number[];
+  contactName: string;
+  outcome: string;
+  note: string;
+  nextFollowUpDate?: string | null;
+}
+
+export interface BulkLogArCallSummary {
+  data: { claimId: number; ok: boolean; noteId: number | null; error: string | null }[];
+  summary: { requested: number; applied: number; failed: number };
+}
+
+export const bulkLogArCalls = (
+  req: BulkLogArCallRequest,
+): Promise<BulkLogArCallSummary> =>
+  apiClient
+    .post<BulkLogArCallSummary>('/billing/ar-followup/claims/bulk-notes', req)
+    .then((r) => r.data);
+
 // ─── Secondary payer COB submission ──────────────────────────────────────
 
 export interface SecondaryEligibleClaim {
