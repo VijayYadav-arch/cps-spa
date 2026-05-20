@@ -12,10 +12,13 @@ vi.mock('@/api/billing', () => ({
   snoozeWorkItem: vi.fn(),
   wakeWorkItem: vi.fn(),
   bulkWorkItem: vi.fn(),
+  getAssignableUsers: vi.fn().mockResolvedValue([]),
+  assignWorkItem: vi.fn(),
 }));
 
 import {
   getInbox, claimWorkItem, completeWorkItem, snoozeWorkItem, wakeWorkItem, bulkWorkItem,
+  getAssignableUsers, assignWorkItem,
 } from '@/api/billing';
 
 function item(over: Partial<WorkQueueItem> = {}): WorkQueueItem {
@@ -221,7 +224,7 @@ describe('InboxPage', () => {
       await user.click(screen.getByRole('button', { name: 'Complete all' }));
 
       await waitFor(() => {
-        expect(bulkWorkItem).toHaveBeenCalledWith('complete', [1, 2], undefined);
+        expect(bulkWorkItem).toHaveBeenCalledWith('complete', [1, 2], {});
       });
       expect(await screen.findByText(/2 items processed/i)).toBeInTheDocument();
     });
@@ -239,7 +242,7 @@ describe('InboxPage', () => {
       await user.click(screen.getByRole('button', { name: 'Claim all' }));
 
       await waitFor(() => {
-        expect(bulkWorkItem).toHaveBeenCalledWith('claim', [1], undefined);
+        expect(bulkWorkItem).toHaveBeenCalledWith('claim', [1], {});
       });
     });
 
@@ -260,7 +263,9 @@ describe('InboxPage', () => {
         expect(bulkWorkItem).toHaveBeenCalledWith(
           'snooze',
           [1],
-          expect.stringMatching(/^\d{4}-\d{2}-\d{2}/),
+          expect.objectContaining({
+            snoozeUntilUtc: expect.stringMatching(/^\d{4}-\d{2}-\d{2}/),
+          }),
         );
       });
     });
@@ -307,6 +312,96 @@ describe('InboxPage', () => {
       await waitFor(() => {
         expect(screen.queryByText(/selected/i)).not.toBeInTheDocument();
       });
+    });
+  });
+
+  // ── Assignment to others ────────────────────────────────────────
+
+  describe('assignment to others', () => {
+    function teammate(id: number, lastName: string, firstName = 'Test') {
+      return { id, firstName, lastName, email: `${firstName.toLowerCase()}@x` };
+    }
+
+    it('per-row Assign… dropdown calls assignWorkItem(id, userId)', async () => {
+      const user = userEvent.setup();
+      vi.mocked(getAssignableUsers).mockResolvedValue([
+        teammate(7, 'Adams'),
+        teammate(8, 'Brown'),
+      ]);
+      vi.mocked(getInbox).mockResolvedValue({
+        data: [item({ id: 1 })],
+        stats: { total: 1, pending: 1, inProgress: 0, critical: 0, overdue: 0 },
+      });
+      vi.mocked(assignWorkItem).mockResolvedValue(undefined);
+
+      renderPage();
+      await screen.findByLabelText(/Assign item 1 to/i);
+      await user.selectOptions(screen.getByLabelText(/Assign item 1 to/i), '8');
+
+      await waitFor(() => {
+        expect(assignWorkItem).toHaveBeenCalledWith(1, 8);
+      });
+      expect(await screen.findByText(/Assigned #1 to Test Brown/i)).toBeInTheDocument();
+    });
+
+    it('bulk Assign all to… calls bulkWorkItem with assignToUserId', async () => {
+      const user = userEvent.setup();
+      vi.mocked(getAssignableUsers).mockResolvedValue([teammate(7, 'Adams')]);
+      vi.mocked(getInbox).mockResolvedValue({
+        data: [item({ id: 1 }), item({ id: 2, description: 'Item 2' })],
+        stats: { total: 2, pending: 2, inProgress: 0, critical: 0, overdue: 0 },
+      });
+      vi.mocked(bulkWorkItem).mockResolvedValue({ succeeded: [1, 2], failed: [] });
+
+      renderPage();
+      await screen.findByLabelText('Select all items');
+      await user.click(screen.getByLabelText('Select all items'));
+      await user.selectOptions(screen.getByLabelText(/Assign all selected to/i), '7');
+
+      await waitFor(() => {
+        expect(bulkWorkItem).toHaveBeenCalledWith('assign', [1, 2], {
+          assignToUserId: 7,
+        });
+      });
+    });
+
+    it('hides per-row Assign dropdown when assignable list is empty', async () => {
+      vi.mocked(getAssignableUsers).mockResolvedValue([]);
+      vi.mocked(getInbox).mockResolvedValue({
+        data: [item({ id: 1 })],
+        stats: { total: 1, pending: 1, inProgress: 0, critical: 0, overdue: 0 },
+      });
+      renderPage();
+      // Wait for the row to render
+      await screen.findByText(/Review denial/i);
+      expect(screen.queryByLabelText(/Assign item 1 to/i)).not.toBeInTheDocument();
+    });
+
+    it('disables bulk Assign-all select when assignable list is empty', async () => {
+      const user = userEvent.setup();
+      vi.mocked(getAssignableUsers).mockResolvedValue([]);
+      vi.mocked(getInbox).mockResolvedValue({
+        data: [item({ id: 1 })],
+        stats: { total: 1, pending: 1, inProgress: 0, critical: 0, overdue: 0 },
+      });
+      renderPage();
+      await screen.findByLabelText('Select item 1');
+      await user.click(screen.getByLabelText('Select item 1'));
+
+      const bulkAssignSelect = screen.getByLabelText(/Assign all selected to/i) as HTMLSelectElement;
+      expect(bulkAssignSelect.disabled).toBe(true);
+    });
+
+    it('silently no-ops when the assignable-users fetch rejects', async () => {
+      vi.mocked(getAssignableUsers).mockRejectedValueOnce(new Error('403'));
+      vi.mocked(getInbox).mockResolvedValue({
+        data: [item({ id: 1 })],
+        stats: { total: 1, pending: 1, inProgress: 0, critical: 0, overdue: 0 },
+      });
+      renderPage();
+      await screen.findByText(/Review denial/i);
+      // No assign dropdowns — the picker just stays empty
+      expect(screen.queryByLabelText(/Assign item 1 to/i)).not.toBeInTheDocument();
     });
   });
 });
