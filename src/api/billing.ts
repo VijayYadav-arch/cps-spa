@@ -468,3 +468,98 @@ export const recordPriorAuthDecision = (
   id: number, req: UpdatePriorAuthDecisionRequest,
 ): Promise<PriorAuth> =>
   apiClient.post<PriorAuth>(`/billing/prior-auth/${id}/decision`, req).then((r) => r.data);
+
+// ─── Charge entry ─────────────────────────────────────────────────
+
+export type ChargeStatus = 'pending' | 'reviewed' | 'billed' | 'voided';
+export type ChargeType = 'per-diem' | 'visit' | 'procedure' | 'supply';
+
+export interface ChargeRecord {
+  id: number;
+  patientId: number;
+  admissionId: number | null;
+  encounterId: number | null;
+  chargeDate: string;
+  chargeType: ChargeType;
+  revenueCode: string | null;
+  procedureCode: string | null;
+  units: number;
+  amount: number;
+  totalAmount: number;
+  status: ChargeStatus;
+  claimId: number | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateChargeRequest {
+  patientId: number;
+  admissionId?: number | null;
+  encounterId?: number | null;
+  chargeDate: string;
+  chargeType: ChargeType;
+  revenueCode?: string | null;
+  procedureCode?: string | null;
+  units: number;
+  amount: number;
+  notes?: string | null;
+}
+
+export interface UpdateChargeRequest {
+  chargeDate?: string;
+  revenueCode?: string | null;
+  procedureCode?: string | null;
+  units?: number;
+  amount?: number;
+  notes?: string | null;
+}
+
+export interface PendingChargesSummary {
+  patientId: number;
+  chargeCount: number;
+  totalAmount: number;
+  earliestServiceDate: string | null;
+  latestServiceDate: string | null;
+}
+
+export const listCharges = (params: {
+  patientId?: number;
+  encounterId?: number;
+  status?: ChargeStatus;
+  fromDate?: string;
+  toDate?: string;
+}): Promise<{ data: ChargeRecord[] }> =>
+  apiClient
+    .get<{ data: ChargeRecord[] }>('/billing/charges', { params })
+    .then((r) => r.data);
+
+export const createCharge = (req: CreateChargeRequest): Promise<{ data: ChargeRecord }> =>
+  apiClient.post<{ data: ChargeRecord }>('/billing/charges', req).then((r) => r.data);
+
+export const updateCharge = (
+  id: number, req: UpdateChargeRequest,
+): Promise<{ data: ChargeRecord }> =>
+  apiClient.put<{ data: ChargeRecord }>(`/billing/charges/${id}`, req).then((r) => r.data);
+
+export const markChargeReviewed = (id: number): Promise<void> =>
+  apiClient.post(`/billing/charges/${id}/reviewed`).then(() => undefined);
+
+export const voidCharge = (id: number): Promise<void> =>
+  apiClient.post(`/billing/charges/${id}/void`).then(() => undefined);
+
+export const getPendingChargesSummary = (
+  patientId: number,
+): Promise<{ data: PendingChargesSummary }> =>
+  apiClient
+    .get<{ data: PendingChargesSummary }>('/billing/charges/pending-summary', {
+      params: { patientId },
+    })
+    .then((r) => r.data);
+
+export const attachChargesToClaim = (
+  chargeIds: number[], claimId: number,
+): Promise<void> =>
+  apiClient
+    .post('/billing/charges/attach-to-claim', { chargeIds, claimId })
+    .then(() => undefined);
