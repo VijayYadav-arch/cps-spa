@@ -270,6 +270,49 @@ export const closeBreach = (
     .post<BreachWorkflowSummary>(`${BREACH_BASE}/${id}/close`, { notes })
     .then((r) => r.data);
 
+// ─── Audit anomaly alerts ─────────────────────────────────────────────
+
+export type AnomalyStatus = 'open' | 'dismissed' | 'escalated';
+export type AnomalyType = 'bulk-read' | 'off-hours' | 'denial-cluster';
+
+export interface AuditAnomalyAlert {
+  id: number;
+  organizationId: number;
+  userId: number | null;
+  userEmail: string | null;
+  ipAddress: string | null;
+  anomalyType: AnomalyType;
+  detectedAtUtc: string;
+  windowStartUtc: string;
+  windowEndUtc: string;
+  evidence: string;
+  status: AnomalyStatus;
+  reviewedByUserId: number | null;
+  reviewedAtUtc: string | null;
+  notes: string | null;
+}
+
+const ANOMALY_BASE = '/compliance/anomalies';
+
+export const listAnomalies = (
+  params: { status?: AnomalyStatus | ''; limit?: number } = {},
+): Promise<{ data: AuditAnomalyAlert[]; total: number }> =>
+  apiClient
+    .get<{ data: AuditAnomalyAlert[]; total: number }>(ANOMALY_BASE, { params })
+    .then((r) => r.data);
+
+export const updateAnomalyStatus = (
+  id: number, status: AnomalyStatus, notes: string | null,
+): Promise<{ data: AuditAnomalyAlert }> =>
+  apiClient
+    .patch<{ data: AuditAnomalyAlert }>(`${ANOMALY_BASE}/${id}`, { status, notes })
+    .then((r) => r.data);
+
+export const scanAnomaliesNow = (): Promise<{ data: { inserted: number } }> =>
+  apiClient
+    .post<{ data: { inserted: number } }>(`${ANOMALY_BASE}/scan-now`)
+    .then((r) => r.data);
+
 /**
  * Triggers a browser download of the ZIP bundle. Returns the suggested file
  * name so the caller can show a confirmation.

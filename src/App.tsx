@@ -30,6 +30,7 @@ import { MyTimeDashboard } from '@/pages/Time/MyTimeDashboard';
 import { PhiAccessReviewDashboard } from '@/pages/Compliance/PhiAccessReviewDashboard';
 import { SurveyorBundlePage } from '@/pages/Compliance/SurveyorBundlePage';
 import { BreachWorkflowPage } from '@/pages/Compliance/BreachWorkflowPage';
+import { AuditAnomalyReviewPage } from '@/pages/Compliance/AuditAnomalyReviewPage';
 import { FhirFeedPage } from '@/pages/Integrations/FhirFeedPage';
 import { AuditLogSearchPage } from '@/pages/Admin/AuditLogSearchPage';
 import { OrgRollupPage } from '@/pages/Admin/OrgRollupPage';
@@ -131,6 +132,10 @@ export default function App() {
             <Route
               path="compliance/breaches"
               element={<BreachWorkflowPage />}
+            />
+            <Route
+              path="compliance/anomalies"
+              element={<AuditAnomalyReviewPage />}
             />
             <Route
               path="integrations/fhir-feed"

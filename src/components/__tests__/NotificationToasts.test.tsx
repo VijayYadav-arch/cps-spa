@@ -9,12 +9,23 @@ vi.mock('@/api/billing', () => ({
   acknowledgeInboxNotifications: vi.fn(),
 }));
 
+vi.mock('@/api/compliance', async (orig) => ({
+  ...(await orig<object>()),
+  listAnomalies: vi.fn(),
+}));
+
 import {
   pollInboxNotifications,
   acknowledgeInboxNotifications,
 } from '@/api/billing';
+import { listAnomalies } from '@/api/compliance';
 
-beforeEach(() => vi.clearAllMocks());
+beforeEach(() => {
+  vi.clearAllMocks();
+  // Default anomaly mock returns empty so existing tests don't see
+  // unexpected toasts; tests that care override this.
+  vi.mocked(listAnomalies).mockResolvedValue({ data: [], total: 0 });
+});
 
 function notif(over: Partial<{
   itemId: number; description: string; priority: string;
@@ -120,5 +131,44 @@ describe('NotificationToasts', () => {
       expect(pollInboxNotifications).toHaveBeenCalled();
     });
     expect(container.querySelector('[role="region"]')).toBeNull();
+  });
+
+  it('shows audit-anomaly toasts alongside assignments', async () => {
+    vi.mocked(pollInboxNotifications).mockResolvedValue({
+      notifications: [],
+      serverNowUtc: '2026-05-21T12:00:00Z',
+      lastSeenAtUtc: '2026-05-21T11:00:00Z',
+    });
+    vi.mocked(acknowledgeInboxNotifications).mockResolvedValue(undefined);
+    vi.mocked(listAnomalies).mockResolvedValue({
+      data: [{
+        id: 9, organizationId: 1, userId: 5, userEmail: 'biller@x',
+        ipAddress: null, anomalyType: 'bulk-read',
+        detectedAtUtc: '2026-05-21T12:00:00Z',
+        windowStartUtc: '2026-05-21T11:00:00Z',
+        windowEndUtc: '2026-05-21T12:00:00Z',
+        evidence: '52 distinct patients accessed in 1 hour',
+        status: 'open', reviewedByUserId: null, reviewedAtUtc: null, notes: null,
+      }],
+      total: 1,
+    });
+
+    renderToasts();
+
+    expect(await screen.findByText(/Audit anomaly · bulk-read/i)).toBeInTheDocument();
+    expect(screen.getByText(/52 distinct patients/i)).toBeInTheDocument();
+  });
+
+  it('survives when only the anomaly poll fails (403 for non-compliance user)', async () => {
+    vi.mocked(pollInboxNotifications).mockResolvedValue({
+      notifications: [notif()],
+      serverNowUtc: '2026-05-21T12:00:00Z',
+      lastSeenAtUtc: '2026-05-21T11:00:00Z',
+    });
+    vi.mocked(acknowledgeInboxNotifications).mockResolvedValue(undefined);
+    vi.mocked(listAnomalies).mockRejectedValueOnce(new Error('403'));
+
+    renderToasts();
+    expect(await screen.findByText(/Review denial CLM-1/i)).toBeInTheDocument();
   });
 });
