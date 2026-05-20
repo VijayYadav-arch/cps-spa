@@ -9,6 +9,8 @@ export interface WorkQueueItem {
   claimId: number | null;
   patientId: number | null;
   dueDate: string | null;
+  assignedTo: number | null;
+  snoozeUntilUtc: string | null;
   createdAt: string;
 }
 
@@ -16,7 +18,8 @@ export interface WorkQueueStats {
   total: number;
   pending: number;
   inProgress: number;
-  completed: number;
+  critical: number;
+  overdue: number;
 }
 
 export interface WorkQueueResponse {
@@ -47,6 +50,22 @@ export const getWorkQueue = (params?: { status?: string; type?: string; }): Prom
 
 export const getWorkQueueStats = (): Promise<WorkQueueStats> =>
   apiClient.get<WorkQueueStats>('/billing/work-queue/stats').then((r) => r.data);
+
+export const getInbox = (mine: boolean = true): Promise<WorkQueueResponse> =>
+  apiClient.get<WorkQueueResponse>('/billing/work-queue/inbox', { params: { mine } })
+    .then((r) => r.data);
+
+export const claimWorkItem = (id: number): Promise<void> =>
+  apiClient.post(`/billing/work-queue/${id}/claim`).then(() => undefined);
+
+export const completeWorkItem = (id: number): Promise<void> =>
+  apiClient.post(`/billing/work-queue/${id}/complete`).then(() => undefined);
+
+export const snoozeWorkItem = (id: number, untilUtc: string): Promise<void> =>
+  apiClient.post(`/billing/work-queue/${id}/snooze`, { untilUtc }).then(() => undefined);
+
+export const wakeWorkItem = (id: number): Promise<void> =>
+  apiClient.post(`/billing/work-queue/${id}/wake`).then(() => undefined);
 
 export const getDenials = (params?: { status?: string; page?: number; pageSize?: number; }): Promise<{ data: DenialItem[]; pagination: PaginationMeta }> =>
   apiClient.get<{ data: DenialItem[]; pagination: PaginationMeta }>('/billing/denials', { params }).then((r) => r.data);

@@ -37,7 +37,7 @@ export function BillingDashboard() {
             { label: 'Total Items', value: stats.total },
             { label: 'Pending', value: stats.pending },
             { label: 'In Progress', value: stats.inProgress },
-            { label: 'Completed', value: stats.completed },
+            { label: 'Overdue', value: stats.overdue },
           ].map(({ label, value }) => (
             <div key={label} style={{ padding: 16, border: '1px solid #e2e8f0', borderRadius: 8 }}>
               <p style={{ fontSize: 12, color: '#64748b', marginBottom: 4 }}>{label}</p>
