@@ -112,3 +112,20 @@ export async function portalPayStatement(
   );
   return r.data;
 }
+
+export interface PortalPaymentHistoryItem {
+  id: number;
+  statementRunId: number;
+  amount: number;
+  method: string;
+  last4: string | null;
+  confirmationNumber: string;
+  paidAtUtc: string;
+}
+
+export async function portalPayments(patientId: number): Promise<PortalPaymentHistoryItem[]> {
+  const r = await portalClient.get<{ data: PortalPaymentHistoryItem[] }>(
+    `/patients/${patientId}/payments`,
+  );
+  return r.data.data ?? [];
+}

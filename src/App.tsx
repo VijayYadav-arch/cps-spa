@@ -42,6 +42,7 @@ import { PortalOverview } from '@/pages/Portal/PortalOverview';
 import { PortalStatements } from '@/pages/Portal/PortalStatements';
 import { PortalStatementDetail } from '@/pages/Portal/PortalStatementDetail';
 import { PortalDocuments } from '@/pages/Portal/PortalDocuments';
+import { PortalPayments } from '@/pages/Portal/PortalPayments';
 
 export default function App() {
   return (
@@ -153,6 +154,7 @@ function PortalRoutes() {
         <Route path="statements" element={<PortalStatements />} />
         <Route path="statements/:runId" element={<PortalStatementDetail />} />
         <Route path="documents" element={<PortalDocuments />} />
+        <Route path="payments" element={<PortalPayments />} />
       </Route>
     </Routes>
   );

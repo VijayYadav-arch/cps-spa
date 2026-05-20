@@ -47,6 +47,7 @@ export function PortalLayout({ children }: { children?: ReactNode }) {
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <NavLink to="/portal" end style={navStyle}>Overview</NavLink>
           <NavLink to="/portal/statements" style={navStyle}>Statements</NavLink>
+          <NavLink to="/portal/payments" style={navStyle}>Payment History</NavLink>
           <NavLink to="/portal/documents" style={navStyle}>Documents</NavLink>
         </nav>
         <div style={{ marginTop: 'auto' }}>
