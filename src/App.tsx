@@ -31,6 +31,7 @@ import { PhiAccessReviewDashboard } from '@/pages/Compliance/PhiAccessReviewDash
 import { SurveyorBundlePage } from '@/pages/Compliance/SurveyorBundlePage';
 import { BreachWorkflowPage } from '@/pages/Compliance/BreachWorkflowPage';
 import { FhirFeedPage } from '@/pages/Integrations/FhirFeedPage';
+import { AuditLogSearchPage } from '@/pages/Admin/AuditLogSearchPage';
 import { OrgRollupPage } from '@/pages/Admin/OrgRollupPage';
 import { BranchesPage } from '@/pages/Admin/BranchesPage';
 import { PortalPaymentPage } from '@/pages/Portal/PortalPaymentPage';
@@ -137,6 +138,7 @@ export default function App() {
             />
             <Route path="org/rollup" element={<OrgRollupPage />} />
             <Route path="admin/branches" element={<BranchesPage />} />
+            <Route path="admin/audit-log" element={<AuditLogSearchPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
