@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   getArDashboard,
   logArCall,
@@ -50,6 +51,7 @@ function extractError(err: unknown, fallback: string): string {
 }
 
 export function ArDashboardPage() {
+  const navigate = useNavigate();
   const [summary, setSummary] = useState<ArDashboardSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -108,13 +110,18 @@ export function ArDashboardPage() {
 
   return (
     <div style={{ padding: 24, maxWidth: 1200, display: 'grid', gap: 24 }}>
-      <header>
-        <h2 style={{ fontSize: 22, fontWeight: 700 }}>AR Follow-Up Dashboard</h2>
-        <p style={{ color: '#64748b', marginTop: 4 }}>
-          Claims flagged for follow-up. The action queue shows what's due
-          today or overdue; the by-payer view shows where your AR balance is
-          stuck.
-        </p>
+      <header style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        <div>
+          <h2 style={{ fontSize: 22, fontWeight: 700 }}>AR Follow-Up Dashboard</h2>
+          <p style={{ color: '#64748b', marginTop: 4 }}>
+            Claims flagged for follow-up. The action queue shows what's due
+            today or overdue; the by-payer view shows where your AR balance is
+            stuck.
+          </p>
+        </div>
+        <button type="button" onClick={() => navigate('/billing/ar/ticklers')}>
+          Open tickler queue →
+        </button>
       </header>
 
       {error && <div role="alert" style={{ color: '#b91c1c' }}>{error}</div>}
