@@ -11,10 +11,11 @@ vi.mock('@/api/billing', () => ({
   completeWorkItem: vi.fn(),
   snoozeWorkItem: vi.fn(),
   wakeWorkItem: vi.fn(),
+  bulkWorkItem: vi.fn(),
 }));
 
 import {
-  getInbox, claimWorkItem, completeWorkItem, snoozeWorkItem, wakeWorkItem,
+  getInbox, claimWorkItem, completeWorkItem, snoozeWorkItem, wakeWorkItem, bulkWorkItem,
 } from '@/api/billing';
 
 function item(over: Partial<WorkQueueItem> = {}): WorkQueueItem {
@@ -162,5 +163,150 @@ describe('InboxPage', () => {
     await screen.findByText(/Review denial/i);
     expect(screen.queryByRole('button', { name: 'Claim' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Complete' })).toBeInTheDocument();
+  });
+
+  // ── Bulk actions ────────────────────────────────────────────────
+
+  describe('bulk actions', () => {
+    function multi(...over: Partial<WorkQueueItem>[]) {
+      return over.map((o, i) => item({
+        id: i + 1,
+        description: `Item ${o.id ?? i + 1}`,
+        ...o,
+      }));
+    }
+
+    it('toolbar appears only after at least one row is selected', async () => {
+      const user = userEvent.setup();
+      vi.mocked(getInbox).mockResolvedValueOnce({
+        data: multi({ id: 1 }, { id: 2 }),
+        stats: { total: 2, pending: 2, inProgress: 0, critical: 0, overdue: 0 },
+      });
+      renderPage();
+      await screen.findByLabelText('Select item 1');
+
+      // No toolbar before selection
+      expect(screen.queryByRole('region', { name: /bulk actions/i })).not.toBeInTheDocument();
+
+      await user.click(screen.getByLabelText('Select item 1'));
+      expect(await screen.findByText(/1 selected/i)).toBeInTheDocument();
+    });
+
+    it('select-all checkbox toggles every row', async () => {
+      const user = userEvent.setup();
+      vi.mocked(getInbox).mockResolvedValueOnce({
+        data: multi({ id: 1 }, { id: 2 }, { id: 3 }),
+        stats: { total: 3, pending: 3, inProgress: 0, critical: 0, overdue: 0 },
+      });
+      renderPage();
+      await screen.findByLabelText('Select all items');
+
+      await user.click(screen.getByLabelText('Select all items'));
+      expect(await screen.findByText(/3 selected/i)).toBeInTheDocument();
+      // Toggle off
+      await user.click(screen.getByLabelText('Select all items'));
+      expect(screen.queryByText(/selected/i)).not.toBeInTheDocument();
+    });
+
+    it('Complete all calls bulkWorkItem with selected ids', async () => {
+      const user = userEvent.setup();
+      vi.mocked(getInbox).mockResolvedValueOnce({
+        data: multi({ id: 1 }, { id: 2 }),
+        stats: { total: 2, pending: 2, inProgress: 0, critical: 0, overdue: 0 },
+      });
+      vi.mocked(bulkWorkItem).mockResolvedValue({ succeeded: [1, 2], failed: [] });
+      renderPage();
+      await screen.findByLabelText('Select all items');
+      await user.click(screen.getByLabelText('Select all items'));
+      await user.click(screen.getByRole('button', { name: 'Complete all' }));
+
+      await waitFor(() => {
+        expect(bulkWorkItem).toHaveBeenCalledWith('complete', [1, 2], undefined);
+      });
+      expect(await screen.findByText(/2 items processed/i)).toBeInTheDocument();
+    });
+
+    it('Claim all calls bulkWorkItem with action=claim', async () => {
+      const user = userEvent.setup();
+      vi.mocked(getInbox).mockResolvedValueOnce({
+        data: multi({ id: 1 }),
+        stats: { total: 1, pending: 1, inProgress: 0, critical: 0, overdue: 0 },
+      });
+      vi.mocked(bulkWorkItem).mockResolvedValue({ succeeded: [1], failed: [] });
+      renderPage();
+      await screen.findByLabelText('Select item 1');
+      await user.click(screen.getByLabelText('Select item 1'));
+      await user.click(screen.getByRole('button', { name: 'Claim all' }));
+
+      await waitFor(() => {
+        expect(bulkWorkItem).toHaveBeenCalledWith('claim', [1], undefined);
+      });
+    });
+
+    it('Snooze all uses a future ISO timestamp', async () => {
+      const user = userEvent.setup();
+      vi.mocked(getInbox).mockResolvedValueOnce({
+        data: multi({ id: 1 }),
+        stats: { total: 1, pending: 1, inProgress: 0, critical: 0, overdue: 0 },
+      });
+      vi.mocked(bulkWorkItem).mockResolvedValue({ succeeded: [1], failed: [] });
+      renderPage();
+      await screen.findByLabelText('Select item 1');
+      await user.click(screen.getByLabelText('Select item 1'));
+
+      await user.selectOptions(screen.getByLabelText(/Snooze all selected/i), 'Tomorrow');
+
+      await waitFor(() => {
+        expect(bulkWorkItem).toHaveBeenCalledWith(
+          'snooze',
+          [1],
+          expect.stringMatching(/^\d{4}-\d{2}-\d{2}/),
+        );
+      });
+    });
+
+    it('reports partial failures in the error strip', async () => {
+      const user = userEvent.setup();
+      vi.mocked(getInbox).mockResolvedValue({
+        data: multi({ id: 1, assignedTo: null }, { id: 2, assignedTo: 99 }),
+        stats: { total: 2, pending: 2, inProgress: 0, critical: 0, overdue: 0 },
+      });
+      vi.mocked(bulkWorkItem).mockResolvedValue({
+        succeeded: [1],
+        failed: [{ id: 2, error: 'Item is already assigned to another user' }],
+      });
+      renderPage();
+      await screen.findByLabelText('Select item 1');
+      // Selecting both items individually avoids the select-all checkbox
+      // path so we exercise the bulk endpoint with exactly the two ids.
+      await user.click(screen.getByLabelText('Select item 1'));
+      await user.click(screen.getByLabelText('Select item 2'));
+      await user.click(screen.getByRole('button', { name: 'Claim all' }));
+
+      await waitFor(() => {
+        expect(bulkWorkItem).toHaveBeenCalled();
+      });
+      // Both notice ("1 succeeded") and error ("1 item failed (first: ...)")
+      // render after the bulk call resolves
+      expect(await screen.findByText(/1 item failed/i)).toBeInTheDocument();
+      expect(screen.getByText(/already assigned/i)).toBeInTheDocument();
+    });
+
+    it('clears selection after a successful bulk action', async () => {
+      const user = userEvent.setup();
+      vi.mocked(getInbox).mockResolvedValue({
+        data: multi({ id: 1 }),
+        stats: { total: 1, pending: 1, inProgress: 0, critical: 0, overdue: 0 },
+      });
+      vi.mocked(bulkWorkItem).mockResolvedValue({ succeeded: [1], failed: [] });
+      renderPage();
+      await screen.findByLabelText('Select item 1');
+      await user.click(screen.getByLabelText('Select item 1'));
+      await user.click(screen.getByRole('button', { name: 'Complete all' }));
+
+      await waitFor(() => {
+        expect(screen.queryByText(/selected/i)).not.toBeInTheDocument();
+      });
+    });
   });
 });

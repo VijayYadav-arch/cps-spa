@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   getInbox,
@@ -6,6 +6,8 @@ import {
   completeWorkItem,
   snoozeWorkItem,
   wakeWorkItem,
+  bulkWorkItem,
+  type BulkAction,
   type WorkQueueItem,
   type WorkQueueStats,
 } from '@/api/billing';
@@ -84,6 +86,64 @@ export function InboxPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [bulkSnoozeLabel, setBulkSnoozeLabel] = useState<string>('');
+
+  const selectableIds = useMemo(() => items.map((i) => i.id), [items]);
+  const allSelected = selected.size > 0 && selected.size === selectableIds.length;
+  const someSelected = selected.size > 0 && selected.size < selectableIds.length;
+
+  function toggleAll() {
+    setSelected(allSelected ? new Set() : new Set(selectableIds));
+  }
+
+  function toggleOne(id: number) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  async function runBulk(action: BulkAction, snoozeUntilUtc?: string) {
+    if (selected.size === 0) return;
+    setNotice(null);
+    setError(null);
+    try {
+      const ids = Array.from(selected);
+      const result = await bulkWorkItem(action, ids, snoozeUntilUtc);
+      const okCount = result.succeeded.length;
+      const failCount = result.failed.length;
+      setSelected(new Set());
+      setBulkSnoozeLabel('');
+      // Reload BEFORE composing the user-visible status so reload()'s
+      // setError(null) on success doesn't wipe the failure message we're
+      // about to set.
+      await reload();
+      if (failCount === 0) {
+        setNotice(`Bulk ${action}: ${okCount} item${okCount === 1 ? '' : 's'} processed`);
+      } else {
+        const firstErr = result.failed[0]?.error ?? 'unknown';
+        setNotice(`Bulk ${action}: ${okCount} succeeded`);
+        setError(`${failCount} item${failCount === 1 ? '' : 's'} failed (first: ${firstErr})`);
+      }
+    } catch (err: unknown) {
+      const msg =
+        typeof err === 'object' && err !== null && 'response' in err
+          ? (err as { response?: { data?: { error?: string } } }).response?.data?.error
+          : undefined;
+      setError(msg ?? `Bulk ${action} failed`);
+    }
+  }
+
+  function handleBulkSnooze(label: string) {
+    const opt = SNOOZE_OPTIONS.find((o) => o.label === label);
+    if (!opt) return;
+    const untilUtc = new Date(Date.now() + opt.deltaMs).toISOString();
+    setBulkSnoozeLabel(label);
+    void runBulk('snooze', untilUtc);
+  }
 
   async function reload(currentTab: 'mine' | 'all' = tab) {
     setLoading(true);
@@ -100,6 +160,7 @@ export function InboxPage() {
   }
 
   useEffect(() => {
+    setSelected(new Set());
     reload(tab);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
@@ -211,6 +272,60 @@ export function InboxPage() {
         </div>
       )}
 
+      {/* Bulk action toolbar — visible only with selection */}
+      {selected.size > 0 && (
+        <div
+          role="region"
+          aria-label="Bulk actions"
+          style={{
+            display: 'flex',
+            gap: 8,
+            alignItems: 'center',
+            padding: 12,
+            marginBottom: 12,
+            background: '#eff6ff',
+            border: '1px solid #93c5fd',
+            borderRadius: 6,
+          }}
+        >
+          <strong>{selected.size} selected</strong>
+          <button
+            type="button"
+            onClick={() => runBulk('claim')}
+            style={btnStyle('primary')}
+          >
+            Claim all
+          </button>
+          <button
+            type="button"
+            onClick={() => runBulk('complete')}
+            style={btnStyle('success')}
+          >
+            Complete all
+          </button>
+          <select
+            value={bulkSnoozeLabel}
+            onChange={(e) => {
+              if (e.target.value) handleBulkSnooze(e.target.value);
+            }}
+            style={{ padding: '4px 8px', border: '1px solid #cbd5e1', borderRadius: 4, fontSize: 12 }}
+            aria-label="Snooze all selected"
+          >
+            <option value="">Snooze all…</option>
+            {SNOOZE_OPTIONS.map((o) => (
+              <option key={o.label} value={o.label}>{o.label}</option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={() => setSelected(new Set())}
+            style={{ ...btnStyle('default'), marginLeft: 'auto' }}
+          >
+            Clear
+          </button>
+        </div>
+      )}
+
       {loading ? (
         <div style={{ color: '#64748b' }}>Loading…</div>
       ) : items.length === 0 ? (
@@ -221,6 +336,17 @@ export function InboxPage() {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
             <tr style={{ borderBottom: '1px solid #e2e8f0', color: '#64748b' }}>
+              <th style={{ textAlign: 'left', padding: '8px 6px', width: 24 }}>
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  ref={(el) => {
+                    if (el) el.indeterminate = someSelected;
+                  }}
+                  onChange={toggleAll}
+                  aria-label="Select all items"
+                />
+              </th>
               <th style={{ textAlign: 'left', padding: '8px 6px' }}>Priority</th>
               <th style={{ textAlign: 'left', padding: '8px 6px' }}>Type</th>
               <th style={{ textAlign: 'left', padding: '8px 6px' }}>Description</th>
@@ -235,7 +361,21 @@ export function InboxPage() {
               const overdue = isOverdue(item, now);
               const snoozed = item.snoozeUntilUtc && new Date(item.snoozeUntilUtc) > now;
               return (
-                <tr key={item.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                <tr
+                  key={item.id}
+                  style={{
+                    borderBottom: '1px solid #f1f5f9',
+                    background: selected.has(item.id) ? '#eff6ff' : undefined,
+                  }}
+                >
+                  <td style={{ padding: '8px 6px' }}>
+                    <input
+                      type="checkbox"
+                      checked={selected.has(item.id)}
+                      onChange={() => toggleOne(item.id)}
+                      aria-label={`Select item ${item.id}`}
+                    />
+                  </td>
                   <td style={{ padding: '8px 6px' }}>{priorityBadge(item.priority)}</td>
                   <td style={{ padding: '8px 6px' }}>{typeChip(item.type)}</td>
                   <td style={{ padding: '8px 6px' }}>{item.description}</td>
