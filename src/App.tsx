@@ -33,6 +33,7 @@ import { BreachWorkflowPage } from '@/pages/Compliance/BreachWorkflowPage';
 import { OrgRollupPage } from '@/pages/Admin/OrgRollupPage';
 import { BranchesPage } from '@/pages/Admin/BranchesPage';
 import { PortalPaymentPage } from '@/pages/Portal/PortalPaymentPage';
+import { AnalyticsDashboardPage } from '@/pages/Analytics/AnalyticsDashboardPage';
 
 export default function App() {
   return (
@@ -95,6 +96,7 @@ export default function App() {
               path="hospice/claims/:claimId/submissions"
               element={<HospiceClaimSubmissionsPage />}
             />
+            <Route path="analytics" element={<AnalyticsDashboardPage />} />
             <Route path="time" element={<PaidTimeDashboard />} />
             <Route path="me/time" element={<MyTimeDashboard />} />
             <Route

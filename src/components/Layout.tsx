@@ -20,6 +20,7 @@ const navItems: NavEntry[] = [
   { kind: 'leaf', to: '/', label: 'Dashboard', exact: true },
   { kind: 'leaf', to: '/claims', label: 'Claims' },
   { kind: 'leaf', to: '/patients', label: 'Patients' },
+  { kind: 'leaf', to: '/analytics', label: 'Analytics' },
   {
     kind: 'group',
     label: 'Billing',
