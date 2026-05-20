@@ -10,6 +10,7 @@ vi.mock('@/api/billing', () => ({
   listExpiringPriorAuths: vi.fn(),
   submitPriorAuth: vi.fn(),
   recordPriorAuthDecision: vi.fn(),
+  refreshPriorAuthStatusNow: vi.fn(),
 }));
 
 import {
@@ -49,6 +50,7 @@ function pa(over: Partial<PriorAuth> = {}): PriorAuth {
     submittedAtUtc: '2026-05-19T12:00:00Z',
     decidedAtUtc: null,
     submittedByEmail: 'intake@x',
+    lastStatusCheckedAtUtc: null,
     ...over,
   };
 }

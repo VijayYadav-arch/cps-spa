@@ -668,6 +668,7 @@ export interface PriorAuth {
   submittedAtUtc: string | null;
   decidedAtUtc: string | null;
   submittedByEmail: string | null;
+  lastStatusCheckedAtUtc: string | null;
 }
 
 export const submitPriorAuth = (req: SubmitPriorAuthRequest): Promise<PriorAuth> =>
@@ -696,6 +697,17 @@ export const recordPriorAuthDecision = (
   id: number, req: UpdatePriorAuthDecisionRequest,
 ): Promise<PriorAuth> =>
   apiClient.post<PriorAuth>(`/billing/prior-auth/${id}/decision`, req).then((r) => r.data);
+
+/**
+ * Triggers an on-demand status poll for all pending prior auths in the
+ * caller's tenant. Production polling happens every 15 minutes via the
+ * hosted background service — this endpoint lets staff force a check
+ * without waiting (useful right after a submission or for dev).
+ */
+export const refreshPriorAuthStatusNow = (): Promise<void> =>
+  apiClient
+    .post<void>('/billing/prior-auth/refresh-status')
+    .then(() => undefined);
 
 // ─── Charge entry ─────────────────────────────────────────────────
 

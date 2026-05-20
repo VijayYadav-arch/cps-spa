@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   listExpiringPriorAuths,
   listPriorAuths,
   recordPriorAuthDecision,
+  refreshPriorAuthStatusNow,
   submitPriorAuth,
   type PriorAuth,
   type PriorAuthStatus,
@@ -74,6 +76,7 @@ const EMPTY_FORM: SubmitPriorAuthRequest = {
 };
 
 export function PriorAuthPage() {
+  const navigate = useNavigate();
   const [items, setItems] = useState<PriorAuth[]>([]);
   const [expiring, setExpiring] = useState<PriorAuth[]>([]);
   const [statusFilter, setStatusFilter] = useState<PriorAuthStatus | 'all'>('all');
@@ -81,6 +84,7 @@ export function PriorAuthPage() {
   const [form, setForm] = useState<SubmitPriorAuthRequest>(EMPTY_FORM);
   const [diagnosesInput, setDiagnosesInput] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionMsg, setActionMsg] = useState<string | null>(null);
@@ -184,9 +188,27 @@ export function PriorAuthPage() {
             when within 30 days of expiration.
           </p>
         </div>
-        <button type="button" onClick={() => setShowForm((s) => !s)}>
-          {showForm ? 'Cancel' : '+ New Inquiry'}
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            type="button"
+            onClick={async () => {
+              setRefreshing(true);
+              try {
+                await refreshPriorAuthStatusNow();
+                await refresh();
+              } finally {
+                setRefreshing(false);
+              }
+            }}
+            disabled={refreshing}
+            aria-busy={refreshing}
+          >
+            {refreshing ? 'Refreshing…' : 'Refresh pending'}
+          </button>
+          <button type="button" onClick={() => setShowForm((s) => !s)}>
+            {showForm ? 'Cancel' : '+ New Inquiry'}
+          </button>
+        </div>
       </header>
 
       {error && <div role="alert" style={{ color: '#b91c1c' }}>{error}</div>}
@@ -385,6 +407,13 @@ export function PriorAuthPage() {
                   {a.authNumber ?? '—'}
                 </td>
                 <td style={{ padding: '6px 10px', display: 'flex', gap: 4 }}>
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/billing/prior-auth/${a.id}`)}
+                    style={{ fontSize: 12 }}
+                  >
+                    View
+                  </button>
                   {a.status === 'pending' && (
                     <>
                       <button type="button" onClick={() => void handleApprove(a)} style={{ fontSize: 12 }}>
