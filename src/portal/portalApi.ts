@@ -24,6 +24,13 @@ export interface PortalSummary {
   nextAppointment: string | null;
 }
 
+export interface StatementLineSnapshot {
+  claimId: number | null;
+  serviceDate: string;
+  description: string;
+  balance: number;
+}
+
 export interface PortalStatement {
   id: number;
   patientId: number;
@@ -32,7 +39,29 @@ export interface PortalStatement {
   dueDate: string;
   patientBalance: number;
   amountPaid: number;
+  balanceRemaining: number;
   dunningCycle: number;
+  paidAt: string | null;
+  lineItems: StatementLineSnapshot[];
+}
+
+export interface PortalPaymentRequest {
+  amount: number;
+  method: 'card' | 'ach' | 'demo';
+  cardNumber?: string;
+  nameOnCard?: string;
+}
+
+export interface PortalPaymentResult {
+  paymentId: number;
+  statementRunId: number;
+  confirmationNumber: string;
+  amount: number;
+  method: string;
+  last4: string | null;
+  newStatus: string;
+  newBalanceRemaining: number;
+  paidAtUtc: string;
 }
 
 export interface PortalDocument {
@@ -70,4 +99,16 @@ export async function portalStatement(patientId: number, runId: number): Promise
 export async function portalDocuments(patientId: number): Promise<PortalDocument[]> {
   const r = await portalClient.get<{ data: PortalDocument[] }>(`/patients/${patientId}/documents`);
   return r.data.data ?? [];
+}
+
+export async function portalPayStatement(
+  patientId: number,
+  runId: number,
+  req: PortalPaymentRequest,
+): Promise<PortalPaymentResult> {
+  const r = await portalClient.post<PortalPaymentResult>(
+    `/patients/${patientId}/statements/${runId}/pay`,
+    req,
+  );
+  return r.data;
 }
