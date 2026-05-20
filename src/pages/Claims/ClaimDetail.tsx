@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getClaim, submitClaim, type ClaimDetail as ClaimDetailType } from '@/api/claims';
+import { downloadClaimPdf, getClaim, submitClaim, type ClaimDetail as ClaimDetailType } from '@/api/claims';
 
 export function ClaimDetail() {
   const { id } = useParams<{ id: string }>();
@@ -9,6 +9,7 @@ export function ClaimDetail() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
 
   useEffect(() => {
     if (!id) {
@@ -34,6 +35,26 @@ export function ClaimDetail() {
       setError('Failed to submit claim.');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handlePrint = async () => {
+    if (!claim) return;
+    setIsPrinting(true);
+    try {
+      const blob = await downloadClaimPdf(claim.id);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `claim-${claim.id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      setError('Failed to download claim PDF.');
+    } finally {
+      setIsPrinting(false);
     }
   };
 
@@ -79,16 +100,26 @@ export function ClaimDetail() {
           </table>
         </div>
       )}
-      {claim.status !== 'submitted' && claim.status !== 'paid' && (
+      <div style={{ display: 'flex', gap: 10 }}>
+        {claim.status !== 'submitted' && claim.status !== 'paid' && (
+          <button
+            onClick={() => { void handleSubmit(); }}
+            disabled={isSubmitting}
+            aria-busy={isSubmitting}
+            style={{ padding: '10px 24px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 4, fontWeight: 600, cursor: isSubmitting ? 'not-allowed' : 'pointer' }}
+          >
+            {isSubmitting ? 'Submitting…' : 'Submit Claim'}
+          </button>
+        )}
         <button
-          onClick={() => { void handleSubmit(); }}
-          disabled={isSubmitting}
-          aria-busy={isSubmitting}
-          style={{ padding: '10px 24px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 4, fontWeight: 600, cursor: isSubmitting ? 'not-allowed' : 'pointer' }}
+          onClick={() => { void handlePrint(); }}
+          disabled={isPrinting}
+          aria-busy={isPrinting}
+          style={{ padding: '10px 24px', background: '#0ea5e9', color: '#fff', border: 'none', borderRadius: 4, fontWeight: 600, cursor: isPrinting ? 'not-allowed' : 'pointer' }}
         >
-          {isSubmitting ? 'Submitting…' : 'Submit Claim'}
+          {isPrinting ? 'Generating…' : 'Print Claim Form'}
         </button>
-      )}
+      </div>
     </div>
   );
 }
