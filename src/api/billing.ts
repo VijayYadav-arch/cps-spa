@@ -170,6 +170,25 @@ export const deleteSavedFilter = (id: number): Promise<void> =>
     .delete(`/billing/inbox/saved-filters/${id}`)
     .then(() => undefined);
 
+export interface EnqueueWorkItemRequest {
+  type: string;
+  description: string;
+  priority: 'critical' | 'high' | 'medium' | 'low';
+  claimId?: number | null;
+  patientId?: number | null;
+  dueDate?: string | null;
+}
+
+export const enqueueWorkItem = (req: EnqueueWorkItemRequest): Promise<WorkQueueItem> =>
+  apiClient
+    .post<{ data: WorkQueueItem } | WorkQueueItem>('/billing/work-queue', req)
+    .then((r) => {
+      // Backend returns CreatedAtAction with the item directly in some shapes
+      // and {data:item} in others — handle both.
+      const body = r.data as { data?: WorkQueueItem } & WorkQueueItem;
+      return body.data ?? (r.data as WorkQueueItem);
+    });
+
 export const getDenials = (params?: { status?: string; page?: number; pageSize?: number; }): Promise<{ data: DenialItem[]; pagination: PaginationMeta }> =>
   apiClient.get<{ data: DenialItem[]; pagination: PaginationMeta }>('/billing/denials', { params }).then((r) => r.data);
 

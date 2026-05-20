@@ -18,6 +18,7 @@ vi.mock('@/api/billing', () => ({
   getSavedFilters: vi.fn().mockResolvedValue([]),
   createSavedFilter: vi.fn(),
   deleteSavedFilter: vi.fn(),
+  enqueueWorkItem: vi.fn(),
 }));
 
 import {
