@@ -374,3 +374,97 @@ export const listRecentEligibility = (
   apiClient
     .get<{ data: EligibilityCheck[] }>('/billing/eligibility/recent', { params: { limit } })
     .then((r) => r.data);
+
+// ─── Prior Authorization (X12 278) ───────────────────────────────────────
+
+export type PriorAuthStatus =
+  | 'pending'
+  | 'approved'
+  | 'denied'
+  | 'expired'
+  | 'cancelled';
+
+export interface SubmitPriorAuthRequest {
+  patientId: number;
+  encounterId: number | null;
+  payerId: string;
+  memberId: string;
+  memberFirstName: string;
+  memberLastName: string;
+  memberDob: string;
+  providerNpi: string;
+  providerOrganizationName: string;
+  serviceTypeCode: string;
+  fromDate: string;
+  toDate: string;
+  requestedUnits: number | null;
+  diagnosisCodes: string[] | null;
+  clearinghouse: string | null;
+}
+
+export interface UpdatePriorAuthDecisionRequest {
+  status: PriorAuthStatus;
+  authNumber: string | null;
+  approvedUnits: number | null;
+  authEffectiveDate: string | null;
+  authExpirationDate: string | null;
+  denialReason: string | null;
+}
+
+export interface PriorAuth {
+  id: number;
+  patientId: number;
+  encounterId: number | null;
+  payerId: string;
+  payerName: string;
+  memberId: string;
+  memberFirstName: string;
+  memberLastName: string;
+  memberDob: string;
+  providerNpi: string;
+  providerOrganizationName: string;
+  serviceTypeCode: string | null;
+  fromDate: string | null;
+  toDate: string | null;
+  requestedUnits: number | null;
+  diagnosisCodes: string[];
+  status: PriorAuthStatus;
+  referenceId: string | null;
+  authNumber: string | null;
+  approvedUnits: number | null;
+  authEffectiveDate: string | null;
+  authExpirationDate: string | null;
+  denialReason: string | null;
+  errorMessage: string | null;
+  clearinghouse: string | null;
+  submittedAtUtc: string | null;
+  decidedAtUtc: string | null;
+  submittedByEmail: string | null;
+}
+
+export const submitPriorAuth = (req: SubmitPriorAuthRequest): Promise<PriorAuth> =>
+  apiClient.post<PriorAuth>('/billing/prior-auth/submit', req).then((r) => r.data);
+
+export const listPriorAuths = (
+  status?: PriorAuthStatus,
+): Promise<{ data: PriorAuth[] }> =>
+  apiClient
+    .get<{ data: PriorAuth[] }>('/billing/prior-auth', {
+      params: status ? { status } : undefined,
+    })
+    .then((r) => r.data);
+
+export const getPriorAuth = (id: number): Promise<PriorAuth> =>
+  apiClient.get<PriorAuth>(`/billing/prior-auth/${id}`).then((r) => r.data);
+
+export const listExpiringPriorAuths = (
+  days: number,
+): Promise<{ data: PriorAuth[] }> =>
+  apiClient
+    .get<{ data: PriorAuth[] }>('/billing/prior-auth/expiring', { params: { days } })
+    .then((r) => r.data);
+
+export const recordPriorAuthDecision = (
+  id: number, req: UpdatePriorAuthDecisionRequest,
+): Promise<PriorAuth> =>
+  apiClient.post<PriorAuth>(`/billing/prior-auth/${id}/decision`, req).then((r) => r.data);
