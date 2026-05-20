@@ -116,6 +116,22 @@ export const assignWorkItem = (id: number, userId: number): Promise<void> =>
     .post(`/billing/work-queue/${id}/assign`, { userId })
     .then(() => undefined);
 
+export interface WorkQueueItemEvent {
+  id: number;
+  workQueueItemId: number;
+  eventType: 'created' | 'claimed' | 'assigned' | 'snoozed' | 'woken'
+           | 'completed' | 'deferred' | 'priority-changed';
+  actorUserId: number;
+  actorEmail: string;
+  description: string;
+  occurredAtUtc: string;
+}
+
+export const getWorkItemEvents = (id: number): Promise<WorkQueueItemEvent[]> =>
+  apiClient
+    .get<{ data: WorkQueueItemEvent[] }>(`/billing/work-queue/${id}/events`)
+    .then((r) => r.data.data ?? []);
+
 export const getDenials = (params?: { status?: string; page?: number; pageSize?: number; }): Promise<{ data: DenialItem[]; pagination: PaginationMeta }> =>
   apiClient.get<{ data: DenialItem[]; pagination: PaginationMeta }>('/billing/denials', { params }).then((r) => r.data);
 

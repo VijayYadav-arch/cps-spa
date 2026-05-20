@@ -14,6 +14,7 @@ import {
   type WorkQueueItem,
   type WorkQueueStats,
 } from '@/api/billing';
+import { InboxItemDrawer } from '@/pages/Inbox/InboxItemDrawer';
 
 function formatUserName(u: AssignableUser): string {
   const full = `${u.firstName} ${u.lastName}`.trim();
@@ -98,6 +99,7 @@ export function InboxPage() {
   const [bulkSnoozeLabel, setBulkSnoozeLabel] = useState<string>('');
   const [bulkAssignUserId, setBulkAssignUserId] = useState<string>('');
   const [assignableUsers, setAssignableUsers] = useState<AssignableUser[]>([]);
+  const [drawerItem, setDrawerItem] = useState<WorkQueueItem | null>(null);
 
   // Load the picker list once. Fail silently — the row Assign… dropdowns
   // become harmless empty selects if the user lacks the permission.
@@ -439,7 +441,21 @@ export function InboxPage() {
                   </td>
                   <td style={{ padding: '8px 6px' }}>{priorityBadge(item.priority)}</td>
                   <td style={{ padding: '8px 6px' }}>{typeChip(item.type)}</td>
-                  <td style={{ padding: '8px 6px' }}>{item.description}</td>
+                  <td style={{ padding: '8px 6px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setDrawerItem(item)}
+                      style={{
+                        background: 'transparent', border: 'none', padding: 0,
+                        cursor: 'pointer', color: '#0f172a', textAlign: 'left',
+                        textDecoration: 'underline', textDecorationColor: '#cbd5e1',
+                        textUnderlineOffset: 3, font: 'inherit',
+                      }}
+                      aria-label={`Open details for item ${item.id}`}
+                    >
+                      {item.description}
+                    </button>
+                  </td>
                   <td style={{ padding: '8px 6px', fontSize: 12 }}>
                     {item.claimId && (
                       <Link to={`/claims/${item.claimId}`} style={{ color: '#0ea5e9', marginRight: 8 }}>
@@ -540,6 +556,10 @@ export function InboxPage() {
             })}
           </tbody>
         </table>
+      )}
+
+      {drawerItem && (
+        <InboxItemDrawer item={drawerItem} onClose={() => setDrawerItem(null)} />
       )}
     </div>
   );

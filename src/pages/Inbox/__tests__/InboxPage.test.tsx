@@ -14,6 +14,7 @@ vi.mock('@/api/billing', () => ({
   bulkWorkItem: vi.fn(),
   getAssignableUsers: vi.fn().mockResolvedValue([]),
   assignWorkItem: vi.fn(),
+  getWorkItemEvents: vi.fn().mockResolvedValue([]),
 }));
 
 import {
@@ -403,5 +404,20 @@ describe('InboxPage', () => {
       // No assign dropdowns — the picker just stays empty
       expect(screen.queryByLabelText(/Assign item 1 to/i)).not.toBeInTheDocument();
     });
+  });
+
+  it('opens the activity drawer when the description is clicked', async () => {
+    const user = userEvent.setup();
+    vi.mocked(getInbox).mockResolvedValueOnce({
+      data: [item({ id: 7 })],
+      stats: { total: 1, pending: 1, inProgress: 0, critical: 0, overdue: 0 },
+    });
+    renderPage();
+    await screen.findByText(/Review denial/i);
+
+    await user.click(screen.getByLabelText(/Open details for item 7/i));
+
+    // The drawer mounts a dialog with the item id in its label
+    expect(await screen.findByRole('dialog', { name: /Work item #7/i })).toBeInTheDocument();
   });
 });
