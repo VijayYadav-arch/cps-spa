@@ -1,6 +1,7 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/auth/useAuth';
 import { InboxBadge } from '@/components/InboxBadge';
+import { NotificationToasts } from '@/components/NotificationToasts';
 
 interface NavLeaf {
   kind: 'leaf';
@@ -186,6 +187,10 @@ export function Layout() {
       <main style={{ flex: 1, padding: 32, background: '#f8fafc', overflow: 'auto' }}>
         <Outlet />
       </main>
+
+      {/* Inbox notification toasts — mounted once at the layout level so
+          they survive route changes; component handles its own polling. */}
+      <NotificationToasts />
     </div>
   );
 }
