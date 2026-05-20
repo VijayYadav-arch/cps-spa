@@ -34,6 +34,7 @@ import { OrgRollupPage } from '@/pages/Admin/OrgRollupPage';
 import { BranchesPage } from '@/pages/Admin/BranchesPage';
 import { PortalPaymentPage } from '@/pages/Portal/PortalPaymentPage';
 import { AnalyticsDashboardPage } from '@/pages/Analytics/AnalyticsDashboardPage';
+import { InboxPage } from '@/pages/Inbox/InboxPage';
 import { PortalAuthProvider } from '@/portal/PortalAuthContext';
 import { PortalProtectedRoute } from '@/portal/PortalProtectedRoute';
 import { PortalLayout } from '@/portal/PortalLayout';
@@ -113,6 +114,7 @@ export default function App() {
               path="hospice/claims/:claimId/submissions"
               element={<HospiceClaimSubmissionsPage />}
             />
+            <Route path="inbox" element={<InboxPage />} />
             <Route path="analytics" element={<AnalyticsDashboardPage />} />
             <Route path="time" element={<PaidTimeDashboard />} />
             <Route path="me/time" element={<MyTimeDashboard />} />
