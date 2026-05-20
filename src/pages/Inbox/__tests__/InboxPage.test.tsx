@@ -19,6 +19,10 @@ vi.mock('@/api/billing', () => ({
   createSavedFilter: vi.fn(),
   deleteSavedFilter: vi.fn(),
   enqueueWorkItem: vi.fn(),
+  getWorkItemTiming: vi.fn().mockResolvedValue({
+    itemId: 0, createdAtUtc: '', firstClaimedAtUtc: null,
+    completedAtUtc: null, timeToClaim: null, timeToComplete: null,
+  }),
 }));
 
 import {

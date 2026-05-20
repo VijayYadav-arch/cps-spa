@@ -13,6 +13,11 @@ import {
   type DenialAnalysis,
   type StatementCollectionStats,
 } from '@/api/analytics';
+import {
+  getInboxAggregateTiming,
+  formatDuration,
+  type InboxAggregateTiming,
+} from '@/api/billing';
 
 function money(n: number): string {
   return n.toLocaleString(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
@@ -71,6 +76,7 @@ export function AnalyticsDashboardPage() {
   const [aging, setAging] = useState<AgingSnapshot | null>(null);
   const [denials, setDenials] = useState<DenialAnalysis | null>(null);
   const [statements, setStatements] = useState<StatementCollectionStats | null>(null);
+  const [opsTiming, setOpsTiming] = useState<InboxAggregateTiming | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -84,8 +90,11 @@ export function AnalyticsDashboardPage() {
       getArAging(),
       getDenialAnalysis(),
       getStatementCollection(),
+      // Inbox aggregate is best-effort — a user without billing:queue
+      // can still see the rest of the dashboard.
+      getInboxAggregateTiming().catch(() => null),
     ])
-      .then(([s, r, p, a, d, st]) => {
+      .then(([s, r, p, a, d, st, ops]) => {
         if (cancelled) return;
         setSummary(s);
         setRevenue(r);
@@ -93,6 +102,7 @@ export function AnalyticsDashboardPage() {
         setAging(a);
         setDenials(d);
         setStatements(st);
+        setOpsTiming(ops);
         setError(null);
       })
       .catch((e: unknown) => {
@@ -282,6 +292,22 @@ export function AnalyticsDashboardPage() {
               statements.collectionRatePct >= 70 ? '#16a34a' : '#f59e0b',
             )}
             {metricCard('Avg days to pay', `${statements.avgDaysToPay.toFixed(1)} d`)}
+          </div>
+        </section>
+      )}
+
+      {/* Operations efficiency (inbox timing, 30d) */}
+      {opsTiming && (
+        <section style={{ marginTop: 24 }}>
+          <h2 style={{ marginBottom: 12, fontSize: 16 }}>Operations efficiency (30 days)</h2>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            {metricCard('Items completed', opsTiming.completedCount.toString())}
+            {metricCard('Avg time to claim', formatDuration(opsTiming.averageTimeToClaim))}
+            {metricCard(
+              'Avg time to complete',
+              formatDuration(opsTiming.averageTimeToComplete),
+              '#16a34a',
+            )}
           </div>
         </section>
       )}

@@ -189,6 +189,63 @@ export const enqueueWorkItem = (req: EnqueueWorkItemRequest): Promise<WorkQueueI
       return body.data ?? (r.data as WorkQueueItem);
     });
 
+export interface WorkItemTiming {
+  itemId: number;
+  createdAtUtc: string;
+  firstClaimedAtUtc: string | null;
+  completedAtUtc: string | null;
+  /** TimeSpan serialized as "d.hh:mm:ss" by .NET, or null. */
+  timeToClaim: string | null;
+  timeToComplete: string | null;
+}
+
+export const getWorkItemTiming = (id: number): Promise<WorkItemTiming> =>
+  apiClient
+    .get<{ data: WorkItemTiming }>(`/billing/work-queue/${id}/timing`)
+    .then((r) => r.data.data);
+
+export interface InboxAggregateTiming {
+  from: string;
+  to: string;
+  completedCount: number;
+  averageTimeToClaim: string | null;
+  averageTimeToComplete: string | null;
+}
+
+export const getInboxAggregateTiming = (
+  from?: string, to?: string,
+): Promise<InboxAggregateTiming> =>
+  apiClient
+    .get<{ data: InboxAggregateTiming }>('/billing/work-queue/timing/aggregate',
+      { params: { from, to } })
+    .then((r) => r.data.data);
+
+/**
+ * Format a .NET TimeSpan ("d.hh:mm:ss" or "hh:mm:ss") as a humane duration.
+ * The backend serializes TimeSpan into a leading-zero-padded format we need
+ * to parse client-side because the SPA never needs sub-minute precision.
+ */
+export function formatDuration(timespan: string | null): string {
+  if (!timespan) return '—';
+  // Split on '.' to peel off optional days
+  let days = 0;
+  let rest = timespan;
+  const dotIdx = timespan.indexOf('.');
+  if (dotIdx > 0 && dotIdx < 4) {  // leading-d form: "1.02:03:04"
+    days = parseInt(timespan.substring(0, dotIdx), 10) || 0;
+    rest = timespan.substring(dotIdx + 1);
+  }
+  // rest is "hh:mm:ss" or "hh:mm:ss.ffffff"
+  const colonParts = rest.split(':');
+  const hours = parseInt(colonParts[0], 10) || 0;
+  const minutes = parseInt(colonParts[1], 10) || 0;
+
+  if (days > 0) return `${days}d ${hours}h ${minutes}m`;
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  if (minutes > 0) return `${minutes}m`;
+  return '< 1m';
+}
+
 export const getDenials = (params?: { status?: string; page?: number; pageSize?: number; }): Promise<{ data: DenialItem[]; pagination: PaginationMeta }> =>
   apiClient.get<{ data: DenialItem[]; pagination: PaginationMeta }>('/billing/denials', { params }).then((r) => r.data);
 
