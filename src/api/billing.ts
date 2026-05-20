@@ -246,6 +246,36 @@ export function formatDuration(timespan: string | null): string {
   return '< 1m';
 }
 
+// ─── Inbox notifications ─────────────────────────────────────────────
+
+export interface InboxNotification {
+  itemId: number;
+  itemType: string;
+  priority: string;
+  description: string;
+  claimId: number | null;
+  patientId: number | null;
+  eventType: 'assigned';
+  actorEmail: string;
+  occurredAtUtc: string;
+}
+
+export interface InboxNotificationsResponse {
+  notifications: InboxNotification[];
+  serverNowUtc: string;
+  lastSeenAtUtc: string;
+}
+
+export const pollInboxNotifications = (): Promise<InboxNotificationsResponse> =>
+  apiClient
+    .get<InboxNotificationsResponse>('/billing/inbox/notifications')
+    .then((r) => r.data);
+
+export const acknowledgeInboxNotifications = (upToUtc: string): Promise<void> =>
+  apiClient
+    .post('/billing/inbox/notifications/ack', { upToUtc })
+    .then(() => undefined);
+
 export const getDenials = (params?: { status?: string; page?: number; pageSize?: number; }): Promise<{ data: DenialItem[]; pagination: PaginationMeta }> =>
   apiClient.get<{ data: DenialItem[]; pagination: PaginationMeta }>('/billing/denials', { params }).then((r) => r.data);
 
