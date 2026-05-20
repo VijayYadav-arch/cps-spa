@@ -849,3 +849,45 @@ export const attachChargesToClaim = (
   apiClient
     .post('/billing/charges/attach-to-claim', { chargeIds, claimId })
     .then(() => undefined);
+
+// ─── ERA postings (835 remittances) ──────────────────────────────────
+
+export interface EraPostingRow {
+  id: number;
+  checkNumber: string;
+  checkDate: string;
+  payerName: string;
+  paymentAmount: number;
+  matchedClaims: number;
+  unmatchedClaims: number;
+  status: string;
+  postedAt: string;
+}
+
+export const listEraPostings = (
+  params: { page?: number; pageSize?: number } = {},
+): Promise<{ data: EraPostingRow[]; total: number }> =>
+  apiClient
+    .get<{ data: EraPostingRow[]; total: number }>('/billing/era', { params })
+    .then((r) => r.data);
+
+export const getEraPosting = (id: number): Promise<EraPostingRow> =>
+  apiClient
+    .get<{ data: EraPostingRow }>(`/billing/era/${id}`)
+    .then((r) => r.data.data);
+
+/**
+ * Manually ingest a raw 835 (paste-and-submit) — covers the case where
+ * a payer sent a remittance file out-of-band that the automated
+ * EraPostingLogic poller hasn't picked up. The orchestrator will parse,
+ * match claims, and create the EraPosting row.
+ */
+export const postEra = (req: {
+  raw835?: string | null;
+  submissionId?: number | null;
+}): Promise<{ data: { eraPostingId: number; matched: number; unmatched: number } }> =>
+  apiClient
+    .post<{ data: { eraPostingId: number; matched: number; unmatched: number } }>(
+      '/billing/era', req,
+    )
+    .then((r) => r.data);
