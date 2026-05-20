@@ -1,5 +1,6 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/auth/useAuth';
+import { InboxBadge } from '@/components/InboxBadge';
 
 interface NavLeaf {
   kind: 'leaf';
@@ -122,7 +123,10 @@ export function Layout() {
                   end={entry.exact}
                   style={(s) => leafStyle(s)}
                 >
-                  {entry.label}
+                  <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                    {entry.label}
+                    {entry.to === '/inbox' && <InboxBadge />}
+                  </span>
                 </NavLink>
               </li>
             ) : (
