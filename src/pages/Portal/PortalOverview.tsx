@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { usePortalAuth } from '@/portal/PortalAuthContext';
-import { portalStatements, type PortalStatement } from '@/portal/portalApi';
+import {
+  portalStatements,
+  portalPayments,
+  type PortalStatement,
+  type PortalPaymentHistoryItem,
+} from '@/portal/portalApi';
 
 function money(n: number): string {
   return n.toLocaleString(undefined, { style: 'currency', currency: 'USD' });
@@ -10,15 +15,19 @@ function money(n: number): string {
 export function PortalOverview() {
   const { me } = usePortalAuth();
   const [statements, setStatements] = useState<PortalStatement[]>([]);
+  const [payments, setPayments] = useState<PortalPaymentHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!me) return;
-    portalStatements(me.patientId)
-      .then(setStatements)
+    Promise.all([portalStatements(me.patientId), portalPayments(me.patientId)])
+      .then(([s, p]) => {
+        setStatements(s);
+        setPayments(p);
+      })
       .catch((e: unknown) => {
-        setError(e instanceof Error ? e.message : 'Failed to load statements');
+        setError(e instanceof Error ? e.message : 'Failed to load overview');
       })
       .finally(() => setLoading(false));
   }, [me]);
@@ -75,6 +84,27 @@ export function PortalOverview() {
           >
             <div style={{ color: '#64748b', fontSize: 13 }}>Total statements</div>
             <div style={{ fontSize: 28, fontWeight: 700, marginTop: 6 }}>{statements.length}</div>
+          </div>
+          <div
+            style={{
+              padding: 24,
+              border: '1px solid #e2e8f0',
+              borderRadius: 8,
+              minWidth: 220,
+            }}
+          >
+            <div style={{ color: '#64748b', fontSize: 13 }}>Lifetime payments</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: '#16a34a', marginTop: 6 }}>
+              {money(payments.reduce((sum, p) => sum + p.amount, 0))}
+            </div>
+            {payments.length > 0 && (
+              <Link
+                to="/portal/payments"
+                style={{ marginTop: 12, display: 'inline-block', color: '#0ea5e9' }}
+              >
+                View payment history →
+              </Link>
+            )}
           </div>
         </div>
       )}
