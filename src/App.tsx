@@ -34,6 +34,11 @@ import { OrgRollupPage } from '@/pages/Admin/OrgRollupPage';
 import { BranchesPage } from '@/pages/Admin/BranchesPage';
 import { PortalPaymentPage } from '@/pages/Portal/PortalPaymentPage';
 import { AnalyticsDashboardPage } from '@/pages/Analytics/AnalyticsDashboardPage';
+import { PortalAuthProvider } from '@/portal/PortalAuthContext';
+import { PortalProtectedRoute } from '@/portal/PortalProtectedRoute';
+import { PortalLayout } from '@/portal/PortalLayout';
+import { PortalLogin } from '@/pages/Portal/PortalLogin';
+import { PortalOverview } from '@/pages/Portal/PortalOverview';
 
 export default function App() {
   return (
@@ -42,6 +47,14 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/portal/pay/:runId" element={<PortalPaymentPage />} />
+          <Route
+            path="/portal/*"
+            element={
+              <PortalAuthProvider>
+                <PortalRoutes />
+              </PortalAuthProvider>
+            }
+          />
           <Route
             path="/*"
             element={
@@ -118,5 +131,23 @@ export default function App() {
         </Routes>
       </BrowserRouter>
     </AuthProvider>
+  );
+}
+
+function PortalRoutes() {
+  return (
+    <Routes>
+      <Route path="login" element={<PortalLogin />} />
+      <Route
+        path="*"
+        element={
+          <PortalProtectedRoute>
+            <PortalLayout />
+          </PortalProtectedRoute>
+        }
+      >
+        <Route index element={<PortalOverview />} />
+      </Route>
+    </Routes>
   );
 }
