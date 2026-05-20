@@ -65,3 +65,14 @@ export const deleteServiceLine = (claimId: number, lineId: number): Promise<void
   apiClient
     .delete<void>(`/claims/${claimId}/service-lines/${lineId}`)
     .then(() => undefined);
+
+/**
+ * Download the CMS-1500 / UB-04 preview PDF for a claim. ClaimType on the
+ * server decides the layout; the response is application/pdf bytes.
+ */
+export const downloadClaimPdf = async (claimId: number): Promise<Blob> => {
+  const res = await apiClient.get<Blob>(`/billing/claims/${claimId}/print`, {
+    responseType: 'blob',
+  });
+  return res.data;
+};
