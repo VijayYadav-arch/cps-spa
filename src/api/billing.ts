@@ -67,6 +67,27 @@ export const snoozeWorkItem = (id: number, untilUtc: string): Promise<void> =>
 export const wakeWorkItem = (id: number): Promise<void> =>
   apiClient.post(`/billing/work-queue/${id}/wake`).then(() => undefined);
 
+export type BulkAction = 'complete' | 'claim' | 'snooze';
+
+export interface BulkActionFailure {
+  id: number;
+  error: string;
+}
+
+export interface BulkActionResult {
+  succeeded: number[];
+  failed: BulkActionFailure[];
+}
+
+export const bulkWorkItem = (
+  action: BulkAction,
+  itemIds: number[],
+  snoozeUntilUtc?: string,
+): Promise<BulkActionResult> =>
+  apiClient
+    .post<BulkActionResult>('/billing/work-queue/bulk', { action, itemIds, snoozeUntilUtc })
+    .then((r) => r.data);
+
 export const getDenials = (params?: { status?: string; page?: number; pageSize?: number; }): Promise<{ data: DenialItem[]; pagination: PaginationMeta }> =>
   apiClient.get<{ data: DenialItem[]; pagination: PaginationMeta }>('/billing/denials', { params }).then((r) => r.data);
 
