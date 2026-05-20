@@ -9,8 +9,13 @@ import {
   bulkWorkItem,
   getAssignableUsers,
   assignWorkItem,
+  getSavedFilters,
+  createSavedFilter,
+  deleteSavedFilter,
   type AssignableUser,
   type BulkAction,
+  type InboxFilterSpec,
+  type InboxSavedFilter,
   type WorkQueueItem,
   type WorkQueueStats,
 } from '@/api/billing';
@@ -100,6 +105,65 @@ export function InboxPage() {
   const [bulkAssignUserId, setBulkAssignUserId] = useState<string>('');
   const [assignableUsers, setAssignableUsers] = useState<AssignableUser[]>([]);
   const [drawerItem, setDrawerItem] = useState<WorkQueueItem | null>(null);
+  const [savedFilters, setSavedFilters] = useState<InboxSavedFilter[]>([]);
+  const [activeFilterId, setActiveFilterId] = useState<number | null>(null);
+  const [filter, setFilter] = useState<InboxFilterSpec>({});
+
+  // Load saved filters once; silent on failure (user may lack billing:queue
+  // in some scopes — chip strip just stays empty).
+  useEffect(() => {
+    let cancelled = false;
+    getSavedFilters()
+      .then((rows) => { if (!cancelled) setSavedFilters(rows); })
+      .catch(() => { /* leave empty */ });
+    return () => { cancelled = true; };
+  }, []);
+
+  function applyFilter(saved: InboxSavedFilter) {
+    setActiveFilterId(saved.id);
+    try {
+      const spec = JSON.parse(saved.filterJson) as InboxFilterSpec;
+      setFilter(spec);
+      if (spec.tab && spec.tab !== tab) setTab(spec.tab);
+    } catch {
+      setError(`Saved filter "${saved.name}" is corrupt`);
+    }
+  }
+
+  function clearFilter() {
+    setActiveFilterId(null);
+    setFilter({});
+  }
+
+  async function handleSaveCurrentFilter() {
+    const name = window.prompt('Name for this filter:');
+    if (!name || !name.trim()) return;
+    setError(null);
+    try {
+      const spec: InboxFilterSpec = { ...filter, tab };
+      const saved = await createSavedFilter(name.trim(), spec);
+      setSavedFilters((prev) => [...prev, saved]);
+      setActiveFilterId(saved.id);
+      setNotice(`Saved filter "${saved.name}"`);
+    } catch (err: unknown) {
+      const msg =
+        typeof err === 'object' && err !== null && 'response' in err
+          ? (err as { response?: { data?: { error?: string } } }).response?.data?.error
+          : undefined;
+      setError(msg ?? 'Could not save filter');
+    }
+  }
+
+  async function handleDeleteFilter(id: number) {
+    if (!confirm('Delete this saved filter?')) return;
+    try {
+      await deleteSavedFilter(id);
+      setSavedFilters((prev) => prev.filter((f) => f.id !== id));
+      if (activeFilterId === id) clearFilter();
+    } catch {
+      setError('Could not delete filter');
+    }
+  }
 
   // Load the picker list once. Fail silently — the row Assign… dropdowns
   // become harmless empty selects if the user lacks the permission.
@@ -111,7 +175,23 @@ export function InboxPage() {
     return () => { cancelled = true; };
   }, []);
 
-  const selectableIds = useMemo(() => items.map((i) => i.id), [items]);
+  // Client-side filtering applied to the already-loaded inbox set. The
+  // backend doesn't know about saved filters, so we slice locally.
+  const filteredItems = useMemo(() => {
+    const now = new Date();
+    return items.filter((i) => {
+      if (filter.priority && filter.priority.length > 0
+          && !filter.priority.includes(i.priority as 'critical' | 'high' | 'medium' | 'low'))
+        return false;
+      if (filter.type && filter.type.length > 0 && !filter.type.includes(i.type))
+        return false;
+      if (filter.overdueOnly && !isOverdue(i, now))
+        return false;
+      return true;
+    });
+  }, [items, filter]);
+
+  const selectableIds = useMemo(() => filteredItems.map((i) => i.id), [filteredItems]);
   const allSelected = selected.size > 0 && selected.size === selectableIds.length;
   const someSelected = selected.size > 0 && selected.size < selectableIds.length;
 
@@ -309,6 +389,102 @@ export function InboxPage() {
         ))}
       </div>
 
+      {/* Filter chips + saved-filter row */}
+      <div
+        role="region"
+        aria-label="Inbox filters"
+        style={{
+          display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center',
+          marginBottom: 16,
+        }}
+      >
+        {(['critical', 'high', 'medium', 'low'] as const).map((p) => {
+          const active = filter.priority?.includes(p) ?? false;
+          return (
+            <button
+              key={p}
+              type="button"
+              onClick={() => setFilter((prev) => ({
+                ...prev,
+                priority: active
+                  ? prev.priority?.filter((x) => x !== p)
+                  : [...(prev.priority ?? []), p],
+              }))}
+              style={chipStyle(active)}
+              aria-pressed={active}
+            >
+              {p}
+            </button>
+          );
+        })}
+        <button
+          type="button"
+          onClick={() => setFilter((prev) => ({ ...prev, overdueOnly: !prev.overdueOnly }))}
+          style={chipStyle(filter.overdueOnly ?? false, '#f59e0b')}
+          aria-pressed={filter.overdueOnly ?? false}
+        >
+          overdue
+        </button>
+
+        <span style={{ width: 1, height: 20, background: '#e2e8f0', margin: '0 4px' }} />
+
+        {savedFilters.map((sf) => {
+          const active = activeFilterId === sf.id;
+          return (
+            <span key={sf.id} style={{ display: 'inline-flex', gap: 2 }}>
+              <button
+                type="button"
+                onClick={() => applyFilter(sf)}
+                style={chipStyle(active, '#8b5cf6')}
+                aria-pressed={active}
+              >
+                {sf.name}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDeleteFilter(sf.id)}
+                style={{
+                  background: 'transparent', border: '1px solid #cbd5e1',
+                  borderRadius: 4, padding: '2px 6px', cursor: 'pointer',
+                  fontSize: 12, color: '#64748b',
+                }}
+                aria-label={`Delete saved filter ${sf.name}`}
+              >
+                ×
+              </button>
+            </span>
+          );
+        })}
+
+        <button
+          type="button"
+          onClick={handleSaveCurrentFilter}
+          style={{
+            background: 'transparent', border: '1px dashed #cbd5e1',
+            borderRadius: 4, padding: '4px 10px', cursor: 'pointer',
+            fontSize: 12, color: '#475569',
+          }}
+          disabled={
+            !(filter.priority?.length || filter.type?.length || filter.overdueOnly)
+          }
+        >
+          + Save current filter
+        </button>
+
+        {(filter.priority?.length || filter.overdueOnly || activeFilterId) ? (
+          <button
+            type="button"
+            onClick={clearFilter}
+            style={{
+              background: 'transparent', border: 'none', padding: '4px 8px',
+              cursor: 'pointer', color: '#64748b', fontSize: 12,
+            }}
+          >
+            Clear filters
+          </button>
+        ) : null}
+      </div>
+
       {notice && (
         <div role="status" style={{ marginBottom: 12, color: '#166534', background: '#dcfce7', padding: 10, borderRadius: 6 }}>
           {notice}
@@ -391,7 +567,7 @@ export function InboxPage() {
 
       {loading ? (
         <div style={{ color: '#64748b' }}>Loading…</div>
-      ) : items.length === 0 ? (
+      ) : filteredItems.length === 0 ? (
         <div style={{ color: '#64748b', padding: 24, textAlign: 'center', background: '#f8fafc', borderRadius: 8 }}>
           🎉 Inbox zero. Nothing assigned to you right now.
         </div>
@@ -420,7 +596,7 @@ export function InboxPage() {
             </tr>
           </thead>
           <tbody>
-            {items.map((item) => {
+            {filteredItems.map((item) => {
               const overdue = isOverdue(item, now);
               const snoozed = item.snoozeUntilUtc && new Date(item.snoozeUntilUtc) > now;
               return (
@@ -580,6 +756,19 @@ function statCard(label: string, value: number, color = '#0f172a') {
       <div style={{ fontSize: 22, fontWeight: 700, color, marginTop: 4 }}>{value}</div>
     </div>
   );
+}
+
+function chipStyle(active: boolean, accent = '#0ea5e9') {
+  return {
+    padding: '4px 10px',
+    background: active ? accent : '#fff',
+    color: active ? '#fff' : '#475569',
+    border: `1px solid ${active ? accent : '#cbd5e1'}`,
+    borderRadius: 999,
+    cursor: 'pointer',
+    fontSize: 12,
+    fontWeight: 500,
+  };
 }
 
 function btnStyle(kind: 'primary' | 'success' | 'default') {
