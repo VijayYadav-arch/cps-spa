@@ -119,6 +119,12 @@ export function ClaimDetail() {
         >
           {isPrinting ? 'Generating…' : 'Print Claim Form'}
         </button>
+        <button
+          onClick={() => navigate(`/claims/${claim.id}/lifecycle`)}
+          style={{ padding: '10px 24px', background: '#475569', color: '#fff', border: 'none', borderRadius: 4, fontWeight: 600, cursor: 'pointer' }}
+        >
+          View Lifecycle
+        </button>
       </div>
     </div>
   );
