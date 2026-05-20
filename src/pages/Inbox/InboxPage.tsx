@@ -7,10 +7,18 @@ import {
   snoozeWorkItem,
   wakeWorkItem,
   bulkWorkItem,
+  getAssignableUsers,
+  assignWorkItem,
+  type AssignableUser,
   type BulkAction,
   type WorkQueueItem,
   type WorkQueueStats,
 } from '@/api/billing';
+
+function formatUserName(u: AssignableUser): string {
+  const full = `${u.firstName} ${u.lastName}`.trim();
+  return full || u.email;
+}
 
 const PRIORITY_COLORS: Record<string, { bg: string; fg: string }> = {
   critical: { bg: '#fee2e2', fg: '#991b1b' },
@@ -88,6 +96,18 @@ export function InboxPage() {
   const [notice, setNotice] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [bulkSnoozeLabel, setBulkSnoozeLabel] = useState<string>('');
+  const [bulkAssignUserId, setBulkAssignUserId] = useState<string>('');
+  const [assignableUsers, setAssignableUsers] = useState<AssignableUser[]>([]);
+
+  // Load the picker list once. Fail silently — the row Assign… dropdowns
+  // become harmless empty selects if the user lacks the permission.
+  useEffect(() => {
+    let cancelled = false;
+    getAssignableUsers()
+      .then((u) => { if (!cancelled) setAssignableUsers(u); })
+      .catch(() => { /* picker just stays empty */ });
+    return () => { cancelled = true; };
+  }, []);
 
   const selectableIds = useMemo(() => items.map((i) => i.id), [items]);
   const allSelected = selected.size > 0 && selected.size === selectableIds.length;
@@ -106,17 +126,21 @@ export function InboxPage() {
     });
   }
 
-  async function runBulk(action: BulkAction, snoozeUntilUtc?: string) {
+  async function runBulk(
+    action: BulkAction,
+    opts: { snoozeUntilUtc?: string; assignToUserId?: number } = {},
+  ) {
     if (selected.size === 0) return;
     setNotice(null);
     setError(null);
     try {
       const ids = Array.from(selected);
-      const result = await bulkWorkItem(action, ids, snoozeUntilUtc);
+      const result = await bulkWorkItem(action, ids, opts);
       const okCount = result.succeeded.length;
       const failCount = result.failed.length;
       setSelected(new Set());
       setBulkSnoozeLabel('');
+      setBulkAssignUserId('');
       // Reload BEFORE composing the user-visible status so reload()'s
       // setError(null) on success doesn't wipe the failure message we're
       // about to set.
@@ -142,7 +166,29 @@ export function InboxPage() {
     if (!opt) return;
     const untilUtc = new Date(Date.now() + opt.deltaMs).toISOString();
     setBulkSnoozeLabel(label);
-    void runBulk('snooze', untilUtc);
+    void runBulk('snooze', { snoozeUntilUtc: untilUtc });
+  }
+
+  function handleBulkAssign(userId: number) {
+    setBulkAssignUserId(String(userId));
+    void runBulk('assign', { assignToUserId: userId });
+  }
+
+  async function handleRowAssign(id: number, userId: number) {
+    setNotice(null);
+    setError(null);
+    try {
+      await assignWorkItem(id, userId);
+      const name = assignableUsers.find((u) => u.id === userId);
+      setNotice(`Assigned #${id} to ${name ? formatUserName(name) : `user ${userId}`}`);
+      await reload();
+    } catch (err: unknown) {
+      const msg =
+        typeof err === 'object' && err !== null && 'response' in err
+          ? (err as { response?: { data?: { error?: string } } }).response?.data?.error
+          : undefined;
+      setError(msg ?? 'Could not assign item');
+    }
   }
 
   async function reload(currentTab: 'mine' | 'all' = tab) {
@@ -316,6 +362,21 @@ export function InboxPage() {
               <option key={o.label} value={o.label}>{o.label}</option>
             ))}
           </select>
+          <select
+            value={bulkAssignUserId}
+            onChange={(e) => {
+              const uid = Number(e.target.value);
+              if (uid > 0) handleBulkAssign(uid);
+            }}
+            style={{ padding: '4px 8px', border: '1px solid #cbd5e1', borderRadius: 4, fontSize: 12 }}
+            aria-label="Assign all selected to"
+            disabled={assignableUsers.length === 0}
+          >
+            <option value="">Assign all to…</option>
+            {assignableUsers.map((u) => (
+              <option key={u.id} value={u.id}>{formatUserName(u)}</option>
+            ))}
+          </select>
           <button
             type="button"
             onClick={() => setSelected(new Set())}
@@ -438,6 +499,31 @@ export function InboxPage() {
                         <option value="" disabled>Snooze…</option>
                         {SNOOZE_OPTIONS.map((o) => (
                           <option key={o.label} value={o.label}>{o.label}</option>
+                        ))}
+                      </select>
+                    )}
+                    {assignableUsers.length > 0 && (
+                      <select
+                        onChange={(e) => {
+                          const uid = Number(e.target.value);
+                          if (uid > 0) void handleRowAssign(item.id, uid);
+                          e.target.value = '';
+                        }}
+                        defaultValue=""
+                        style={{
+                          padding: '2px 4px',
+                          border: '1px solid #cbd5e1',
+                          borderRadius: 4,
+                          fontSize: 12,
+                          marginRight: 4,
+                          background: '#fff',
+                          maxWidth: 110,
+                        }}
+                        aria-label={`Assign item ${item.id} to`}
+                      >
+                        <option value="" disabled>Assign…</option>
+                        {assignableUsers.map((u) => (
+                          <option key={u.id} value={u.id}>{formatUserName(u)}</option>
                         ))}
                       </select>
                     )}

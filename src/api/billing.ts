@@ -67,7 +67,7 @@ export const snoozeWorkItem = (id: number, untilUtc: string): Promise<void> =>
 export const wakeWorkItem = (id: number): Promise<void> =>
   apiClient.post(`/billing/work-queue/${id}/wake`).then(() => undefined);
 
-export type BulkAction = 'complete' | 'claim' | 'snooze';
+export type BulkAction = 'complete' | 'claim' | 'snooze' | 'assign';
 
 export interface BulkActionFailure {
   id: number;
@@ -79,14 +79,42 @@ export interface BulkActionResult {
   failed: BulkActionFailure[];
 }
 
+export interface BulkActionOptions {
+  snoozeUntilUtc?: string;
+  assignToUserId?: number;
+}
+
 export const bulkWorkItem = (
   action: BulkAction,
   itemIds: number[],
-  snoozeUntilUtc?: string,
+  opts: BulkActionOptions = {},
 ): Promise<BulkActionResult> =>
   apiClient
-    .post<BulkActionResult>('/billing/work-queue/bulk', { action, itemIds, snoozeUntilUtc })
+    .post<BulkActionResult>('/billing/work-queue/bulk', {
+      action,
+      itemIds,
+      snoozeUntilUtc: opts.snoozeUntilUtc,
+      assignToUserId: opts.assignToUserId,
+    })
     .then((r) => r.data);
+
+export interface AssignableUser {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+}
+
+export const getAssignableUsers = (): Promise<AssignableUser[]> =>
+  apiClient
+    .get<{ data: AssignableUser[] }>('/billing/work-queue/assignable-users')
+    .then((r) => r.data.data ?? []);
+
+/** Assign a single work item to a specific user (team-lead reassign). */
+export const assignWorkItem = (id: number, userId: number): Promise<void> =>
+  apiClient
+    .post(`/billing/work-queue/${id}/assign`, { userId })
+    .then(() => undefined);
 
 export const getDenials = (params?: { status?: string; page?: number; pageSize?: number; }): Promise<{ data: DenialItem[]; pagination: PaginationMeta }> =>
   apiClient.get<{ data: DenialItem[]; pagination: PaginationMeta }>('/billing/denials', { params }).then((r) => r.data);
