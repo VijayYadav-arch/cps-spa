@@ -30,6 +30,7 @@ const navItems: NavEntry[] = [
       { kind: 'leaf', to: '/billing/secondary', label: 'Secondary Claims' },
       { kind: 'leaf', to: '/billing/statements', label: 'Patient Statements' },
       { kind: 'leaf', to: '/billing/eligibility', label: 'Eligibility' },
+      { kind: 'leaf', to: '/billing/prior-auth', label: 'Prior Auth' },
     ],
   },
   { kind: 'leaf', to: '/clinical', label: 'Clinical' },

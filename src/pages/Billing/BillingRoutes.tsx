@@ -5,6 +5,7 @@ import { ArDashboardPage } from './ArDashboardPage';
 import { SecondaryClaimsPage } from './SecondaryClaimsPage';
 import { StatementsPage } from './StatementsPage';
 import { EligibilityPage } from './EligibilityPage';
+import { PriorAuthPage } from './PriorAuthPage';
 
 export function BillingRoutes() {
   return (
@@ -15,6 +16,7 @@ export function BillingRoutes() {
       <Route path="secondary" element={<SecondaryClaimsPage />} />
       <Route path="statements" element={<StatementsPage />} />
       <Route path="eligibility" element={<EligibilityPage />} />
+      <Route path="prior-auth" element={<PriorAuthPage />} />
       <Route path="*" element={<Navigate to="/billing" replace />} />
     </Routes>
   );
