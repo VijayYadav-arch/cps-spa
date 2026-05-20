@@ -148,3 +148,25 @@ export const downloadClaimPdf = async (claimId: number): Promise<Blob> => {
   });
   return res.data;
 };
+
+// ─── Batch ops (POST /api/v2/billing/batch/*) ────────────────────────
+
+export interface BatchSubmitResult {
+  succeeded: number[];
+  failed: number[];
+}
+
+export interface BatchVoidResult {
+  voided: number[];
+  notFound: number[];
+}
+
+export const batchSubmitClaims = (claimIds: number[]): Promise<BatchSubmitResult> =>
+  apiClient
+    .post<BatchSubmitResult>('/billing/batch/submit', { claimIds })
+    .then((r) => r.data);
+
+export const batchVoidClaims = (claimIds: number[]): Promise<BatchVoidResult> =>
+  apiClient
+    .post<BatchVoidResult>('/billing/batch/void', { claimIds })
+    .then((r) => r.data);
