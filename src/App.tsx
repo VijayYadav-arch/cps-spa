@@ -39,6 +39,9 @@ import { PortalProtectedRoute } from '@/portal/PortalProtectedRoute';
 import { PortalLayout } from '@/portal/PortalLayout';
 import { PortalLogin } from '@/pages/Portal/PortalLogin';
 import { PortalOverview } from '@/pages/Portal/PortalOverview';
+import { PortalStatements } from '@/pages/Portal/PortalStatements';
+import { PortalStatementDetail } from '@/pages/Portal/PortalStatementDetail';
+import { PortalDocuments } from '@/pages/Portal/PortalDocuments';
 
 export default function App() {
   return (
@@ -147,6 +150,9 @@ function PortalRoutes() {
         }
       >
         <Route index element={<PortalOverview />} />
+        <Route path="statements" element={<PortalStatements />} />
+        <Route path="statements/:runId" element={<PortalStatementDetail />} />
+        <Route path="documents" element={<PortalDocuments />} />
       </Route>
     </Routes>
   );
