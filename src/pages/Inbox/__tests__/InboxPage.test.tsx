@@ -15,11 +15,15 @@ vi.mock('@/api/billing', () => ({
   getAssignableUsers: vi.fn().mockResolvedValue([]),
   assignWorkItem: vi.fn(),
   getWorkItemEvents: vi.fn().mockResolvedValue([]),
+  getSavedFilters: vi.fn().mockResolvedValue([]),
+  createSavedFilter: vi.fn(),
+  deleteSavedFilter: vi.fn(),
 }));
 
 import {
   getInbox, claimWorkItem, completeWorkItem, snoozeWorkItem, wakeWorkItem, bulkWorkItem,
   getAssignableUsers, assignWorkItem,
+  getSavedFilters, createSavedFilter, deleteSavedFilter,
 } from '@/api/billing';
 
 function item(over: Partial<WorkQueueItem> = {}): WorkQueueItem {
@@ -62,7 +66,9 @@ describe('InboxPage', () => {
     await waitFor(() => {
       expect(screen.getByText(/Review denial for claim/i)).toBeInTheDocument();
     });
-    expect(screen.getByText('high')).toBeInTheDocument();
+    // "high" appears in both the filter chip strip and the row priority
+    // badge — at least one is enough to confirm the badge rendered.
+    expect(screen.getAllByText('high').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Denial')).toBeInTheDocument();
     // Claim deep link
     expect(screen.getByRole('link', { name: /Claim #42/i })).toBeInTheDocument();
@@ -417,7 +423,147 @@ describe('InboxPage', () => {
 
     await user.click(screen.getByLabelText(/Open details for item 7/i));
 
-    // The drawer mounts a dialog with the item id in its label
     expect(await screen.findByRole('dialog', { name: /Work item #7/i })).toBeInTheDocument();
+  });
+
+  // ── Saved filters ──────────────────────────────────────────────
+
+  describe('saved filters', () => {
+    it('priority chip filters the visible rows', async () => {
+      const user = userEvent.setup();
+      vi.mocked(getInbox).mockResolvedValueOnce({
+        data: [
+          item({ id: 1, priority: 'critical' }),
+          item({ id: 2, priority: 'low', description: 'Low one' }),
+        ],
+        stats: { total: 2, pending: 2, inProgress: 0, critical: 1, overdue: 0 },
+      });
+      renderPage();
+      await screen.findByText(/Review denial/i);
+
+      // Both visible initially
+      expect(screen.getByText(/Low one/i)).toBeInTheDocument();
+
+      // Click "critical" chip
+      await user.click(screen.getByRole('button', { name: 'critical', pressed: false }));
+
+      // Low row gone; critical row stays
+      await waitFor(() => {
+        expect(screen.queryByText(/Low one/i)).not.toBeInTheDocument();
+      });
+      expect(screen.getByText(/Review denial/i)).toBeInTheDocument();
+    });
+
+    it('overdue chip filters to overdue rows only', async () => {
+      const user = userEvent.setup();
+      vi.mocked(getInbox).mockResolvedValueOnce({
+        data: [
+          item({ id: 1, dueDate: '2020-01-01T00:00:00Z', description: 'Old one' }),
+          item({ id: 2, dueDate: null, description: 'No-due one' }),
+        ],
+        stats: { total: 2, pending: 2, inProgress: 0, critical: 0, overdue: 1 },
+      });
+      renderPage();
+      await screen.findByText(/Old one/i);
+
+      await user.click(screen.getByRole('button', { name: 'overdue' }));
+
+      await waitFor(() => {
+        expect(screen.queryByText(/No-due one/i)).not.toBeInTheDocument();
+      });
+      expect(screen.getByText(/Old one/i)).toBeInTheDocument();
+    });
+
+    it('renders saved filter chips and applies one when clicked', async () => {
+      const user = userEvent.setup();
+      vi.mocked(getSavedFilters).mockResolvedValue([{
+        id: 99, userId: 1, organizationId: 1,
+        name: 'My overdue', filterJson: '{"overdueOnly":true}',
+        createdAt: '2026-05-21T12:00:00Z', updatedAt: '2026-05-21T12:00:00Z',
+      }]);
+      vi.mocked(getInbox).mockResolvedValueOnce({
+        data: [
+          item({ id: 1, dueDate: '2020-01-01T00:00:00Z', description: 'Old one' }),
+          item({ id: 2, dueDate: null, description: 'No-due one' }),
+        ],
+        stats: { total: 2, pending: 2, inProgress: 0, critical: 0, overdue: 1 },
+      });
+      renderPage();
+      await screen.findByText(/Old one/i);
+
+      // Saved-filter chip appears in the filter strip
+      const chip = await screen.findByRole('button', { name: 'My overdue' });
+      await user.click(chip);
+
+      // Only the overdue row remains
+      await waitFor(() => {
+        expect(screen.queryByText(/No-due one/i)).not.toBeInTheDocument();
+      });
+      expect(chip).toHaveAttribute('aria-pressed', 'true');
+    });
+
+    it('saves the current filter when prompted', async () => {
+      const user = userEvent.setup();
+      vi.stubGlobal('prompt', vi.fn(() => 'My critical'));
+      vi.mocked(createSavedFilter).mockResolvedValue({
+        id: 50, userId: 1, organizationId: 1,
+        name: 'My critical', filterJson: '{"priority":["critical"],"tab":"mine"}',
+        createdAt: '2026-05-21T12:00:00Z', updatedAt: '2026-05-21T12:00:00Z',
+      });
+      vi.mocked(getInbox).mockResolvedValueOnce({
+        data: [item({ id: 1, priority: 'critical' })],
+        stats: { total: 1, pending: 1, inProgress: 0, critical: 1, overdue: 0 },
+      });
+      renderPage();
+      await screen.findByText(/Review denial/i);
+
+      // Need to enable a filter so the Save button activates
+      await user.click(screen.getByRole('button', { name: 'critical' }));
+      await user.click(screen.getByRole('button', { name: /Save current filter/i }));
+
+      await waitFor(() => {
+        expect(createSavedFilter).toHaveBeenCalledWith(
+          'My critical',
+          expect.objectContaining({ priority: ['critical'], tab: 'mine' }),
+        );
+      });
+      // New chip rendered after creation
+      expect(await screen.findByRole('button', { name: 'My critical' })).toBeInTheDocument();
+    });
+
+    it('deletes a saved filter via its × button', async () => {
+      const user = userEvent.setup();
+      vi.stubGlobal('confirm', vi.fn(() => true));
+      vi.mocked(getSavedFilters).mockResolvedValue([{
+        id: 99, userId: 1, organizationId: 1,
+        name: 'Old saved', filterJson: '{}',
+        createdAt: '2026-05-21T12:00:00Z', updatedAt: '2026-05-21T12:00:00Z',
+      }]);
+      vi.mocked(deleteSavedFilter).mockResolvedValue(undefined);
+      vi.mocked(getInbox).mockResolvedValueOnce({
+        data: [item({ id: 1 })],
+        stats: { total: 1, pending: 1, inProgress: 0, critical: 0, overdue: 0 },
+      });
+      renderPage();
+      await screen.findByRole('button', { name: 'Old saved' });
+
+      await user.click(screen.getByLabelText(/Delete saved filter Old saved/i));
+
+      await waitFor(() => {
+        expect(deleteSavedFilter).toHaveBeenCalledWith(99);
+      });
+      expect(screen.queryByRole('button', { name: 'Old saved' })).not.toBeInTheDocument();
+    });
+
+    it('Save current filter button is disabled with no filters active', async () => {
+      vi.mocked(getInbox).mockResolvedValueOnce({
+        data: [item({ id: 1 })],
+        stats: { total: 1, pending: 1, inProgress: 0, critical: 0, overdue: 0 },
+      });
+      renderPage();
+      await screen.findByText(/Review denial/i);
+      expect(screen.getByRole('button', { name: /Save current filter/i }))
+        .toHaveProperty('disabled', true);
+    });
   });
 });

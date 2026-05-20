@@ -132,6 +132,44 @@ export const getWorkItemEvents = (id: number): Promise<WorkQueueItemEvent[]> =>
     .get<{ data: WorkQueueItemEvent[] }>(`/billing/work-queue/${id}/events`)
     .then((r) => r.data.data ?? []);
 
+// ─── Saved inbox filters ─────────────────────────────────────────────
+
+export interface InboxSavedFilter {
+  id: number;
+  userId: number;
+  organizationId: number;
+  name: string;
+  filterJson: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Client-defined filter spec stored as JSON. Free to evolve. */
+export interface InboxFilterSpec {
+  tab?: 'mine' | 'all';
+  priority?: ('critical' | 'high' | 'medium' | 'low')[];
+  type?: string[];
+  overdueOnly?: boolean;
+}
+
+export const getSavedFilters = (): Promise<InboxSavedFilter[]> =>
+  apiClient
+    .get<{ data: InboxSavedFilter[] }>('/billing/inbox/saved-filters')
+    .then((r) => r.data.data ?? []);
+
+export const createSavedFilter = (
+  name: string, spec: InboxFilterSpec,
+): Promise<InboxSavedFilter> =>
+  apiClient
+    .post<{ data: InboxSavedFilter }>('/billing/inbox/saved-filters',
+      { name, filterJson: JSON.stringify(spec) })
+    .then((r) => r.data.data);
+
+export const deleteSavedFilter = (id: number): Promise<void> =>
+  apiClient
+    .delete(`/billing/inbox/saved-filters/${id}`)
+    .then(() => undefined);
+
 export const getDenials = (params?: { status?: string; page?: number; pageSize?: number; }): Promise<{ data: DenialItem[]; pagination: PaginationMeta }> =>
   apiClient.get<{ data: DenialItem[]; pagination: PaginationMeta }>('/billing/denials', { params }).then((r) => r.data);
 
