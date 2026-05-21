@@ -850,6 +850,75 @@ export const attachChargesToClaim = (
     .post('/billing/charges/attach-to-claim', { chargeIds, claimId })
     .then(() => undefined);
 
+// ─── Superbills (encounter slips) ────────────────────────────────────
+
+export interface SuperbillProcedure {
+  code: string;
+  modifier: string | null;
+  units: number;
+  charge: number;
+}
+
+export interface Superbill {
+  id: number;
+  organizationId: number;
+  patientId: number;
+  providerId: string;
+  serviceDate: string;
+  /** JSON-encoded string of string[] */
+  diagnosisCodes: string;
+  /** JSON-encoded string of SuperbillProcedure[] */
+  procedureCodes: string;
+  totalCharge: number;
+  status: 'draft' | 'finalized';
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+export interface SuperbillPagination {
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export const listSuperbills = (params: { page?: number; pageSize?: number } = {}):
+  Promise<{ data: Superbill[]; pagination: SuperbillPagination }> =>
+  apiClient
+    .get<{ data: Superbill[]; pagination: SuperbillPagination }>('/billing/superbills', { params })
+    .then((r) => r.data);
+
+export const getSuperbill = (id: number): Promise<Superbill> =>
+  apiClient
+    .get<{ data: Superbill }>(`/billing/superbills/${id}`)
+    .then((r) => r.data.data);
+
+export interface CreateSuperbillRequest {
+  patientId: number;
+  providerId: string;
+  serviceDate: string;
+  diagnosisCodes: string[];
+  procedureCodes: SuperbillProcedure[];
+  notes?: string | null;
+}
+
+export const createSuperbill = (req: CreateSuperbillRequest): Promise<Superbill> =>
+  apiClient
+    .post<{ data: Superbill }>('/billing/superbills', req)
+    .then((r) => r.data.data);
+
+export const finalizeSuperbill = (id: number): Promise<Superbill> =>
+  apiClient
+    .put<{ data: Superbill }>(`/billing/superbills/${id}/finalize`, {})
+    .then((r) => r.data.data);
+
+export const downloadSuperbillPdf = async (id: number): Promise<Blob> => {
+  const res = await apiClient.get<Blob>(`/billing/superbills/${id}/pdf`, {
+    responseType: 'blob',
+  });
+  return res.data;
+};
+
 // ─── ERA postings (835 remittances) ──────────────────────────────────
 
 export interface EraPostingRow {
