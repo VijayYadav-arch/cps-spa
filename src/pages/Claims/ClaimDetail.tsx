@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { downloadClaimPdf, getClaim, submitClaim, type ClaimDetail as ClaimDetailType } from '@/api/claims';
+import {
+  downloadClaimPdf, getClaim, submitClaim, scrubClaimById,
+  type ClaimDetail as ClaimDetailType,
+  type ScrubResult,
+} from '@/api/claims';
 
 export function ClaimDetail() {
   const { id } = useParams<{ id: string }>();
@@ -10,6 +14,8 @@ export function ClaimDetail() {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
+  const [scrub, setScrub] = useState<ScrubResult | null>(null);
+  const [isScrubbing, setIsScrubbing] = useState(false);
 
   useEffect(() => {
     if (!id) {
@@ -35,6 +41,22 @@ export function ClaimDetail() {
       setError('Failed to submit claim.');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleValidate = async () => {
+    if (!claim) return;
+    setIsScrubbing(true);
+    setError(null);
+    try {
+      const result = await scrubClaimById(claim.id);
+      setScrub(result);
+    } catch (err: unknown) {
+      const message = (err as { response?: { data?: { error?: string } } })
+        ?.response?.data?.error ?? 'Validation failed';
+      setError(message);
+    } finally {
+      setIsScrubbing(false);
     }
   };
 
@@ -100,7 +122,46 @@ export function ClaimDetail() {
           </table>
         </div>
       )}
-      <div style={{ display: 'flex', gap: 10 }}>
+      {scrub && (
+        <div
+          style={{
+            border: '1px solid ' + (scrub.passed ? '#bbf7d0' : '#fecaca'),
+            background: scrub.passed ? '#f0fdf4' : '#fef2f2',
+            borderRadius: 8, padding: 16, marginTop: 16,
+          }}
+        >
+          <div style={{ fontWeight: 600, color: scrub.passed ? '#166534' : '#991b1b' }}>
+            {scrub.passed
+              ? `Validation passed${scrub.findings.length > 0 ? ` (${scrub.findings.length} warning${scrub.findings.length === 1 ? '' : 's'})` : ''}`
+              : `Validation failed · ${scrub.findings.filter((f) => f.severity === 'error').length} error${scrub.findings.filter((f) => f.severity === 'error').length === 1 ? '' : 's'}`}
+          </div>
+          {scrub.findings.length > 0 && (
+            <ul style={{ marginTop: 8, marginBottom: 0, paddingLeft: 20 }}>
+              {scrub.findings.map((f, i) => (
+                <li key={`${f.rule}-${f.field}-${i}`} style={{ fontSize: 13, marginBottom: 4 }}>
+                  <span style={{
+                    color: f.severity === 'error' ? '#b91c1c' : '#b45309',
+                    fontWeight: 600, marginRight: 6,
+                  }}>
+                    {f.severity}
+                  </span>
+                  <code style={{ fontSize: 12, color: '#64748b' }}>{f.rule}</code>
+                  <span style={{ marginLeft: 8 }}>{f.message}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+      <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+        <button
+          onClick={() => { void handleValidate(); }}
+          disabled={isScrubbing}
+          aria-busy={isScrubbing}
+          style={{ padding: '10px 24px', background: '#7c3aed', color: '#fff', border: 'none', borderRadius: 4, fontWeight: 600, cursor: isScrubbing ? 'not-allowed' : 'pointer' }}
+        >
+          {isScrubbing ? 'Validating…' : 'Validate'}
+        </button>
         {claim.status !== 'submitted' && claim.status !== 'paid' && (
           <button
             onClick={() => { void handleSubmit(); }}
