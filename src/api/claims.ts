@@ -170,3 +170,38 @@ export const batchVoidClaims = (claimIds: number[]): Promise<BatchVoidResult> =>
   apiClient
     .post<BatchVoidResult>('/billing/batch/void', { claimIds })
     .then((r) => r.data);
+
+// ─── Scrub a saved claim by id ───────────────────────────────────────
+
+export interface ScrubFinding {
+  rule: string;
+  field: string;
+  message: string;
+  severity: 'error' | 'warning';
+}
+
+export interface ScrubResult {
+  passed: boolean;
+  findings: ScrubFinding[];
+}
+
+export const scrubClaimById = (id: number): Promise<ScrubResult> =>
+  apiClient
+    .post<{ data: ScrubResult }>(`/billing/claims/${id}/scrub`)
+    .then((r) => r.data.data);
+
+// ─── Billing code lookup (CPT / ICD / HCPCS / revenue) ───────────────
+
+export interface BillingCodeEntry {
+  code: string;
+  description: string;
+  type: string;
+  category: string;
+}
+
+export const searchBillingCodes = (params: {
+  query?: string; type?: string; category?: string;
+} = {}): Promise<{ data: BillingCodeEntry[]; count: number }> =>
+  apiClient
+    .get<{ data: BillingCodeEntry[]; count: number }>('/billing/codes', { params })
+    .then((r) => r.data);

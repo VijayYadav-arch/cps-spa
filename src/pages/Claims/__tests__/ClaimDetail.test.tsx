@@ -9,9 +9,10 @@ vi.mock('@/api/claims', () => ({
   getClaim: vi.fn(),
   submitClaim: vi.fn(),
   downloadClaimPdf: vi.fn(),
+  scrubClaimById: vi.fn(),
 }));
 
-import { getClaim, downloadClaimPdf } from '@/api/claims';
+import { getClaim, downloadClaimPdf, scrubClaimById } from '@/api/claims';
 
 function claim(over: Partial<ClaimDetailType> = {}): ClaimDetailType {
   return {
@@ -89,5 +90,62 @@ describe('ClaimDetail — print button', () => {
     // Submit hidden on paid; Print should still be present
     expect(screen.queryByRole('button', { name: /Submit Claim/i })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Print Claim Form/i })).toBeInTheDocument();
+  });
+});
+
+describe('ClaimDetail — Validate (scrub)', () => {
+  it('shows passed result with no findings', async () => {
+    const user = userEvent.setup();
+    vi.mocked(getClaim).mockResolvedValue(claim());
+    vi.mocked(scrubClaimById).mockResolvedValue({
+      passed: true, findings: [],
+    });
+
+    renderPage();
+    await screen.findByText(/Claim #5/i);
+    await user.click(screen.getByRole('button', { name: /^Validate$/ }));
+
+    expect(await screen.findByText(/Validation passed$/i)).toBeInTheDocument();
+  });
+
+  it('renders findings with severity tags when validation fails', async () => {
+    const user = userEvent.setup();
+    vi.mocked(getClaim).mockResolvedValue(claim());
+    vi.mocked(scrubClaimById).mockResolvedValue({
+      passed: false,
+      findings: [
+        { rule: 'NPI_LUHN', field: 'billingNPI', severity: 'error',
+          message: 'Billing NPI fails Luhn check digit validation' },
+        { rule: 'TIMELY_FILING_WARNING', field: 'serviceDate', severity: 'warning',
+          message: 'Approaching timely filing deadline' },
+      ],
+    });
+
+    renderPage();
+    await screen.findByText(/Claim #5/i);
+    await user.click(screen.getByRole('button', { name: /^Validate$/ }));
+
+    expect(await screen.findByText(/Validation failed · 1 error/i)).toBeInTheDocument();
+    expect(screen.getByText(/Billing NPI fails Luhn/i)).toBeInTheDocument();
+    expect(screen.getByText(/Approaching timely filing/i)).toBeInTheDocument();
+  });
+
+  it('shows passed-with-warnings count when only warnings present', async () => {
+    const user = userEvent.setup();
+    vi.mocked(getClaim).mockResolvedValue(claim());
+    vi.mocked(scrubClaimById).mockResolvedValue({
+      passed: true,
+      findings: [
+        { rule: 'AMOUNT_HIGH', field: 'totalAmount', severity: 'warning',
+          message: 'Total amount is unusually high' },
+      ],
+    });
+
+    renderPage();
+    await screen.findByText(/Claim #5/i);
+    await user.click(screen.getByRole('button', { name: /^Validate$/ }));
+
+    expect(await screen.findByText(/Validation passed \(1 warning\)/i))
+      .toBeInTheDocument();
   });
 });

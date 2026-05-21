@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { BillingCodeAutocomplete } from '@/components/BillingCodeAutocomplete';
 import {
   attachChargesToClaim,
   createCharge,
@@ -323,26 +324,26 @@ export function ChargeEntryPage() {
               ))}
             </select>
           </label>
-          <label>
-            <div style={{ fontSize: 12, color: '#64748b' }}>Revenue Code</div>
-            <input
+          <div>
+            <BillingCodeAutocomplete
+              id="charge-revenue-code"
+              label="Revenue Code"
+              type="revenue"
               value={formRevenueCode}
-              onChange={(e) => setFormRevenueCode(e.target.value)}
+              onChange={setFormRevenueCode}
               placeholder="e.g. 0651"
-              style={{ width: '100%', padding: '6px 10px', border: '1px solid #cbd5e1', borderRadius: 4 }}
             />
-          </label>
-          <label>
-            <div style={{ fontSize: 12, color: '#64748b' }}>
-              Procedure Code {formChargeType === 'procedure' && '*'}
-            </div>
-            <input
+          </div>
+          <div>
+            <BillingCodeAutocomplete
+              id="charge-procedure-code"
+              label={`Procedure Code${formChargeType === 'procedure' ? ' *' : ''}`}
+              type="cpt"
               value={formProcedureCode}
-              onChange={(e) => setFormProcedureCode(e.target.value)}
+              onChange={setFormProcedureCode}
               placeholder="e.g. T2042"
-              style={{ width: '100%', padding: '6px 10px', border: '1px solid #cbd5e1', borderRadius: 4 }}
             />
-          </label>
+          </div>
           <label>
             <div style={{ fontSize: 12, color: '#64748b' }}>Units *</div>
             <input
