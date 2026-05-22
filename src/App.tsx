@@ -27,6 +27,7 @@ import { HospiceCahpsDashboard } from '@/pages/Hospice/HospiceCahpsDashboard';
 import { HospiceClaimSubmissionsPage } from '@/pages/Hospice/HospiceClaimSubmissionsPage';
 import { PaidTimeDashboard } from '@/pages/Time/PaidTimeDashboard';
 import { MyTimeDashboard } from '@/pages/Time/MyTimeDashboard';
+import { SessionsPage } from '@/pages/Me/SessionsPage';
 import { PhiAccessReviewDashboard } from '@/pages/Compliance/PhiAccessReviewDashboard';
 import { SurveyorBundlePage } from '@/pages/Compliance/SurveyorBundlePage';
 import { BreachWorkflowPage } from '@/pages/Compliance/BreachWorkflowPage';
@@ -121,6 +122,7 @@ export default function App() {
             <Route path="analytics" element={<AnalyticsDashboardPage />} />
             <Route path="time" element={<PaidTimeDashboard />} />
             <Route path="me/time" element={<MyTimeDashboard />} />
+            <Route path="me/sessions" element={<SessionsPage />} />
             <Route
               path="compliance/phi-access"
               element={<PhiAccessReviewDashboard />}
