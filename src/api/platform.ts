@@ -1,5 +1,23 @@
 import { apiClient } from './client';
 
+// --- Background-job health (GET /api/v2/platform/background-jobs) ---
+export interface BackgroundJobTick {
+  name: string;
+  displayName: string;
+  lastRanAtUtc: string;
+  intervalSeconds: number;
+  summary: string;
+  lastError: string | null;
+  lastErrorAtUtc: string | null;
+  secondsSinceLastRun: number;
+  stale: boolean;
+}
+
+export const getBackgroundJobs = (): Promise<{ data: BackgroundJobTick[]; asOfUtc: string }> =>
+  apiClient
+    .get<{ data: BackgroundJobTick[]; asOfUtc: string }>('/platform/background-jobs')
+    .then((r) => r.data);
+
 // --- API Keys (GET /api/v2/api-keys) ---
 export interface ApiKey {
   id: number;
