@@ -17,6 +17,7 @@ vi.mock('@/api/compliance', () => ({
   sendBreachMediaNotice: vi.fn(),
   sendBreachHhsNotification: vi.fn(),
   closeBreach: vi.fn(),
+  registerBreach: vi.fn(),
 }));
 
 import {
@@ -25,6 +26,7 @@ import {
   getBreachActivity,
   getBreachWorkflow,
   listBreachesWorkflow,
+  registerBreach,
   sendBreachHhsNotification,
   sendBreachPatientNotifications,
 } from '@/api/compliance';
@@ -81,8 +83,7 @@ describe('BreachWorkflowPage', () => {
     await waitFor(() => {
       expect(screen.getByText('confirmed')).toBeInTheDocument();
     });
-    expect(screen.getByText(/55d until/i)).toBeInTheDocument();
-    // both the row's overdue badge AND the deadline column carry "OVERDUE"
+    expect(screen.getByText(/55d remaining/i)).toBeInTheDocument();
     expect(screen.getAllByText(/OVERDUE/i).length).toBeGreaterThanOrEqual(1);
   });
 
@@ -103,44 +104,66 @@ describe('BreachWorkflowPage', () => {
     expect(
       screen.getByRole('button', { name: /Assess Risk/i }),
     ).toBeInTheDocument();
-    // Patient/HHS notification buttons require prior assessment, hidden here
     expect(
       screen.queryByRole('button', { name: /Mark Patient Notifications Sent/i }),
     ).not.toBeInTheDocument();
   });
 
-  it('runs the assess-risk flow with prompts', async () => {
+  it('runs the assess-risk flow via the 4-factor modal', async () => {
     const user = userEvent.setup();
     const b = summary();
     vi.mocked(listBreachesWorkflow).mockResolvedValue({ data: [b] });
     vi.mocked(getBreachWorkflow).mockResolvedValueOnce(b);
     vi.mocked(getBreachActivity).mockResolvedValue({ data: [] });
     vi.mocked(assessBreachRisk).mockResolvedValueOnce(
-      summary({ riskLevel: 'Moderate', riskAssessmentAt: '2026-05-19T00:00:00Z', status: 'assessed' }),
+      summary({ riskLevel: 'High', riskAssessmentAt: '2026-05-19T00:00:00Z', status: 'assessed' }),
     );
-
-    const promptSpy = vi
-      .spyOn(window, 'prompt')
-      .mockReturnValueOnce('Moderate')     // risk level
-      .mockReturnValueOnce('limited expo') // notes
-      .mockReturnValueOnce('100');         // affected count
 
     renderPage();
     await user.click(await screen.findByRole('button', { name: 'Open' }));
     await user.click(await screen.findByRole('button', { name: /Assess Risk/i }));
 
+    // Modal opens with structured form
+    expect(await screen.findByRole('dialog', { name: /Assess breach risk/i })).toBeInTheDocument();
+
+    await user.selectOptions(screen.getByLabelText(/Risk level/i), 'High');
+    // Fill out the four-factor textareas
+    await user.type(
+      screen.getByLabelText(/Nature & extent of PHI/i),
+      'names + DOB + diagnoses',
+    );
+    await user.type(
+      screen.getByLabelText(/Unauthorized person/i),
+      'external attacker',
+    );
+    await user.type(
+      screen.getByLabelText(/actually acquired or viewed/i),
+      'confirmed exfil',
+    );
+    await user.type(
+      screen.getByLabelText(/Extent risk has been mitigated/i),
+      'tokens rotated, devices wiped',
+    );
+    await user.clear(screen.getByLabelText(/Affected patient count/i));
+    await user.type(screen.getByLabelText(/Affected patient count/i), '750');
+
+    await user.click(screen.getByRole('button', { name: /Save assessment/i }));
+
     await waitFor(() => {
-      expect(assessBreachRisk).toHaveBeenCalledWith(1, {
-        riskLevel: 'Moderate',
-        notes: 'limited expo',
-        affectedPatientCount: 100,
-        mediaNoticeRequired: false,
-      });
+      expect(assessBreachRisk).toHaveBeenCalledWith(1, expect.objectContaining({
+        riskLevel: 'High',
+        affectedPatientCount: 750,
+        mediaNoticeRequired: true,
+        notes: expect.stringContaining('names + DOB + diagnoses'),
+      }));
     });
-    promptSpy.mockRestore();
+    // Stitched notes contain all four factor headers
+    const callArgs = vi.mocked(assessBreachRisk).mock.calls[0][1];
+    expect(callArgs.notes).toContain('1.');
+    expect(callArgs.notes).toContain('4.');
   });
 
-  it('sends HHS notification after assessment', async () => {
+  it('sends HHS notification through the notes modal', async () => {
     const user = userEvent.setup();
     const assessed = summary({
       status: 'assessed',
@@ -154,16 +177,15 @@ describe('BreachWorkflowPage', () => {
       summary({ status: 'hhs_notified', hhsNotifiedAt: '2026-05-19T00:00:00Z' }),
     );
 
-    const promptSpy = vi.spyOn(window, 'prompt').mockReturnValueOnce('OCR-REF-123');
-
     renderPage();
     await user.click(await screen.findByRole('button', { name: 'Open' }));
     await user.click(await screen.findByRole('button', { name: /Mark HHS Notified/i }));
+    await user.type(screen.getByLabelText(/Notes/i), 'OCR-REF-123');
+    await user.click(screen.getByRole('button', { name: /^Confirm$/ }));
 
     await waitFor(() => {
       expect(sendBreachHhsNotification).toHaveBeenCalledWith(1, 'OCR-REF-123');
     });
-    promptSpy.mockRestore();
   });
 
   it('requires closure note when closing confirmed-without-HHS', async () => {
@@ -177,18 +199,18 @@ describe('BreachWorkflowPage', () => {
     vi.mocked(getBreachWorkflow).mockResolvedValueOnce(assessed);
     vi.mocked(getBreachActivity).mockResolvedValue({ data: [] });
 
-    // user cancels prompt → null
-    const promptSpy = vi.spyOn(window, 'prompt').mockReturnValueOnce(null);
-
     renderPage();
     await user.click(await screen.findByRole('button', { name: 'Open' }));
     await user.click(await screen.findByRole('button', { name: /Close Breach/i }));
+    // Modal warns inline when HHS hasn't been notified
+    expect(await screen.findByText(/HHS has not been notified/i)).toBeInTheDocument();
+    // Submit without filling notes
+    await user.click(screen.getByRole('button', { name: /^Close breach$/ }));
 
     await waitFor(() => {
       expect(screen.getByText(/Closure note is required/i)).toBeInTheDocument();
     });
     expect(closeBreach).not.toHaveBeenCalled();
-    promptSpy.mockRestore();
   });
 
   it('shows the activity timeline', async () => {
@@ -226,16 +248,47 @@ describe('BreachWorkflowPage', () => {
       summary({ patientNotificationsSentAt: '2026-05-19T00:00:00Z', status: 'notifying' }),
     );
 
-    const promptSpy = vi.spyOn(window, 'prompt').mockReturnValueOnce('letters mailed');
     renderPage();
     await user.click(await screen.findByRole('button', { name: 'Open' }));
     await user.click(
       await screen.findByRole('button', { name: /Mark Patient Notifications Sent/i }),
     );
+    await user.type(screen.getByLabelText(/Notes/i), 'letters mailed');
+    await user.click(screen.getByRole('button', { name: /^Confirm$/ }));
 
     await waitFor(() => {
       expect(sendBreachPatientNotifications).toHaveBeenCalledWith(1, 'letters mailed');
     });
-    promptSpy.mockRestore();
+  });
+
+  it('registers a new breach via the modal', async () => {
+    const user = userEvent.setup();
+    vi.mocked(listBreachesWorkflow).mockResolvedValue({ data: [] });
+    vi.mocked(registerBreach).mockResolvedValueOnce({ id: 99 });
+
+    renderPage();
+    await waitFor(() => expect(listBreachesWorkflow).toHaveBeenCalled());
+
+    await user.click(screen.getByRole('button', { name: /Register breach/i }));
+    await user.clear(screen.getByLabelText(/Affected patient count/i));
+    await user.type(screen.getByLabelText(/Affected patient count/i), '12');
+    await user.type(
+      screen.getByLabelText(/PHI types involved/i),
+      'names, DOB',
+    );
+    await user.type(
+      screen.getByLabelText(/^Description$/i),
+      'Laptop left in cab',
+    );
+    await user.click(screen.getByRole('button', { name: /^Register$/ }));
+
+    await waitFor(() => {
+      expect(registerBreach).toHaveBeenCalledWith(expect.objectContaining({
+        affectedPatientCount: 12,
+        phiTypesInvolved: 'names, DOB',
+        description: 'Laptop left in cab',
+      }));
+    });
+    expect(await screen.findByText(/Breach registered/i)).toBeInTheDocument();
   });
 });
