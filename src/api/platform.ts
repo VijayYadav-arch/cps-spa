@@ -75,6 +75,34 @@ export const revokeApiKey = (id: number): Promise<void> =>
     .delete(`/api-keys/${id}`)
     .then(() => undefined);
 
+export interface CreateApiKeyRequest {
+  name: string;
+  scope: string;
+  expiresAt?: string | null;
+}
+
+/**
+ * The full key is returned EXACTLY ONCE in the create response — the
+ * server stores only a hash. Callers must surface it to the user before
+ * navigating away; it can't be retrieved later.
+ */
+export interface ApiKeyCreateResponse {
+  id: number;
+  prefix: string;
+  name: string;
+  scope: string;
+  isActive: boolean;
+  lastUsedAt: string | null;
+  expiresAt: string | null;
+  createdAt: string;
+  fullKey: string;
+}
+
+export const createApiKey = (req: CreateApiKeyRequest): Promise<ApiKeyCreateResponse> =>
+  apiClient
+    .post<{ data: ApiKeyCreateResponse }>('/api-keys', req)
+    .then((r) => r.data.data);
+
 // GET /api/v2/webhooks?page=&pageSize=
 export const getWebhooks = (params?: {
   page?: number;
@@ -82,6 +110,61 @@ export const getWebhooks = (params?: {
 }): Promise<{ data: Webhook[]; pagination: PaginationMeta }> =>
   apiClient
     .get<{ data: Webhook[]; pagination: PaginationMeta }>('/webhooks', { params })
+    .then((r) => r.data);
+
+export interface CreateWebhookRequest {
+  organizationId: number;
+  url: string;
+  events: string[];
+}
+
+export interface WebhookCreateResponse {
+  id: number;
+  url: string;
+  /** Returned ONCE — signing secret the partner needs to verify deliveries. */
+  secret: string;
+  events: string;
+}
+
+export const createWebhook = (req: CreateWebhookRequest): Promise<WebhookCreateResponse> =>
+  apiClient
+    .post<{ data: WebhookCreateResponse }>('/webhooks', req)
+    .then((r) => r.data.data);
+
+export const deleteWebhook = (id: number): Promise<void> =>
+  apiClient.delete(`/webhooks/${id}`).then(() => undefined);
+
+export interface TestWebhookResponse {
+  payload: string;
+  signature: string;
+}
+
+/** Returns a sample payload + signature for the partner's URL to verify. */
+export const testWebhookSignature = (secret: string): Promise<TestWebhookResponse> =>
+  apiClient
+    .post<TestWebhookResponse>('/webhooks/test', { secret })
+    .then((r) => r.data);
+
+export interface WebhookDeliveryAttempt {
+  id: number;
+  webhookEndpointId: number;
+  eventType: string;
+  payload: string;
+  responseStatus: number | null;
+  responseBody: string | null;
+  attemptedAt: string;
+  durationMs: number | null;
+  succeeded: boolean;
+  errorMessage: string | null;
+}
+
+export const getWebhookDeliveries = (
+  id: number, limit = 50,
+): Promise<{ data: WebhookDeliveryAttempt[] }> =>
+  apiClient
+    .get<{ data: WebhookDeliveryAttempt[] }>(`/webhooks/${id}/deliveries`, {
+      params: { limit },
+    })
     .then((r) => r.data);
 
 // GET /api/v2/audit?startDate=&endDate=&page=&pageSize=&...
