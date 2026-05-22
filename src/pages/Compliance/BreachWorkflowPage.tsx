@@ -5,6 +5,7 @@ import {
   getBreachActivity,
   getBreachWorkflow,
   listBreachesWorkflow,
+  registerBreach,
   sendBreachHhsNotification,
   sendBreachMediaNotice,
   sendBreachPatientNotifications,
@@ -28,16 +29,11 @@ const STATUS_COLORS: Record<BreachStatus, { bg: string; fg: string }> = {
 function statusBadge(s: BreachStatus) {
   const c = STATUS_COLORS[s] ?? STATUS_COLORS.draft;
   return (
-    <span
-      style={{
-        background: c.bg,
-        color: c.fg,
-        padding: '2px 8px',
-        borderRadius: 6,
-        fontSize: 12,
-        fontWeight: 600,
-      }}
-    >
+    <span style={{
+      background: c.bg, color: c.fg,
+      padding: '2px 8px', borderRadius: 6,
+      fontSize: 12, fontWeight: 600,
+    }}>
       {s}
     </span>
   );
@@ -48,18 +44,18 @@ function deadlineBadge(b: BreachWorkflowSummary) {
   if (b.isOverdue) {
     return (
       <span style={{ color: '#991b1b', fontWeight: 600 }}>
-        OVERDUE ({Math.abs(b.daysUntilDeadline)}d past)
+        OVERDUE by {Math.abs(b.daysUntilDeadline)}d
       </span>
     );
   }
-  const color =
-    b.daysUntilDeadline <= 10 ? '#b45309' :
-    b.daysUntilDeadline <= 30 ? '#0e7490' : '#15803d';
-  return (
-    <span style={{ color, fontWeight: 600 }}>
-      {b.daysUntilDeadline}d until 60-day deadline
-    </span>
-  );
+  if (b.daysUntilDeadline <= 7) {
+    return (
+      <span style={{ color: '#b45309', fontWeight: 600 }}>
+        {b.daysUntilDeadline}d remaining
+      </span>
+    );
+  }
+  return <span style={{ color: '#64748b' }}>{b.daysUntilDeadline}d remaining</span>;
 }
 
 function extractError(err: unknown, fallback: string): string {
@@ -69,6 +65,24 @@ function extractError(err: unknown, fallback: string): string {
   );
 }
 
+type ModalKind =
+  | 'register'
+  | 'assess'
+  | 'send-patients'
+  | 'send-media'
+  | 'send-hhs'
+  | 'close'
+  | null;
+
+// HIPAA §164.402 four-factor risk-of-compromise assessment. Structured
+// capture beats a single free-text blob.
+const RISK_FACTORS = [
+  { key: 'phiNature', label: '1. Nature & extent of PHI involved (identifiers, financial, clinical)' },
+  { key: 'unauthorizedPerson', label: '2. Unauthorized person who used or received the PHI' },
+  { key: 'actualAcquisition', label: '3. Whether PHI was actually acquired or viewed' },
+  { key: 'mitigation', label: '4. Extent risk has been mitigated' },
+] as const;
+
 export function BreachWorkflowPage() {
   const [items, setItems] = useState<BreachWorkflowSummary[]>([]);
   const [selected, setSelected] = useState<BreachWorkflowSummary | null>(null);
@@ -76,6 +90,21 @@ export function BreachWorkflowPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionMsg, setActionMsg] = useState<string | null>(null);
+  const [modal, setModal] = useState<ModalKind>(null);
+
+  // Register form
+  const [registerDate, setRegisterDate] = useState(new Date().toISOString().slice(0, 10));
+  const [registerAffected, setRegisterAffected] = useState('');
+  const [registerPhiTypes, setRegisterPhiTypes] = useState('');
+  const [registerDescription, setRegisterDescription] = useState('');
+
+  // Assess-risk form
+  const [riskLevel, setRiskLevel] = useState<BreachRiskLevel>('Moderate');
+  const [riskFactors, setRiskFactors] = useState<Record<string, string>>({});
+  const [riskAffected, setRiskAffected] = useState('');
+
+  // Notification / close form
+  const [actionNotes, setActionNotes] = useState('');
 
   async function refresh() {
     setIsLoading(true);
@@ -90,9 +119,7 @@ export function BreachWorkflowPage() {
     }
   }
 
-  useEffect(() => {
-    void refresh();
-  }, []);
+  useEffect(() => { void refresh(); }, []);
 
   async function openDetail(b: BreachWorkflowSummary) {
     setActionMsg(null);
@@ -109,80 +136,131 @@ export function BreachWorkflowPage() {
     }
   }
 
-  async function runWorkflow(fn: () => Promise<BreachWorkflowSummary>) {
+  async function runWorkflow(fn: () => Promise<BreachWorkflowSummary>, successMsg: string) {
     setError(null);
+    setActionMsg(null);
     try {
       const updated = await fn();
       setSelected(updated);
       const act = await getBreachActivity(updated.id);
       setActivity(act.data);
       await refresh();
+      setActionMsg(successMsg);
     } catch (err) {
       setError(extractError(err, 'Workflow action failed.'));
     }
   }
 
-  async function handleAssess(b: BreachWorkflowSummary) {
-    const lvl = window.prompt(
-      'Risk level — Low | Moderate | High:',
-      b.riskLevel ?? 'Moderate',
-    ) as BreachRiskLevel | null;
-    if (!lvl || !['Low', 'Moderate', 'High'].includes(lvl)) return;
-    const notes = window.prompt('Risk assessment notes (4-factor):') ?? '';
-    const affectedStr = window.prompt(
-      'Affected patient count (>= 500 triggers media notice):',
-      b.affectedPatientCount?.toString() ?? '',
-    );
-    const affected = affectedStr ? Number(affectedStr) : null;
+  function openModal(kind: Exclude<ModalKind, null>, b?: BreachWorkflowSummary) {
+    setActionNotes('');
+    if (kind === 'register') {
+      setRegisterDate(new Date().toISOString().slice(0, 10));
+      setRegisterAffected('');
+      setRegisterPhiTypes('');
+      setRegisterDescription('');
+    }
+    if (kind === 'assess' && b) {
+      setRiskLevel((b.riskLevel as BreachRiskLevel) ?? 'Moderate');
+      setRiskFactors({});
+      setRiskAffected(b.affectedPatientCount?.toString() ?? '');
+    }
+    setModal(kind);
+  }
+
+  async function submitRegister() {
+    try {
+      await registerBreach({
+        discoveredAt: new Date(registerDate).toISOString(),
+        affectedPatientCount: registerAffected ? Number(registerAffected) : null,
+        phiTypesInvolved: registerPhiTypes.trim() || null,
+        description: registerDescription.trim() || null,
+      });
+      setModal(null);
+      setActionMsg('Breach registered');
+      await refresh();
+    } catch (err) {
+      setError(extractError(err, 'Failed to register breach.'));
+    }
+  }
+
+  async function submitAssess() {
+    if (!selected) return;
+    // Stitch the 4-factor structured input into the single notes field
+    // the backend expects, with labelled sections so the activity log
+    // preserves the structure for auditors.
+    const stitched = RISK_FACTORS
+      .map((f) => `${f.label}: ${riskFactors[f.key]?.trim() || '(not assessed)'}`)
+      .join('\n');
+    const affected = riskAffected ? Number(riskAffected) : null;
     const req: AssessRiskRequest = {
-      riskLevel: lvl,
-      notes: notes.trim() || null,
+      riskLevel,
+      notes: stitched,
       affectedPatientCount: affected,
       mediaNoticeRequired: (affected ?? 0) >= 500,
     };
-    await runWorkflow(() => assessBreachRisk(b.id, req));
-  }
-
-  async function handleSendPatients(b: BreachWorkflowSummary) {
-    const notes = window.prompt('Notes (letters mailed batch, etc.):') ?? '';
-    await runWorkflow(() => sendBreachPatientNotifications(b.id, notes.trim() || null));
-  }
-
-  async function handleSendMedia(b: BreachWorkflowSummary) {
-    const notes = window.prompt('Notes (publication, URL):') ?? '';
-    await runWorkflow(() => sendBreachMediaNotice(b.id, notes.trim() || null));
-  }
-
-  async function handleSendHhs(b: BreachWorkflowSummary) {
-    const notes = window.prompt('Notes (OCR submission reference):') ?? '';
-    await runWorkflow(() => sendBreachHhsNotification(b.id, notes.trim() || null));
-  }
-
-  async function handleClose(b: BreachWorkflowSummary) {
-    const requiresNote = b.confirmedAt !== null && b.hhsNotifiedAt === null;
-    const notes = window.prompt(
-      requiresNote
-        ? 'Closure note required (no HHS notification yet):'
-        : 'Closure note (optional):',
+    setModal(null);
+    await runWorkflow(
+      () => assessBreachRisk(selected.id, req),
+      `Risk assessed as ${riskLevel}`,
     );
-    if (requiresNote && (!notes || !notes.trim())) {
+  }
+
+  async function submitSendPatients() {
+    if (!selected) return;
+    setModal(null);
+    await runWorkflow(
+      () => sendBreachPatientNotifications(selected.id, actionNotes.trim() || null),
+      'Patient notifications marked sent',
+    );
+  }
+
+  async function submitSendMedia() {
+    if (!selected) return;
+    setModal(null);
+    await runWorkflow(
+      () => sendBreachMediaNotice(selected.id, actionNotes.trim() || null),
+      'Media notice marked sent',
+    );
+  }
+
+  async function submitSendHhs() {
+    if (!selected) return;
+    setModal(null);
+    await runWorkflow(
+      () => sendBreachHhsNotification(selected.id, actionNotes.trim() || null),
+      'HHS notification marked sent',
+    );
+  }
+
+  async function submitClose() {
+    if (!selected) return;
+    const requiresNote = selected.confirmedAt !== null && selected.hhsNotifiedAt === null;
+    if (requiresNote && !actionNotes.trim()) {
       setError('Closure note is required when closing without HHS notification.');
       return;
     }
-    await runWorkflow(() => closeBreach(b.id, notes?.trim() || null));
+    setModal(null);
+    await runWorkflow(
+      () => closeBreach(selected.id, actionNotes.trim() || null),
+      'Breach closed',
+    );
   }
 
   return (
     <div style={{ padding: 24, maxWidth: 1200, display: 'grid', gap: 24 }}>
-      <header>
-        <h2 style={{ fontSize: 22, fontWeight: 700 }}>
-          HIPAA Breach Workflow
-        </h2>
-        <p style={{ color: '#64748b', marginTop: 4 }}>
-          State-machine view of breach notifications: confirm → assess risk →
-          notify individuals/media/HHS → close. 60-day deadline tracking and
-          activity log per HIPAA §164.404, §164.406, §164.408, §164.414(b).
-        </p>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <h2 style={{ fontSize: 22, fontWeight: 700 }}>HIPAA Breach Workflow</h2>
+          <p style={{ color: '#64748b', marginTop: 4, maxWidth: 720 }}>
+            State-machine view of breach notifications: confirm → assess
+            risk → notify individuals/media/HHS → close. 60-day deadline
+            tracking and activity log per HIPAA §164.404, §164.406,
+            §164.408, §164.414(b).
+          </p>
+        </div>
+        <button type="button" onClick={() => openModal('register')}>
+          + Register breach
+        </button>
       </header>
 
       {error && <div role="alert" style={{ color: '#b91c1c' }}>{error}</div>}
@@ -228,28 +306,20 @@ export function BreachWorkflowPage() {
       )}
 
       {selected && (
-        <section
-          style={{
-            border: '1px solid #cbd5e1',
-            borderRadius: 8,
-            padding: 16,
-            background: '#f8fafc',
-            display: 'grid',
-            gap: 12,
-          }}
-        >
+        <section style={{
+          border: '1px solid #cbd5e1', borderRadius: 8, padding: 16,
+          background: '#f8fafc', display: 'grid', gap: 12,
+        }}>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <div>
-              <h3 style={{ fontSize: 16, fontWeight: 600 }}>
-                Breach #{selected.id}
-              </h3>
+              <h3 style={{ fontSize: 16, fontWeight: 600 }}>Breach #{selected.id}</h3>
               <div style={{ color: '#64748b', fontSize: 13, marginTop: 4 }}>
-                Discovered {selected.discoveredAt.slice(0, 10)} ·
-                {' '}{statusBadge(selected.isOverdue ? 'overdue' : selected.status)}
-                {' · '}{deadlineBadge(selected)}
+                Discovered {selected.discoveredAt.slice(0, 10)} ·{' '}
+                {statusBadge(selected.isOverdue ? 'overdue' : selected.status)}{' · '}
+                {deadlineBadge(selected)}
               </div>
             </div>
-            <button type="button" onClick={() => setSelected(null)}>Close</button>
+            <button type="button" onClick={() => setSelected(null)}>Close panel</button>
           </div>
 
           {selected.description && (
@@ -257,10 +327,7 @@ export function BreachWorkflowPage() {
           )}
 
           <div style={{ display: 'grid', gap: 6, color: '#475569', fontSize: 13 }}>
-            <div>
-              <strong>Confirmed:</strong>{' '}
-              {selected.confirmedAt?.slice(0, 10) ?? '—'}
-            </div>
+            <div><strong>Confirmed:</strong> {selected.confirmedAt?.slice(0, 10) ?? '—'}</div>
             <div>
               <strong>Risk Assessment:</strong>{' '}
               {selected.riskAssessmentAt
@@ -279,52 +346,40 @@ export function BreachWorkflowPage() {
                   : 'Required, not yet sent'
                 : 'Not required'}
             </div>
-            <div>
-              <strong>HHS Notification:</strong>{' '}
-              {selected.hhsNotifiedAt?.slice(0, 10) ?? '—'}
-            </div>
-            <div>
-              <strong>Closed:</strong>{' '}
-              {selected.closedAt?.slice(0, 10) ?? '—'}
-            </div>
+            <div><strong>HHS Notification:</strong> {selected.hhsNotifiedAt?.slice(0, 10) ?? '—'}</div>
+            <div><strong>Closed:</strong> {selected.closedAt?.slice(0, 10) ?? '—'}</div>
           </div>
 
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {selected.confirmedAt && selected.riskAssessmentAt === null && (
-              <button onClick={() => void handleAssess(selected)}>
-                Assess Risk
-              </button>
+              <button onClick={() => openModal('assess', selected)}>Assess Risk</button>
             )}
             {selected.riskAssessmentAt
               && selected.patientNotificationsSentAt === null
               && selected.status !== 'closed' && (
-                <button onClick={() => void handleSendPatients(selected)}>
+                <button onClick={() => openModal('send-patients')}>
                   Mark Patient Notifications Sent
                 </button>
               )}
             {selected.mediaNoticeRequired
               && selected.mediaNoticeSentAt === null
               && selected.status !== 'closed' && (
-                <button onClick={() => void handleSendMedia(selected)}>
+                <button onClick={() => openModal('send-media')}>
                   Mark Media Notice Sent
                 </button>
               )}
             {selected.riskAssessmentAt
               && selected.hhsNotifiedAt === null
               && selected.status !== 'closed' && (
-                <button onClick={() => void handleSendHhs(selected)}>
-                  Mark HHS Notified
-                </button>
+                <button onClick={() => openModal('send-hhs')}>Mark HHS Notified</button>
               )}
             {selected.status !== 'closed' && (
-              <button onClick={() => void handleClose(selected)}>Close Breach</button>
+              <button onClick={() => openModal('close')}>Close Breach</button>
             )}
           </div>
 
           <div>
-            <h4 style={{ fontSize: 14, fontWeight: 600, marginBottom: 6 }}>
-              Activity
-            </h4>
+            <h4 style={{ fontSize: 14, fontWeight: 600, marginBottom: 6 }}>Activity</h4>
             {activity.length === 0 ? (
               <p style={{ color: '#64748b' }}>No activity yet.</p>
             ) : (
@@ -337,9 +392,13 @@ export function BreachWorkflowPage() {
                     {' · '}<strong>{a.eventType}</strong>
                     {' · '}<span style={{ color: '#475569' }}>{a.actorEmail}</span>
                     {a.notes && (
-                      <span style={{ color: '#0f172a', marginLeft: 6 }}>
-                        — {a.notes}
-                      </span>
+                      <pre style={{
+                        color: '#0f172a', margin: '4px 0 0 0',
+                        fontFamily: 'inherit', fontSize: 13,
+                        whiteSpace: 'pre-wrap',
+                      }}>
+                        {a.notes}
+                      </pre>
                     )}
                   </li>
                 ))}
@@ -347,6 +406,200 @@ export function BreachWorkflowPage() {
             )}
           </div>
         </section>
+      )}
+
+      {modal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={
+            modal === 'register' ? 'Register breach'
+              : modal === 'assess' ? 'Assess breach risk'
+              : modal === 'send-patients' ? 'Mark patient notifications sent'
+              : modal === 'send-media' ? 'Mark media notice sent'
+              : modal === 'send-hhs' ? 'Mark HHS notified'
+              : 'Close breach'
+          }
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(15,23,42,0.5)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 100,
+          }}
+        >
+          <div style={{
+            background: '#fff', padding: 24, borderRadius: 8,
+            minWidth: 480, maxWidth: 640, maxHeight: '85vh',
+            overflowY: 'auto',
+          }}>
+            {modal === 'register' && (
+              <>
+                <h3 style={{ marginTop: 0 }}>Register breach</h3>
+                <label style={{ display: 'block', marginBottom: 8 }}>
+                  Discovered on
+                  <input
+                    type="date"
+                    value={registerDate}
+                    onChange={(e) => setRegisterDate(e.target.value)}
+                    style={{ width: '100%' }}
+                  />
+                </label>
+                <label style={{ display: 'block', marginBottom: 8 }}>
+                  Affected patient count (estimated; ≥500 triggers media notice)
+                  <input
+                    type="number"
+                    min={0}
+                    value={registerAffected}
+                    onChange={(e) => setRegisterAffected(e.target.value)}
+                    style={{ width: '100%' }}
+                  />
+                </label>
+                <label style={{ display: 'block', marginBottom: 8 }}>
+                  PHI types involved
+                  <input
+                    type="text"
+                    placeholder="e.g. names, SSN, treatment records"
+                    value={registerPhiTypes}
+                    onChange={(e) => setRegisterPhiTypes(e.target.value)}
+                    style={{ width: '100%' }}
+                  />
+                </label>
+                <label style={{ display: 'block', marginBottom: 8 }}>
+                  Description
+                  <textarea
+                    rows={4}
+                    value={registerDescription}
+                    onChange={(e) => setRegisterDescription(e.target.value)}
+                    placeholder="What happened, when, how was it discovered…"
+                    style={{ width: '100%' }}
+                  />
+                </label>
+                <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 12 }}>
+                  <button type="button" onClick={() => setModal(null)}>Cancel</button>
+                  <button type="button" onClick={() => { void submitRegister(); }}>
+                    Register
+                  </button>
+                </div>
+              </>
+            )}
+
+            {modal === 'assess' && (
+              <>
+                <h3 style={{ marginTop: 0 }}>Risk assessment</h3>
+                <p style={{ fontSize: 13, color: '#64748b' }}>
+                  HIPAA §164.402: assess the four factors to determine
+                  whether the impermissible use/disclosure compromised PHI.
+                  All four are required for the determination to be
+                  defensible.
+                </p>
+                <label style={{ display: 'block', marginBottom: 12 }}>
+                  Risk level
+                  <select
+                    value={riskLevel}
+                    onChange={(e) => setRiskLevel(e.target.value as BreachRiskLevel)}
+                    style={{ width: '100%' }}
+                  >
+                    <option value="Low">Low</option>
+                    <option value="Moderate">Moderate</option>
+                    <option value="High">High</option>
+                  </select>
+                </label>
+                {RISK_FACTORS.map((f) => (
+                  <label key={f.key} style={{ display: 'block', marginBottom: 8 }}>
+                    <div style={{ fontSize: 13, color: '#475569' }}>{f.label}</div>
+                    <textarea
+                      rows={2}
+                      value={riskFactors[f.key] ?? ''}
+                      onChange={(e) =>
+                        setRiskFactors((prev) => ({ ...prev, [f.key]: e.target.value }))
+                      }
+                      style={{ width: '100%' }}
+                    />
+                  </label>
+                ))}
+                <label style={{ display: 'block', marginBottom: 8 }}>
+                  Affected patient count (≥500 triggers media notice)
+                  <input
+                    type="number"
+                    min={0}
+                    value={riskAffected}
+                    onChange={(e) => setRiskAffected(e.target.value)}
+                    style={{ width: '100%' }}
+                  />
+                </label>
+                <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 12 }}>
+                  <button type="button" onClick={() => setModal(null)}>Cancel</button>
+                  <button type="button" onClick={() => { void submitAssess(); }}>
+                    Save assessment
+                  </button>
+                </div>
+              </>
+            )}
+
+            {(modal === 'send-patients' || modal === 'send-media' || modal === 'send-hhs') && (
+              <>
+                <h3 style={{ marginTop: 0 }}>
+                  {modal === 'send-patients' && 'Patient notifications sent'}
+                  {modal === 'send-media' && 'Media notice sent'}
+                  {modal === 'send-hhs' && 'HHS notification sent'}
+                </h3>
+                <p style={{ fontSize: 13, color: '#64748b' }}>
+                  Notes are appended to the activity log. Reference batch IDs,
+                  publication URLs, or OCR submission numbers as appropriate.
+                </p>
+                <label style={{ display: 'block', marginBottom: 8 }}>
+                  Notes (optional)
+                  <textarea
+                    rows={4}
+                    value={actionNotes}
+                    onChange={(e) => setActionNotes(e.target.value)}
+                    style={{ width: '100%' }}
+                  />
+                </label>
+                <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 12 }}>
+                  <button type="button" onClick={() => setModal(null)}>Cancel</button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (modal === 'send-patients') void submitSendPatients();
+                      else if (modal === 'send-media') void submitSendMedia();
+                      else void submitSendHhs();
+                    }}
+                  >
+                    Confirm
+                  </button>
+                </div>
+              </>
+            )}
+
+            {modal === 'close' && (
+              <>
+                <h3 style={{ marginTop: 0 }}>Close breach</h3>
+                {selected && selected.confirmedAt && selected.hhsNotifiedAt === null && (
+                  <p style={{ fontSize: 13, color: '#b45309' }}>
+                    HHS has not been notified for this breach. A closure note
+                    explaining the reason is required.
+                  </p>
+                )}
+                <label style={{ display: 'block', marginBottom: 8 }}>
+                  Closure notes
+                  <textarea
+                    rows={4}
+                    value={actionNotes}
+                    onChange={(e) => setActionNotes(e.target.value)}
+                    style={{ width: '100%' }}
+                  />
+                </label>
+                <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 12 }}>
+                  <button type="button" onClick={() => setModal(null)}>Cancel</button>
+                  <button type="button" onClick={() => { void submitClose(); }}>
+                    Close breach
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );

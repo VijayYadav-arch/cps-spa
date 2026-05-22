@@ -225,6 +225,20 @@ const BREACH_BASE = '/compliance/breaches/workflow';
 export const listBreachesWorkflow = (): Promise<{ data: BreachWorkflowSummary[] }> =>
   apiClient.get<{ data: BreachWorkflowSummary[] }>(BREACH_BASE).then((r) => r.data);
 
+export interface RegisterBreachRequest {
+  discoveredAt: string;            // ISO date
+  affectedPatientCount?: number | null;
+  phiTypesInvolved?: string | null;
+  description?: string | null;
+}
+
+export const registerBreach = (
+  req: RegisterBreachRequest,
+): Promise<{ id: number }> =>
+  apiClient
+    .post<{ data: { id: number } }>('/compliance/breaches', req)
+    .then((r) => r.data.data);
+
 export const getBreachWorkflow = (id: number): Promise<BreachWorkflowSummary> =>
   apiClient.get<BreachWorkflowSummary>(`${BREACH_BASE}/${id}`).then((r) => r.data);
 
