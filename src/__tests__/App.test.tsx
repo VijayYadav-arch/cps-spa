@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { setDevClaims, clearDevClaims } from '@/auth/devLogin';
 
 // Mock all API calls to prevent network requests in routing tests
 vi.mock('@/api/client', () => ({
@@ -43,6 +44,10 @@ import App from '@/App';
 
 describe('App routing', () => {
   beforeEach(() => {
+    // Force dev mode: no B2C client ID → useDevAuth() returns true → DevAuthInner used
+    (import.meta.env as any).VITE_B2C_CLIENT_ID = '';
+    (import.meta.env as any).VITE_DEV_LOGIN = 'false';
+    clearDevClaims();
     // Reset location to root before each test so BrowserRouter starts at /
     window.history.pushState({}, '', '/');
     sessionStorage.clear();
@@ -50,6 +55,7 @@ describe('App routing', () => {
 
   afterEach(() => {
     cleanup();
+    clearDevClaims();
     sessionStorage.clear();
   });
 
@@ -60,11 +66,7 @@ describe('App routing', () => {
   });
 
   it('renders Dashboard for authenticated users at /', () => {
-    const makeToken = (payload: object) => {
-      const body = btoa(JSON.stringify(payload));
-      return `header.${body}.sig`;
-    };
-    sessionStorage.setItem('cps_token', makeToken({ userId: 1, organizationId: 5, rbac_role: 'billing_admin' }));
+    setDevClaims({ userId: 1, organizationId: 5, roles: ['billing_admin'], permissions: [] });
     render(<App />);
     // Layout sidebar nav has a "Dashboard" link + the stub page renders <div>Dashboard</div>
     const dashboardEls = screen.getAllByText('Dashboard');
@@ -72,22 +74,14 @@ describe('App routing', () => {
   });
 
   it('renders PatientHistory page at /patients/1/history', () => {
-    const makeToken = (payload: object) => {
-      const body = btoa(JSON.stringify(payload));
-      return `header.${body}.sig`;
-    };
-    sessionStorage.setItem('cps_token', makeToken({ userId: 1, organizationId: 5, rbac_role: 'billing_admin' }));
+    setDevClaims({ userId: 1, organizationId: 5, roles: ['billing_admin'], permissions: [] });
     window.history.pushState({}, '', '/patients/1/history');
     render(<App />);
     expect(screen.getByText('Patient History')).toBeInTheDocument();
   });
 
   it('renders HospiceWorkQueue at /hospice/work-queue', () => {
-    const makeToken = (payload: object) => {
-      const body = btoa(JSON.stringify(payload));
-      return `header.${body}.sig`;
-    };
-    sessionStorage.setItem('cps_token', makeToken({ userId: 1, organizationId: 5, rbac_role: 'billing_manager' }));
+    setDevClaims({ userId: 1, organizationId: 5, roles: ['billing_manager'], permissions: [] });
     window.history.pushState({}, '', '/hospice/work-queue');
     render(<App />);
     expect(screen.getByText('Hospice Work Queue Page')).toBeInTheDocument();
