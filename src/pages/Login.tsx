@@ -1,16 +1,35 @@
-// Phase 2 of MSAL-only cutover replaces this entire file.
-// For Phase 1, the old password-based login form is stubbed out so the build
-// passes. SSO redirect via loginWithSSO() replaces this UI in Phase 2.
+import { useSearchParams } from 'react-router-dom';
+import { SsoButton } from '@/auth/SsoButton';
+import { DevLoginForm } from '@/auth/DevLoginForm';
+import { useDevAuth } from '@/auth/msalConfig';
 
 export function Login() {
+  const [searchParams] = useSearchParams();
+  const reason = searchParams.get('reason');
+  const devMode = useDevAuth();
+
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ width: 360, padding: 32, border: '1px solid #e2e8f0', borderRadius: 8 }}>
-        <h1 style={{ marginBottom: 24, fontSize: 24, fontWeight: 700 }}>CPS Sign In</h1>
-        <p style={{ color: '#64748b' }}>
-          Sign-in is handled via SSO. If you are seeing this page, please contact your administrator.
-        </p>
-      </div>
+    <div className="login-page">
+      <header>
+        <h1>CPS</h1>
+        <p>Care Practice Suite</p>
+      </header>
+
+      {reason === 'expired' && (
+        <div role="alert" className="login-banner login-banner--info">
+          Your session ended. Please sign in again.
+        </div>
+      )}
+
+      {reason === 'invalid_token' && (
+        <div role="alert" className="login-banner login-banner--warning">
+          Sign-in could not be completed. Contact your administrator if this persists.
+        </div>
+      )}
+
+      {devMode ? <DevLoginForm /> : <SsoButton />}
     </div>
   );
 }
+
+export default Login;

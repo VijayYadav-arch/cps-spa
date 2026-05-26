@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { DevLoginForm } from '@/auth/DevLoginForm';
-import { setDevClaims, clearDevClaims, getDevClaims } from '@/auth/devLogin';
+import { setDevClaims, getDevClaims } from '@/auth/devLogin';
 
 describe('DevLoginForm', () => {
   beforeEach(() => {
