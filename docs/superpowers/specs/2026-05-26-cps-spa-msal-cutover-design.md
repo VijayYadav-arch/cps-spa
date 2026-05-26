@@ -1,8 +1,20 @@
 # cps-spa MSAL Cutover — Design Spec
 
+> ## ⚠️ SUPERSEDED — DO NOT IMPLEMENT
+>
+> **This spec is superseded by [`2026-05-26-cps-spa-msal-only-design.md`](./2026-05-26-cps-spa-msal-only-design.md).**
+>
+> **Why:** This spec assumed `POST /api/v2/auth/login` existed on cps-dotnet and just needed an `EnforceSso` guard. That endpoint had already been deliberately deleted three weeks earlier in commit `16cf7e0` (2026-05-01: *"delete AuthController and AdminAuthController (legacy removed) — Remove legacy password-based auth controllers now that B2C is the sole auth path"*). The whole `t3` commit series in early May systematically removed local password auth (BCrypt, JwtDenyList, AuthService, etc.). The "keep both auth paths, no flag" decision in this spec was therefore based on a false premise.
+>
+> The replacement spec drops the dual-auth framing entirely: B2C is the only production path, and a `DevLoginForm` driving `X-Dev-Claims` against `DevBypassAuthHandler` provides the local-testing affordance without resurrecting a password endpoint.
+>
+> Kept here as a record of the brainstorming history, not as a buildable spec.
+
+---
+
 **Date:** 2026-05-26
 **Repos touched:** `cps-spa` (primary), `cps-dotnet` (one controller + Bicep)
-**Status:** Approved through brainstorming; ready for implementation planning
+**Status:** ~~Approved through brainstorming; ready for implementation planning~~ **Superseded 2026-05-26.**
 
 ---
 
