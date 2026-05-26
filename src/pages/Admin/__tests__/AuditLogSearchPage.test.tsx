@@ -127,7 +127,8 @@ describe('AuditLogSearchPage', () => {
 
     await user.click(screen.getByRole('button', { name: /^Clear$/ }));
     await waitFor(() => {
-      const last = vi.mocked(getAuditEvents).mock.calls.at(-1)![0];
+      const calls = vi.mocked(getAuditEvents).mock.calls;
+      const last = calls[calls.length - 1][0];
       expect(last).not.toHaveProperty('q');
     });
   });

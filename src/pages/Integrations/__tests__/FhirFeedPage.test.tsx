@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { FhirFeedPage } from '@/pages/Integrations/FhirFeedPage';
+import type { FhirFeedRow } from '@/api/integrations';
 
 vi.mock('@/api/integrations', () => ({
   listFhirFeed: vi.fn(),
@@ -11,10 +12,7 @@ import { listFhirFeed } from '@/api/integrations';
 
 beforeEach(() => vi.clearAllMocks());
 
-function row(over: Partial<{
-  id: number; status: string; resourceType: string;
-  diagnostics: string | null; bundleEntryIndex: number | null;
-}> = {}) {
+function row(over: Partial<FhirFeedRow> = {}) {
   return {
     id: 1,
     receivedAtUtc: '2026-05-20T10:00:00Z',

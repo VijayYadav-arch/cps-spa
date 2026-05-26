@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AuditAnomalyReviewPage } from '@/pages/Compliance/AuditAnomalyReviewPage';
+import type { AnomalyType, AnomalyStatus } from '@/api/compliance';
 
 vi.mock('@/api/compliance', async (orig) => ({
   ...(await orig<object>()),
@@ -19,7 +20,7 @@ import {
 beforeEach(() => vi.clearAllMocks());
 
 function alert(over: Partial<{
-  id: number; status: string; anomalyType: string;
+  id: number; status: AnomalyStatus; anomalyType: AnomalyType;
   userEmail: string | null; evidence: string;
 }> = {}) {
   return {

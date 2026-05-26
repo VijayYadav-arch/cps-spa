@@ -1,11 +1,14 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import {
+  _resetAccessTokenProviderForTests,
+} from '@/auth/getAccessToken';
+import { setDevClaims, clearDevClaims } from '@/auth/devLogin';
 
 vi.mock('axios', async (importOriginal) => {
   const actual = await importOriginal<typeof import('axios')>();
   return { default: actual.default };
 });
 
-/** Minimal headers stub that mimics AxiosHeaders for testing purposes. */
 function makeHeaders(): Record<string, string> & { set(name: string, value: string): void } {
   const store: Record<string, string> = {};
   const obj = {
@@ -28,7 +31,11 @@ describe('apiClient interceptors', () => {
       configurable: true,
     });
     sessionStorage.clear();
+    _resetAccessTokenProviderForTests();
     vi.resetModules();
+    // Default: SSO mode for these tests unless overridden
+    (import.meta.env as any).VITE_B2C_CLIENT_ID = 'abc-123';
+    (import.meta.env as any).VITE_DEV_LOGIN = 'false';
   });
 
   afterEach(() => {
@@ -41,44 +48,67 @@ describe('apiClient interceptors', () => {
     vi.restoreAllMocks();
   });
 
-  it('attaches Bearer token from sessionStorage when token is present', async () => {
-    sessionStorage.setItem('cps_token', 'test.jwt.token');
+  it('attaches Bearer token from getAccessToken in SSO mode', async () => {
+    const { setAccessTokenProvider: setProvider } = await import('@/auth/getAccessToken');
+    setProvider(() => 'b2c.access.tok');
     const { apiClient } = await import('@/api/client');
-
     const interceptors = (apiClient.interceptors.request as any).handlers;
-    expect(interceptors.length).toBeGreaterThan(0);
-
     const mockConfig = { headers: makeHeaders() };
-    const result = interceptors[0].fulfilled(mockConfig);
-    expect(result.headers['Authorization']).toBe('Bearer test.jwt.token');
-    expect(window.location.href).toBe('');
+    const result = await interceptors[0].fulfilled(mockConfig);
+    expect(result.headers['Authorization']).toBe('Bearer b2c.access.tok');
+    expect(result.headers['X-Dev-Claims']).toBeUndefined();
   });
 
-  it('does not attach Authorization header when no token in sessionStorage', async () => {
+  it('does not attach Authorization header when getAccessToken returns null', async () => {
+    const { setAccessTokenProvider: setProvider } = await import('@/auth/getAccessToken');
+    setProvider(() => null);
     const { apiClient } = await import('@/api/client');
     const interceptors = (apiClient.interceptors.request as any).handlers;
     const mockConfig = { headers: makeHeaders() };
-    const result = interceptors[0].fulfilled(mockConfig);
+    const result = await interceptors[0].fulfilled(mockConfig);
     expect(result.headers['Authorization']).toBeUndefined();
   });
 
-  it('on 401 response clears sessionStorage and redirects to /login', async () => {
-    // Seed a token so we can verify removal
-    sessionStorage.setItem('cps_token', 'some.token');
+  it('sets X-Dev-Claims and omits Authorization in dev mode', async () => {
+    (import.meta.env as any).VITE_B2C_CLIENT_ID = '';
+    setDevClaims({
+      userId: 5,
+      organizationId: 1,
+      roles: ['billing_admin'],
+      permissions: ['claims:view'],
+    });
+    const { apiClient } = await import('@/api/client');
+    const interceptors = (apiClient.interceptors.request as any).handlers;
+    const mockConfig = { headers: makeHeaders() };
+    const result = await interceptors[0].fulfilled(mockConfig);
+    expect(result.headers['X-Dev-Claims']).toBe(
+      'userId=5;organizationId=1;rbac_role=billing_admin;permission=claims:view'
+    );
+    expect(result.headers['Authorization']).toBeUndefined();
+  });
 
+  it('dev mode with no dev claims set: no headers added', async () => {
+    (import.meta.env as any).VITE_B2C_CLIENT_ID = '';
+    clearDevClaims();
+    const { apiClient } = await import('@/api/client');
+    const interceptors = (apiClient.interceptors.request as any).handlers;
+    const mockConfig = { headers: makeHeaders() };
+    const result = await interceptors[0].fulfilled(mockConfig);
+    expect(result.headers['Authorization']).toBeUndefined();
+    expect(result.headers['X-Dev-Claims']).toBeUndefined();
+  });
+
+  it('on 401 response redirects to /login?reason=expired', async () => {
+    const { setAccessTokenProvider: setProvider } = await import('@/auth/getAccessToken');
+    setProvider(() => 'some.tok');
     const { apiClient } = await import('@/api/client');
     const responseInterceptors = (apiClient.interceptors.response as any).handlers;
-    expect(responseInterceptors.length).toBeGreaterThan(0);
-
     const err = { response: { status: 401 } };
     try {
       await responseInterceptors[0].rejected(err);
     } catch {
       // expected to reject
     }
-
-    // Verify the token was removed and redirect was set
-    expect(sessionStorage.getItem('cps_token')).toBeNull();
-    expect(window.location.href).toBe('/login');
+    expect(window.location.href).toBe('/login?reason=expired');
   });
 });

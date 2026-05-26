@@ -1,4 +1,7 @@
 import axios from 'axios';
+import { useDevAuth } from '@/auth/msalConfig';
+import { getAccessToken } from '@/auth/getAccessToken';
+import { getDevClaims, serializeDevClaims } from '@/auth/devLogin';
 
 export const apiClient = axios.create({
   baseURL: '/api/v2',
@@ -7,10 +10,17 @@ export const apiClient = axios.create({
   },
 });
 
-apiClient.interceptors.request.use((config) => {
-  const token = sessionStorage.getItem('cps_token');
-  if (token) {
-    config.headers.set('Authorization', `Bearer ${token}`);
+apiClient.interceptors.request.use(async (config) => {
+  if (useDevAuth()) {
+    const claims = getDevClaims();
+    if (claims) {
+      config.headers.set('X-Dev-Claims', serializeDevClaims(claims));
+    }
+  } else {
+    const token = await getAccessToken();
+    if (token) {
+      config.headers.set('Authorization', `Bearer ${token}`);
+    }
   }
   return config;
 });
@@ -24,8 +34,7 @@ apiClient.interceptors.response.use(
       'response' in err &&
       (err as { response?: { status?: number } }).response?.status === 401
     ) {
-      sessionStorage.removeItem('cps_token');
-      window.location.href = '/login';
+      window.location.href = '/login?reason=expired';
     }
     return Promise.reject(err);
   }
