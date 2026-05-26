@@ -1,15 +1,27 @@
 import {
   createContext,
+  useCallback,
+  useEffect,
   useState,
   type ReactNode,
 } from 'react';
-import { apiClient } from '@/api/client';
-
-interface UserInfo {
-  userId: number;
-  organizationId?: number;
-  roles: string[];
-}
+import {
+  EventType,
+  type EventMessage,
+  type IPublicClientApplication,
+} from '@azure/msal-browser';
+import { MsalProvider } from '@azure/msal-react';
+import { getMsalInstance, isB2CConfigured, loginRequest, useDevAuth } from './msalConfig';
+import { acquireBearerToken } from './ssoAcquire';
+import { parseCpsClaims, type UserInfo } from './claims';
+import { MalformedTokenError } from './errors';
+import {
+  clearDevClaims,
+  DEV_CLAIMS_EVENT,
+  getDevClaims,
+  type DevClaims,
+} from './devLogin';
+import { setAccessTokenProvider } from './getAccessToken';
 
 interface AuthState {
   isAuthenticated: boolean;
@@ -18,63 +30,173 @@ interface AuthState {
 
 interface AuthContextValue {
   auth: AuthState;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  loginWithSSO: () => Promise<void>;
+  logout: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextValue>(null!);
 
-function decodeToken(token: string): UserInfo {
-  const base64 = token.split('.')[1]
-    .replace(/-/g, '+')
-    .replace(/_/g, '/');
-  const padded = base64.padEnd(base64.length + (4 - (base64.length % 4)) % 4, '=');
-  const payload = JSON.parse(atob(padded)) as Record<string, unknown>;
-  return {
-    userId: Number(payload['userId']),
-    organizationId: payload['organizationId'] != null
-      ? Number(payload['organizationId'])
-      : undefined,
-    roles: Array.isArray(payload['rbac_role'])
-      ? (payload['rbac_role'] as string[])
-      : typeof payload['rbac_role'] === 'string'
-        ? [payload['rbac_role']]
-        : [],
-  };
+const UNAUTH: AuthState = { isAuthenticated: false, user: null };
+
+interface AuthProviderProps {
+  children: ReactNode;
+  /** Test injection point; defaults to real MSAL singleton. */
+  pca?: IPublicClientApplication;
 }
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [auth, setAuth] = useState<AuthState>(() => {
-    const token = sessionStorage.getItem('cps_token');
-    if (token) {
-      try {
-        return { isAuthenticated: true, user: decodeToken(token) };
-      } catch {
-        sessionStorage.removeItem('cps_token');
-      }
-    }
-    return { isAuthenticated: false, user: null };
-  });
+export function AuthProvider({ children, pca }: AuthProviderProps) {
+  // useDevAuth() is evaluated at module-init time; safe to call once here.
+  const devMode = useDevAuth();
+  const msalInstance = pca ?? (devMode ? null : getMsalInstance());
 
-  const login = async (email: string, password: string): Promise<void> => {
-    const { data } = await apiClient.post<{ data: { token: string } }>(
-      '/auth/login',
-      { email, password }
-    );
-    const token = data.data.token;
-    const user = decodeToken(token);  // throws first if malformed
-    sessionStorage.setItem('cps_token', token);
-    setAuth({ isAuthenticated: true, user });
-  };
+  if (devMode || msalInstance === null) {
+    return <DevAuthInner>{children}</DevAuthInner>;
+  }
 
-  const logout = () => {
-    sessionStorage.removeItem('cps_token');
-    setAuth({ isAuthenticated: false, user: null });
-  };
+  // When a test-injected fake PCA is provided, skip MsalProvider to avoid
+  // the real PCA initialization path (which calls getConfiguration().auth.clone()).
+  if (pca) {
+    return <SsoAuthInner pca={pca}>{children}</SsoAuthInner>;
+  }
 
   return (
-    <AuthContext.Provider value={{ auth, login, logout }}>
+    <MsalProvider instance={msalInstance}>
+      <SsoAuthInner pca={msalInstance}>{children}</SsoAuthInner>
+    </MsalProvider>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Dev-mode branch                                                     */
+/* ------------------------------------------------------------------ */
+function DevAuthInner({ children }: { children: ReactNode }) {
+  const [auth, setAuth] = useState<AuthState>(() => synthFromDevClaims(getDevClaims()));
+
+  useEffect(() => {
+    // Provider for apiClient. Dev mode returns null — apiClient sends
+    // X-Dev-Claims directly instead.
+    setAccessTokenProvider(() => null);
+
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<DevClaims | null>).detail;
+      setAuth(synthFromDevClaims(detail));
+    };
+    window.addEventListener(DEV_CLAIMS_EVENT, handler);
+    return () => window.removeEventListener(DEV_CLAIMS_EVENT, handler);
+  }, []);
+
+  const loginWithSSO = useCallback(async () => {
+    // No-op in dev mode; user uses DevLoginForm.
+    // Surfaced as a console warning so devs notice if they wire SsoButton incorrectly.
+    console.warn('[auth] loginWithSSO called in dev mode — no-op');
+  }, []);
+
+  const logout = useCallback(async () => {
+    clearDevClaims();
+    setAuth(UNAUTH);
+    if (typeof window !== 'undefined') window.location.href = '/login';
+  }, []);
+
+  return (
+    <AuthContext.Provider value={{ auth, loginWithSSO, logout }}>
       {children}
     </AuthContext.Provider>
   );
+}
+
+function synthFromDevClaims(claims: DevClaims | null): AuthState {
+  if (!claims) return UNAUTH;
+  return {
+    isAuthenticated: true,
+    user: {
+      userId: claims.userId,
+      organizationId: claims.organizationId,
+      roles: claims.roles,
+    },
+  };
+}
+
+/* ------------------------------------------------------------------ */
+/* SSO-mode branch                                                     */
+/* ------------------------------------------------------------------ */
+function SsoAuthInner({
+  children,
+  pca,
+}: {
+  children: ReactNode;
+  pca: IPublicClientApplication;
+}) {
+  const [auth, setAuth] = useState<AuthState>(UNAUTH);
+
+  useEffect(() => {
+    // Register accessor for apiClient. In SSO mode, returns an access token
+    // from MSAL silent acquire.
+    setAccessTokenProvider(async () => {
+      const account = pca.getAllAccounts()[0] ?? null;
+      try {
+        return await acquireBearerToken(pca, account);
+      } catch {
+        return null;
+      }
+    });
+
+    // Cold boot: if MSAL has a cached account, hydrate.
+    const accounts = pca.getAllAccounts();
+    if (accounts.length > 0) {
+      hydrateFromAccount(pca, accounts[0]).then(setAuth);
+    }
+
+    // Subscribe to LOGIN_SUCCESS so post-redirect lands hydrate properly.
+    const cbId = pca.addEventCallback((message: EventMessage) => {
+      if (
+        message.eventType === EventType.LOGIN_SUCCESS &&
+        message.payload &&
+        'account' in message.payload &&
+        message.payload.account
+      ) {
+        hydrateFromAccount(pca, message.payload.account as any).then(setAuth);
+      } else if (message.eventType === EventType.LOGOUT_SUCCESS) {
+        setAuth(UNAUTH);
+      }
+    });
+
+    return () => {
+      if (cbId) pca.removeEventCallback(cbId);
+    };
+  }, [pca]);
+
+  const loginWithSSO = useCallback(async () => {
+    await pca.loginRedirect(loginRequest);
+  }, [pca]);
+
+  const logout = useCallback(async () => {
+    await pca.logoutRedirect({ postLogoutRedirectUri: '/login' });
+  }, [pca]);
+
+  return (
+    <AuthContext.Provider value={{ auth, loginWithSSO, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+async function hydrateFromAccount(
+  pca: IPublicClientApplication,
+  account: any
+): Promise<AuthState> {
+  try {
+    const token = await acquireBearerToken(pca, account);
+    if (!token) return UNAUTH;
+    const user = parseCpsClaims(token);
+    if (import.meta.env.DEV) {
+      console.info('[auth] login success', { source: 'sso' });
+    }
+    return { isAuthenticated: true, user };
+  } catch (err) {
+    if (err instanceof MalformedTokenError) {
+      console.error('[auth] malformed token', { name: err.name });
+      pca.logoutRedirect({ postLogoutRedirectUri: '/login?reason=invalid_token' });
+    }
+    return UNAUTH;
+  }
 }
