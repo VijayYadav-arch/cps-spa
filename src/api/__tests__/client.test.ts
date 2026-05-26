@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
-  setAccessTokenProvider,
   _resetAccessTokenProviderForTests,
 } from '@/auth/getAccessToken';
 import { setDevClaims, clearDevClaims } from '@/auth/devLogin';

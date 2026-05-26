@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { InteractionRequiredAuthError } from '@azure/msal-browser';
 import { acquireBearerToken } from '@/auth/ssoAcquire';
 import { createFakePca, fakeAccount, fakeTokenResponse } from './fakes/msal';

@@ -11,7 +11,7 @@ import {
   type IPublicClientApplication,
 } from '@azure/msal-browser';
 import { MsalProvider } from '@azure/msal-react';
-import { getMsalInstance, isB2CConfigured, loginRequest, useDevAuth } from './msalConfig';
+import { getMsalInstance, loginRequest, useDevAuth } from './msalConfig';
 import { acquireBearerToken } from './ssoAcquire';
 import { parseCpsClaims, type UserInfo } from './claims';
 import { MalformedTokenError } from './errors';

@@ -7,7 +7,6 @@ import { useAuth } from '@/auth/useAuth';
 import {
   setDevClaims,
   clearDevClaims,
-  DEV_CLAIMS_EVENT,
 } from '@/auth/devLogin';
 import {
   createFakePca,
