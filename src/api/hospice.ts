@@ -1474,3 +1474,163 @@ export const markClaimSubmissionSubmitted = (
       { clearinghouseTrackingId },
     )
     .then((r) => r.data);
+
+// ============================================================
+// Sub-system E — Discharge & Transition Management
+// See cps-dotnet/docs/superpowers/specs/2026-05-26-hospice-discharge-design.md
+// ============================================================
+
+export type HospiceDischargeReason =
+  | 'Transfer'
+  | 'OutOfServiceArea'
+  | 'NoLongerTerminal'
+  | 'ForCause'
+  | 'AgencyClosure';
+
+export type HospiceDischargeTaskType =
+  | 'DmeRetrieval'
+  | 'RecordsTransfer'
+  | 'FamilyNotification'
+  | 'PhysicianSignOffConfirmation'
+  | 'Other';
+
+export interface HospiceDischarge {
+  id: number;
+  organizationId: number;
+  electionId: number;
+  reason: HospiceDischargeReason;
+  effectiveDate: string;       // ISO yyyy-MM-dd
+  reasonNotes: string | null;
+  receivingAgencyName: string | null;
+  outOfAreaDestination: string | null;
+  idgApprovalDate: string | null;
+  physicianSignOffUserId: number | null;
+  advanceNoticeDate: string | null;
+  alternativeArrangements: string | null;
+  surveyRiskFlags: string[];
+  isSurveyRisk: boolean;
+  pendingTaskCount: number;
+  recordedByUserId: number;
+  createdAt: string;
+  updatedAt: string;
+  tasks: HospiceDischargeTask[];
+}
+
+export interface HospiceDischargeTask {
+  id: number;
+  dischargeId: number;
+  taskType: HospiceDischargeTaskType;
+  title: string;
+  dueDate: string;
+  completedAt: string | null;
+  completedByUserId: number | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateHospiceDischargeRequest {
+  reason: HospiceDischargeReason;
+  effectiveDate: string;
+  reasonNotes?: string | null;
+  receivingAgencyName?: string | null;
+  outOfAreaDestination?: string | null;
+  idgApprovalDate?: string | null;
+  physicianSignOffUserId?: number | null;
+  advanceNoticeDate?: string | null;
+  alternativeArrangements?: string | null;
+}
+
+export interface EditHospiceDischargeRequest {
+  reasonNotes?: string | null;
+  receivingAgencyName?: string | null;
+  outOfAreaDestination?: string | null;
+  idgApprovalDate?: string | null;
+  physicianSignOffUserId?: number | null;
+  advanceNoticeDate?: string | null;
+  alternativeArrangements?: string | null;
+}
+
+export interface CreateHospiceDischargeTaskRequest {
+  taskType: HospiceDischargeTaskType;
+  title: string;
+  dueDate: string;
+  notes?: string | null;
+}
+
+export interface UpdateHospiceDischargeTaskRequest {
+  complete?: boolean;
+  title?: string | null;
+  dueDate?: string | null;
+  notes?: string | null;
+}
+
+export const createDischarge = (
+  electionId: number,
+  body: CreateHospiceDischargeRequest,
+): Promise<HospiceDischarge> =>
+  apiClient
+    .post<HospiceDischarge>(`/hospice/elections/${electionId}/discharge`, body)
+    .then((r) => r.data);
+
+export const getDischarge = (dischargeId: number): Promise<HospiceDischarge> =>
+  apiClient
+    .get<HospiceDischarge>(`/hospice/discharges/${dischargeId}`)
+    .then((r) => r.data);
+
+export const editDischarge = (
+  dischargeId: number,
+  body: EditHospiceDischargeRequest,
+): Promise<HospiceDischarge> =>
+  apiClient
+    .patch<HospiceDischarge>(`/hospice/discharges/${dischargeId}`, body)
+    .then((r) => r.data);
+
+export const listDischarges = (
+  reasonFilter?: HospiceDischargeReason,
+): Promise<HospiceDischarge[]> => {
+  const url = reasonFilter
+    ? `/hospice/discharges?reason=${reasonFilter}`
+    : '/hospice/discharges';
+  return apiClient.get<HospiceDischarge[]>(url).then((r) => r.data);
+};
+
+export const addDischargeTask = (
+  dischargeId: number,
+  body: CreateHospiceDischargeTaskRequest,
+): Promise<HospiceDischargeTask> =>
+  apiClient
+    .post<HospiceDischargeTask>(`/hospice/discharges/${dischargeId}/tasks`, body)
+    .then((r) => r.data);
+
+export const completeDischargeTask = (
+  dischargeId: number,
+  taskId: number,
+  notes?: string,
+): Promise<HospiceDischargeTask> =>
+  apiClient
+    .patch<HospiceDischargeTask>(
+      `/hospice/discharges/${dischargeId}/tasks/${taskId}`,
+      { complete: true, notes: notes ?? null } as UpdateHospiceDischargeTaskRequest,
+    )
+    .then((r) => r.data);
+
+export const editDischargeTask = (
+  dischargeId: number,
+  taskId: number,
+  body: Omit<UpdateHospiceDischargeTaskRequest, 'complete'>,
+): Promise<HospiceDischargeTask> =>
+  apiClient
+    .patch<HospiceDischargeTask>(
+      `/hospice/discharges/${dischargeId}/tasks/${taskId}`,
+      body,
+    )
+    .then((r) => r.data);
+
+export const removeDischargeTask = (
+  dischargeId: number,
+  taskId: number,
+): Promise<void> =>
+  apiClient
+    .delete(`/hospice/discharges/${dischargeId}/tasks/${taskId}`)
+    .then(() => undefined);

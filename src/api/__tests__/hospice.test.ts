@@ -481,4 +481,100 @@ describe('hospice API', () => {
       { clearinghouseTrackingId: 'TRACK-123' },
     );
   });
+
+  // ── Sub-system E: Discharge & Transition Management ────────────────────────
+
+  it('createDischarge() POSTs to /hospice/elections/{id}/discharge', async () => {
+    const { apiClient } = await import('@/api/client');
+    const { createDischarge } = await import('@/api/hospice');
+    const mockDischarge = {
+      id: 10, organizationId: 1, electionId: 42, reason: 'Transfer',
+      effectiveDate: '2026-06-01', reasonNotes: null, receivingAgencyName: 'Acme Hospice',
+      outOfAreaDestination: null, idgApprovalDate: null, physicianSignOffUserId: null,
+      advanceNoticeDate: null, alternativeArrangements: null, surveyRiskFlags: [],
+      isSurveyRisk: false, pendingTaskCount: 0, recordedByUserId: 5,
+      createdAt: '2026-06-01T00:00:00Z', updatedAt: '2026-06-01T00:00:00Z', tasks: [],
+    };
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: mockDischarge });
+    const body = { reason: 'Transfer' as const, effectiveDate: '2026-06-01', receivingAgencyName: 'Acme Hospice' };
+    const result = await createDischarge(42, body);
+    expect(apiClient.post).toHaveBeenCalledWith('/hospice/elections/42/discharge', body);
+    expect(result).toEqual(mockDischarge);
+  });
+
+  it('getDischarge() GETs /hospice/discharges/{id}', async () => {
+    const { apiClient } = await import('@/api/client');
+    const { getDischarge } = await import('@/api/hospice');
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ data: { id: 1 } });
+    await getDischarge(1);
+    expect(apiClient.get).toHaveBeenCalledWith('/hospice/discharges/1');
+  });
+
+  it('editDischarge() PATCHes /hospice/discharges/{id}', async () => {
+    const { apiClient } = await import('@/api/client');
+    const { editDischarge } = await import('@/api/hospice');
+    const patch = { reasonNotes: 'Updated notes' };
+    vi.mocked(apiClient.patch).mockResolvedValueOnce({ data: { id: 1, ...patch } });
+    await editDischarge(1, patch);
+    expect(apiClient.patch).toHaveBeenCalledWith('/hospice/discharges/1', patch);
+  });
+
+  it('listDischarges() GETs /hospice/discharges (no filter)', async () => {
+    const { apiClient } = await import('@/api/client');
+    const { listDischarges } = await import('@/api/hospice');
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ data: [] });
+    await listDischarges();
+    expect(apiClient.get).toHaveBeenCalledWith('/hospice/discharges');
+  });
+
+  it('listDischarges() GETs /hospice/discharges?reason=ForCause (with filter)', async () => {
+    const { apiClient } = await import('@/api/client');
+    const { listDischarges } = await import('@/api/hospice');
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ data: [] });
+    await listDischarges('ForCause');
+    expect(apiClient.get).toHaveBeenCalledWith('/hospice/discharges?reason=ForCause');
+  });
+
+  it('addDischargeTask() POSTs to /hospice/discharges/{id}/tasks', async () => {
+    const { apiClient } = await import('@/api/client');
+    const { addDischargeTask } = await import('@/api/hospice');
+    const mockTask = {
+      id: 20, dischargeId: 1, taskType: 'DmeRetrieval', title: 'Retrieve DME',
+      dueDate: '2026-06-05', completedAt: null, completedByUserId: null, notes: null,
+      createdAt: '2026-06-01T00:00:00Z', updatedAt: '2026-06-01T00:00:00Z',
+    };
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: mockTask });
+    const body = { taskType: 'DmeRetrieval' as const, title: 'Retrieve DME', dueDate: '2026-06-05' };
+    const result = await addDischargeTask(1, body);
+    expect(apiClient.post).toHaveBeenCalledWith('/hospice/discharges/1/tasks', body);
+    expect(result).toEqual(mockTask);
+  });
+
+  it('completeDischargeTask() PATCHes with { complete: true, notes }', async () => {
+    const { apiClient } = await import('@/api/client');
+    const { completeDischargeTask } = await import('@/api/hospice');
+    vi.mocked(apiClient.patch).mockResolvedValueOnce({ data: { id: 20, completedAt: '2026-06-02T10:00:00Z' } });
+    await completeDischargeTask(1, 20, 'Done');
+    expect(apiClient.patch).toHaveBeenCalledWith(
+      '/hospice/discharges/1/tasks/20',
+      { complete: true, notes: 'Done' },
+    );
+  });
+
+  it('editDischargeTask() PATCHes without complete field', async () => {
+    const { apiClient } = await import('@/api/client');
+    const { editDischargeTask } = await import('@/api/hospice');
+    const patch = { title: 'Updated title', dueDate: '2026-06-10', notes: null };
+    vi.mocked(apiClient.patch).mockResolvedValueOnce({ data: { id: 20, ...patch } });
+    await editDischargeTask(1, 20, patch);
+    expect(apiClient.patch).toHaveBeenCalledWith('/hospice/discharges/1/tasks/20', patch);
+  });
+
+  it('removeDischargeTask() DELETEs /hospice/discharges/{id}/tasks/{taskId}', async () => {
+    const { apiClient } = await import('@/api/client');
+    const { removeDischargeTask } = await import('@/api/hospice');
+    vi.mocked(apiClient.delete).mockResolvedValueOnce({ data: undefined });
+    await removeDischargeTask(1, 20);
+    expect(apiClient.delete).toHaveBeenCalledWith('/hospice/discharges/1/tasks/20');
+  });
 });
