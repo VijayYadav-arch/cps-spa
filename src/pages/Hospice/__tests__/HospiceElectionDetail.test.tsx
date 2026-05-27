@@ -113,8 +113,8 @@ describe('HospiceElectionDetail', () => {
     await waitFor(() => expect(submitNoe).toHaveBeenCalled());
   });
 
-  it('shows Discharge Patient button when user has hospice:discharge_manage role AND election status is Active', async () => {
-    mockAuth(['hospice:discharge_manage']);
+  it('shows Discharge Patient button when user has physician role AND election status is Active', async () => {
+    mockAuth(['physician']);
     vi.mocked(getElection).mockResolvedValueOnce(fixture);
     renderDetail();
     await waitFor(() => {

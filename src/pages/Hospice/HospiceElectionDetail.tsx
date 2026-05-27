@@ -34,7 +34,8 @@ export function HospiceElectionDetail() {
   }>();
   const navigate = useNavigate();
   const { auth } = useAuth();
-  const canManageDischarge = auth.user?.roles.includes('hospice:discharge_manage') ?? false;
+  const canManageDischarge = auth.user?.roles.some(r =>
+    ['physician', 'client_admin', 'system_admin'].includes(r)) ?? false;
   const [election, setElection] = useState<HospiceElection | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
