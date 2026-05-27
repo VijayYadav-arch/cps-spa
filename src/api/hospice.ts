@@ -1,6 +1,6 @@
 import { apiClient } from '@/api/client';
 
-export type HospiceElectionStatus = 'Active' | 'Revoked' | 'Expired';
+export type HospiceElectionStatus = 'Active' | 'Revoked' | 'Expired' | 'Discharged';
 export type HospiceElectionType = 'InitialElection' | 'ReElection';
 export type HospicePeriodStatus = 'Active' | 'Certified' | 'Completed' | 'Revoked';
 export type NoeStatus = 'Pending' | 'Submitted' | 'ManualOverride' | 'Late';
@@ -69,6 +69,29 @@ export interface WorkQueueItem {
   periodNumber: number | null;
 }
 
+export interface DischargeTaskQueueItem {
+  type: 'DischargeTaskDue';
+  dischargeId: number;
+  electionId: number;
+  patientId: number;
+  patientName: string;
+  taskType: string;
+  taskTitle: string;
+  dueDate: string;
+  daysUntilDue: number | null;
+}
+
+export interface SurveyRiskDischargeQueueItem {
+  type: 'SurveyRiskDischarge';
+  dischargeId: number;
+  electionId: number;
+  patientId: number;
+  patientName: string;
+  reason: string;
+  effectiveDate: string;
+  surveyRiskFlags: string[];
+}
+
 export interface BereavementQueueItem {
   type: 'BereavementFollowUp' | 'BereavementOverdueContact';
   programId: number;
@@ -107,6 +130,8 @@ export interface WorkQueueResponse {
   addendumDue: WorkQueueItem[];
   notrOverdue: WorkQueueItem[];
   ftfDue: WorkQueueItem[];
+  dischargeTasksDue?: DischargeTaskQueueItem[];
+  surveyRiskDischarges?: SurveyRiskDischargeQueueItem[];
 }
 
 export const createElection = (req: CreateElectionRequest): Promise<HospiceElection> =>

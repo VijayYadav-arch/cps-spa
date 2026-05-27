@@ -9,7 +9,12 @@ vi.mock('@/api/hospice', () => ({
   submitNoe: vi.fn(),
 }));
 
+vi.mock('@/auth/useAuth', () => ({
+  useAuth: vi.fn(),
+}));
+
 import { getElection, submitNoe } from '@/api/hospice';
+import { useAuth } from '@/auth/useAuth';
 
 const fixture = {
   id: 1,
@@ -55,8 +60,19 @@ function renderDetail() {
   );
 }
 
+function mockAuth(roles: string[] = []) {
+  vi.mocked(useAuth).mockReturnValue({
+    auth: { isAuthenticated: true, user: { userId: 1, organizationId: 1, roles } },
+    loginWithSSO: vi.fn(),
+    logout: vi.fn(),
+  });
+}
+
 describe('HospiceElectionDetail', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockAuth();
+  });
 
   it('shows loading state initially', () => {
     vi.mocked(getElection).mockReturnValue(new Promise(() => {}));
@@ -95,5 +111,33 @@ describe('HospiceElectionDetail', () => {
     await user.type(urlInput, 'https://example.com/noe.pdf');
     await user.click(screen.getByRole('button', { name: /Confirm Submission/i }));
     await waitFor(() => expect(submitNoe).toHaveBeenCalled());
+  });
+
+  it('shows Discharge Patient button when user has hospice:discharge_manage role AND election status is Active', async () => {
+    mockAuth(['hospice:discharge_manage']);
+    vi.mocked(getElection).mockResolvedValueOnce(fixture);
+    renderDetail();
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /Discharge Patient/i })).toBeInTheDocument();
+    });
+  });
+
+  it('does not show Discharge Patient button when user lacks hospice:discharge_manage role', async () => {
+    mockAuth(['billing_admin']);
+    vi.mocked(getElection).mockResolvedValueOnce(fixture);
+    renderDetail();
+    await waitFor(() => {
+      expect(screen.queryByRole('button', { name: /Discharge Patient/i })).not.toBeInTheDocument();
+    });
+  });
+
+  it('shows Discharged section with link when election status is Discharged', async () => {
+    const dischargedFixture = { ...fixture, status: 'Discharged' as const };
+    vi.mocked(getElection).mockResolvedValueOnce(dischargedFixture);
+    renderDetail();
+    await waitFor(() => {
+      expect(screen.getByText(/This election has been discharged/i)).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /View discharge details/i })).toBeInTheDocument();
+    });
   });
 });
