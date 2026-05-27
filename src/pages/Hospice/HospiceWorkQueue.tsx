@@ -4,6 +4,8 @@ import {
   getWorkQueue,
   type BereavementQueueItem,
   type WorkQueueItem,
+  type DischargeTaskQueueItem,
+  type SurveyRiskDischargeQueueItem,
 } from '@/api/hospice';
 
 type Tab =
@@ -16,7 +18,9 @@ type Tab =
   | 'bereavementOverdueContact'
   | 'addendum'
   | 'notr'
-  | 'ftf';
+  | 'ftf'
+  | 'dischargeTasksDue'
+  | 'surveyRiskDischarges';
 
 const TAB_META: Record<Tab, { label: string; emptyMessage: string }> = {
   recerts: { label: 'Recerts Due', emptyMessage: 'No recerts due in the next 15 days.' },
@@ -45,6 +49,14 @@ const TAB_META: Record<Tab, { label: string; emptyMessage: string }> = {
     emptyMessage:
       'No Face-to-Face encounters due (period 3+ within 30-day window).',
   },
+  dischargeTasksDue: {
+    label: 'Discharge Tasks Due',
+    emptyMessage: 'No discharge tasks due in the next 7 days.',
+  },
+  surveyRiskDischarges: {
+    label: 'Survey Risk Discharges',
+    emptyMessage: 'No survey-risk discharges.',
+  },
 };
 
 export function HospiceWorkQueue() {
@@ -62,6 +74,8 @@ export function HospiceWorkQueue() {
   const [addendum, setAddendum] = useState<WorkQueueItem[]>([]);
   const [notr, setNotr] = useState<WorkQueueItem[]>([]);
   const [ftf, setFtf] = useState<WorkQueueItem[]>([]);
+  const [dischargeTasksDue, setDischargeTasksDue] = useState<DischargeTaskQueueItem[]>([]);
+  const [surveyRiskDischarges, setSurveyRiskDischarges] = useState<SurveyRiskDischargeQueueItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('recerts');
@@ -81,6 +95,8 @@ export function HospiceWorkQueue() {
         setAddendum(res.addendumDue ?? []);
         setNotr(res.notrOverdue ?? []);
         setFtf(res.ftfDue ?? []);
+        setDischargeTasksDue(res.dischargeTasksDue ?? []);
+        setSurveyRiskDischarges(res.surveyRiskDischarges ?? []);
       })
       .catch(() => setError('Failed to load work queue.'))
       .finally(() => setIsLoading(false));
@@ -108,10 +124,14 @@ export function HospiceWorkQueue() {
     addendum: addendum.length,
     notr: notr.length,
     ftf: ftf.length,
+    dischargeTasksDue: dischargeTasksDue.length,
+    surveyRiskDischarges: surveyRiskDischarges.length,
   };
   const meta = TAB_META[tab];
   const isBereavementTab =
     tab === 'bereavementFollowUps' || tab === 'bereavementOverdueContact';
+  const isDischargeTasksTab = tab === 'dischargeTasksDue';
+  const isSurveyRiskTab = tab === 'surveyRiskDischarges';
 
   return (
     <div style={{ padding: 24, maxWidth: 900 }}>
@@ -151,6 +171,74 @@ export function HospiceWorkQueue() {
 
       {counts[tab] === 0 ? (
         <p style={{ color: '#64748b' }}>{meta.emptyMessage}</p>
+      ) : isDischargeTasksTab ? (
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
+              <th style={{ padding: '8px 12px' }}>Patient</th>
+              <th style={{ padding: '8px 12px' }}>Task</th>
+              <th style={{ padding: '8px 12px' }}>Due Date</th>
+              <th style={{ padding: '8px 12px' }}>Days Until Due</th>
+              <th style={{ padding: '8px 12px' }}>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {dischargeTasksDue.map((item, idx) => (
+              <tr
+                key={`discharge-task-${item.dischargeId}-${idx}`}
+                style={{ borderBottom: '1px solid #f1f5f9' }}
+              >
+                <td style={{ padding: '8px 12px' }}>
+                  {item.patientName ? (
+                    <Link to={`/patients/${item.patientId}`}>{item.patientName}</Link>
+                  ) : (
+                    <span style={{ color: '#64748b' }}>Patient #{item.patientId}</span>
+                  )}
+                </td>
+                <td style={{ padding: '8px 12px' }}>{item.taskTitle}</td>
+                <td style={{ padding: '8px 12px' }}>{item.dueDate}</td>
+                <td style={{ padding: '8px 12px' }}>{item.daysUntilDue}</td>
+                <td style={{ padding: '8px 12px' }}>
+                  <Link to={`/hospice/discharges/${item.dischargeId}`}>Open Discharge</Link>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : isSurveyRiskTab ? (
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
+              <th style={{ padding: '8px 12px' }}>Patient</th>
+              <th style={{ padding: '8px 12px' }}>Reason</th>
+              <th style={{ padding: '8px 12px' }}>Effective Date</th>
+              <th style={{ padding: '8px 12px' }}>Risk Flags</th>
+              <th style={{ padding: '8px 12px' }}>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {surveyRiskDischarges.map((item, idx) => (
+              <tr
+                key={`survey-risk-${item.dischargeId}-${idx}`}
+                style={{ borderBottom: '1px solid #f1f5f9' }}
+              >
+                <td style={{ padding: '8px 12px' }}>
+                  {item.patientName ? (
+                    <Link to={`/patients/${item.patientId}`}>{item.patientName}</Link>
+                  ) : (
+                    <span style={{ color: '#64748b' }}>Patient #{item.patientId}</span>
+                  )}
+                </td>
+                <td style={{ padding: '8px 12px' }}>{item.reason}</td>
+                <td style={{ padding: '8px 12px' }}>{item.effectiveDate}</td>
+                <td style={{ padding: '8px 12px' }}>{item.surveyRiskFlags.join(', ')}</td>
+                <td style={{ padding: '8px 12px' }}>
+                  <Link to={`/hospice/discharges/${item.dischargeId}`}>Review</Link>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       ) : isBereavementTab ? (
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>

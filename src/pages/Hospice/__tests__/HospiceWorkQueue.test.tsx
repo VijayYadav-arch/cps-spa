@@ -27,7 +27,7 @@ describe('HospiceWorkQueue', () => {
     expect(screen.getByRole('status')).toBeInTheDocument();
   });
 
-  it('renders all ten tabs with empty state when no items', async () => {
+  it('renders all twelve tabs with empty state when no items', async () => {
     vi.mocked(getWorkQueue).mockResolvedValueOnce({
       recertsDue: [],
       noeOverdue: [],
@@ -39,6 +39,8 @@ describe('HospiceWorkQueue', () => {
       addendumDue: [],
       notrOverdue: [],
       ftfDue: [],
+      dischargeTasksDue: [],
+      surveyRiskDischarges: [],
     });
     renderPage();
     await waitFor(() => {
@@ -52,6 +54,8 @@ describe('HospiceWorkQueue', () => {
       expect(screen.getByRole('tab', { name: /Addendum Due/i })).toBeInTheDocument();
       expect(screen.getByRole('tab', { name: /NOTR Overdue/i })).toBeInTheDocument();
       expect(screen.getByRole('tab', { name: /FTF Due/i })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /Discharge Tasks Due/i })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /Survey Risk Discharges/i })).toBeInTheDocument();
       expect(screen.getByText(/No recerts due/i)).toBeInTheDocument();
     });
   });
@@ -90,6 +94,8 @@ describe('HospiceWorkQueue', () => {
       addendumDue: [],
       notrOverdue: [],
       ftfDue: [],
+      dischargeTasksDue: [],
+      surveyRiskDischarges: [],
     });
     const user = userEvent.setup();
     renderPage();
@@ -104,5 +110,81 @@ describe('HospiceWorkQueue', () => {
     vi.mocked(getWorkQueue).mockRejectedValueOnce(new Error('boom'));
     renderPage();
     await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
+  });
+
+  it('dischargeTasksDue items render in the new tab', async () => {
+    vi.mocked(getWorkQueue).mockResolvedValueOnce({
+      recertsDue: [],
+      noeOverdue: [],
+      hopeOverdue: [],
+      idgOverdue: [],
+      carePlanReviewsDue: [],
+      bereavementFollowUps: [],
+      bereavementOverdueContact: [],
+      addendumDue: [],
+      notrOverdue: [],
+      ftfDue: [],
+      dischargeTasksDue: [
+        {
+          type: 'DischargeTaskDue',
+          dischargeId: 10,
+          electionId: 3,
+          patientId: 20,
+          patientName: 'Alice Brown',
+          taskType: 'DmeRetrieval',
+          taskTitle: 'Return DME equipment',
+          dueDate: '2026-06-05',
+          daysUntilDue: 3,
+        },
+      ],
+      surveyRiskDischarges: [],
+    });
+    const user = userEvent.setup();
+    renderPage();
+    await waitFor(() => screen.getByRole('tab', { name: /Discharge Tasks Due/i }));
+    await user.click(screen.getByRole('tab', { name: /Discharge Tasks Due/i }));
+    await waitFor(() => {
+      expect(screen.getByText('Alice Brown')).toBeInTheDocument();
+      expect(screen.getByText('Return DME equipment')).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /Open Discharge/i })).toBeInTheDocument();
+    });
+  });
+
+  it('surveyRiskDischarges items render in the new tab', async () => {
+    vi.mocked(getWorkQueue).mockResolvedValueOnce({
+      recertsDue: [],
+      noeOverdue: [],
+      hopeOverdue: [],
+      idgOverdue: [],
+      carePlanReviewsDue: [],
+      bereavementFollowUps: [],
+      bereavementOverdueContact: [],
+      addendumDue: [],
+      notrOverdue: [],
+      ftfDue: [],
+      dischargeTasksDue: [],
+      surveyRiskDischarges: [
+        {
+          type: 'SurveyRiskDischarge',
+          dischargeId: 11,
+          electionId: 4,
+          patientId: 21,
+          patientName: 'Bob Green',
+          reason: 'ForCause',
+          effectiveDate: '2026-05-20',
+          surveyRiskFlags: ['MissingIdgApproval', 'MissingAdvanceNotice'],
+        },
+      ],
+    });
+    const user = userEvent.setup();
+    renderPage();
+    await waitFor(() => screen.getByRole('tab', { name: /Survey Risk Discharges/i }));
+    await user.click(screen.getByRole('tab', { name: /Survey Risk Discharges/i }));
+    await waitFor(() => {
+      expect(screen.getByText('Bob Green')).toBeInTheDocument();
+      expect(screen.getByText('ForCause')).toBeInTheDocument();
+      expect(screen.getByText(/MissingIdgApproval/)).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /Review/i })).toBeInTheDocument();
+    });
   });
 });

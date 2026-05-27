@@ -1,5 +1,5 @@
 import { useEffect, useState, type CSSProperties } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import {
   getElection,
   submitNoe,
@@ -7,6 +7,7 @@ import {
   type NoeSubmissionMode,
 } from '@/api/hospice';
 import { HospiceNotrCard } from '@/components/HospiceNotrCard';
+import { useAuth } from '@/auth/useAuth';
 
 function badgeStyle(color: string): CSSProperties {
   return {
@@ -32,6 +33,9 @@ export function HospiceElectionDetail() {
     electionId: string;
   }>();
   const navigate = useNavigate();
+  const { auth } = useAuth();
+  const canManageDischarge = auth.user?.roles.some(r =>
+    ['physician', 'client_admin', 'system_admin'].includes(r)) ?? false;
   const [election, setElection] = useState<HospiceElection | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -291,7 +295,43 @@ export function HospiceElectionDetail() {
           >
             Election Addendum
           </button>
+          {canManageDischarge && (
+            <button
+              onClick={() =>
+                navigate(`/hospice/elections/${election.id}/discharge/new`)
+              }
+              style={{
+                background: '#fff7ed',
+                color: '#c2410c',
+                border: '1px solid #fed7aa',
+                padding: '8px 16px',
+                borderRadius: 4,
+              }}
+            >
+              Discharge Patient
+            </button>
+          )}
         </div>
+      )}
+
+      {election.status === 'Discharged' && (
+        <section
+          style={{
+            border: '1px solid #fde68a',
+            borderRadius: 8,
+            padding: 16,
+            marginBottom: 16,
+            background: '#fffbeb',
+          }}
+        >
+          <h3 style={{ marginTop: 0 }}>Discharged</h3>
+          <p style={{ color: '#64748b', marginBottom: 8 }}>
+            This election has been discharged.
+          </p>
+          <Link to={`/hospice/discharges?electionId=${election.id}`}>
+            View discharge details →
+          </Link>
+        </section>
       )}
 
       <div style={{ marginTop: 24 }}>
