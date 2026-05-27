@@ -12,6 +12,9 @@ import { ClinicalOverview } from '@/pages/Clinical/ClinicalOverview';
 import { DocumentsList } from '@/pages/Documents/DocumentsList';
 import { PlatformDashboard } from '@/pages/Platform/PlatformDashboard';
 import { AdminDashboard } from '@/pages/Admin/AdminDashboard';
+import { HospiceDischargeWizard } from '@/pages/Hospice/HospiceDischargeWizard';
+import { HospiceDischargeDetail } from '@/pages/Hospice/HospiceDischargeDetail';
+import { HospiceDischargedElectionsList } from '@/pages/Hospice/HospiceDischargedElectionsList';
 import { HospiceWorkQueue } from '@/pages/Hospice/HospiceWorkQueue';
 import { HospiceHopeOverdue } from '@/pages/Hospice/HospiceHopeOverdue';
 import { HospiceIdgMeeting } from '@/pages/Hospice/HospiceIdgMeeting';
@@ -117,6 +120,18 @@ export default function App() {
             <Route
               path="hospice/claims/:claimId/submissions"
               element={<HospiceClaimSubmissionsPage />}
+            />
+            <Route
+              path="hospice/elections/:electionId/discharge/new"
+              element={<HospiceDischargeWizard />}
+            />
+            <Route
+              path="hospice/discharges/:dischargeId"
+              element={<HospiceDischargeDetail />}
+            />
+            <Route
+              path="hospice/discharges"
+              element={<HospiceDischargedElectionsList />}
             />
             <Route path="inbox" element={<InboxPage />} />
             <Route path="analytics" element={<AnalyticsDashboardPage />} />
