@@ -215,3 +215,26 @@ export const logReview = (body: {
 // ============ Dashboard ============
 export const getQapiDashboard = () =>
   apiClient.get<QapiDashboard>('/hospice/qapi/dashboard').then(r => r.data);
+
+// ============ Audit Triggers (admin) ============
+export interface HospiceQapiAuditTrigger {
+  id: number;
+  organizationId: number;
+  auditEventCode: string;
+  category: HospiceAdverseEventCategory;
+  severity: HospiceAdverseEventSeverity;
+  isEnabled: boolean;
+}
+
+export const listAuditTriggers = () =>
+  apiClient.get<HospiceQapiAuditTrigger[]>('/hospice/qapi/audit-triggers').then(r => r.data);
+
+export const upsertAuditTrigger = (body: {
+  auditEventCode: string;
+  category: HospiceAdverseEventCategory;
+  severity: HospiceAdverseEventSeverity;
+  isEnabled: boolean;
+}) => apiClient.put<HospiceQapiAuditTrigger>(
+  `/hospice/qapi/audit-triggers/${encodeURIComponent(body.auditEventCode)}`,
+  body
+).then(r => r.data);
