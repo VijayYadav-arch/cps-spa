@@ -48,6 +48,8 @@ import { QapiPipDetailPage } from '@/pages/Quality/QapiPipDetailPage';
 import { AdverseEventListPage } from '@/pages/Quality/AdverseEventListPage';
 import { AdverseEventDetailPage } from '@/pages/Quality/AdverseEventDetailPage';
 import { QapiReviewLogPage } from '@/pages/Quality/QapiReviewLogPage';
+import { QapiDashboardPage } from '@/pages/Quality/QapiDashboardPage';
+import { QapiAuditTriggerConfigPage } from '@/pages/Quality/QapiAuditTriggerConfigPage';
 import { PortalAuthProvider } from '@/portal/PortalAuthContext';
 import { PortalProtectedRoute } from '@/portal/PortalProtectedRoute';
 import { PortalLayout } from '@/portal/PortalLayout';
@@ -168,12 +170,14 @@ export default function App() {
             <Route path="admin/branches" element={<BranchesPage />} />
             <Route path="admin/audit-log" element={<AuditLogSearchPage />} />
             {/* Sub-system F: QAPI program */}
+            <Route path="quality/qapi" element={<QapiDashboardPage />} />
             <Route path="quality/qapi/plan" element={<QapiPlanPage />} />
             <Route path="quality/qapi/pips" element={<QapiPipListPage />} />
             <Route path="quality/qapi/pips/:pipId" element={<QapiPipDetailPage />} />
             <Route path="quality/qapi/adverse-events" element={<AdverseEventListPage />} />
             <Route path="quality/qapi/adverse-events/:eventId" element={<AdverseEventDetailPage />} />
             <Route path="quality/qapi/reviews" element={<QapiReviewLogPage />} />
+            <Route path="quality/qapi/audit-triggers" element={<QapiAuditTriggerConfigPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>

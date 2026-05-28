@@ -64,6 +64,18 @@ const navItems: NavEntry[] = [
   { kind: 'leaf', to: '/admin/branches', label: 'Branches' },
   {
     kind: 'group',
+    label: 'Quality',
+    items: [
+      { kind: 'leaf', to: '/quality/qapi', label: 'Dashboard' },
+      { kind: 'leaf', to: '/quality/qapi/pips', label: 'PIPs' },
+      { kind: 'leaf', to: '/quality/qapi/adverse-events', label: 'Adverse Events' },
+      { kind: 'leaf', to: '/quality/qapi/reviews', label: 'Reviews' },
+      { kind: 'leaf', to: '/quality/qapi/plan', label: 'Plan' },
+      { kind: 'leaf', to: '/quality/qapi/audit-triggers', label: 'Audit Triggers' },
+    ],
+  },
+  {
+    kind: 'group',
     label: 'Compliance',
     items: [
       { kind: 'leaf', to: '/compliance/phi-access', label: 'PHI Access Review' },
