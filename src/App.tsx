@@ -53,6 +53,7 @@ import { QapiDashboardPage } from '@/pages/Quality/QapiDashboardPage';
 import { QapiAuditTriggerConfigPage } from '@/pages/Quality/QapiAuditTriggerConfigPage';
 import { ClinicianRoutes } from '@/pages/Clinician/ClinicianRoutes';
 import { CommercialPortalRoutes } from '@/pages/Portal/CommercialPortalRoutes';
+import { FamilyRoutes } from '@/pages/Family/FamilyRoutes';
 import Unauthorized from '@/pages/Unauthorized';
 
 const queryClient = new QueryClient({
@@ -89,6 +90,8 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          {/* Family portal uses its own auth (FamilyJwt) — RequireFamilyAuth lives inside FamilyRoutes */}
+          <Route path="/family/*" element={<FamilyRoutes />} />
           <Route
             path="/*"
             element={
