@@ -5,6 +5,7 @@
 import { test as base, expect } from '@playwright/test';
 import { spawn, type ChildProcess } from 'node:child_process';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { waitForPort } from '../helpers/wait-for-port';
 
 type DualAppFixture = {
@@ -12,8 +13,11 @@ type DualAppFixture = {
   spa: { url: string };
 };
 
-const CPS_REPO = path.resolve(__dirname, '../../../../cps');
-const CPS_SPA_REPO = path.resolve(__dirname, '../../..');
+// ESM compatibility: cps-spa's package.json declares "type": "module", so the CommonJS
+// __dirname global is undefined. fileURLToPath(import.meta.url) gives the same value.
+const HERE = path.dirname(fileURLToPath(import.meta.url));
+const CPS_REPO = path.resolve(HERE, '../../../../cps');
+const CPS_SPA_REPO = path.resolve(HERE, '../../..');
 
 let nextProc: ChildProcess | undefined;
 let spaProc: ChildProcess | undefined;
