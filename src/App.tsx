@@ -131,15 +131,7 @@ export default function App() {
             <Route
               path="billing/*"
               element={
-                <RoleRoute
-                  required={[
-                    PERMISSIONS.BILLING_SCRUB,
-                    PERMISSIONS.BILLING_ERA,
-                    PERMISSIONS.BILLING_DENIALS,
-                    PERMISSIONS.BILLING_QUEUE,
-                    PERMISSIONS.BILLING_STATEMENTS,
-                  ]}
-                >
+                <RoleRoute required={PERMISSIONS.BILLING_QUEUE}>
                   <BillingDashboard />
                 </RoleRoute>
               }
@@ -147,13 +139,7 @@ export default function App() {
             <Route
               path="clinical/*"
               element={
-                <RoleRoute
-                  required={[
-                    PERMISSIONS.CLINICAL_VISIT_NOTES,
-                    PERMISSIONS.CLINICAL_VITALS,
-                    PERMISSIONS.CLINICAL_CARE_PLANS,
-                  ]}
-                >
+                <RoleRoute required={PERMISSIONS.CLINICAL_VISIT_NOTES}>
                   <ClinicalOverview />
                 </RoleRoute>
               }
