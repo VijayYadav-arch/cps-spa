@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/auth/AuthContext';
 import { ProtectedRoute } from '@/auth/ProtectedRoute';
 import { Layout } from '@/components/Layout';
@@ -59,14 +60,26 @@ import { PortalStatements } from '@/pages/Portal/PortalStatements';
 import { PortalStatementDetail } from '@/pages/Portal/PortalStatementDetail';
 import { PortalDocuments } from '@/pages/Portal/PortalDocuments';
 import { PortalPayments } from '@/pages/Portal/PortalPayments';
+import Unauthorized from '@/pages/Unauthorized';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 0,
+      retry: 1,
+    },
+  },
+});
 
 export default function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/portal/pay/:runId" element={<PortalPaymentPage />} />
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/unauthorized" element={<Unauthorized />} />
+            <Route path="/portal/pay/:runId" element={<PortalPaymentPage />} />
           <Route
             path="/portal/*"
             element={
@@ -183,6 +196,7 @@ export default function App() {
         </Routes>
       </BrowserRouter>
     </AuthProvider>
+    </QueryClientProvider>
   );
 }
 
