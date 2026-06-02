@@ -37,7 +37,7 @@ describe('PortalAuthContext family-member flow', () => {
     const token = makeFakeFamilyJwt({ familyAccessId: 7, patientId: 42 });
     const expiresAt = new Date(Date.now() + 8 * 3600 * 1000).toISOString();
 
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
       json: async () => ({ token, expiresAt }),
@@ -60,7 +60,7 @@ describe('PortalAuthContext family-member flow', () => {
   });
 
   it('loginAsFamily throws "Invalid patient ID or PIN" on 401', async () => {
-    global.fetch = vi.fn().mockResolvedValue({ ok: false, status: 401 });
+    globalThis.fetch = vi.fn().mockResolvedValue({ ok: false, status: 401 });
 
     const { result } = renderHook(() => usePortalAuth(), {
       wrapper: ({ children }) => <PortalAuthProvider>{children}</PortalAuthProvider>,
@@ -73,7 +73,7 @@ describe('PortalAuthContext family-member flow', () => {
   });
 
   it('loginAsFamily throws rate-limit message on 429', async () => {
-    global.fetch = vi.fn().mockResolvedValue({ ok: false, status: 429 });
+    globalThis.fetch = vi.fn().mockResolvedValue({ ok: false, status: 429 });
 
     const { result } = renderHook(() => usePortalAuth(), {
       wrapper: ({ children }) => <PortalAuthProvider>{children}</PortalAuthProvider>,
@@ -90,7 +90,7 @@ describe('PortalAuthContext family-member flow', () => {
     sessionStorage.setItem('cps-family-expires-at', String(Date.now() + 3600_000));
     sessionStorage.setItem('cps-family-patient-id', '42');
     sessionStorage.setItem('cps-family-access-id', '7');
-    global.fetch = vi.fn().mockResolvedValue({ ok: true, status: 204 });
+    globalThis.fetch = vi.fn().mockResolvedValue({ ok: true, status: 204 });
 
     const { result } = renderHook(() => usePortalAuth(), {
       wrapper: ({ children }) => <PortalAuthProvider>{children}</PortalAuthProvider>,
