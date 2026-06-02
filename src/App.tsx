@@ -51,6 +51,7 @@ import { AdverseEventDetailPage } from '@/pages/Quality/AdverseEventDetailPage';
 import { QapiReviewLogPage } from '@/pages/Quality/QapiReviewLogPage';
 import { QapiDashboardPage } from '@/pages/Quality/QapiDashboardPage';
 import { QapiAuditTriggerConfigPage } from '@/pages/Quality/QapiAuditTriggerConfigPage';
+import { ClinicianRoutes } from '@/pages/Clinician/ClinicianRoutes';
 import { PortalAuthProvider } from '@/portal/PortalAuthContext';
 import { PortalProtectedRoute } from '@/portal/PortalProtectedRoute';
 import { PortalLayout } from '@/portal/PortalLayout';
@@ -86,6 +87,14 @@ export default function App() {
               <PortalAuthProvider>
                 <PortalRoutes />
               </PortalAuthProvider>
+            }
+          />
+          <Route
+            path="/clinician/*"
+            element={
+              <ProtectedRoute>
+                <ClinicianRoutes />
+              </ProtectedRoute>
             }
           />
           <Route
