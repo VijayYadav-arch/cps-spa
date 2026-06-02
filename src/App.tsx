@@ -54,6 +54,7 @@ import { QapiAuditTriggerConfigPage } from '@/pages/Quality/QapiAuditTriggerConf
 import { ClinicianRoutes } from '@/pages/Clinician/ClinicianRoutes';
 import { CommercialPortalRoutes } from '@/pages/Portal/CommercialPortalRoutes';
 import { FamilyRoutes } from '@/pages/Family/FamilyRoutes';
+import { PortalAuthProvider } from '@/portal/PortalAuthContext';
 import Unauthorized from '@/pages/Unauthorized';
 
 const queryClient = new QueryClient({
@@ -69,6 +70,7 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <PortalAuthProvider>
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<Login />} />
@@ -199,6 +201,7 @@ export default function App() {
           </Route>
         </Routes>
       </BrowserRouter>
+        </PortalAuthProvider>
     </AuthProvider>
     </QueryClientProvider>
   );
