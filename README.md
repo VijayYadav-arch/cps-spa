@@ -1,4 +1,12 @@
-# React + TypeScript + Vite
+# cps-spa
+
+Vite SPA hosting every authenticated surface of the CPS platform (admin, clinician, commercial portal, family portal, patient self-service).
+
+## Architecture
+
+See [docs/runbook-p4-b.md](docs/runbook-p4-b.md) for the auth schemes, role-gating model, parity-test setup, and rollback procedure introduced by P4-B (SPA portal absorption).
+
+## React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
