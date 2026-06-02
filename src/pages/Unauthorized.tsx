@@ -13,7 +13,12 @@ export default function Unauthorized() {
         textAlign: 'center',
       }}
     >
-      <h1 style={{ fontSize: 24, fontWeight: 600, marginBottom: 8 }}>Access denied</h1>
+      <h1
+        data-testid="unauthorized-page"
+        style={{ fontSize: 24, fontWeight: 600, marginBottom: 8 }}
+      >
+        Access denied
+      </h1>
       <p style={{ color: '#64748b', maxWidth: 480, marginBottom: 24 }}>
         You don't have permission to access this page. Contact your administrator if you believe this is an error.
       </p>
