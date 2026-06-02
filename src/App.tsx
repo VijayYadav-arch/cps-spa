@@ -52,15 +52,7 @@ import { QapiReviewLogPage } from '@/pages/Quality/QapiReviewLogPage';
 import { QapiDashboardPage } from '@/pages/Quality/QapiDashboardPage';
 import { QapiAuditTriggerConfigPage } from '@/pages/Quality/QapiAuditTriggerConfigPage';
 import { ClinicianRoutes } from '@/pages/Clinician/ClinicianRoutes';
-import { PortalAuthProvider } from '@/portal/PortalAuthContext';
-import { PortalProtectedRoute } from '@/portal/PortalProtectedRoute';
-import { PortalLayout } from '@/portal/PortalLayout';
-import { PortalLogin } from '@/pages/Portal/PortalLogin';
-import { PortalOverview } from '@/pages/Portal/PortalOverview';
-import { PortalStatements } from '@/pages/Portal/PortalStatements';
-import { PortalStatementDetail } from '@/pages/Portal/PortalStatementDetail';
-import { PortalDocuments } from '@/pages/Portal/PortalDocuments';
-import { PortalPayments } from '@/pages/Portal/PortalPayments';
+import { CommercialPortalRoutes } from '@/pages/Portal/CommercialPortalRoutes';
 import Unauthorized from '@/pages/Unauthorized';
 
 const queryClient = new QueryClient({
@@ -84,9 +76,9 @@ export default function App() {
           <Route
             path="/portal/*"
             element={
-              <PortalAuthProvider>
-                <PortalRoutes />
-              </PortalAuthProvider>
+              <ProtectedRoute>
+                <CommercialPortalRoutes />
+              </ProtectedRoute>
             }
           />
           <Route
@@ -206,27 +198,5 @@ export default function App() {
       </BrowserRouter>
     </AuthProvider>
     </QueryClientProvider>
-  );
-}
-
-function PortalRoutes() {
-  return (
-    <Routes>
-      <Route path="login" element={<PortalLogin />} />
-      <Route
-        path="*"
-        element={
-          <PortalProtectedRoute>
-            <PortalLayout />
-          </PortalProtectedRoute>
-        }
-      >
-        <Route index element={<PortalOverview />} />
-        <Route path="statements" element={<PortalStatements />} />
-        <Route path="statements/:runId" element={<PortalStatementDetail />} />
-        <Route path="documents" element={<PortalDocuments />} />
-        <Route path="payments" element={<PortalPayments />} />
-      </Route>
-    </Routes>
   );
 }
