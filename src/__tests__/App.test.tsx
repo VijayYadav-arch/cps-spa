@@ -15,6 +15,29 @@ vi.mock('@/api/client', () => ({
   },
 }));
 
+// Mock useUserRoles to read dev claims directly so RoleRoute / PermissionGuard
+// in T23-wrapped routes see the permissions set by setDevClaims() per test.
+vi.mock('@/permissions/useUserRoles', () => ({
+  useUserRoles: () => {
+    const raw = sessionStorage.getItem('cps_dev_claims');
+    const claims = raw ? JSON.parse(raw) : null;
+    return {
+      data: claims
+        ? {
+            userId: claims.userId,
+            email: '',
+            organizationId: claims.organizationId ?? null,
+            organizationName: '',
+            roles: claims.roles ?? [],
+            permissions: claims.permissions ?? [],
+            serverTime: new Date().toISOString(),
+          }
+        : undefined,
+      isLoading: false,
+    };
+  },
+}));
+
 // Stub all page components to keep tests fast
 vi.mock('@/pages/Login', () => ({ Login: () => <div>Login Page</div> }));
 vi.mock('@/pages/Dashboard', () => ({ Dashboard: () => <div>Dashboard</div> }));
@@ -74,14 +97,14 @@ describe('App routing', () => {
   });
 
   it('renders PatientHistory page at /patients/1/history', () => {
-    setDevClaims({ userId: 1, organizationId: 5, roles: ['billing_admin'], permissions: [] });
+    setDevClaims({ userId: 1, organizationId: 5, roles: ['billing_admin'], permissions: ['patients:view'] });
     window.history.pushState({}, '', '/patients/1/history');
     render(<App />);
     expect(screen.getByText('Patient History')).toBeInTheDocument();
   });
 
   it('renders HospiceWorkQueue at /hospice/work-queue', () => {
-    setDevClaims({ userId: 1, organizationId: 5, roles: ['billing_manager'], permissions: [] });
+    setDevClaims({ userId: 1, organizationId: 5, roles: ['billing_manager'], permissions: ['clinical:quality'] });
     window.history.pushState({}, '', '/hospice/work-queue');
     render(<App />);
     expect(screen.getByText('Hospice Work Queue Page')).toBeInTheDocument();

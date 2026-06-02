@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/auth/AuthContext';
 import { ProtectedRoute } from '@/auth/ProtectedRoute';
 import { Layout } from '@/components/Layout';
@@ -50,31 +51,50 @@ import { AdverseEventDetailPage } from '@/pages/Quality/AdverseEventDetailPage';
 import { QapiReviewLogPage } from '@/pages/Quality/QapiReviewLogPage';
 import { QapiDashboardPage } from '@/pages/Quality/QapiDashboardPage';
 import { QapiAuditTriggerConfigPage } from '@/pages/Quality/QapiAuditTriggerConfigPage';
+import { ClinicianRoutes } from '@/pages/Clinician/ClinicianRoutes';
+import { CommercialPortalRoutes } from '@/pages/Portal/CommercialPortalRoutes';
+import { FamilyRoutes } from '@/pages/Family/FamilyRoutes';
 import { PortalAuthProvider } from '@/portal/PortalAuthContext';
-import { PortalProtectedRoute } from '@/portal/PortalProtectedRoute';
-import { PortalLayout } from '@/portal/PortalLayout';
-import { PortalLogin } from '@/pages/Portal/PortalLogin';
-import { PortalOverview } from '@/pages/Portal/PortalOverview';
-import { PortalStatements } from '@/pages/Portal/PortalStatements';
-import { PortalStatementDetail } from '@/pages/Portal/PortalStatementDetail';
-import { PortalDocuments } from '@/pages/Portal/PortalDocuments';
-import { PortalPayments } from '@/pages/Portal/PortalPayments';
+import Unauthorized from '@/pages/Unauthorized';
+import { RoleRoute, PERMISSIONS } from '@/permissions';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 0,
+      retry: 1,
+    },
+  },
+});
 
 export default function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/portal/pay/:runId" element={<PortalPaymentPage />} />
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <PortalAuthProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/unauthorized" element={<Unauthorized />} />
+            <Route path="/portal/pay/:runId" element={<PortalPaymentPage />} />
           <Route
             path="/portal/*"
             element={
-              <PortalAuthProvider>
-                <PortalRoutes />
-              </PortalAuthProvider>
+              <ProtectedRoute>
+                <CommercialPortalRoutes />
+              </ProtectedRoute>
             }
           />
+          <Route
+            path="/clinician/*"
+            element={
+              <ProtectedRoute>
+                <ClinicianRoutes />
+              </ProtectedRoute>
+            }
+          />
+          {/* Family portal uses its own auth (FamilyJwt) — RequireFamilyAuth lives inside FamilyRoutes */}
+          <Route path="/family/*" element={<FamilyRoutes />} />
           <Route
             path="/*"
             element={
@@ -84,79 +104,233 @@ export default function App() {
             }
           >
             <Route index element={<Dashboard />} />
-            <Route path="claims" element={<ClaimsList />} />
-            <Route path="claims/:id" element={<ClaimDetail />} />
-            <Route path="patients/*" element={<PatientsRoutes />} />
-            <Route path="billing/*" element={<BillingDashboard />} />
-            <Route path="clinical/*" element={<ClinicalOverview />} />
+            <Route
+              path="claims"
+              element={
+                <RoleRoute required={PERMISSIONS.CLAIMS_VIEW}>
+                  <ClaimsList />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="claims/:id"
+              element={
+                <RoleRoute required={PERMISSIONS.CLAIMS_VIEW}>
+                  <ClaimDetail />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="patients/*"
+              element={
+                <RoleRoute required={PERMISSIONS.PATIENTS_VIEW}>
+                  <PatientsRoutes />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="billing/*"
+              element={
+                <RoleRoute required={PERMISSIONS.BILLING_QUEUE}>
+                  <BillingDashboard />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="clinical/*"
+              element={
+                <RoleRoute required={PERMISSIONS.CLINICAL_VISIT_NOTES}>
+                  <ClinicalOverview />
+                </RoleRoute>
+              }
+            />
             <Route path="documents/*" element={<DocumentsList />} />
-            <Route path="platform/*" element={<PlatformDashboard />} />
-            <Route path="admin/*" element={<AdminDashboard />} />
-            <Route path="hospice/work-queue" element={<HospiceWorkQueue />} />
-            <Route path="hospice/hope/overdue" element={<HospiceHopeOverdue />} />
-            <Route path="hospice/idg-meetings/:meetingId" element={<HospiceIdgMeeting />} />
+            <Route
+              path="platform/*"
+              element={
+                <RoleRoute required={PERMISSIONS.PLATFORM_ADMIN}>
+                  <PlatformDashboard />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="admin/*"
+              element={
+                <RoleRoute required={PERMISSIONS.ADMIN_DASHBOARD}>
+                  <AdminDashboard />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="hospice/work-queue"
+              element={
+                <RoleRoute required={PERMISSIONS.CLINICAL_QUALITY}>
+                  <HospiceWorkQueue />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="hospice/hope/overdue"
+              element={
+                <RoleRoute required={PERMISSIONS.CLINICAL_QUALITY}>
+                  <HospiceHopeOverdue />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="hospice/idg-meetings/:meetingId"
+              element={
+                <RoleRoute required={PERMISSIONS.CLINICAL_QUALITY}>
+                  <HospiceIdgMeeting />
+                </RoleRoute>
+              }
+            />
             <Route
               path="hospice/bereavement"
-              element={<HospiceBereavementList />}
+              element={
+                <RoleRoute required={PERMISSIONS.CLINICAL_QUALITY}>
+                  <HospiceBereavementList />
+                </RoleRoute>
+              }
             />
             <Route
               path="hospice/bereavement/eligible"
-              element={<HospiceBereavementEligible />}
+              element={
+                <RoleRoute required={PERMISSIONS.CLINICAL_QUALITY}>
+                  <HospiceBereavementEligible />
+                </RoleRoute>
+              }
             />
             <Route
               path="hospice/bereavement/:programId"
-              element={<HospiceBereavementProgramDetail />}
+              element={
+                <RoleRoute required={PERMISSIONS.CLINICAL_QUALITY}>
+                  <HospiceBereavementProgramDetail />
+                </RoleRoute>
+              }
             />
             <Route
               path="hospice/elections/:electionId/addendum"
-              element={<HospiceAddendumPage />}
+              element={
+                <RoleRoute required={PERMISSIONS.CLINICAL_QUALITY}>
+                  <HospiceAddendumPage />
+                </RoleRoute>
+              }
             />
             <Route
               path="hospice/elections/:electionId/periods/:periodId/ftf"
-              element={<HospiceFtfPage />}
+              element={
+                <RoleRoute required={PERMISSIONS.CLINICAL_QUALITY}>
+                  <HospiceFtfPage />
+                </RoleRoute>
+              }
             />
-            <Route path="hospice/hqrp" element={<HospiceHqrpDashboard />} />
+            <Route
+              path="hospice/hqrp"
+              element={
+                <RoleRoute required={PERMISSIONS.CLINICAL_QUALITY}>
+                  <HospiceHqrpDashboard />
+                </RoleRoute>
+              }
+            />
             <Route
               path="hospice/medicare-cap"
-              element={<HospiceMedicareCapDashboard />}
+              element={
+                <RoleRoute required={PERMISSIONS.CLINICAL_QUALITY}>
+                  <HospiceMedicareCapDashboard />
+                </RoleRoute>
+              }
             />
             <Route
               path="hospice/volunteers"
-              element={<HospiceVolunteersDashboard />}
+              element={
+                <RoleRoute required={PERMISSIONS.CLINICAL_QUALITY}>
+                  <HospiceVolunteersDashboard />
+                </RoleRoute>
+              }
             />
-            <Route path="hospice/cahps" element={<HospiceCahpsDashboard />} />
+            <Route
+              path="hospice/cahps"
+              element={
+                <RoleRoute required={PERMISSIONS.CLINICAL_QUALITY}>
+                  <HospiceCahpsDashboard />
+                </RoleRoute>
+              }
+            />
             <Route
               path="hospice/claims/:claimId/submissions"
-              element={<HospiceClaimSubmissionsPage />}
+              element={
+                <RoleRoute required={PERMISSIONS.CLINICAL_QUALITY}>
+                  <HospiceClaimSubmissionsPage />
+                </RoleRoute>
+              }
             />
             <Route
               path="hospice/elections/:electionId/discharge/new"
-              element={<HospiceDischargeWizard />}
+              element={
+                <RoleRoute required={PERMISSIONS.CLINICAL_DISCHARGE}>
+                  <HospiceDischargeWizard />
+                </RoleRoute>
+              }
             />
             <Route
               path="hospice/discharges/:dischargeId"
-              element={<HospiceDischargeDetail />}
+              element={
+                <RoleRoute required={PERMISSIONS.CLINICAL_DISCHARGE}>
+                  <HospiceDischargeDetail />
+                </RoleRoute>
+              }
             />
             <Route
               path="hospice/discharges"
-              element={<HospiceDischargedElectionsList />}
+              element={
+                <RoleRoute required={PERMISSIONS.CLINICAL_DISCHARGE}>
+                  <HospiceDischargedElectionsList />
+                </RoleRoute>
+              }
             />
             <Route path="inbox" element={<InboxPage />} />
-            <Route path="analytics" element={<AnalyticsDashboardPage />} />
-            <Route path="time" element={<PaidTimeDashboard />} />
+            <Route
+              path="analytics"
+              element={
+                <RoleRoute required={PERMISSIONS.REPORTS_VIEW}>
+                  <AnalyticsDashboardPage />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="time"
+              element={
+                <RoleRoute required={PERMISSIONS.ADMIN_DASHBOARD}>
+                  <PaidTimeDashboard />
+                </RoleRoute>
+              }
+            />
             <Route path="me/time" element={<MyTimeDashboard />} />
             <Route path="me/sessions" element={<SessionsPage />} />
             <Route
               path="compliance/phi-access"
-              element={<PhiAccessReviewDashboard />}
+              element={
+                <RoleRoute required={PERMISSIONS.COMPLIANCE_PHI_REVIEW}>
+                  <PhiAccessReviewDashboard />
+                </RoleRoute>
+              }
             />
             <Route
               path="compliance/surveyor-bundle"
-              element={<SurveyorBundlePage />}
+              element={
+                <RoleRoute required={PERMISSIONS.COMPLIANCE_SURVEYOR_EXPORT}>
+                  <SurveyorBundlePage />
+                </RoleRoute>
+              }
             />
             <Route
               path="compliance/breaches"
-              element={<BreachWorkflowPage />}
+              element={
+                <RoleRoute required={PERMISSIONS.COMPLIANCE_BREACHES}>
+                  <BreachWorkflowPage />
+                </RoleRoute>
+              }
             />
             <Route
               path="compliance/anomalies"
@@ -164,46 +338,107 @@ export default function App() {
             />
             <Route
               path="integrations/fhir-feed"
-              element={<FhirFeedPage />}
+              element={
+                <RoleRoute required={PERMISSIONS.INTEGRATIONS_FHIR_INGEST}>
+                  <FhirFeedPage />
+                </RoleRoute>
+              }
             />
-            <Route path="org/rollup" element={<OrgRollupPage />} />
-            <Route path="admin/branches" element={<BranchesPage />} />
-            <Route path="admin/audit-log" element={<AuditLogSearchPage />} />
+            <Route
+              path="org/rollup"
+              element={
+                <RoleRoute required={PERMISSIONS.ORG_ROLLUP_VIEW}>
+                  <OrgRollupPage />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="admin/branches"
+              element={
+                <RoleRoute required={PERMISSIONS.ADMIN_MANAGE_BRANCHES}>
+                  <BranchesPage />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="admin/audit-log"
+              element={
+                <RoleRoute required={PERMISSIONS.ADMIN_AUDIT_LOGS}>
+                  <AuditLogSearchPage />
+                </RoleRoute>
+              }
+            />
             {/* Sub-system F: QAPI program */}
-            <Route path="quality/qapi" element={<QapiDashboardPage />} />
-            <Route path="quality/qapi/plan" element={<QapiPlanPage />} />
-            <Route path="quality/qapi/pips" element={<QapiPipListPage />} />
-            <Route path="quality/qapi/pips/:pipId" element={<QapiPipDetailPage />} />
-            <Route path="quality/qapi/adverse-events" element={<AdverseEventListPage />} />
-            <Route path="quality/qapi/adverse-events/:eventId" element={<AdverseEventDetailPage />} />
-            <Route path="quality/qapi/reviews" element={<QapiReviewLogPage />} />
-            <Route path="quality/qapi/audit-triggers" element={<QapiAuditTriggerConfigPage />} />
+            <Route
+              path="quality/qapi"
+              element={
+                <RoleRoute required={PERMISSIONS.CLINICAL_QUALITY}>
+                  <QapiDashboardPage />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="quality/qapi/plan"
+              element={
+                <RoleRoute required={PERMISSIONS.CLINICAL_QUALITY}>
+                  <QapiPlanPage />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="quality/qapi/pips"
+              element={
+                <RoleRoute required={PERMISSIONS.CLINICAL_QUALITY}>
+                  <QapiPipListPage />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="quality/qapi/pips/:pipId"
+              element={
+                <RoleRoute required={PERMISSIONS.CLINICAL_QUALITY}>
+                  <QapiPipDetailPage />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="quality/qapi/adverse-events"
+              element={
+                <RoleRoute required={PERMISSIONS.CLINICAL_QUALITY}>
+                  <AdverseEventListPage />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="quality/qapi/adverse-events/:eventId"
+              element={
+                <RoleRoute required={PERMISSIONS.CLINICAL_QUALITY}>
+                  <AdverseEventDetailPage />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="quality/qapi/reviews"
+              element={
+                <RoleRoute required={PERMISSIONS.CLINICAL_QUALITY}>
+                  <QapiReviewLogPage />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="quality/qapi/audit-triggers"
+              element={
+                <RoleRoute required={PERMISSIONS.CLINICAL_QUALITY}>
+                  <QapiAuditTriggerConfigPage />
+                </RoleRoute>
+              }
+            />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
       </BrowserRouter>
+        </PortalAuthProvider>
     </AuthProvider>
-  );
-}
-
-function PortalRoutes() {
-  return (
-    <Routes>
-      <Route path="login" element={<PortalLogin />} />
-      <Route
-        path="*"
-        element={
-          <PortalProtectedRoute>
-            <PortalLayout />
-          </PortalProtectedRoute>
-        }
-      >
-        <Route index element={<PortalOverview />} />
-        <Route path="statements" element={<PortalStatements />} />
-        <Route path="statements/:runId" element={<PortalStatementDetail />} />
-        <Route path="documents" element={<PortalDocuments />} />
-        <Route path="payments" element={<PortalPayments />} />
-      </Route>
-    </Routes>
+    </QueryClientProvider>
   );
 }
