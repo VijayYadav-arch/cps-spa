@@ -5,13 +5,12 @@ import { ProtectedRoute } from '@/auth/ProtectedRoute';
 import { Layout } from '@/components/Layout';
 import { Login } from '@/pages/Login';
 import { Dashboard } from '@/pages/Dashboard';
-import { ClaimsList } from '@/pages/Claims/ClaimsList';
-import { ClaimDetail } from '@/pages/Claims/ClaimDetail';
+import { ClaimsRoutes } from '@/pages/Claims/ClaimsRoutes';
 import { PatientsRoutes } from '@/pages/Patients/PatientsRoutes';
-import { BillingDashboard } from '@/pages/Billing/BillingDashboard';
+import { BillingRoutes } from '@/pages/Billing/BillingRoutes';
 import { ClinicalOverview } from '@/pages/Clinical/ClinicalOverview';
 import { DocumentsList } from '@/pages/Documents/DocumentsList';
-import { PlatformDashboard } from '@/pages/Platform/PlatformDashboard';
+import { PlatformRoutes } from '@/pages/Platform/PlatformRoutes';
 import { AdminDashboard } from '@/pages/Admin/AdminDashboard';
 import { HospiceDischargeWizard } from '@/pages/Hospice/HospiceDischargeWizard';
 import { HospiceDischargeDetail } from '@/pages/Hospice/HospiceDischargeDetail';
@@ -105,18 +104,10 @@ export default function App() {
           >
             <Route index element={<Dashboard />} />
             <Route
-              path="claims"
+              path="claims/*"
               element={
                 <RoleRoute required={PERMISSIONS.CLAIMS_VIEW}>
-                  <ClaimsList />
-                </RoleRoute>
-              }
-            />
-            <Route
-              path="claims/:id"
-              element={
-                <RoleRoute required={PERMISSIONS.CLAIMS_VIEW}>
-                  <ClaimDetail />
+                  <ClaimsRoutes />
                 </RoleRoute>
               }
             />
@@ -132,7 +123,7 @@ export default function App() {
               path="billing/*"
               element={
                 <RoleRoute required={PERMISSIONS.BILLING_QUEUE}>
-                  <BillingDashboard />
+                  <BillingRoutes />
                 </RoleRoute>
               }
             />
@@ -149,7 +140,7 @@ export default function App() {
               path="platform/*"
               element={
                 <RoleRoute required={PERMISSIONS.PLATFORM_ADMIN}>
-                  <PlatformDashboard />
+                  <PlatformRoutes />
                 </RoleRoute>
               }
             />
