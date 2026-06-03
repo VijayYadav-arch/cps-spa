@@ -29,8 +29,25 @@ export function IntakeWizard() {
 
   const totalSteps = form.admissionType === 'hospice' ? 5 : 4;
 
+  function autoCalcEffectiveTo(bp: string, from: string): string {
+    if (!from) return '';
+    const d = new Date(from);
+    const bpNum = parseInt(bp, 10);
+    if (bpNum === 1 || bpNum === 2) d.setDate(d.getDate() + 90);
+    else d.setDate(d.getDate() + 60);
+    return d.toISOString().split('T')[0];
+  }
+
   function update<K extends keyof FormData>(field: K, value: FormData[K]): void {
-    setForm((prev) => ({ ...prev, [field]: value }));
+    setForm((prev) => {
+      const next = { ...prev, [field]: value };
+      if (field === 'benefitPeriod' || field === 'effectiveFrom') {
+        const bp = field === 'benefitPeriod' ? String(value) : prev.benefitPeriod;
+        const from = field === 'effectiveFrom' ? String(value) : prev.effectiveFrom;
+        if (bp && from) next.effectiveTo = autoCalcEffectiveTo(bp, from);
+      }
+      return next;
+    });
   }
 
   function validateStep(s: number): Partial<Record<keyof FormData, string>> {
