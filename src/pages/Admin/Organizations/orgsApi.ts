@@ -18,6 +18,7 @@ import type {
   OrganizationDetail,
   UpdateOrgRequest,
 } from './orgsTypes';
+import type { ClaimSummary, PagedResponse } from '@/api/claims';
 
 const BASE = '/organizations';
 
@@ -34,4 +35,20 @@ export const orgsApi = {
     apiClient.delete(`${BASE}/${id}`).then(() => undefined),
   restore: (id: number) =>
     apiClient.post(`${BASE}/${id}/restore`).then(() => undefined),
+  /**
+   * Cross-org-admin fetch of an organization's claims. Hits
+   *   GET /api/v2/claims?organizationId={orgId}&status=&page=&pageSize=
+   * which the cps-dotnet ClaimsController.GetAll endpoint exposes for callers
+   * holding admin:manage_orgs (returns 403 for non-admin attempts to view
+   * another org). The normal tenant-scoped path is unchanged.
+   */
+  getClaims: (
+    orgId: number,
+    params: { status?: string; page?: number; pageSize?: number } = {},
+  ): Promise<PagedResponse<ClaimSummary>> =>
+    apiClient
+      .get<PagedResponse<ClaimSummary>>('/claims', {
+        params: { ...params, organizationId: orgId },
+      })
+      .then((r) => r.data),
 };
