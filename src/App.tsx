@@ -40,6 +40,7 @@ import { AuditLogSearchPage } from '@/pages/Admin/AuditLogSearchPage';
 import { OrgRollupPage } from '@/pages/Admin/OrgRollupPage';
 import { BranchesPage } from '@/pages/Admin/BranchesPage';
 import { OrganizationsRoutes } from '@/pages/Admin/Organizations/OrganizationsRoutes';
+import { EncountersRoutes } from '@/pages/Admin/Encounters/EncountersRoutes';
 import { PortalPaymentPage } from '@/pages/Portal/PortalPaymentPage';
 import { AnalyticsDashboardPage } from '@/pages/Analytics/AnalyticsDashboardPage';
 import { InboxPage } from '@/pages/Inbox/InboxPage';
@@ -349,6 +350,14 @@ export default function App() {
               element={
                 <RoleRoute required={PERMISSIONS.ADMIN_MANAGE_ORGS}>
                   <OrganizationsRoutes />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="admin/encounters/*"
+              element={
+                <RoleRoute required={PERMISSIONS.CLINICAL_VISIT_NOTES}>
+                  <EncountersRoutes />
                 </RoleRoute>
               }
             />
