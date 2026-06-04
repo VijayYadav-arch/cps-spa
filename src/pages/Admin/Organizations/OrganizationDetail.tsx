@@ -96,6 +96,30 @@ export function OrganizationDetail() {
           >
             View claims ({org.claimsCount})
           </Link>
+          <Link
+            to={`/admin/organizations/${org.id}/patients`}
+            className={`${btnCls} border border-navy-200 text-teal-700 hover:bg-teal-50`}
+          >
+            View patients ({org.patientsCount})
+          </Link>
+          <Link
+            to={`/admin/organizations/${org.id}/encounters`}
+            className={`${btnCls} border border-navy-200 text-teal-700 hover:bg-teal-50`}
+          >
+            View encounters
+          </Link>
+          <Link
+            to={`/admin/organizations/${org.id}/documents`}
+            className={`${btnCls} border border-navy-200 text-teal-700 hover:bg-teal-50`}
+          >
+            View documents
+          </Link>
+          <Link
+            to={`/admin/organizations/${org.id}/reports`}
+            className={`${btnCls} border border-navy-200 text-teal-700 hover:bg-teal-50`}
+          >
+            View reports
+          </Link>
           {!org.isDeleted && (
             <Link
               to={`/admin/organizations/${org.id}/edit`}

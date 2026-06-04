@@ -13,6 +13,52 @@
 // declaring a parallel type. Import-site uses `import type` for tree-shaking.
 export type { ClaimSummary, PagedResponse, PaginationMeta } from '@/api/claims';
 
+/**
+ * Org-scoped Document list-row shape returned by GET /api/v2/documents.
+ *
+ * cps-dotnet/src/CPS.Api/Controllers/DocumentsController.cs serializes the
+ * Document entity passthrough (no DTO projection), so this mirrors
+ * cps-dotnet/src/CPS.Core/Entities/Document.cs. UpdatedAt / audit columns
+ * exist on the entity but are not used by the OrganizationDocumentsTab UI.
+ */
+export interface DocumentSummary {
+  id: number;
+  organizationId: number;
+  uploadedById: number | null;
+  fileName: string;
+  filePath: string;
+  fileSize: number;
+  mimeType: string;
+  /** "contract" | "eob" | "supporting" | "other" */
+  category: string;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+  isDeleted: boolean;
+}
+
+/**
+ * Org-scoped Report list-row shape returned by GET /api/v2/reports.
+ *
+ * Mirrors cps-dotnet/src/CPS.Core/Entities/Report.cs (entity passthrough).
+ * The aggregate endpoints (claims-summary / aging / denials) return different
+ * shapes and stay tenant-scoped — they are NOT consumed by this tab.
+ */
+export interface ReportSummary {
+  id: number;
+  organizationId: number;
+  title: string;
+  /** "monthly" | "ar-aging" | "denials" | "custom" */
+  type: string;
+  /** Period covered, e.g. "2026-04" or "Q1-2026" */
+  period: string;
+  url: string | null;
+  summary: string | null;
+  createdAt: string;
+  updatedAt: string;
+  isDeleted: boolean;
+}
+
 export interface OrganizationListItem {
   id: number;
   name: string;
