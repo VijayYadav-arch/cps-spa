@@ -90,6 +90,12 @@ export function OrganizationDetail() {
           {statusBadge}
         </div>
         <div className="flex flex-wrap gap-2">
+          <Link
+            to={`/admin/organizations/${org.id}/claims`}
+            className={`${btnCls} border border-navy-200 text-teal-700 hover:bg-teal-50`}
+          >
+            View claims ({org.claimsCount})
+          </Link>
           {!org.isDeleted && (
             <Link
               to={`/admin/organizations/${org.id}/edit`}

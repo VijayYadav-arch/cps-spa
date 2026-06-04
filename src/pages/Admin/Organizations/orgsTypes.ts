@@ -8,6 +8,11 @@
  *   - cps-dotnet/src/CPS.Core/Entities/Organization.cs
  */
 
+// Re-export the shared Claim list-row + pagination shapes from the canonical
+// claims API module so the OrganizationClaimsTab can reuse them without
+// declaring a parallel type. Import-site uses `import type` for tree-shaking.
+export type { ClaimSummary, PagedResponse, PaginationMeta } from '@/api/claims';
+
 export interface OrganizationListItem {
   id: number;
   name: string;
