@@ -74,6 +74,17 @@ export const createClaim = (payload: CreateClaimPayload): Promise<ClaimDetail> =
     .post<{ data: ClaimDetail }>('/claims', payload)
     .then((r) => r.data.data);
 
+/**
+ * GET /api/v2/claims/{id} returns the full Claim entity (not the trimmed
+ * `ClaimDetail` DTO). Used by the CMS-1500 print view, which needs all 33
+ * box fields + service line details. Caller is responsible for narrowing
+ * the response — exposed as `unknown` and re-typed at the print site.
+ */
+export const getClaimForPrint = (id: number): Promise<unknown> =>
+  apiClient
+    .get<{ data: unknown }>(`/claims/${id}`)
+    .then((r) => r.data.data);
+
 // DELETE /api/v2/claims/{id}/service-lines/{lineId}
 export const deleteServiceLine = (claimId: number, lineId: number): Promise<void> =>
   apiClient
