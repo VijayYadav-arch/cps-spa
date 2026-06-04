@@ -16,7 +16,7 @@ export function BillingRoutes() {
   return (
     <Routes>
       <Route index element={<BillingDashboard />} />
-      <Route path="denials" element={<DenialQueuePage />} />
+      <Route path="denials/queue" element={<DenialQueuePage />} />
       <Route path="ar" element={<ArDashboardPage />} />
       <Route path="ar/ticklers" element={<ArTicklerPage />} />
       <Route path="era" element={<EraPostingsPage />} />
