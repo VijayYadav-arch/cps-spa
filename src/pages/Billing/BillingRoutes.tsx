@@ -14,6 +14,7 @@ import { PriorAuthPage } from './PriorAuthPage';
 import { PriorAuthDetailPage } from './PriorAuthDetailPage';
 import { ChargeEntryPage } from './ChargeEntryPage';
 import { BillingCodesPage } from './BillingCodesPage';
+import { BatchOperationsPage } from './BatchOperationsPage';
 
 export function BillingRoutes() {
   return (
@@ -33,6 +34,7 @@ export function BillingRoutes() {
       <Route path="prior-auth/:id" element={<PriorAuthDetailPage />} />
       <Route path="charges" element={<ChargeEntryPage />} />
       <Route path="codes" element={<BillingCodesPage />} />
+      <Route path="batch" element={<BatchOperationsPage />} />
       <Route path="*" element={<Navigate to="/billing" replace />} />
     </Routes>
   );
