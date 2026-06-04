@@ -60,6 +60,20 @@ export const submitClaim = (id: number): Promise<ClaimDetail> =>
     .put<{ data: ClaimDetail }>(`/claims/${id}/status`, { status: 'submitted' })
     .then((r) => r.data.data);
 
+// POST /api/v2/claims - server stamps ClaimNumber + Status + OrganizationId from tenant
+export interface CreateClaimPayload {
+  patientName: string;
+  serviceDate: string;
+  amount: number;
+  payer: string;
+  diagnosisCodeA?: string;
+}
+
+export const createClaim = (payload: CreateClaimPayload): Promise<ClaimDetail> =>
+  apiClient
+    .post<{ data: ClaimDetail }>('/claims', payload)
+    .then((r) => r.data.data);
+
 // DELETE /api/v2/claims/{id}/service-lines/{lineId}
 export const deleteServiceLine = (claimId: number, lineId: number): Promise<void> =>
   apiClient
