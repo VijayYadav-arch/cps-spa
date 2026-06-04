@@ -27,16 +27,26 @@ export interface WorkQueueResponse {
   stats: WorkQueueStats;
 }
 
+/**
+ * Matches DenialWorkItem entity returned by GET /billing/denials.
+ * payerName is not on the entity (denials are looked up via claim relation)
+ * — backend includes it via projection; UI may receive it as empty string.
+ */
 export interface DenialItem {
   id: number;
+  claimId: number;
   organizationId: number;
   status: string;
   denialCode: string;
-  payerName: string;
-  denialDate: string;
+  denialReason: string;
+  category: string;
+  payerName?: string;
+  appealDeadline: string | null;
   resolvedAt: string | null;
   assignedTo: number | null;
   appealHistory: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface PaginationMeta {
@@ -276,7 +286,7 @@ export const acknowledgeInboxNotifications = (upToUtc: string): Promise<void> =>
     .post('/billing/inbox/notifications/ack', { upToUtc })
     .then(() => undefined);
 
-export const getDenials = (params?: { status?: string; page?: number; pageSize?: number; }): Promise<{ data: DenialItem[]; pagination: PaginationMeta }> =>
+export const getDenials = (params?: { status?: string; category?: string; page?: number; pageSize?: number; }): Promise<{ data: DenialItem[]; pagination: PaginationMeta }> =>
   apiClient.get<{ data: DenialItem[]; pagination: PaginationMeta }>('/billing/denials', { params }).then((r) => r.data);
 
 // ─── Denial Queue (Billing PR 1 frontend) ────────────────────────────────
