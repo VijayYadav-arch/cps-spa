@@ -9,16 +9,28 @@
  *   DELETE /api/v2/organizations/{id}    (soft-delete; idempotent)
  *   POST   /api/v2/organizations/{id}/restore (restore; idempotent)
  *
+ * Phase B + C nested-tab cross-org-admin fetches (cps-dotnet PR #193 + #195):
+ *   GET /api/v2/claims?organizationId={n}
+ *   GET /api/v2/patients?organizationId={n}
+ *   GET /api/v2/encounters?organizationId={n}   (admin-list branch — no patientId)
+ *   GET /api/v2/documents?organizationId={n}
+ *   GET /api/v2/reports?organizationId={n}
+ *
  * The shared apiClient (@/api/client) sets baseURL=/api/v2.
  */
 import { apiClient } from '@/api/client';
 import type {
   CreateOrgRequest,
+  DocumentSummary,
   OrgListResponse,
   OrganizationDetail,
+  PaginationMeta,
+  ReportSummary,
   UpdateOrgRequest,
 } from './orgsTypes';
 import type { ClaimSummary, PagedResponse } from '@/api/claims';
+import type { PatientSummary } from '@/api/patients';
+import type { EncountersListResponse } from '@/pages/Admin/Encounters/encountersTypes';
 
 const BASE = '/organizations';
 
@@ -48,6 +60,68 @@ export const orgsApi = {
   ): Promise<PagedResponse<ClaimSummary>> =>
     apiClient
       .get<PagedResponse<ClaimSummary>>('/claims', {
+        params: { ...params, organizationId: orgId },
+      })
+      .then((r) => r.data),
+
+  /**
+   * Cross-org-admin fetch of an organization's patients. Hits
+   *   GET /api/v2/patients?organizationId={orgId}&page=&pageSize=
+   * shipped in cps-dotnet PR #195. Response shape: { data: PatientResponseDto[],
+   * pagination }. PHI masking still applies for cross-org admins (DateOfBirth
+   * truncated to Jan 1, MedicareId/MedicaidId always masked).
+   */
+  getPatients: (
+    orgId: number,
+    params: { page?: number; pageSize?: number } = {},
+  ): Promise<{ data: PatientSummary[]; pagination: PaginationMeta }> =>
+    apiClient
+      .get<{ data: PatientSummary[]; pagination: PaginationMeta }>('/patients', {
+        params: { ...params, organizationId: orgId },
+      })
+      .then((r) => r.data),
+
+  /**
+   * Cross-org-admin fetch of an organization's encounters. Hits the admin-list
+   * branch (no patientId param) which returns the enriched EncounterListDto
+   * shape with patient + organization names + correlated ClaimsCount.
+   */
+  getEncounters: (
+    orgId: number,
+    params: { page?: number; pageSize?: number; q?: string; includeDeleted?: boolean } = {},
+  ): Promise<EncountersListResponse> =>
+    apiClient
+      .get<EncountersListResponse>('/encounters', {
+        params: { ...params, organizationId: orgId },
+      })
+      .then((r) => r.data),
+
+  /**
+   * Cross-org-admin fetch of an organization's documents. Hits
+   *   GET /api/v2/documents?organizationId={orgId}&page=&pageSize=
+   * which returns the Document entity passthrough (no DTO projection).
+   */
+  getDocuments: (
+    orgId: number,
+    params: { page?: number; pageSize?: number } = {},
+  ): Promise<{ data: DocumentSummary[]; pagination: PaginationMeta }> =>
+    apiClient
+      .get<{ data: DocumentSummary[]; pagination: PaginationMeta }>('/documents', {
+        params: { ...params, organizationId: orgId },
+      })
+      .then((r) => r.data),
+
+  /**
+   * Cross-org-admin fetch of an organization's reports. Only the list endpoint
+   * accepts the cross-org override — the aggregate endpoints (claims-summary,
+   * aging, denials) intentionally stay tenant-scoped.
+   */
+  getReports: (
+    orgId: number,
+    params: { page?: number; pageSize?: number; type?: string } = {},
+  ): Promise<{ data: ReportSummary[]; pagination: PaginationMeta }> =>
+    apiClient
+      .get<{ data: ReportSummary[]; pagination: PaginationMeta }>('/reports', {
         params: { ...params, organizationId: orgId },
       })
       .then((r) => r.data),
