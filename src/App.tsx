@@ -50,6 +50,8 @@ import { MedicationsPage } from '@/pages/Admin/Clinical/MedicationsPage';
 import { OrdersPage } from '@/pages/Admin/Clinical/OrdersPage';
 import { ReferralsPage } from '@/pages/Admin/Clinical/ReferralsPage';
 import { IdgMeetingsPage } from '@/pages/Admin/IdgMeetings/IdgMeetingsPage';
+import { ConsentPage } from '@/pages/Admin/Compliance/ConsentPage';
+import { SlaPage } from '@/pages/Admin/Compliance/SlaPage';
 import { PortalPaymentPage } from '@/pages/Portal/PortalPaymentPage';
 import { AnalyticsDashboardPage } from '@/pages/Analytics/AnalyticsDashboardPage';
 import { InboxPage } from '@/pages/Inbox/InboxPage';
@@ -455,6 +457,22 @@ export default function App() {
               element={
                 <RoleRoute required={PERMISSIONS.HOSPICE_VIEW}>
                   <IdgMeetingsPage />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="admin/consent"
+              element={
+                <RoleRoute required={PERMISSIONS.COMPLIANCE_PHI_REVIEW}>
+                  <ConsentPage />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="admin/sla"
+              element={
+                <RoleRoute required={PERMISSIONS.ADMIN_SYSTEM_CONFIG}>
+                  <SlaPage />
                 </RoleRoute>
               }
             />
