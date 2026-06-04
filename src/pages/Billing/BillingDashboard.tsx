@@ -49,7 +49,7 @@ export function BillingDashboard() {
       <div style={{ marginBottom: 24 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
           <h3 style={{ fontWeight: 600 }}>Recent Denials</h3>
-          <Link to="/billing/denials" style={{ color: '#2563eb', fontSize: 14 }}>View all</Link>
+          <Link to="/billing/denials/queue" style={{ color: '#2563eb', fontSize: 14 }}>View all</Link>
         </div>
         {denials.length === 0 ? (
           <p style={{ color: '#64748b' }}>No recent denials.</p>
