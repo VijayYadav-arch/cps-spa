@@ -42,6 +42,7 @@ import { BranchesPage } from '@/pages/Admin/BranchesPage';
 import { OrganizationsRoutes } from '@/pages/Admin/Organizations/OrganizationsRoutes';
 import { EncountersRoutes } from '@/pages/Admin/Encounters/EncountersRoutes';
 import { B2cMigrationPage } from '@/pages/Admin/B2cMigration/B2cMigrationPage';
+import { InquiriesPage } from '@/pages/Admin/Inquiries/InquiriesPage';
 import { PortalPaymentPage } from '@/pages/Portal/PortalPaymentPage';
 import { AnalyticsDashboardPage } from '@/pages/Analytics/AnalyticsDashboardPage';
 import { InboxPage } from '@/pages/Inbox/InboxPage';
@@ -383,6 +384,14 @@ export default function App() {
               element={
                 <RoleRoute required={PERMISSIONS.ADMIN_MANAGE_ORGS}>
                   <B2cMigrationPage />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="admin/inquiries"
+              element={
+                <RoleRoute required={PERMISSIONS.ADMIN_MANAGE_ORGS}>
+                  <InquiriesPage />
                 </RoleRoute>
               }
             />
