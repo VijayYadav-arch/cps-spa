@@ -46,6 +46,7 @@ import { InquiriesPage } from '@/pages/Admin/Inquiries/InquiriesPage';
 import { ImportPage } from '@/pages/Admin/Import/ImportPage';
 import { OnboardingPage } from '@/pages/Admin/Onboarding/OnboardingPage';
 import { OnboardingEmailsPage } from '@/pages/Admin/Onboarding/OnboardingEmailsPage';
+import { MedicationsPage } from '@/pages/Admin/Clinical/MedicationsPage';
 import { PortalPaymentPage } from '@/pages/Portal/PortalPaymentPage';
 import { AnalyticsDashboardPage } from '@/pages/Analytics/AnalyticsDashboardPage';
 import { InboxPage } from '@/pages/Inbox/InboxPage';
@@ -419,6 +420,14 @@ export default function App() {
               element={
                 <RoleRoute required={PERMISSIONS.PLATFORM_ONBOARDING}>
                   <OnboardingEmailsPage />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="admin/medications"
+              element={
+                <RoleRoute required={PERMISSIONS.CLINICAL_MEDICATIONS}>
+                  <MedicationsPage />
                 </RoleRoute>
               }
             />
