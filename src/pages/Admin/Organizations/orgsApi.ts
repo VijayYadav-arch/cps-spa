@@ -70,6 +70,10 @@ export const orgsApi = {
    * shipped in cps-dotnet PR #195. Response shape: { data: PatientResponseDto[],
    * pagination }. PHI masking still applies for cross-org admins (DateOfBirth
    * truncated to Jan 1, MedicareId/MedicaidId always masked).
+   *
+   * Note: the cps-dotnet PatientsController.GetAll signature is currently
+   * just (organizationId, page, pageSize). No status / search filter exists
+   * server-side — the OrganizationPatientsTab is a plain paginated list.
    */
   getPatients: (
     orgId: number,
@@ -115,10 +119,14 @@ export const orgsApi = {
    * Cross-org-admin fetch of an organization's reports. Only the list endpoint
    * accepts the cross-org override — the aggregate endpoints (claims-summary,
    * aging, denials) intentionally stay tenant-scoped.
+   *
+   * Note: cps-dotnet ReportsController.GetAll currently only accepts
+   * (organizationId, page, pageSize). No type filter exists server-side — the
+   * OrganizationReportsTab filters by type client-side over the page window.
    */
   getReports: (
     orgId: number,
-    params: { page?: number; pageSize?: number; type?: string } = {},
+    params: { page?: number; pageSize?: number } = {},
   ): Promise<{ data: ReportSummary[]; pagination: PaginationMeta }> =>
     apiClient
       .get<{ data: ReportSummary[]; pagination: PaginationMeta }>('/reports', {
