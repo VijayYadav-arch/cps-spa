@@ -369,6 +369,31 @@ export const assignDenial = (
 ): Promise<{ data: unknown }> =>
   apiClient.put<{ data: unknown }>(`/billing/denials/${denialId}/assign`, { userId }).then((r) => r.data);
 
+export const escalateDenial = (
+  denialId: number, notes: string | null,
+): Promise<{ data: unknown }> =>
+  apiClient.put<{ data: unknown }>(`/billing/denials/${denialId}/escalate`, { notes }).then((r) => r.data);
+
+export const getDenialById = (denialId: number): Promise<DenialItem> =>
+  apiClient.get<{ data: DenialItem }>(`/billing/denials/${denialId}`).then((r) => r.data.data);
+
+export interface DenialAnalysisResult {
+  category: string;
+  description: string;
+  appealDeadline: string;
+  recommendedAction: string;
+  appealTemplate: string | null;
+}
+
+export const analyzeDenial = (params: {
+  denialCode: string;
+  payerName: string;
+  denialDate: string;
+}): Promise<DenialAnalysisResult> =>
+  apiClient
+    .post<{ data: DenialAnalysisResult }>('/billing/denials/analyze', params)
+    .then((r) => r.data.data);
+
 // ─── AR Dashboard ────────────────────────────────────────────────────────
 
 export interface ArActionQueueItem {
