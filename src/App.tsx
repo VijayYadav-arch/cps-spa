@@ -49,6 +49,7 @@ import { OnboardingEmailsPage } from '@/pages/Admin/Onboarding/OnboardingEmailsP
 import { MedicationsPage } from '@/pages/Admin/Clinical/MedicationsPage';
 import { OrdersPage } from '@/pages/Admin/Clinical/OrdersPage';
 import { ReferralsPage } from '@/pages/Admin/Clinical/ReferralsPage';
+import { IdgMeetingsPage } from '@/pages/Admin/IdgMeetings/IdgMeetingsPage';
 import { PortalPaymentPage } from '@/pages/Portal/PortalPaymentPage';
 import { AnalyticsDashboardPage } from '@/pages/Analytics/AnalyticsDashboardPage';
 import { InboxPage } from '@/pages/Inbox/InboxPage';
@@ -446,6 +447,14 @@ export default function App() {
               element={
                 <RoleRoute required={PERMISSIONS.CLINICAL_REFERRALS}>
                   <ReferralsPage />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="admin/idg-meetings"
+              element={
+                <RoleRoute required={PERMISSIONS.HOSPICE_VIEW}>
+                  <IdgMeetingsPage />
                 </RoleRoute>
               }
             />
