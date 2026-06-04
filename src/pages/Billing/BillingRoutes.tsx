@@ -16,6 +16,7 @@ import { ChargeEntryPage } from './ChargeEntryPage';
 import { BillingCodesPage } from './BillingCodesPage';
 import { BatchOperationsPage } from './BatchOperationsPage';
 import { WorkQueuePage } from './WorkQueuePage';
+import { BillingAnalyticsPage } from './BillingAnalyticsPage';
 
 export function BillingRoutes() {
   return (
@@ -38,6 +39,7 @@ export function BillingRoutes() {
       <Route path="batch" element={<BatchOperationsPage />} />
       <Route path="queue" element={<WorkQueuePage />} />
       <Route path="work-queue" element={<WorkQueuePage />} />
+      <Route path="analytics" element={<BillingAnalyticsPage />} />
       <Route path="*" element={<Navigate to="/billing" replace />} />
     </Routes>
   );
