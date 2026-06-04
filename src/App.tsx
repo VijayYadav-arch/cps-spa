@@ -45,6 +45,7 @@ import { B2cMigrationPage } from '@/pages/Admin/B2cMigration/B2cMigrationPage';
 import { InquiriesPage } from '@/pages/Admin/Inquiries/InquiriesPage';
 import { ImportPage } from '@/pages/Admin/Import/ImportPage';
 import { OnboardingPage } from '@/pages/Admin/Onboarding/OnboardingPage';
+import { OnboardingEmailsPage } from '@/pages/Admin/Onboarding/OnboardingEmailsPage';
 import { PortalPaymentPage } from '@/pages/Portal/PortalPaymentPage';
 import { AnalyticsDashboardPage } from '@/pages/Analytics/AnalyticsDashboardPage';
 import { InboxPage } from '@/pages/Inbox/InboxPage';
@@ -410,6 +411,14 @@ export default function App() {
               element={
                 <RoleRoute required={PERMISSIONS.PLATFORM_ONBOARDING}>
                   <OnboardingPage />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="admin/onboarding/emails"
+              element={
+                <RoleRoute required={PERMISSIONS.PLATFORM_ONBOARDING}>
+                  <OnboardingEmailsPage />
                 </RoleRoute>
               }
             />
