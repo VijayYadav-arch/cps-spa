@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { BillingDashboard } from './BillingDashboard';
 import { DenialQueuePage } from './DenialQueuePage';
 import { DenialsList } from './DenialsList';
+import { DenialDetail } from './DenialDetail';
 import { ArDashboardPage } from './ArDashboardPage';
 import { ArTicklerPage } from './ArTicklerPage';
 import { EraPostingsPage } from './EraPostingsPage';
@@ -19,6 +20,7 @@ export function BillingRoutes() {
       <Route index element={<BillingDashboard />} />
       <Route path="denials" element={<DenialsList />} />
       <Route path="denials/queue" element={<DenialQueuePage />} />
+      <Route path="denials/:id" element={<DenialDetail />} />
       <Route path="ar" element={<ArDashboardPage />} />
       <Route path="ar/ticklers" element={<ArTicklerPage />} />
       <Route path="era" element={<EraPostingsPage />} />
