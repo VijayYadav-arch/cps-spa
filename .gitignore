@@ -8,3 +8,5 @@ dist-ssr/
 src/api/types.ts
 .DS_Store
 coverage/
+playwright-report/
+test-results/
