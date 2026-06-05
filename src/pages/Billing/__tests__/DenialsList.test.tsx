@@ -36,6 +36,8 @@ function buildItem(overrides: Partial<{ id: number; status: string; category: st
     resolvedAt: null,
     assignedTo: null,
     appealHistory: null,
+    draftAppealText: null,
+    draftAppealGeneratedAtUtc: null,
     createdAt: '2026-06-04T00:00:00Z',
     updatedAt: '2026-06-04T00:00:00Z',
   };

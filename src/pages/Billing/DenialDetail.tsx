@@ -4,6 +4,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   analyzeDenial,
   assignDenial,
+  draftDenialAppeal,
   escalateDenial,
   getDenialById,
   resolveDenial,
@@ -151,6 +152,26 @@ export function DenialDetail() {
   const [modal, setModal] = useState<ModalType>(null);
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [aiDrafting, setAiDrafting] = useState(false);
+  const [aiDraftCopied, setAiDraftCopied] = useState(false);
+
+  async function handleDraftAppeal() {
+    if (!item) return;
+    setAiDrafting(true);
+    setError(null);
+    try {
+      const result = await draftDenialAppeal(item.id);
+      setItem({
+        ...item,
+        draftAppealText: result.draftAppealText,
+        draftAppealGeneratedAtUtc: result.draftAppealGeneratedAtUtc,
+      });
+    } catch {
+      setError('Failed to draft appeal. Please try again.');
+    } finally {
+      setAiDrafting(false);
+    }
+  }
 
   useEffect(() => {
     if (!id) return;
@@ -320,6 +341,58 @@ export function DenialDetail() {
           )}
         </div>
       )}
+
+      <div className="bg-white rounded-xl border border-navy-100 p-6 mb-6">
+        <div className="flex items-center justify-between mb-3 gap-3 flex-wrap">
+          <h2 className="font-semibold text-navy-900">AI Drafted Appeal</h2>
+          <button
+            type="button"
+            onClick={handleDraftAppeal}
+            disabled={aiDrafting}
+            className="text-sm bg-teal-600 text-white px-3 py-1.5 rounded hover:bg-teal-700 disabled:opacity-50"
+          >
+            {aiDrafting
+              ? 'Drafting…'
+              : item.draftAppealText
+              ? 'Regenerate draft'
+              : 'Draft appeal'}
+          </button>
+        </div>
+        {item.draftAppealText ? (
+          <div>
+            <div className="flex items-center justify-end mb-2">
+              <button
+                type="button"
+                onClick={async () => {
+                  await navigator.clipboard.writeText(item.draftAppealText!);
+                  setAiDraftCopied(true);
+                  setTimeout(() => setAiDraftCopied(false), 2000);
+                }}
+                className="text-xs text-navy-400 hover:text-navy-700"
+              >
+                {aiDraftCopied ? 'Copied!' : 'Copy'}
+              </button>
+            </div>
+            <pre
+              aria-label={`AI-drafted appeal for denial ${item.id}`}
+              className="text-sm text-navy-800 bg-indigo-50 border-l-4 border-indigo-500 rounded p-4 whitespace-pre-wrap font-sans"
+            >
+              {item.draftAppealText}
+              {item.draftAppealGeneratedAtUtc && (
+                <span className="block mt-4 text-xs text-navy-400">
+                  AI-generated {new Date(item.draftAppealGeneratedAtUtc).toLocaleString()}
+                  {' '}— review, edit, and verify all [bracketed] placeholders before submitting.
+                </span>
+              )}
+            </pre>
+          </div>
+        ) : (
+          <p className="text-sm text-navy-400">
+            Click <span className="font-semibold">Draft appeal</span> to generate a draft letter
+            from the denial reason, claim details, and clinical notes around the service date.
+          </p>
+        )}
+      </div>
 
       <div className="bg-white rounded-xl border border-navy-100 p-6 mb-6">
         <h2 className="font-semibold text-navy-900 mb-4">Appeal History</h2>

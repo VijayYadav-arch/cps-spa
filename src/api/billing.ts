@@ -45,8 +45,16 @@ export interface DenialItem {
   resolvedAt: string | null;
   assignedTo: number | null;
   appealHistory: string | null;
+  draftAppealText: string | null;
+  draftAppealGeneratedAtUtc: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface DenialAppealDraftResult {
+  id: number;
+  draftAppealText: string;
+  draftAppealGeneratedAtUtc: string;
 }
 
 export interface PaginationMeta {
@@ -376,6 +384,11 @@ export const escalateDenial = (
 
 export const getDenialById = (denialId: number): Promise<DenialItem> =>
   apiClient.get<{ data: DenialItem }>(`/billing/denials/${denialId}`).then((r) => r.data.data);
+
+export const draftDenialAppeal = (denialId: number): Promise<DenialAppealDraftResult> =>
+  apiClient
+    .post<{ data: DenialAppealDraftResult }>(`/billing/denials/${denialId}/draft-appeal`)
+    .then((r) => r.data.data);
 
 export interface DenialAnalysisResult {
   category: string;
