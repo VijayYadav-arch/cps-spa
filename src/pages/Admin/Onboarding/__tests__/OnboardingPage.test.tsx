@@ -10,10 +10,20 @@ vi.mock('@/api/client', () => ({
 
 vi.mock('@/api/onboardingStatus', () => ({
   getOrgsStatus: vi.fn(),
+  listOnboardingManagers: vi.fn(),
+  listOrgUsers: vi.fn(),
+  assignOnboardingManager: vi.fn(),
+  sendOnboardingEmail: vi.fn(),
 }));
 
 import { apiClient } from '@/api/client';
-import { getOrgsStatus } from '@/api/onboardingStatus';
+import {
+  assignOnboardingManager,
+  getOrgsStatus,
+  listOnboardingManagers,
+  listOrgUsers,
+  sendOnboardingEmail,
+} from '@/api/onboardingStatus';
 
 function renderPage() {
   return render(
@@ -49,6 +59,9 @@ const STATUS_RESPONSE = {
       status: 'completed',
       claimsCount: 42,
       patientsCount: 18,
+      assignedManagerUserId: null,
+      assignedManagerName: null,
+      assignedManagerAt: null,
     },
     {
       orgId: 2,
@@ -63,6 +76,9 @@ const STATUS_RESPONSE = {
       status: 'in-progress',
       claimsCount: 4,
       patientsCount: 7,
+      assignedManagerUserId: 101,
+      assignedManagerName: 'Maya Manager',
+      assignedManagerAt: '2026-06-01T00:00:00Z',
     },
   ],
   rollup: {
@@ -75,10 +91,30 @@ const STATUS_RESPONSE = {
   },
 };
 
+const MANAGERS = [
+  { userId: 101, name: 'Maya Manager', email: 'maya@cps.test' },
+  { userId: 102, name: 'Owen Onboarding', email: 'owen@cps.test' },
+];
+
+const BRAVO_USERS = [
+  { userId: 201, name: 'Brian Bravo', email: 'brian@bravo.test', role: 'client' },
+];
+
 describe('OnboardingPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(getOrgsStatus).mockResolvedValue(STATUS_RESPONSE as never);
+    vi.mocked(listOnboardingManagers).mockResolvedValue(MANAGERS as never);
+    vi.mocked(listOrgUsers).mockResolvedValue(BRAVO_USERS as never);
+    vi.mocked(assignOnboardingManager).mockResolvedValue({
+      orgId: 1,
+      assignedManagerUserId: 102,
+      assignedManagerAt: '2026-06-05T00:00:00Z',
+    } as never);
+    vi.mocked(sendOnboardingEmail).mockResolvedValue({
+      success: true,
+      recipientEmail: 'brian@bravo.test',
+    } as never);
   });
 
   it('renders heading + emails link', () => {
@@ -150,5 +186,72 @@ describe('OnboardingPage', () => {
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent(/500 onboarding/);
     });
+  });
+
+  it('assigns a manager via the per-row dropdown', async () => {
+    vi.mocked(apiClient.get).mockResolvedValue({ data: HOSPICE_FLOW } as never);
+    const user = userEvent.setup();
+    renderPage();
+    await waitFor(() => expect(screen.getByText('Acme Hospice')).toBeInTheDocument());
+    await waitFor(() => expect(listOnboardingManagers).toHaveBeenCalled());
+
+    await user.selectOptions(
+      screen.getByLabelText('Manager for Acme Hospice'),
+      '102'
+    );
+
+    await waitFor(() => {
+      expect(assignOnboardingManager).toHaveBeenCalledWith(1, 102);
+    });
+    await waitFor(() => {
+      expect(screen.getByRole('status')).toHaveTextContent(/Manager assigned for org 1/);
+    });
+  });
+
+  it('clears a manager by selecting Unassigned', async () => {
+    vi.mocked(apiClient.get).mockResolvedValue({ data: HOSPICE_FLOW } as never);
+    vi.mocked(assignOnboardingManager).mockResolvedValueOnce({
+      orgId: 2,
+      assignedManagerUserId: null,
+      assignedManagerAt: null,
+    } as never);
+    const user = userEvent.setup();
+    renderPage();
+    await waitFor(() => expect(screen.getByText('Bravo Home Health')).toBeInTheDocument());
+
+    const dropdown = screen.getByLabelText('Manager for Bravo Home Health') as HTMLSelectElement;
+    await waitFor(() => expect(dropdown.value).toBe('101'));
+
+    await user.selectOptions(dropdown, '');
+    await waitFor(() => {
+      expect(assignOnboardingManager).toHaveBeenCalledWith(2, null);
+    });
+  });
+
+  it('opens send-email modal and submits with rendered subject', async () => {
+    vi.mocked(apiClient.get).mockResolvedValue({ data: HOSPICE_FLOW } as never);
+    const user = userEvent.setup();
+    renderPage();
+    await waitFor(() => expect(screen.getByText('Bravo Home Health')).toBeInTheDocument());
+
+    // Click the Send email button on the Bravo row -- two buttons exist; pick row 2.
+    const sendButtons = screen.getAllByRole('button', { name: /send email/i });
+    await user.click(sendButtons[1]); // 2nd row = Bravo
+
+    await waitFor(() => expect(listOrgUsers).toHaveBeenCalledWith(2));
+    await waitFor(() => expect(screen.getByRole('dialog')).toBeInTheDocument());
+
+    // Default recipient = first user, default template = welcome-day-0
+    await user.click(screen.getByRole('button', { name: /^send$/i }));
+
+    await waitFor(() => {
+      expect(sendOnboardingEmail).toHaveBeenCalled();
+    });
+    const [orgId, payload] = vi.mocked(sendOnboardingEmail).mock.calls[0];
+    expect(orgId).toBe(2);
+    expect(payload.recipientUserId).toBe(201);
+    expect(payload.templateId).toBeTruthy();
+    // {{organizationName}} substituted in subject preview text
+    expect(payload.subject).toContain('Welcome');
   });
 });
