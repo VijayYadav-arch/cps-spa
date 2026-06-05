@@ -10,9 +10,10 @@ vi.mock('@/api/claims', () => ({
   submitClaim: vi.fn(),
   downloadClaimPdf: vi.fn(),
   scrubClaimById: vi.fn(),
+  predictClaimDenial: vi.fn(),
 }));
 
-import { getClaim, downloadClaimPdf, scrubClaimById } from '@/api/claims';
+import { getClaim, downloadClaimPdf, scrubClaimById, predictClaimDenial } from '@/api/claims';
 
 function claim(over: Partial<ClaimDetailType> = {}): ClaimDetailType {
   return {
@@ -147,5 +148,64 @@ describe('ClaimDetail — Validate (scrub)', () => {
 
     expect(await screen.findByText(/Validation passed \(1 warning\)/i))
       .toBeInTheDocument();
+  });
+});
+
+describe('ClaimDetail — AI denial prediction', () => {
+  it('runs prediction and displays risk panel with rationale + fixes', async () => {
+    const user = userEvent.setup();
+    vi.mocked(getClaim).mockResolvedValue(claim());
+    vi.mocked(predictClaimDenial).mockResolvedValueOnce({
+      riskLevel: 'high',
+      likelyDenialCode: 'CO-50',
+      rationale: 'Prior auth missing for procedure code 99205.',
+      suggestedFixes: ['Verify prior auth', 'Attach 278 transaction'],
+    });
+
+    renderPage();
+    await screen.findByText(/Claim #5/i);
+
+    await user.click(screen.getByRole('button', { name: /Predict denial risk/i }));
+
+    expect(await screen.findByText(/Prior auth missing/i)).toBeInTheDocument();
+    expect(screen.getByText(/Likely denial:/i)).toBeInTheDocument();
+    expect(screen.getByText(/CO-50/)).toBeInTheDocument();
+    expect(screen.getByText(/Verify prior auth/)).toBeInTheDocument();
+    expect(screen.getByText(/Attach 278/)).toBeInTheDocument();
+    expect(screen.getByText(/AI advisory/i)).toBeInTheDocument();
+    // Button label flips to Re-run after a prediction has been produced.
+    expect(screen.getByRole('button', { name: /Re-run AI prediction/i })).toBeInTheDocument();
+  });
+
+  it('renders "unknown" risk panel when AI fallback fires', async () => {
+    const user = userEvent.setup();
+    vi.mocked(getClaim).mockResolvedValue(claim());
+    vi.mocked(predictClaimDenial).mockResolvedValueOnce({
+      riskLevel: 'unknown',
+      likelyDenialCode: null,
+      rationale: 'AI provider returned non-JSON output; manual review required.',
+      suggestedFixes: [],
+    });
+
+    renderPage();
+    await screen.findByText(/Claim #5/i);
+    await user.click(screen.getByRole('button', { name: /Predict denial risk/i }));
+
+    expect(await screen.findByText(/unknown risk/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Likely denial:/i)).not.toBeInTheDocument();
+  });
+
+  it('surfaces error when prediction fails', async () => {
+    const user = userEvent.setup();
+    vi.mocked(getClaim).mockResolvedValue(claim());
+    vi.mocked(predictClaimDenial).mockRejectedValueOnce({
+      response: { data: { error: 'AI provider unavailable' } },
+    });
+
+    renderPage();
+    await screen.findByText(/Claim #5/i);
+    await user.click(screen.getByRole('button', { name: /Predict denial risk/i }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(/AI provider unavailable/i);
   });
 });

@@ -60,6 +60,20 @@ export const submitClaim = (id: number): Promise<ClaimDetail> =>
     .put<{ data: ClaimDetail }>(`/claims/${id}/status`, { status: 'submitted' })
     .then((r) => r.data.data);
 
+// AI-assisted pre-submission denial prediction.
+// Returns an ephemeral advisory; nothing is persisted server-side.
+export interface DenialPrediction {
+  riskLevel: 'low' | 'moderate' | 'high' | 'unknown';
+  likelyDenialCode: string | null;
+  rationale: string;
+  suggestedFixes: string[];
+}
+
+export const predictClaimDenial = (id: number): Promise<DenialPrediction> =>
+  apiClient
+    .post<{ data: DenialPrediction }>(`/claims/${id}/predict-denial`)
+    .then((r) => r.data.data);
+
 // POST /api/v2/claims - server stamps ClaimNumber + Status + OrganizationId from tenant
 export interface CreateClaimPayload {
   patientName: string;

@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  downloadClaimPdf, getClaim, submitClaim, scrubClaimById,
+  downloadClaimPdf, getClaim, submitClaim, scrubClaimById, predictClaimDenial,
   type ClaimDetail as ClaimDetailType,
   type ScrubResult,
+  type DenialPrediction,
 } from '@/api/claims';
 
 export function ClaimDetail() {
@@ -16,6 +17,8 @@ export function ClaimDetail() {
   const [isPrinting, setIsPrinting] = useState(false);
   const [scrub, setScrub] = useState<ScrubResult | null>(null);
   const [isScrubbing, setIsScrubbing] = useState(false);
+  const [prediction, setPrediction] = useState<DenialPrediction | null>(null);
+  const [isPredicting, setIsPredicting] = useState(false);
 
   useEffect(() => {
     if (!id) {
@@ -57,6 +60,22 @@ export function ClaimDetail() {
       setError(message);
     } finally {
       setIsScrubbing(false);
+    }
+  };
+
+  const handlePredictDenial = async () => {
+    if (!claim) return;
+    setIsPredicting(true);
+    setError(null);
+    try {
+      const result = await predictClaimDenial(claim.id);
+      setPrediction(result);
+    } catch (err: unknown) {
+      const message = (err as { response?: { data?: { error?: string } } })
+        ?.response?.data?.error ?? 'AI denial prediction failed';
+      setError(message);
+    } finally {
+      setIsPredicting(false);
     }
   };
 
@@ -153,7 +172,54 @@ export function ClaimDetail() {
           )}
         </div>
       )}
-      <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+      {prediction && (
+        <div
+          aria-label={`AI denial risk prediction for claim ${claim.id}`}
+          style={{
+            border: '1px solid ' + riskBorder(prediction.riskLevel),
+            background: riskBackground(prediction.riskLevel),
+            borderLeft: `4px solid ${riskBadge(prediction.riskLevel)}`,
+            borderRadius: 8, padding: 16, marginTop: 16,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+            <span
+              style={{
+                background: riskBadge(prediction.riskLevel),
+                color: '#fff', fontWeight: 700, fontSize: 12, padding: '2px 10px',
+                borderRadius: 999, textTransform: 'uppercase',
+              }}
+            >
+              {prediction.riskLevel} risk
+            </span>
+            {prediction.likelyDenialCode && (
+              <code style={{ fontSize: 13, color: '#475569' }}>
+                Likely denial: {prediction.likelyDenialCode}
+              </code>
+            )}
+          </div>
+          <div style={{ fontSize: 14, color: '#1f2937', marginBottom: 8 }}>
+            {prediction.rationale || '(no rationale provided)'}
+          </div>
+          {prediction.suggestedFixes.length > 0 && (
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 4 }}>
+                Suggested fixes
+              </div>
+              <ul style={{ marginTop: 0, marginBottom: 0, paddingLeft: 20 }}>
+                {prediction.suggestedFixes.map((fix, i) => (
+                  <li key={i} style={{ fontSize: 13, marginBottom: 2 }}>{fix}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <div style={{ marginTop: 10, fontSize: 11, color: '#94a3b8' }}>
+            AI advisory — review independently before submission.
+          </div>
+        </div>
+      )}
+
+      <div style={{ display: 'flex', gap: 10, marginTop: 16, flexWrap: 'wrap' }}>
         <button
           onClick={() => { void handleValidate(); }}
           disabled={isScrubbing}
@@ -161,6 +227,18 @@ export function ClaimDetail() {
           style={{ padding: '10px 24px', background: '#7c3aed', color: '#fff', border: 'none', borderRadius: 4, fontWeight: 600, cursor: isScrubbing ? 'not-allowed' : 'pointer' }}
         >
           {isScrubbing ? 'Validating…' : 'Validate'}
+        </button>
+        <button
+          onClick={() => { void handlePredictDenial(); }}
+          disabled={isPredicting}
+          aria-busy={isPredicting}
+          style={{ padding: '10px 24px', background: '#0d9488', color: '#fff', border: 'none', borderRadius: 4, fontWeight: 600, cursor: isPredicting ? 'not-allowed' : 'pointer' }}
+        >
+          {isPredicting
+            ? 'Predicting…'
+            : prediction
+            ? 'Re-run AI prediction'
+            : 'Predict denial risk (AI)'}
         </button>
         {claim.status !== 'submitted' && claim.status !== 'paid' && (
           <button
@@ -189,4 +267,31 @@ export function ClaimDetail() {
       </div>
     </div>
   );
+}
+
+function riskBadge(level: DenialPrediction['riskLevel']): string {
+  switch (level) {
+    case 'low': return '#16a34a';      // green
+    case 'moderate': return '#d97706'; // amber
+    case 'high': return '#dc2626';     // red
+    default: return '#64748b';         // slate (unknown)
+  }
+}
+
+function riskBorder(level: DenialPrediction['riskLevel']): string {
+  switch (level) {
+    case 'low': return '#bbf7d0';
+    case 'moderate': return '#fed7aa';
+    case 'high': return '#fecaca';
+    default: return '#e2e8f0';
+  }
+}
+
+function riskBackground(level: DenialPrediction['riskLevel']): string {
+  switch (level) {
+    case 'low': return '#f0fdf4';
+    case 'moderate': return '#fffbeb';
+    case 'high': return '#fef2f2';
+    default: return '#f8fafc';
+  }
 }
