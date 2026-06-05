@@ -368,6 +368,14 @@ export interface IdgMeeting {
   notes: string | null;
   actionItems: string | null;
   nextMeetingDate: string | null;
+  prepBriefText?: string | null;
+  prepBriefGeneratedAtUtc?: string | null;
+}
+
+export interface IdgPrepBriefResult {
+  id: number;
+  prepBriefText: string;
+  prepBriefGeneratedAtUtc: string;
 }
 
 export interface CarePlanReview {
@@ -515,6 +523,11 @@ export const cancelIdgMeeting = (
   apiClient
     .post<IdgMeeting>(`/hospice/idg-meetings/${meetingId}/cancel`, { reason })
     .then((r) => r.data);
+
+export const generateIdgPrepBrief = (meetingId: number): Promise<IdgPrepBriefResult> =>
+  apiClient
+    .post<{ data: IdgPrepBriefResult }>(`/hospice/idg-meetings/${meetingId}/prep-brief`)
+    .then((r) => r.data.data);
 
 // CarePlan reviews
 export const recordCarePlanReview = (
