@@ -9,12 +9,14 @@ vi.mock('@/api/compliance', async (orig) => ({
   listAnomalies: vi.fn(),
   updateAnomalyStatus: vi.fn(),
   scanAnomaliesNow: vi.fn(),
+  narrateAnomaliesNow: vi.fn(),
 }));
 
 import {
   listAnomalies,
   updateAnomalyStatus,
   scanAnomaliesNow,
+  narrateAnomaliesNow,
 } from '@/api/compliance';
 
 beforeEach(() => vi.clearAllMocks());
@@ -22,6 +24,7 @@ beforeEach(() => vi.clearAllMocks());
 function alert(over: Partial<{
   id: number; status: AnomalyStatus; anomalyType: AnomalyType;
   userEmail: string | null; evidence: string;
+  narrativeText: string | null; narrativeGeneratedAtUtc: string | null;
 }> = {}) {
   return {
     id: 1, organizationId: 1,
@@ -33,6 +36,8 @@ function alert(over: Partial<{
     evidence: '52 distinct patients accessed in 1 hour',
     status: 'open' as const,
     reviewedByUserId: null, reviewedAtUtc: null, notes: null,
+    narrativeText: null as string | null,
+    narrativeGeneratedAtUtc: null as string | null,
     ...over,
   };
 }
@@ -120,5 +125,51 @@ describe('AuditAnomalyReviewPage', () => {
     });
     render(<AuditAnomalyReviewPage />);
     expect(await screen.findByRole('alert')).toHaveTextContent('forbidden');
+  });
+
+  it('expands the AI narrative when the toggle is clicked', async () => {
+    const user = userEvent.setup();
+    vi.mocked(listAnomalies).mockResolvedValue({
+      data: [alert({
+        narrativeText: 'A user reviewed 52 patient records in one hour. Investigate after-hours patterns.',
+        narrativeGeneratedAtUtc: '2026-05-20T10:35:00Z',
+      })],
+      total: 1,
+    });
+
+    render(<AuditAnomalyReviewPage />);
+    await screen.findByText(/52 distinct patients/);
+
+    // Narrative starts collapsed
+    expect(screen.queryByText(/A user reviewed 52/)).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /show narrative for alert 1/i }));
+    expect(await screen.findByText(/A user reviewed 52/)).toBeInTheDocument();
+
+    // Click again to collapse
+    await user.click(screen.getByRole('button', { name: /hide narrative for alert 1/i }));
+    expect(screen.queryByText(/A user reviewed 52/)).not.toBeInTheDocument();
+  });
+
+  it('does not render the AI toggle when narrativeText is null', async () => {
+    vi.mocked(listAnomalies).mockResolvedValue({
+      data: [alert({ narrativeText: null })],
+      total: 1,
+    });
+    render(<AuditAnomalyReviewPage />);
+    await screen.findByText(/52 distinct patients/);
+    expect(screen.queryByRole('button', { name: /show narrative/i })).not.toBeInTheDocument();
+  });
+
+  it('triggers the narrate-now endpoint and reports the count', async () => {
+    const user = userEvent.setup();
+    vi.mocked(listAnomalies).mockResolvedValue({ data: [], total: 0 });
+    vi.mocked(narrateAnomaliesNow).mockResolvedValue({ data: { written: 4 } });
+
+    render(<AuditAnomalyReviewPage />);
+    await waitFor(() => expect(listAnomalies).toHaveBeenCalled());
+
+    await user.click(screen.getByRole('button', { name: /generate narratives/i }));
+    expect(await screen.findByText(/Generated narratives for 4 alert/i)).toBeInTheDocument();
   });
 });

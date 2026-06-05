@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import {
   listAnomalies,
   updateAnomalyStatus,
   scanAnomaliesNow,
+  narrateAnomaliesNow,
   type AuditAnomalyAlert,
   type AnomalyStatus,
 } from '@/api/compliance';
@@ -36,6 +37,8 @@ export function AuditAnomalyReviewPage() {
   const [actionNotes, setActionNotes] = useState('');
   const [scanResult, setScanResult] = useState<string | null>(null);
   const [refreshCount, setRefreshCount] = useState(0);
+  const [expandedNarrativeId, setExpandedNarrativeId] = useState<number | null>(null);
+  const [narrateResult, setNarrateResult] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -91,6 +94,19 @@ export function AuditAnomalyReviewPage() {
     }
   };
 
+  const runNarrate = async () => {
+    setNarrateResult(null);
+    try {
+      const res = await narrateAnomaliesNow();
+      setNarrateResult(`Generated narratives for ${res.data.written} alert(s)`);
+      setRefreshCount((c) => c + 1);
+    } catch (err: unknown) {
+      const message = (err as { response?: { data?: { error?: string } } })
+        ?.response?.data?.error ?? 'Narrative generation failed';
+      setError(message);
+    }
+  };
+
   return (
     <div style={{ padding: 24 }}>
       <h1 style={{ marginTop: 0 }}>Audit anomaly review</h1>
@@ -114,7 +130,9 @@ export function AuditAnomalyReviewPage() {
           </select>
         </label>
         <button type="button" onClick={runScan}>Scan now</button>
+        <button type="button" onClick={runNarrate}>Generate narratives</button>
         {scanResult && <span style={{ color: '#15803d' }}>{scanResult}</span>}
+        {narrateResult && <span style={{ color: '#15803d' }}>{narrateResult}</span>}
       </div>
 
       {error && (
@@ -143,47 +161,97 @@ export function AuditAnomalyReviewPage() {
               const label = ANOMALY_LABELS[r.anomalyType] ?? {
                 label: r.anomalyType, tone: '#475569',
               };
+              const isExpanded = expandedNarrativeId === r.id;
               return (
-                <tr key={r.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td style={{ padding: 8, whiteSpace: 'nowrap' }}>
-                    {new Date(r.detectedAtUtc).toLocaleString()}
-                  </td>
-                  <td style={{ padding: 8, color: label.tone, fontWeight: 600 }}>
-                    {label.label}
-                  </td>
-                  <td style={{ padding: 8 }}>
-                    {r.userEmail ?? r.ipAddress ?? `user ${r.userId ?? '?'}`}
-                  </td>
-                  <td style={{ padding: 8, fontSize: 13 }}>
-                    {fmtWindow(r.windowStartUtc, r.windowEndUtc)}
-                  </td>
-                  <td style={{ padding: 8 }}>{r.evidence}</td>
-                  <td style={{ padding: 8 }}>{r.status}</td>
-                  <td style={{ padding: 8 }}>
-                    {r.status === 'open' && (
-                      <>
+                <Fragment key={r.id}>
+                  <tr style={{ borderBottom: r.narrativeText && isExpanded ? 'none' : '1px solid #f1f5f9' }}>
+                    <td style={{ padding: 8, whiteSpace: 'nowrap' }}>
+                      {new Date(r.detectedAtUtc).toLocaleString()}
+                    </td>
+                    <td style={{ padding: 8, color: label.tone, fontWeight: 600 }}>
+                      {label.label}
+                      {r.narrativeText && (
                         <button
                           type="button"
-                          onClick={() => openAction(r.id, 'dismissed')}
-                          style={{ marginRight: 8 }}
+                          onClick={() => setExpandedNarrativeId(isExpanded ? null : r.id)}
+                          aria-expanded={isExpanded}
+                          aria-label={isExpanded ? `Hide narrative for alert ${r.id}` : `Show narrative for alert ${r.id}`}
+                          style={{
+                            marginLeft: 8,
+                            background: 'none',
+                            border: '1px solid #cbd5e1',
+                            borderRadius: 4,
+                            padding: '0 6px',
+                            fontSize: 11,
+                            cursor: 'pointer',
+                            color: '#475569',
+                          }}
                         >
-                          Dismiss
+                          {isExpanded ? '▾ AI' : '▸ AI'}
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => openAction(r.id, 'escalated')}
+                      )}
+                    </td>
+                    <td style={{ padding: 8 }}>
+                      {r.userEmail ?? r.ipAddress ?? `user ${r.userId ?? '?'}`}
+                    </td>
+                    <td style={{ padding: 8, fontSize: 13 }}>
+                      {fmtWindow(r.windowStartUtc, r.windowEndUtc)}
+                    </td>
+                    <td style={{ padding: 8 }}>{r.evidence}</td>
+                    <td style={{ padding: 8 }}>{r.status}</td>
+                    <td style={{ padding: 8 }}>
+                      {r.status === 'open' && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => openAction(r.id, 'dismissed')}
+                            style={{ marginRight: 8 }}
+                          >
+                            Dismiss
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => openAction(r.id, 'escalated')}
+                          >
+                            Escalate
+                          </button>
+                        </>
+                      )}
+                      {r.status !== 'open' && r.notes && (
+                        <span style={{ color: '#64748b', fontSize: 13 }}>
+                          {r.notes}
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                  {r.narrativeText && isExpanded && (
+                    <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                      <td colSpan={7} style={{ padding: '0 8px 12px 32px', background: '#f8fafc' }}>
+                        <div
+                          aria-label={`AI narrative for alert ${r.id}`}
+                          style={{
+                            fontSize: 13,
+                            lineHeight: 1.5,
+                            color: '#334155',
+                            whiteSpace: 'pre-wrap',
+                            padding: '8px 12px',
+                            borderLeft: '3px solid #6366f1',
+                            background: '#fff',
+                            borderRadius: 4,
+                          }}
                         >
-                          Escalate
-                        </button>
-                      </>
-                    )}
-                    {r.status !== 'open' && r.notes && (
-                      <span style={{ color: '#64748b', fontSize: 13 }}>
-                        {r.notes}
-                      </span>
-                    )}
-                  </td>
-                </tr>
+                          {r.narrativeText}
+                          {r.narrativeGeneratedAtUtc && (
+                            <div style={{ marginTop: 8, fontSize: 11, color: '#94a3b8' }}>
+                              AI-generated {new Date(r.narrativeGeneratedAtUtc).toLocaleString()}
+                              {' '}— review and verify before acting.
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
               );
             })}
           </tbody>

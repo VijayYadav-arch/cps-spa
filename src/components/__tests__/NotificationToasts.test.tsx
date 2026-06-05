@@ -149,6 +149,7 @@ describe('NotificationToasts', () => {
         windowEndUtc: '2026-05-21T12:00:00Z',
         evidence: '52 distinct patients accessed in 1 hour',
         status: 'open', reviewedByUserId: null, reviewedAtUtc: null, notes: null,
+        narrativeText: null, narrativeGeneratedAtUtc: null,
       }],
       total: 1,
     });
