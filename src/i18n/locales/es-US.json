@@ -1,0 +1,62 @@
+{
+  "common": {
+    "loading": "Cargando…",
+    "error": "Algo salió mal.",
+    "retry": "Intentar de nuevo",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "submit": "Enviar",
+    "close": "Cerrar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "yes": "Sí",
+    "no": "No",
+    "search": "Buscar",
+    "signIn": "Iniciar sesión",
+    "signOut": "Cerrar sesión"
+  },
+  "languagePicker": {
+    "label": "Idioma",
+    "english": "English (US)",
+    "spanish": "Español (US)"
+  },
+  "family": {
+    "nav": {
+      "dashboard": "Panel principal",
+      "patient": "Paciente",
+      "messages": "Mensajes",
+      "care": "Plan de cuidado",
+      "billing": "Facturación"
+    },
+    "login": {
+      "title": "Portal familiar — iniciar sesión",
+      "description": "Ingrese el correo electrónico y el código de acceso que le envió su coordinador de cuidado.",
+      "emailLabel": "Correo electrónico",
+      "codeLabel": "Código de acceso",
+      "submit": "Iniciar sesión",
+      "needHelp": "¿Necesita ayuda? Comuníquese con su coordinador de cuidado."
+    },
+    "dashboard": {
+      "welcome": "Bienvenido, {{name}}",
+      "patientCardTitle": "Paciente",
+      "messagesCardTitle": "Mensajes recientes",
+      "noMessages": "No hay mensajes nuevos.",
+      "upcomingVisits": "Próximas visitas",
+      "noVisits": "No hay visitas programadas."
+    },
+    "patient": {
+      "title": "Información del paciente",
+      "demographics": "Datos demográficos",
+      "careTeam": "Equipo de cuidado",
+      "medications": "Medicamentos",
+      "noMedications": "No hay medicamentos activos registrados."
+    },
+    "messages": {
+      "title": "Mensajes",
+      "compose": "Nuevo mensaje",
+      "empty": "Aún no tiene mensajes.",
+      "from": "De",
+      "sent": "Enviado"
+    }
+  }
+}

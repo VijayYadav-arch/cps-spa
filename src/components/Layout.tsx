@@ -2,6 +2,7 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/auth/useAuth';
 import { InboxBadge } from '@/components/InboxBadge';
 import { NotificationToasts } from '@/components/NotificationToasts';
+import { LanguagePicker } from '@/i18n/LanguagePicker';
 
 interface NavLeaf {
   kind: 'leaf';
@@ -174,6 +175,9 @@ export function Layout() {
         </ul>
 
         <div style={{ padding: '16px 20px', borderTop: '1px solid #334155' }}>
+          <div style={{ marginBottom: 12, color: '#94a3b8' }}>
+            <LanguagePicker />
+          </div>
           <p style={{ fontSize: 12, color: '#94a3b8', marginBottom: 8 }}>
             {auth.user?.roles[0] ?? 'User'}
           </p>
