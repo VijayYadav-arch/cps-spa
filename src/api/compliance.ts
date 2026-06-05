@@ -304,6 +304,10 @@ export interface AuditAnomalyAlert {
   reviewedByUserId: number | null;
   reviewedAtUtc: string | null;
   notes: string | null;
+  /** AI-generated plain-English summary + suggested next steps. Null until the
+   *  narrative subscriber materialises it (~5 min after detection). */
+  narrativeText: string | null;
+  narrativeGeneratedAtUtc: string | null;
 }
 
 const ANOMALY_BASE = '/compliance/anomalies';
@@ -325,6 +329,11 @@ export const updateAnomalyStatus = (
 export const scanAnomaliesNow = (): Promise<{ data: { inserted: number } }> =>
   apiClient
     .post<{ data: { inserted: number } }>(`${ANOMALY_BASE}/scan-now`)
+    .then((r) => r.data);
+
+export const narrateAnomaliesNow = (): Promise<{ data: { written: number } }> =>
+  apiClient
+    .post<{ data: { written: number } }>(`${ANOMALY_BASE}/narrate-now`)
     .then((r) => r.data);
 
 /**
