@@ -1,12 +1,15 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { usePortalAuth } from '@/portal/PortalAuthContext';
+import { LanguagePicker } from '@/i18n/LanguagePicker';
 
 export function FamilyLoginPage() {
   const { loginAsFamily } = usePortalAuth();
   const navigate = useNavigate();
   const [search] = useSearchParams();
   const reason = search.get('reason');
+  const { t } = useTranslation();
 
   const [patientId, setPatientId] = useState('');
   const [pin, setPin] = useState('');
@@ -18,7 +21,7 @@ export function FamilyLoginPage() {
     setError(null);
     const pid = parseInt(patientId, 10);
     if (Number.isNaN(pid)) {
-      setError('Patient ID must be a number');
+      setError(t('family.login.patientIdNumeric'));
       return;
     }
     setSubmitting(true);
@@ -26,7 +29,7 @@ export function FamilyLoginPage() {
       await loginAsFamily(pid, pin);
       navigate('/family/dashboard');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
+      setError(err instanceof Error ? err.message : t('family.login.loginFailed'));
     } finally {
       setSubmitting(false);
     }
@@ -60,20 +63,20 @@ export function FamilyLoginPage() {
           data-testid="family-login-title"
           style={{ fontSize: 24, fontWeight: 700, color: '#0ea5e9', margin: 0, marginBottom: 4 }}
         >
-          Family Login
+          {t('family.login.title')}
         </h1>
         <div style={{ fontSize: 13, color: '#64748b', marginBottom: 12 }}>
-          Enter your patient ID and PIN to view care updates.
+          {t('family.login.description')}
         </div>
 
         {reason === 'expired' && (
           <div role="status" style={{ fontSize: 13, color: '#b45309', marginBottom: 4 }}>
-            Your session has ended. Please log in again.
+            {t('family.login.sessionExpired')}
           </div>
         )}
 
         <label htmlFor="family-patient-id" style={{ fontSize: 13, color: '#475569' }}>
-          Patient ID
+          {t('family.login.patientIdLabel')}
         </label>
         <input
           id="family-patient-id"
@@ -87,7 +90,7 @@ export function FamilyLoginPage() {
         />
 
         <label htmlFor="family-pin" style={{ fontSize: 13, color: '#475569' }}>
-          PIN
+          {t('family.login.pinLabel')}
         </label>
         <input
           id="family-pin"
@@ -125,8 +128,11 @@ export function FamilyLoginPage() {
             fontWeight: 600,
           }}
         >
-          {submitting ? 'Signing in…' : 'Sign in'}
+          {submitting ? t('family.login.submitting') : t('family.login.submit')}
         </button>
+        <div style={{ marginTop: 16, color: '#64748b' }}>
+          <LanguagePicker />
+        </div>
       </form>
     </div>
   );

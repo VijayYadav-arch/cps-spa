@@ -29,34 +29,33 @@
       "billing": "Facturación"
     },
     "login": {
-      "title": "Portal familiar — iniciar sesión",
-      "description": "Ingrese el correo electrónico y el código de acceso que le envió su coordinador de cuidado.",
-      "emailLabel": "Correo electrónico",
-      "codeLabel": "Código de acceso",
+      "title": "Acceso para familiares",
+      "description": "Ingrese el ID del paciente y su PIN para ver las actualizaciones de cuidado.",
+      "patientIdLabel": "ID del paciente",
+      "pinLabel": "PIN",
       "submit": "Iniciar sesión",
-      "needHelp": "¿Necesita ayuda? Comuníquese con su coordinador de cuidado."
+      "submitting": "Ingresando…",
+      "patientIdNumeric": "El ID del paciente debe ser un número",
+      "loginFailed": "Error al iniciar sesión",
+      "sessionExpired": "Su sesión ha finalizado. Por favor vuelva a ingresar."
     },
     "dashboard": {
-      "welcome": "Bienvenido, {{name}}",
-      "patientCardTitle": "Paciente",
-      "messagesCardTitle": "Mensajes recientes",
-      "noMessages": "No hay mensajes nuevos.",
-      "upcomingVisits": "Próximas visitas",
-      "noVisits": "No hay visitas programadas."
+      "dobLabel": "Fecha de nacimiento:",
+      "primaryDiagnosisLabel": "Diagnóstico principal:",
+      "loadFailed": "No se pudo cargar el resumen. Actualice la página."
     },
-    "patient": {
-      "title": "Información del paciente",
-      "demographics": "Datos demográficos",
-      "careTeam": "Equipo de cuidado",
-      "medications": "Medicamentos",
-      "noMedications": "No hay medicamentos activos registrados."
+    "medications": {
+      "title": "Medicamentos",
+      "empty": "No hay medicamentos activos.",
+      "loadFailed": "No se pudieron cargar los medicamentos. Actualice o comuníquese con su equipo de cuidado."
     },
-    "messages": {
-      "title": "Mensajes",
-      "compose": "Nuevo mensaje",
-      "empty": "Aún no tiene mensajes.",
-      "from": "De",
-      "sent": "Enviado"
+    "visits": {
+      "title": "Historial de visitas",
+      "columnDate": "Fecha",
+      "columnType": "Tipo",
+      "columnStatus": "Estado",
+      "empty": "No se encontraron visitas",
+      "loadFailed": "No se pudieron cargar las visitas. Actualice o comuníquese con su equipo de cuidado."
     }
   }
 }

@@ -29,34 +29,33 @@
       "billing": "Billing"
     },
     "login": {
-      "title": "Family portal sign in",
-      "description": "Enter the email and access code that were sent to you by your care coordinator.",
-      "emailLabel": "Email",
-      "codeLabel": "Access code",
+      "title": "Family Login",
+      "description": "Enter your patient ID and PIN to view care updates.",
+      "patientIdLabel": "Patient ID",
+      "pinLabel": "PIN",
       "submit": "Sign in",
-      "needHelp": "Need help? Contact your care coordinator."
+      "submitting": "Signing in…",
+      "patientIdNumeric": "Patient ID must be a number",
+      "loginFailed": "Login failed",
+      "sessionExpired": "Your session has ended. Please log in again."
     },
     "dashboard": {
-      "welcome": "Welcome, {{name}}",
-      "patientCardTitle": "Patient",
-      "messagesCardTitle": "Recent messages",
-      "noMessages": "No new messages.",
-      "upcomingVisits": "Upcoming visits",
-      "noVisits": "No upcoming visits scheduled."
+      "dobLabel": "Date of Birth:",
+      "primaryDiagnosisLabel": "Primary Diagnosis:",
+      "loadFailed": "Failed to load summary. Please refresh the page."
     },
-    "patient": {
-      "title": "Patient information",
-      "demographics": "Demographics",
-      "careTeam": "Care team",
-      "medications": "Medications",
-      "noMedications": "No active medications on file."
+    "medications": {
+      "title": "Medications",
+      "empty": "No active medications.",
+      "loadFailed": "Unable to load medications. Please refresh or contact your care team."
     },
-    "messages": {
-      "title": "Messages",
-      "compose": "New message",
-      "empty": "You have no messages yet.",
-      "from": "From",
-      "sent": "Sent"
+    "visits": {
+      "title": "Visit History",
+      "columnDate": "Date",
+      "columnType": "Type",
+      "columnStatus": "Status",
+      "empty": "No visits found",
+      "loadFailed": "Unable to load visits. Please refresh or contact your care team."
     }
   }
 }

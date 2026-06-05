@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { familyApi } from '@/portal/familyApi';
 import { usePortalAuth } from '@/portal/PortalAuthContext';
 
@@ -14,14 +15,15 @@ export function FamilyDashboard() {
   const patientId = session?.patientId;
   const [summary, setSummary] = useState<Summary | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const { t, i18n } = useTranslation();
 
   useEffect(() => {
     if (!patientId) return;
     familyApi
       .get<Summary>(`/patients/${patientId}/summary`)
       .then((r) => setSummary(r.data))
-      .catch(() => setError('Failed to load summary. Please refresh the page.'));
-  }, [patientId]);
+      .catch(() => setError(t('family.dashboard.loadFailed')));
+  }, [patientId, t]);
 
   if (error) {
     return (
@@ -33,10 +35,11 @@ export function FamilyDashboard() {
   if (!summary) {
     return (
       <p data-testid="family-loading" style={{ color: '#94a3b8', padding: 16 }}>
-        Loading…
+        {t('common.loading')}
       </p>
     );
   }
+  const dateLocale = i18n.resolvedLanguage ?? 'en-US';
 
   return (
     <section style={{ padding: 16 }}>
@@ -57,15 +60,15 @@ export function FamilyDashboard() {
       >
         {summary.dateOfBirth && (
           <p style={{ fontSize: 14, color: '#475569', marginBottom: 8 }}>
-            <span style={{ fontWeight: 500 }}>Date of Birth:</span>{' '}
+            <span style={{ fontWeight: 500 }}>{t('family.dashboard.dobLabel')}</span>{' '}
             <span data-testid="patient-dob">
-              {new Date(summary.dateOfBirth).toLocaleDateString()}
+              {new Date(summary.dateOfBirth).toLocaleDateString(dateLocale)}
             </span>
           </p>
         )}
         {summary.primaryDiagnosis && (
           <p style={{ fontSize: 14, color: '#475569' }}>
-            <span style={{ fontWeight: 500 }}>Primary Diagnosis:</span>{' '}
+            <span style={{ fontWeight: 500 }}>{t('family.dashboard.primaryDiagnosisLabel')}</span>{' '}
             <span data-testid="patient-diagnosis">{summary.primaryDiagnosis}</span>
           </p>
         )}
