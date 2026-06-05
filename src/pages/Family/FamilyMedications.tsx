@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { familyApi } from '@/portal/familyApi';
 import { usePortalAuth } from '@/portal/PortalAuthContext';
 
@@ -21,16 +22,15 @@ export function FamilyMedications() {
   const patientId = session?.patientId;
   const [meds, setMeds] = useState<Medication[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!patientId) return;
     familyApi
       .get<MedicationsResponse>(`/patients/${patientId}/medications`)
       .then((r) => setMeds(r.data.data ?? []))
-      .catch(() =>
-        setError('Unable to load medications. Please refresh or contact your care team.'),
-      );
-  }, [patientId]);
+      .catch(() => setError(t('family.medications.loadFailed')));
+  }, [patientId, t]);
 
   if (error) {
     return (
@@ -42,7 +42,7 @@ export function FamilyMedications() {
   if (meds === null) {
     return (
       <p data-testid="family-loading" style={{ color: '#94a3b8', padding: 16 }}>
-        Loading…
+        {t('common.loading')}
       </p>
     );
   }
@@ -53,7 +53,7 @@ export function FamilyMedications() {
         data-testid="page-title"
         style={{ fontSize: 24, fontWeight: 600, color: '#1e293b', marginBottom: 24 }}
       >
-        Medications
+        {t('family.medications.title')}
       </h1>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }} data-testid="medications-list">
         {meds.map((m) => (
@@ -81,7 +81,7 @@ export function FamilyMedications() {
         ))}
         {meds.length === 0 && (
           <p data-testid="medications-empty" style={{ color: '#94a3b8' }}>
-            No active medications.
+            {t('family.medications.empty')}
           </p>
         )}
       </div>
