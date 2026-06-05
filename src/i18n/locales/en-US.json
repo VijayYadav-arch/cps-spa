@@ -1,0 +1,62 @@
+{
+  "common": {
+    "loading": "Loading…",
+    "error": "Something went wrong.",
+    "retry": "Try again",
+    "save": "Save",
+    "cancel": "Cancel",
+    "submit": "Submit",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "yes": "Yes",
+    "no": "No",
+    "search": "Search",
+    "signIn": "Sign in",
+    "signOut": "Sign out"
+  },
+  "languagePicker": {
+    "label": "Language",
+    "english": "English (US)",
+    "spanish": "Español (US)"
+  },
+  "family": {
+    "nav": {
+      "dashboard": "Dashboard",
+      "patient": "Patient",
+      "messages": "Messages",
+      "care": "Care plan",
+      "billing": "Billing"
+    },
+    "login": {
+      "title": "Family portal sign in",
+      "description": "Enter the email and access code that were sent to you by your care coordinator.",
+      "emailLabel": "Email",
+      "codeLabel": "Access code",
+      "submit": "Sign in",
+      "needHelp": "Need help? Contact your care coordinator."
+    },
+    "dashboard": {
+      "welcome": "Welcome, {{name}}",
+      "patientCardTitle": "Patient",
+      "messagesCardTitle": "Recent messages",
+      "noMessages": "No new messages.",
+      "upcomingVisits": "Upcoming visits",
+      "noVisits": "No upcoming visits scheduled."
+    },
+    "patient": {
+      "title": "Patient information",
+      "demographics": "Demographics",
+      "careTeam": "Care team",
+      "medications": "Medications",
+      "noMedications": "No active medications on file."
+    },
+    "messages": {
+      "title": "Messages",
+      "compose": "New message",
+      "empty": "You have no messages yet.",
+      "from": "From",
+      "sent": "Sent"
+    }
+  }
+}
