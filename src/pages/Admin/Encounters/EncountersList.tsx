@@ -2,6 +2,7 @@ import '@/styles/encounters.css';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { encountersApi } from './encountersApi';
+import { CodingSuggestionsModal } from './CodingSuggestionsModal';
 import type { EncounterListItem } from './encountersTypes';
 
 /**
@@ -24,6 +25,7 @@ export function EncountersList() {
   const [includeDeleted, setIncludeDeleted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [suggestFor, setSuggestFor] = useState<EncounterListItem | null>(null);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -97,6 +99,15 @@ export function EncountersList() {
               {e.provider} · {e.claimsCount} claims
             </p>
             <p className="text-sm text-navy-500 mt-1">{e.organizationName}</p>
+            {!e.isDeleted && (
+              <button
+                type="button"
+                onClick={() => setSuggestFor(e)}
+                className="mt-2 text-xs text-teal-700 hover:text-teal-900 underline"
+              >
+                Suggest codes (AI)
+              </button>
+            )}
           </li>
         ))}
       </ul>
@@ -111,6 +122,7 @@ export function EncountersList() {
             <th className="py-2 px-3 text-right">Claims</th>
             <th className="py-2 px-3 hidden lg:table-cell">Organization</th>
             <th className="py-2 px-3">Status</th>
+            <th className="py-2 px-3">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -128,6 +140,17 @@ export function EncountersList() {
                   <span className="text-xs text-red-600">deleted</span>
                 ) : (
                   <span className="text-xs text-green-600">active</span>
+                )}
+              </td>
+              <td className="py-2 px-3">
+                {!e.isDeleted && (
+                  <button
+                    type="button"
+                    onClick={() => setSuggestFor(e)}
+                    className="text-xs text-teal-700 hover:text-teal-900 underline"
+                  >
+                    Suggest codes (AI)
+                  </button>
                 )}
               </td>
             </tr>
@@ -172,6 +195,14 @@ export function EncountersList() {
         <p role="alert" className="text-red-600 text-sm mt-4">
           {error}
         </p>
+      )}
+
+      {suggestFor && (
+        <CodingSuggestionsModal
+          encounterId={suggestFor.id}
+          patientLabel={`${suggestFor.patientFirstName} ${suggestFor.patientLastName} · ${suggestFor.serviceDate}`}
+          onClose={() => setSuggestFor(null)}
+        />
       )}
     </section>
   );

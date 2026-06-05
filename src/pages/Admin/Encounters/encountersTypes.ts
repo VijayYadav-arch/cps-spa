@@ -43,6 +43,19 @@ export interface CreateEncounterRequest {
   notes?: string;
 }
 
+export interface CodeSuggestion {
+  code: string;
+  description: string;
+  /** "high" | "moderate" | "low" — normalised by the server. */
+  confidence: 'high' | 'moderate' | 'low';
+  rationale: string;
+}
+
+export interface CodeSuggestions {
+  cptSuggestions: CodeSuggestion[];
+  icd10Suggestions: CodeSuggestion[];
+}
+
 /**
  * Subset of the PatientResponseDto used by the typeahead. The backend
  * envelope is `{ data: PatientResponseDto[], pagination }`; we only pick the

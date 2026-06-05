@@ -16,6 +16,7 @@
  */
 import { apiClient } from '@/api/client';
 import type {
+  CodeSuggestions,
   CreateEncounterRequest,
   EncountersListResponse,
   PatientSearchResult,
@@ -31,5 +32,15 @@ export const encountersApi = {
   searchPatients: (q: string) =>
     apiClient
       .get<{ data: PatientSearchResult[] }>('/patients', { params: { q, pageSize: 20 } })
+      .then((r) => r.data.data),
+  /**
+   * Pre-coding AI advisory: returns CPT + ICD-10 suggestions for the encounter.
+   * Server-side prompt forbids invented codes and instructs the model to OMIT
+   * low-confidence rather than guess. The UI must stamp "coder must verify each
+   * code" before any code is acted on. Ephemeral — no server-side persistence.
+   */
+  suggestCodes: (encounterId: number) =>
+    apiClient
+      .post<{ data: CodeSuggestions }>(`${BASE}/${encounterId}/suggest-codes`)
       .then((r) => r.data.data),
 };
