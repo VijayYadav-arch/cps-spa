@@ -24,12 +24,14 @@ vi.mock('@/api/billing', async () => {
     escalateDenial: vi.fn(),
     resolveDenial: vi.fn(),
     assignDenial: vi.fn(),
+    draftDenialAppeal: vi.fn(),
   };
 });
 
 import {
   analyzeDenial,
   assignDenial,
+  draftDenialAppeal,
   escalateDenial,
   getDenialById,
   resolveDenial,
@@ -37,7 +39,12 @@ import {
   submitDenialAppeal,
 } from '@/api/billing';
 
-function buildDenial(overrides: Partial<{ status: string; appealHistory: string | null }> = {}) {
+function buildDenial(overrides: Partial<{
+  status: string;
+  appealHistory: string | null;
+  draftAppealText: string | null;
+  draftAppealGeneratedAtUtc: string | null;
+}> = {}) {
   return {
     id: 7,
     claimId: 42,
@@ -51,6 +58,8 @@ function buildDenial(overrides: Partial<{ status: string; appealHistory: string 
     resolvedAt: null,
     assignedTo: null,
     appealHistory: overrides.appealHistory ?? null,
+    draftAppealText: overrides.draftAppealText ?? null,
+    draftAppealGeneratedAtUtc: overrides.draftAppealGeneratedAtUtc ?? null,
     createdAt: '2026-06-04T00:00:00Z',
     updatedAt: '2026-06-04T00:00:00Z',
   };
@@ -179,5 +188,56 @@ describe('DenialDetail', () => {
     expect(escalateDenial).toBeDefined();
     expect(resolveDenial).toBeDefined();
     expect(assignDenial).toBeDefined();
+  });
+
+  it('drafts an AI appeal and shows the result', async () => {
+    vi.mocked(getDenialById).mockResolvedValueOnce(buildDenial());
+    vi.mocked(draftDenialAppeal).mockResolvedValueOnce({
+      id: 7,
+      draftAppealText: 'Dear Medicare, We are writing to appeal denial CO-50 for the patient ...',
+      draftAppealGeneratedAtUtc: '2026-06-05T19:30:00Z',
+    });
+
+    const user = userEvent.setup();
+    renderAt();
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /draft appeal/i })).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole('button', { name: /draft appeal/i }));
+
+    await waitFor(() => {
+      expect(draftDenialAppeal).toHaveBeenCalledWith(7);
+    });
+    expect(await screen.findByText(/we are writing to appeal denial CO-50/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /regenerate draft/i })).toBeInTheDocument();
+  });
+
+  it('shows pre-existing AI draft on load', async () => {
+    vi.mocked(getDenialById).mockResolvedValueOnce(buildDenial({
+      draftAppealText: 'Previously drafted appeal text',
+      draftAppealGeneratedAtUtc: '2026-06-04T10:00:00Z',
+    }));
+    renderAt();
+
+    await waitFor(() => {
+      expect(screen.getByText(/previously drafted appeal text/i)).toBeInTheDocument();
+    });
+    expect(screen.getByRole('button', { name: /regenerate draft/i })).toBeInTheDocument();
+  });
+
+  it('shows error when AI draft fails', async () => {
+    vi.mocked(getDenialById).mockResolvedValueOnce(buildDenial());
+    vi.mocked(draftDenialAppeal).mockRejectedValueOnce(new Error('AI provider unavailable'));
+    const user = userEvent.setup();
+    renderAt();
+
+    await waitFor(() => screen.getByRole('button', { name: /draft appeal/i }));
+    await user.click(screen.getByRole('button', { name: /draft appeal/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(/failed to draft appeal/i);
+    });
   });
 });
