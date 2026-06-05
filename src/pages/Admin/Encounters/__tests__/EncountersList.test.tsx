@@ -10,6 +10,7 @@ vi.mock('@/pages/Admin/Encounters/encountersApi', () => ({
     list: vi.fn(),
     create: vi.fn(),
     searchPatients: vi.fn(),
+    suggestCodes: vi.fn(),
   },
 }));
 
@@ -202,5 +203,85 @@ describe('EncountersList', () => {
     });
 
     expect(await screen.findByText(/no encounters found/i)).toBeInTheDocument();
+  });
+
+  it('shows "Suggest codes (AI)" buttons only for non-deleted rows', async () => {
+    vi.mocked(encountersApi.list).mockResolvedValueOnce(makeResponse());
+    renderList();
+    await act(async () => { await vi.advanceTimersByTimeAsync(300); });
+    await screen.findAllByText('Alice Anderson');
+
+    // Only one non-deleted row in the fixture (Alice). Bob is deleted -- no
+    // button on his row. Both desktop table + mobile card render in jsdom, so
+    // we expect exactly 2 buttons (one per surface) for the live row.
+    const buttons = screen.getAllByRole('button', { name: /Suggest codes \(AI\)/i });
+    expect(buttons.length).toBeGreaterThan(0);
+    expect(buttons.length).toBeLessThanOrEqual(2);
+  });
+
+  it('opens the coding-suggestions modal and renders banner + suggestions', async () => {
+    vi.mocked(encountersApi.list).mockResolvedValueOnce(makeResponse());
+    vi.mocked(encountersApi.suggestCodes).mockResolvedValueOnce({
+      cptSuggestions: [{
+        code: '99214', description: 'Office visit, est patient',
+        confidence: 'high', rationale: 'BP 158/95 in 5-1 visit note',
+      }],
+      icd10Suggestions: [{
+        code: 'I10', description: 'Essential hypertension',
+        confidence: 'moderate', rationale: 'Sustained elevated BP across two visits',
+      }],
+    });
+
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    renderList();
+    await act(async () => { await vi.advanceTimersByTimeAsync(300); });
+    await screen.findAllByText('Alice Anderson');
+
+    const buttons = screen.getAllByRole('button', { name: /Suggest codes \(AI\)/i });
+    await user.click(buttons[0]);
+
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    expect(await screen.findByText('99214')).toBeInTheDocument();
+    expect(screen.getByText('I10')).toBeInTheDocument();
+    // Regulatory banner
+    expect(screen.getByText(/Coder verification required/i)).toBeInTheDocument();
+    expect(screen.getByText(/False Claims Act/i)).toBeInTheDocument();
+    // Confidence badges
+    expect(screen.getByText(/high confidence/i)).toBeInTheDocument();
+    expect(screen.getByText(/moderate confidence/i)).toBeInTheDocument();
+  });
+
+  it('shows "no suggestions" sentinel when both arrays empty (NullAiClient fallback)', async () => {
+    vi.mocked(encountersApi.list).mockResolvedValueOnce(makeResponse());
+    vi.mocked(encountersApi.suggestCodes).mockResolvedValueOnce({
+      cptSuggestions: [],
+      icd10Suggestions: [],
+    });
+
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    renderList();
+    await act(async () => { await vi.advanceTimersByTimeAsync(300); });
+    await screen.findAllByText('Alice Anderson');
+
+    await user.click(screen.getAllByRole('button', { name: /Suggest codes \(AI\)/i })[0]);
+    expect(await screen.findByText(/No code suggestions returned/i)).toBeInTheDocument();
+    // Banner still shown even on empty result -- the regulatory note is non-conditional.
+    expect(screen.getByText(/Coder verification required/i)).toBeInTheDocument();
+  });
+
+  it('surfaces error when suggest endpoint fails', async () => {
+    vi.mocked(encountersApi.list).mockResolvedValueOnce(makeResponse());
+    vi.mocked(encountersApi.suggestCodes).mockRejectedValueOnce({
+      response: { data: { error: 'AI provider unavailable' } },
+    });
+
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    renderList();
+    await act(async () => { await vi.advanceTimersByTimeAsync(300); });
+    await screen.findAllByText('Alice Anderson');
+
+    await user.click(screen.getAllByRole('button', { name: /Suggest codes \(AI\)/i })[0]);
+    const alerts = await screen.findAllByRole('alert');
+    expect(alerts.some((a) => /AI provider unavailable/i.test(a.textContent ?? ''))).toBe(true);
   });
 });
