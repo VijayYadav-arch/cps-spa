@@ -12,11 +12,27 @@ export interface ConsentForm {
   witnessName?: string | null;
   witnessAt?: string | null;
   documentUrl?: string | null;
+  signatureImageDataUrl?: string | null;
   expirationDate?: string | null;
   notes?: string | null;
   createdAt: string;
   updatedAt: string;
 }
+
+export interface SignConsentFormPayload {
+  signedBy: string;
+  signatureImageDataUrl: string;
+  relationship?: string;
+  witnessName?: string;
+}
+
+export const signConsentForm = (
+  id: number,
+  payload: SignConsentFormPayload,
+): Promise<ConsentForm> =>
+  apiClient
+    .post<{ data: ConsentForm }>(`/consent-forms/${id}/sign`, payload)
+    .then((r) => r.data.data);
 
 export interface PaginationMeta {
   total: number;
