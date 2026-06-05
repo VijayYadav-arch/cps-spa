@@ -8,7 +8,12 @@ vi.mock('@/api/client', () => ({
   apiClient: { get: vi.fn() },
 }));
 
+vi.mock('@/api/onboardingStatus', () => ({
+  getOrgsStatus: vi.fn(),
+}));
+
 import { apiClient } from '@/api/client';
+import { getOrgsStatus } from '@/api/onboardingStatus';
 
 function renderPage() {
   return render(
@@ -29,12 +34,54 @@ const HOSPICE_FLOW = {
   },
 };
 
+const STATUS_RESPONSE = {
+  data: [
+    {
+      orgId: 1,
+      orgName: 'Acme Hospice',
+      slug: 'acme',
+      signupDate: '2026-04-01T00:00:00Z',
+      onboardingPercent: 100,
+      currentStep: 6,
+      totalSteps: 6,
+      completedSteps: [1, 2, 3, 4, 5, 6],
+      completedAt: '2026-05-15T00:00:00Z',
+      status: 'completed',
+      claimsCount: 42,
+      patientsCount: 18,
+    },
+    {
+      orgId: 2,
+      orgName: 'Bravo Home Health',
+      slug: 'bravo',
+      signupDate: '2026-05-01T00:00:00Z',
+      onboardingPercent: 33,
+      currentStep: 3,
+      totalSteps: 6,
+      completedSteps: [1, 2],
+      completedAt: null,
+      status: 'in-progress',
+      claimsCount: 4,
+      patientsCount: 7,
+    },
+  ],
+  rollup: {
+    totalOrgs: 2,
+    completed: 1,
+    inProgress: 1,
+    atRisk: 0,
+    notStarted: 0,
+    activationRate: 50,
+  },
+};
+
 describe('OnboardingPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(getOrgsStatus).mockResolvedValue(STATUS_RESPONSE as never);
   });
 
-  it('renders heading + emails link', async () => {
+  it('renders heading + emails link', () => {
     vi.mocked(apiClient.get).mockResolvedValueOnce({ data: HOSPICE_FLOW } as never);
     renderPage();
     expect(screen.getByRole('heading', { name: /^onboarding$/i })).toBeInTheDocument();
@@ -42,6 +89,33 @@ describe('OnboardingPage', () => {
       'href',
       '/admin/onboarding/emails'
     );
+  });
+
+  it('renders KPI rollup from /orgs-status', async () => {
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ data: HOSPICE_FLOW } as never);
+    renderPage();
+    await waitFor(() => {
+      expect(screen.getByText('50%')).toBeInTheDocument(); // activation rate
+      expect(screen.getByText('Acme Hospice')).toBeInTheDocument();
+      expect(screen.getByText('Bravo Home Health')).toBeInTheDocument();
+    });
+  });
+
+  it('filters per-org rows by status', async () => {
+    vi.mocked(apiClient.get).mockResolvedValue({ data: HOSPICE_FLOW } as never);
+    vi.mocked(getOrgsStatus).mockResolvedValueOnce(STATUS_RESPONSE as never).mockResolvedValueOnce({
+      data: [STATUS_RESPONSE.data[0]],
+      rollup: STATUS_RESPONSE.rollup,
+    } as never);
+    const user = userEvent.setup();
+    renderPage();
+    await waitFor(() => expect(screen.getByText('Acme Hospice')).toBeInTheDocument());
+
+    await user.click(screen.getByRole('tab', { name: /^completed$/i }));
+
+    await waitFor(() => {
+      expect(getOrgsStatus).toHaveBeenLastCalledWith({ statusFilter: 'completed' });
+    });
   });
 
   it('loads + renders hospice flow steps', async () => {
@@ -69,11 +143,12 @@ describe('OnboardingPage', () => {
     });
   });
 
-  it('shows error on fetch failure', async () => {
-    vi.mocked(apiClient.get).mockRejectedValueOnce(new Error('500'));
+  it('shows error when /orgs-status fetch fails', async () => {
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ data: HOSPICE_FLOW } as never);
+    vi.mocked(getOrgsStatus).mockRejectedValueOnce(new Error('500 onboarding'));
     renderPage();
     await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent(/500/);
+      expect(screen.getByRole('alert')).toHaveTextContent(/500 onboarding/);
     });
   });
 });
