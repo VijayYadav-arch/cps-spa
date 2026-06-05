@@ -1,14 +1,5 @@
-interface ConsentForm {
-  id: number;
-  patientId: number;
-  formType: string;
-  signedBy?: string | null;
-  relationship?: string | null;
-  signedAt?: string | null;
-  witnessName?: string | null;
-  expirationDate?: string | null;
-  status: string;
-}
+import { useEffect, useState } from 'react';
+import { listConsentForms, type ConsentForm } from '@/api/consentForms';
 
 const STATUS_BADGE: Record<string, string> = {
   pending: 'bg-amber-50 text-amber-700 border-amber-200',
@@ -47,10 +38,27 @@ function FormTypeBadge({ type }: { type: string }) {
 }
 
 export function ConsentPage() {
-  // Backend ConsentFormController is not yet implemented in cps-dotnet.
-  // Origin (cps Next.js) shipped with the same hardcoded empty array and TODO note.
-  // This page renders the empty-state UI until a ConsentService + endpoint land.
-  const forms: ConsentForm[] = [];
+  const [forms, setForms] = useState<ConsentForm[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    listConsentForms({ pageSize: 100 })
+      .then((res) => {
+        if (!cancelled) setForms(res.data ?? []);
+      })
+      .catch((e) => {
+        if (!cancelled) setError((e as Error).message || 'Failed to load consent forms');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const pendingCount = forms.filter((f) => f.status === 'pending').length;
 
   return (
@@ -59,10 +67,6 @@ export function ConsentPage() {
         <h1 className="text-2xl font-serif text-slate-900">Consent Forms</h1>
         <p className="text-slate-600 mt-1">
           Manage patient consent forms and advance directives.
-        </p>
-        <p className="text-xs text-amber-700 mt-2">
-          Backend pending: ConsentFormController not yet implemented. List shows empty until
-          the cps-dotnet endpoint ships.
         </p>
       </header>
 
@@ -74,8 +78,16 @@ export function ConsentPage() {
         </div>
       )}
 
+      {error && (
+        <div role="alert" className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-sm text-red-700">{error}</p>
+        </div>
+      )}
+
       <div className="bg-white rounded-xl border border-slate-100 overflow-hidden">
-        {forms.length === 0 ? (
+        {loading ? (
+          <div className="p-12 text-center text-slate-500">Loading consent forms...</div>
+        ) : forms.length === 0 ? (
           <div className="p-12 text-center text-slate-500">
             <p className="text-lg font-medium mb-1">No consent forms yet</p>
             <p className="text-sm">Patient consent forms will appear here.</p>
