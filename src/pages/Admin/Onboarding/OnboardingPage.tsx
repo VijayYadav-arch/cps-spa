@@ -2,11 +2,18 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiClient } from '@/api/client';
 import {
+  assignOnboardingManager,
   getOrgsStatus,
+  listOnboardingManagers,
+  listOrgUsers,
+  sendOnboardingEmail,
+  type OnboardingManager,
   type OnboardingRollup,
   type OnboardingStatus,
   type OrgStatusRow,
+  type OrgUser,
 } from '@/api/onboardingStatus';
+import { getWelcomeSequence } from '@/data/onboardingEmailTemplates';
 
 interface OnboardingStep {
   number: number;
@@ -49,6 +56,11 @@ export function OnboardingPage() {
   const [statusError, setStatusError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<OnboardingStatus | 'all'>('all');
 
+  const [managers, setManagers] = useState<OnboardingManager[]>([]);
+  const [assigningOrgId, setAssigningOrgId] = useState<number | null>(null);
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [emailModalOrg, setEmailModalOrg] = useState<OrgStatusRow | null>(null);
+
   useEffect(() => {
     let cancelled = false;
     setFlowLoading(true);
@@ -71,6 +83,20 @@ export function OnboardingPage() {
 
   useEffect(() => {
     let cancelled = false;
+    listOnboardingManagers()
+      .then((rows) => {
+        if (!cancelled) setManagers(rows);
+      })
+      .catch(() => {
+        /* manager fetch failure is non-fatal; assign dropdown will just be empty */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
     setStatusLoading(true);
     setStatusError(null);
     getOrgsStatus(statusFilter === 'all' ? undefined : { statusFilter })
@@ -89,6 +115,35 @@ export function OnboardingPage() {
       cancelled = true;
     };
   }, [statusFilter]);
+
+  const handleAssignManager = async (orgId: number, raw: string) => {
+    setAssigningOrgId(orgId);
+    setActionMessage(null);
+    const managerUserId = raw === '' ? null : Number(raw);
+    try {
+      const updated = await assignOnboardingManager(orgId, managerUserId);
+      const name = managerUserId === null
+        ? null
+        : (managers.find((m) => m.userId === managerUserId)?.name ?? null);
+      setOrgs((prev) =>
+        prev.map((o) =>
+          o.orgId === orgId
+            ? {
+                ...o,
+                assignedManagerUserId: updated.assignedManagerUserId,
+                assignedManagerName: name,
+                assignedManagerAt: updated.assignedManagerAt,
+              }
+            : o
+        )
+      );
+      setActionMessage(`Manager ${managerUserId === null ? 'cleared' : 'assigned'} for org ${orgId}.`);
+    } catch (e) {
+      setActionMessage((e as Error).message || 'Failed to assign manager');
+    } finally {
+      setAssigningOrgId(null);
+    }
+  };
 
   return (
     <section className="p-4 lg:p-8 max-w-6xl mx-auto">
@@ -155,14 +210,19 @@ export function OnboardingPage() {
           <p className="text-sm text-slate-500">No organizations match this filter.</p>
         ) : (
           <div className="overflow-x-auto">
+            {actionMessage && (
+              <p role="status" className="text-xs text-slate-600 mb-2">{actionMessage}</p>
+            )}
             <table className="w-full text-sm">
               <thead>
                 <tr>
                   <th className="text-left px-3 py-2 bg-slate-50 border-b border-slate-200 font-medium text-slate-700">Organization</th>
                   <th className="text-left px-3 py-2 bg-slate-50 border-b border-slate-200 font-medium text-slate-700">Status</th>
                   <th className="text-left px-3 py-2 bg-slate-50 border-b border-slate-200 font-medium text-slate-700">Progress</th>
+                  <th className="text-left px-3 py-2 bg-slate-50 border-b border-slate-200 font-medium text-slate-700">Manager</th>
                   <th className="text-left px-3 py-2 bg-slate-50 border-b border-slate-200 font-medium text-slate-700">Patients</th>
                   <th className="text-left px-3 py-2 bg-slate-50 border-b border-slate-200 font-medium text-slate-700">Claims</th>
+                  <th className="text-left px-3 py-2 bg-slate-50 border-b border-slate-200 font-medium text-slate-700">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -182,8 +242,32 @@ export function OnboardingPage() {
                     <td className="px-3 py-2 text-slate-600">
                       Step {o.currentStep} of {o.totalSteps} &middot; {o.onboardingPercent}%
                     </td>
+                    <td className="px-3 py-2 text-slate-600">
+                      <label className="sr-only" htmlFor={`mgr-${o.orgId}`}>Manager for {o.orgName}</label>
+                      <select
+                        id={`mgr-${o.orgId}`}
+                        value={o.assignedManagerUserId ?? ''}
+                        onChange={(e) => handleAssignManager(o.orgId, e.target.value)}
+                        disabled={assigningOrgId === o.orgId}
+                        className="text-xs border border-slate-200 rounded px-2 py-1 bg-white"
+                      >
+                        <option value="">Unassigned</option>
+                        {managers.map((m) => (
+                          <option key={m.userId} value={m.userId}>{m.name || m.email}</option>
+                        ))}
+                      </select>
+                    </td>
                     <td className="px-3 py-2 text-slate-600">{o.patientsCount}</td>
                     <td className="px-3 py-2 text-slate-600">{o.claimsCount}</td>
+                    <td className="px-3 py-2">
+                      <button
+                        type="button"
+                        onClick={() => setEmailModalOrg(o)}
+                        className="text-xs text-teal-700 hover:text-teal-800 underline"
+                      >
+                        Send email
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -251,7 +335,146 @@ export function OnboardingPage() {
           </ol>
         </div>
       )}
+
+      {emailModalOrg && (
+        <SendEmailModal
+          org={emailModalOrg}
+          onClose={(message) => {
+            setEmailModalOrg(null);
+            if (message) setActionMessage(message);
+          }}
+        />
+      )}
     </section>
+  );
+}
+
+function SendEmailModal({ org, onClose }: { org: OrgStatusRow; onClose: (msg?: string) => void }) {
+  const templates = getWelcomeSequence();
+  const [users, setUsers] = useState<OrgUser[]>([]);
+  const [usersLoading, setUsersLoading] = useState(true);
+  const [usersError, setUsersError] = useState<string | null>(null);
+  const [templateId, setTemplateId] = useState(templates[0]?.id ?? '');
+  const [recipientUserId, setRecipientUserId] = useState<number | null>(null);
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setUsersLoading(true);
+    listOrgUsers(org.orgId)
+      .then((rows) => {
+        if (cancelled) return;
+        setUsers(rows);
+        setRecipientUserId(rows[0]?.userId ?? null);
+      })
+      .catch((e) => {
+        if (!cancelled) setUsersError((e as Error).message || 'Failed to load org users');
+      })
+      .finally(() => {
+        if (!cancelled) setUsersLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [org.orgId]);
+
+  const template = templates.find((t) => t.id === templateId) ?? null;
+  const recipient = users.find((u) => u.userId === recipientUserId) ?? null;
+
+  const render = (raw: string): string =>
+    raw
+      .replace(/\{\{firstName\}\}/g, recipient?.name?.split(' ')[0] ?? '')
+      .replace(/\{\{organizationName\}\}/g, org.orgName)
+      .replace(/\{\{dashboardUrl\}\}/g, '/admin');
+
+  const handleSend = async () => {
+    if (!template || !recipientUserId) return;
+    setSending(true);
+    setSendError(null);
+    try {
+      const subject = render(template.subject);
+      const bodyHtml = render(template.bodyHtml);
+      await sendOnboardingEmail(org.orgId, {
+        templateId: template.id,
+        recipientUserId,
+        subject,
+        bodyHtml,
+      });
+      onClose(`Email "${template.id}" sent to ${recipient?.email ?? 'recipient'}.`);
+    } catch (e) {
+      setSendError((e as Error).message || 'Failed to send email');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div role="dialog" aria-modal="true" aria-label={`Send email to ${org.orgName}`} className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
+      <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6">
+        <header className="flex items-start justify-between mb-4">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900">Send onboarding email</h2>
+            <p className="text-xs text-slate-500">to {org.orgName}</p>
+          </div>
+          <button type="button" onClick={() => onClose()} aria-label="Close" className="text-slate-400 hover:text-slate-600">&times;</button>
+        </header>
+
+        {usersError && (
+          <div role="alert" className="mb-3 text-xs text-red-700 bg-red-50 border border-red-200 rounded p-2">{usersError}</div>
+        )}
+        {sendError && (
+          <div role="alert" className="mb-3 text-xs text-red-700 bg-red-50 border border-red-200 rounded p-2">{sendError}</div>
+        )}
+
+        <div className="space-y-3">
+          <div>
+            <label htmlFor="email-recipient" className="block text-xs font-medium text-slate-700 mb-1">Recipient</label>
+            <select
+              id="email-recipient"
+              value={recipientUserId ?? ''}
+              onChange={(e) => setRecipientUserId(e.target.value === '' ? null : Number(e.target.value))}
+              disabled={usersLoading}
+              className="w-full text-sm border border-slate-200 rounded px-2 py-1.5 bg-white"
+            >
+              {usersLoading && <option>Loading users...</option>}
+              {!usersLoading && users.length === 0 && <option value="">No active users in this org</option>}
+              {!usersLoading && users.map((u) => (
+                <option key={u.userId} value={u.userId}>
+                  {(u.name || u.email)} &lt;{u.email}&gt; ({u.role})
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label htmlFor="email-template" className="block text-xs font-medium text-slate-700 mb-1">Template</label>
+            <select
+              id="email-template"
+              value={templateId}
+              onChange={(e) => setTemplateId(e.target.value)}
+              className="w-full text-sm border border-slate-200 rounded px-2 py-1.5 bg-white"
+            >
+              {templates.map((t) => (
+                <option key={t.id} value={t.id}>Day {t.day}: {t.subject}</option>
+              ))}
+            </select>
+          </div>
+          {template && (
+            <div>
+              <label className="block text-xs font-medium text-slate-700 mb-1">Subject preview</label>
+              <p className="text-sm text-slate-900 bg-slate-50 border border-slate-200 rounded px-2 py-1.5">{render(template.subject)}</p>
+            </div>
+          )}
+        </div>
+
+        <footer className="mt-5 flex gap-2 justify-end">
+          <button type="button" onClick={() => onClose()} disabled={sending} className="px-3 py-1.5 text-sm rounded text-slate-700 hover:bg-slate-100">Cancel</button>
+          <button type="button" onClick={handleSend} disabled={sending || !recipientUserId || !template} className="px-4 py-1.5 text-sm rounded bg-teal-600 text-white hover:bg-teal-700 disabled:opacity-50">
+            {sending ? 'Sending...' : 'Send'}
+          </button>
+        </footer>
+      </div>
+    </div>
   );
 }
 
