@@ -302,6 +302,61 @@ describe('FamilyChat', () => {
     expect(screen.queryByTestId('follow-ups')).not.toBeInTheDocument();
   });
 
+  it('does not show export button when chat is empty', () => {
+    renderChat();
+    expect(screen.queryByTestId('export-conversation')).not.toBeInTheDocument();
+  });
+
+  it('shows export button after first completed turn', async () => {
+    postSpy.mockResolvedValueOnce({
+      data: { data: { answer: 'fine', sources: ['patient-summary'], inputTokens: 1, outputTokens: 1, correlationId: 'c-exp', followUps: [] } },
+    });
+
+    renderChat();
+    fireEvent.change(screen.getByTestId('family-chat-input'), { target: { value: 'q?' } });
+    fireEvent.click(screen.getByTestId('family-chat-submit'));
+
+    await waitFor(() => expect(screen.getByTestId('export-conversation')).toBeInTheDocument());
+  });
+
+  it('export-conversation triggers a download with both Q and A in the blob', async () => {
+    postSpy.mockResolvedValueOnce({
+      data: { data: { answer: 'You are taking Acetaminophen.', sources: ['patient-summary', 'medications'], inputTokens: 80, outputTokens: 12, correlationId: 'c-exp', followUps: [] } },
+    });
+
+    // Capture the Blob that gets handed to URL.createObjectURL so we can
+    // read it back. jsdom Blob lacks .text() but FileReader works.
+    const blobs: Blob[] = [];
+    const createObjectURL = vi.fn((b: Blob | MediaSource) => {
+      if (b instanceof Blob) blobs.push(b);
+      return 'blob:mock-url';
+    });
+    const revokeObjectURL = vi.fn();
+    URL.createObjectURL = createObjectURL as unknown as typeof URL.createObjectURL;
+    URL.revokeObjectURL = revokeObjectURL as unknown as typeof URL.revokeObjectURL;
+
+    renderChat();
+    fireEvent.change(screen.getByTestId('family-chat-input'), { target: { value: 'meds?' } });
+    fireEvent.click(screen.getByTestId('family-chat-submit'));
+    await waitFor(() => expect(screen.getByTestId('export-conversation')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByTestId('export-conversation'));
+    expect(createObjectURL).toHaveBeenCalledTimes(1);
+    expect(blobs).toHaveLength(1);
+
+    // jsdom Blob doesn't implement .text(); read via FileReader instead.
+    const text = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsText(blobs[0]);
+    });
+    expect(text).toContain('CPS Family Chat');
+    expect(text).toContain('[Q1] meds?');
+    expect(text).toContain('[A1] You are taking Acetaminophen.');
+    expect(text).toContain('I used:');
+  });
+
   it('sends recentTurns with the second question containing prior Q+A', async () => {
     postSpy.mockResolvedValueOnce({
       data: { data: { answer: 'first answer', sources: ['patient-summary'], inputTokens: 1, outputTokens: 1, correlationId: 'family-chat-7-mt1', followUps: [] } },

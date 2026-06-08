@@ -162,6 +162,56 @@ export function FamilyChat() {
     await askQuestion(question);
   }
 
+  /**
+   * Assembles the current chat session as plain text and triggers a
+   * browser download. Pure client-side: no PHI leaves the device that
+   * wasn't already on screen, no audit event is emitted (this is a
+   * user-initiated copy of their own view).
+   *
+   * Includes only completed turns. Errored / in-flight turns are
+   * skipped so the export isn't littered with "Loading..." placeholders.
+   */
+  function exportConversation() {
+    const completed = turns.filter((t) => typeof t.answer === 'string' && t.answer.length > 0);
+    if (completed.length === 0) return;
+    const now = new Date();
+    const header = [
+      `${t('family.chat.exportHeader')}`,
+      `${t('family.chat.exportPatient', { id: patientId ?? '' })}`,
+      `${t('family.chat.exportTimestamp')}: ${now.toLocaleString(i18n.resolvedLanguage ?? 'en-US')}`,
+      `${t('family.chat.exportDisclaimer')}`,
+      '',
+    ].join('\n');
+    const body = completed
+      .map((turn, idx) => {
+        const i = idx + 1;
+        const lines = [
+          `[Q${i}] ${turn.question}`,
+          `[A${i}] ${turn.answer}`,
+        ];
+        if (turn.sources.length > 0) {
+          const sourceLabels = turn.sources
+            .map((s) => t(`family.chat.sources.${s.replace(/-/g, '_')}` as const, s))
+            .join(', ');
+          lines.push(`${t('family.chat.sourcesLabel')} ${sourceLabels}`);
+        }
+        return lines.join('\n');
+      })
+      .join('\n\n');
+
+    const blob = new Blob([`${header}${body}\n`], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const stamp = now.toISOString().slice(0, 10);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `cps-family-chat-${stamp}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    // Defer revoke so Safari has time to start the download.
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
   async function sendFeedback(turn: ChatTurn, helpful: boolean) {
     if (turn.correlationId == null || patientId == null) return;
     if (turn.feedback === 'pending' || turn.feedback === 'helpful' || turn.feedback === 'not-helpful') return;
@@ -198,12 +248,40 @@ export function FamilyChat() {
 
   return (
     <section style={{ padding: 16, maxWidth: 720 }}>
-      <h1
-        data-testid="page-title"
-        style={{ fontSize: 24, fontWeight: 600, color: '#1e293b', marginBottom: 12 }}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 8,
+          marginBottom: 12,
+        }}
       >
-        {t('family.chat.title')}
-      </h1>
+        <h1
+          data-testid="page-title"
+          style={{ fontSize: 24, fontWeight: 600, color: '#1e293b', margin: 0 }}
+        >
+          {t('family.chat.title')}
+        </h1>
+        {turns.some((t) => typeof t.answer === 'string' && t.answer.length > 0) && (
+          <button
+            type="button"
+            data-testid="export-conversation"
+            onClick={exportConversation}
+            style={{
+              padding: '6px 12px',
+              fontSize: 13,
+              border: '1px solid #cbd5e1',
+              borderRadius: 6,
+              background: '#f8fafc',
+              color: '#0f172a',
+              cursor: 'pointer',
+            }}
+          >
+            {t('family.chat.exportButton')}
+          </button>
+        )}
+      </div>
 
       <div
         role="note"
