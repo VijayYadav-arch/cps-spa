@@ -31,6 +31,12 @@ interface ChatTurn {
    */
   correlationId: string | null;
   feedback: FeedbackState;
+  /**
+   * Up to 3 follow-up questions proposed by the model. Empty when
+   * the model omitted the directive (e.g. fallback "I don't have
+   * that information" answers). UI hides the chip row when empty.
+   */
+  followUps: string[];
 }
 
 interface AskResponse {
@@ -40,6 +46,7 @@ interface AskResponse {
     inputTokens: number;
     outputTokens: number;
     correlationId: string;
+    followUps?: string[];
   };
 }
 
@@ -102,6 +109,7 @@ export function FamilyChat() {
         sources: [],
         correlationId: null,
         feedback: null,
+        followUps: [],
       },
     ]);
     setQuestion('');
@@ -120,6 +128,7 @@ export function FamilyChat() {
                 answer: res.data.data.answer,
                 sources: res.data.data.sources,
                 correlationId: res.data.data.correlationId,
+                followUps: res.data.data.followUps ?? [],
               }
             : turn,
         ),
@@ -283,6 +292,39 @@ export function FamilyChat() {
                   <p style={{ margin: '6px 0 0', fontSize: 11, color: '#94a3b8', fontStyle: 'italic' }}>
                     {t('family.chat.verifyFooter')}
                   </p>
+                  {turn.followUps.length > 0 && (
+                    <div
+                      data-testid="follow-ups"
+                      style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}
+                    >
+                      <span style={{ fontSize: 11, color: '#64748b', fontWeight: 500 }}>
+                        {t('family.chat.followUpsLabel')}
+                      </span>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                        {turn.followUps.map((q) => (
+                          <button
+                            key={q}
+                            type="button"
+                            data-testid="follow-up-chip"
+                            onClick={() => void askQuestion(q)}
+                            disabled={submitting}
+                            style={{
+                              padding: '4px 10px',
+                              border: '1px solid #cbd5e1',
+                              borderRadius: 999,
+                              background: '#f8fafc',
+                              color: '#0f172a',
+                              fontSize: 12,
+                              cursor: submitting ? 'not-allowed' : 'pointer',
+                              textAlign: 'left',
+                            }}
+                          >
+                            {q}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   {turn.correlationId != null && (
                     <div
                       data-testid="feedback-controls"
