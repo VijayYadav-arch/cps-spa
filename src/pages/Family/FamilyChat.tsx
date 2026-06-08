@@ -1,6 +1,10 @@
 import { useState, useRef, useEffect, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { familyApi } from '@/portal/familyApi';
+import {
+  familyApi,
+  streamFamilyChat,
+  type FamilyChatStreamErrorEvent,
+} from '@/portal/familyApi';
 import { usePortalAuth } from '@/portal/PortalAuthContext';
 
 const MAX_QUESTION_LENGTH = 500;
@@ -45,22 +49,6 @@ interface ChatTurn {
   followUps: string[];
 }
 
-interface AskResponse {
-  data: {
-    answer: string;
-    sources: string[];
-    inputTokens: number;
-    outputTokens: number;
-    correlationId: string;
-    followUps?: string[];
-  };
-}
-
-interface ApiErrorBody {
-  error?: string;
-  message?: string;
-  maxLength?: number;
-}
 
 /**
  * Family-portal AI chatbot page.
@@ -127,34 +115,78 @@ export function FamilyChat() {
       .filter((t) => typeof t.answer === 'string' && t.answer.length > 0)
       .slice(-MAX_RECENT_TURNS)
       .map((t) => ({ question: t.question, answer: t.answer as string }));
+    // Switch to streaming so each delta renders as it arrives. The done
+    // event still carries sources / correlationId / followUps once the
+    // model finishes, matching the non-streaming response payload shape.
+    let streamingError: FamilyChatStreamErrorEvent | null = null;
     try {
-      const res = await familyApi.post<AskResponse>(`/patients/${patientId}/chat`, {
-        question: trimmed,
-        locale: i18n.resolvedLanguage?.startsWith('es') ? 'es' : 'en',
-        includeVisitDetails,
-        recentTurns: recentTurns.length > 0 ? recentTurns : undefined,
-      });
+      await streamFamilyChat(
+        patientId,
+        {
+          question: trimmed,
+          locale: i18n.resolvedLanguage?.startsWith('es') ? 'es' : 'en',
+          includeVisitDetails,
+          recentTurns: recentTurns.length > 0 ? recentTurns : undefined,
+        },
+        {
+          onDelta: (text) => {
+            setTurns((prev) =>
+              prev.map((turn) =>
+                turn.id === turnId
+                  ? { ...turn, answer: (turn.answer ?? '') + text }
+                  : turn,
+              ),
+            );
+          },
+          onDone: (event) => {
+            setTurns((prev) =>
+              prev.map((turn) =>
+                turn.id === turnId
+                  ? {
+                      ...turn,
+                      // Streamed deltas have already painted the answer; just
+                      // attach the trailing metadata for sources / feedback / chips.
+                      answer: turn.answer ?? '',
+                      sources: event.sources,
+                      correlationId: event.correlationId,
+                      followUps: event.followUps,
+                    }
+                  : turn,
+              ),
+            );
+          },
+          onError: (event) => {
+            streamingError = event;
+          },
+        }
+      );
+    } catch (err) {
+      streamingError = {
+        status: 0,
+        error: mapTransportError(err),
+      };
+    }
+
+    if (streamingError !== null) {
+      const error: FamilyChatStreamErrorEvent = streamingError;
+      const errorKey = mapStreamErrorToKey(error);
       setTurns((prev) =>
         prev.map((turn) =>
           turn.id === turnId
             ? {
                 ...turn,
-                answer: res.data.data.answer,
-                sources: res.data.data.sources,
-                correlationId: res.data.data.correlationId,
-                followUps: res.data.data.followUps ?? [],
+                // Discard any partial text emitted before the error frame; the
+                // user sees the friendly error message rather than a half-written
+                // answer that ended up failing.
+                answer: null,
+                errorKey,
               }
             : turn,
         ),
       );
-    } catch (err) {
-      const errorKey = mapErrorToKey(err);
-      setTurns((prev) =>
-        prev.map((turn) => (turn.id === turnId ? { ...turn, errorKey } : turn)),
-      );
-    } finally {
-      setSubmitting(false);
     }
+
+    setSubmitting(false);
   }
 
   async function handleSubmit(event: FormEvent) {
@@ -585,14 +617,35 @@ function feedbackBtn(selected: boolean): React.CSSProperties {
   };
 }
 
-function mapErrorToKey(err: unknown): string {
-  if (typeof err === 'object' && err !== null && 'response' in err) {
-    const response = (err as { response?: { status?: number; data?: ApiErrorBody } }).response;
-    if (response?.status === 429) return 'family.chat.errorRateLimited';
-    if (response?.status === 503) return 'family.chat.errorNotAvailable';
-    if (response?.status === 502) return 'family.chat.errorUnreachable';
-    if (response?.status === 400 && response.data?.error === 'question_too_long')
+function mapStreamErrorToKey(error: FamilyChatStreamErrorEvent): string {
+  // The streaming endpoint surfaces the same error taxonomy as the non-
+  // streaming variant: rate_limited / ai_not_available / ai_provider_unreachable.
+  // Status code is non-zero only when the failure happened before the SSE
+  // stream opened (the response was a JSON envelope at an HTTP error status).
+  switch (error.error) {
+    case 'rate_limited':
+      return 'family.chat.errorRateLimited';
+    case 'ai_not_available':
+      return 'family.chat.errorNotAvailable';
+    case 'ai_provider_unreachable':
+      return 'family.chat.errorUnreachable';
+    case 'question_too_long':
       return 'family.chat.tooLong';
+    case 'not_found':
+      return 'family.chat.errorGeneric';
+    default:
+      return 'family.chat.errorGeneric';
   }
-  return 'family.chat.errorGeneric';
 }
+
+function mapTransportError(err: unknown): string {
+  // streamFamilyChat catches most transport errors internally and translates
+  // them to onError(); anything that escapes is exceptional (e.g. unhandled
+  // exception from a callback). Treat as provider-unreachable.
+  if (typeof err === 'object' && err !== null && 'name' in err
+      && (err as { name?: string }).name === 'AbortError') {
+    return 'ai_provider_unreachable';
+  }
+  return 'ai_provider_unreachable';
+}
+
