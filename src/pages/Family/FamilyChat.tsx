@@ -5,6 +5,16 @@ import { usePortalAuth } from '@/portal/PortalAuthContext';
 
 const MAX_QUESTION_LENGTH = 500;
 
+/** Translation keys for the suggested-question chips shown on first load. */
+const SUGGESTED_PROMPT_KEYS = [
+  'family.chat.suggested.medications',
+  'family.chat.suggested.nextVisit',
+  'family.chat.suggested.carePlan',
+  'family.chat.suggested.recentVisits',
+] as const;
+
+type FeedbackState = null | 'pending' | 'helpful' | 'not-helpful' | 'failed';
+
 interface ChatTurn {
   /** Stable key for React rendering. */
   id: string;
@@ -14,6 +24,13 @@ interface ChatTurn {
   /** Translation key for an inline error, when the call failed. */
   errorKey: string | null;
   sources: string[];
+  /**
+   * Backend-issued correlation id for this turn -- echoed on the
+   * feedback endpoint to link the thumbs vote to the originating
+   * answer. null until the answer arrives.
+   */
+  correlationId: string | null;
+  feedback: FeedbackState;
 }
 
 interface AskResponse {
@@ -22,6 +39,7 @@ interface AskResponse {
     sources: string[];
     inputTokens: number;
     outputTokens: number;
+    correlationId: string;
   };
 }
 
@@ -43,9 +61,14 @@ interface ApiErrorBody {
  *   - non-dismissable amber disclaimer banner at the top
  *   - per-turn "What I used to answer" disclosure showing which
  *     patient-data buckets were fed to the model (medications / visits
- *     / care-plan / patient-summary)
+ *     / care-plan / patient-summary / visits-detailed)
  *   - "Always verify with your care team" footer attached to each answer
  *   - friendly fallbacks for opt-in / rate-limit / provider-unreachable
+ *   - suggested-prompt chips on first load reduce the blank-page friction
+ *   - "Include visit details" checkbox lets the user opt in to fuller
+ *     grounding (visit narratives) per question
+ *   - per-turn thumbs up/down emits an ai.family-chat.feedback audit row
+ *     keyed on the backend correlation id
  */
 export function FamilyChat() {
   const { session } = usePortalAuth();
@@ -55,6 +78,7 @@ export function FamilyChat() {
   const [question, setQuestion] = useState('');
   const [turns, setTurns] = useState<ChatTurn[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [includeVisitDetails, setIncludeVisitDetails] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -62,16 +86,23 @@ export function FamilyChat() {
     bottomRef.current?.scrollIntoView?.({ behavior: 'smooth' });
   }, [turns]);
 
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault();
-    const trimmed = question.trim();
+  async function askQuestion(rawQuestion: string) {
+    const trimmed = rawQuestion.trim();
     if (!trimmed || submitting || patientId == null) return;
     if (trimmed.length > MAX_QUESTION_LENGTH) return;
 
     const turnId = `t-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     setTurns((prev) => [
       ...prev,
-      { id: turnId, question: trimmed, answer: null, errorKey: null, sources: [] },
+      {
+        id: turnId,
+        question: trimmed,
+        answer: null,
+        errorKey: null,
+        sources: [],
+        correlationId: null,
+        feedback: null,
+      },
     ]);
     setQuestion('');
     setSubmitting(true);
@@ -79,11 +110,17 @@ export function FamilyChat() {
       const res = await familyApi.post<AskResponse>(`/patients/${patientId}/chat`, {
         question: trimmed,
         locale: i18n.resolvedLanguage?.startsWith('es') ? 'es' : 'en',
+        includeVisitDetails,
       });
       setTurns((prev) =>
         prev.map((turn) =>
           turn.id === turnId
-            ? { ...turn, answer: res.data.data.answer, sources: res.data.data.sources }
+            ? {
+                ...turn,
+                answer: res.data.data.answer,
+                sources: res.data.data.sources,
+                correlationId: res.data.data.correlationId,
+              }
             : turn,
         ),
       );
@@ -94,6 +131,34 @@ export function FamilyChat() {
       );
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    await askQuestion(question);
+  }
+
+  async function sendFeedback(turn: ChatTurn, helpful: boolean) {
+    if (turn.correlationId == null || patientId == null) return;
+    if (turn.feedback === 'pending' || turn.feedback === 'helpful' || turn.feedback === 'not-helpful') return;
+    setTurns((prev) =>
+      prev.map((x) => (x.id === turn.id ? { ...x, feedback: 'pending' } : x)),
+    );
+    try {
+      await familyApi.post(`/patients/${patientId}/chat/feedback`, {
+        correlationId: turn.correlationId,
+        helpful,
+      });
+      setTurns((prev) =>
+        prev.map((x) =>
+          x.id === turn.id ? { ...x, feedback: helpful ? 'helpful' : 'not-helpful' } : x,
+        ),
+      );
+    } catch {
+      setTurns((prev) =>
+        prev.map((x) => (x.id === turn.id ? { ...x, feedback: 'failed' } : x)),
+      );
     }
   }
 
@@ -137,7 +202,43 @@ export function FamilyChat() {
 
       <div data-testid="chat-log" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {turns.length === 0 && (
-          <p style={{ color: '#94a3b8', fontStyle: 'italic' }}>{t('family.chat.empty')}</p>
+          <div>
+            <p style={{ color: '#94a3b8', fontStyle: 'italic', marginBottom: 12 }}>
+              {t('family.chat.empty')}
+            </p>
+            <div
+              data-testid="suggested-prompts"
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 8,
+              }}
+            >
+              {SUGGESTED_PROMPT_KEYS.map((key) => {
+                const label = t(key);
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    data-testid="suggested-prompt"
+                    onClick={() => void askQuestion(label)}
+                    disabled={submitting}
+                    style={{
+                      padding: '6px 12px',
+                      border: '1px solid #cbd5e1',
+                      borderRadius: 999,
+                      background: '#f8fafc',
+                      color: '#0f172a',
+                      fontSize: 13,
+                      cursor: submitting ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         )}
         {turns.map((turn) => (
           <div key={turn.id} data-testid="chat-turn" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -175,13 +276,61 @@ export function FamilyChat() {
                         {t('family.chat.sourcesLabel')}
                       </span>{' '}
                       {turn.sources
-                        .map((s) => t(`family.chat.sources.${s.replace('-', '_')}` as const, s))
+                        .map((s) => t(`family.chat.sources.${s.replace(/-/g, '_')}` as const, s))
                         .join(', ')}
                     </p>
                   )}
                   <p style={{ margin: '6px 0 0', fontSize: 11, color: '#94a3b8', fontStyle: 'italic' }}>
                     {t('family.chat.verifyFooter')}
                   </p>
+                  {turn.correlationId != null && (
+                    <div
+                      data-testid="feedback-controls"
+                      style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}
+                    >
+                      <span style={{ fontSize: 11, color: '#64748b' }}>
+                        {t('family.chat.feedbackPrompt')}
+                      </span>
+                      <button
+                        type="button"
+                        data-testid="feedback-up"
+                        aria-label={t('family.chat.feedbackHelpfulLabel')}
+                        disabled={
+                          turn.feedback === 'pending'
+                          || turn.feedback === 'helpful'
+                          || turn.feedback === 'not-helpful'
+                        }
+                        onClick={() => sendFeedback(turn, true)}
+                        style={feedbackBtn(turn.feedback === 'helpful')}
+                      >
+                        {turn.feedback === 'helpful' ? '✅' : '👍'}
+                      </button>
+                      <button
+                        type="button"
+                        data-testid="feedback-down"
+                        aria-label={t('family.chat.feedbackNotHelpfulLabel')}
+                        disabled={
+                          turn.feedback === 'pending'
+                          || turn.feedback === 'helpful'
+                          || turn.feedback === 'not-helpful'
+                        }
+                        onClick={() => sendFeedback(turn, false)}
+                        style={feedbackBtn(turn.feedback === 'not-helpful')}
+                      >
+                        {turn.feedback === 'not-helpful' ? '☑️' : '👎'}
+                      </button>
+                      {turn.feedback === 'helpful' || turn.feedback === 'not-helpful' ? (
+                        <span style={{ fontSize: 11, color: '#16a34a' }}>
+                          {t('family.chat.feedbackThanks')}
+                        </span>
+                      ) : null}
+                      {turn.feedback === 'failed' ? (
+                        <span style={{ fontSize: 11, color: '#b91c1c' }}>
+                          {t('family.chat.feedbackFailed')}
+                        </span>
+                      ) : null}
+                    </div>
+                  )}
                 </>
               ) : turn.errorKey != null ? (
                 <p role="alert" style={{ margin: 0, color: '#b91c1c', fontSize: 13 }}>
@@ -216,6 +365,23 @@ export function FamilyChat() {
             resize: 'vertical',
           }}
         />
+        <label
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            fontSize: 12,
+            color: '#475569',
+          }}
+        >
+          <input
+            data-testid="include-visit-details"
+            type="checkbox"
+            checked={includeVisitDetails}
+            onChange={(e) => setIncludeVisitDetails(e.target.checked)}
+          />
+          {t('family.chat.includeVisitDetailsLabel')}
+        </label>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'space-between' }}>
           <span style={{ fontSize: 11, color: overLimit ? '#dc2626' : '#94a3b8' }}>
             {charsLeft >= 0
@@ -243,6 +409,17 @@ export function FamilyChat() {
       </form>
     </section>
   );
+}
+
+function feedbackBtn(selected: boolean): React.CSSProperties {
+  return {
+    border: `1px solid ${selected ? '#16a34a' : '#cbd5e1'}`,
+    background: selected ? '#dcfce7' : '#f8fafc',
+    borderRadius: 6,
+    padding: '4px 8px',
+    fontSize: 14,
+    cursor: 'pointer',
+  };
 }
 
 function mapErrorToKey(err: unknown): string {

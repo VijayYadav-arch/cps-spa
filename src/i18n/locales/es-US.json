@@ -74,8 +74,21 @@
         "patient_summary": "datos del paciente",
         "medications": "medicamentos",
         "visits": "historial de visitas",
+        "visits_detailed": "historial de visitas (con notas)",
         "care_plan": "plan de cuidado"
       },
+      "suggested": {
+        "medications": "¿Qué medicamentos está tomando mi mamá actualmente?",
+        "nextVisit": "¿Cuándo es la próxima visita?",
+        "carePlan": "¿Cuál es el plan de cuidado actual?",
+        "recentVisits": "¿Qué pasó en la visita más reciente?"
+      },
+      "includeVisitDetailsLabel": "Incluir detalles de las notas de visita recientes",
+      "feedbackPrompt": "¿Le fue útil?",
+      "feedbackHelpfulLabel": "Marcar como útil",
+      "feedbackNotHelpfulLabel": "Marcar como no útil",
+      "feedbackThanks": "¡Gracias por sus comentarios!",
+      "feedbackFailed": "No se pudo guardar el comentario. Intente de nuevo.",
       "errorRateLimited": "Demasiadas preguntas en poco tiempo — espere unos minutos e intente de nuevo.",
       "errorNotAvailable": "El asistente con IA no está disponible en este momento.",
       "errorUnreachable": "No se pudo contactar el servicio. Intente de nuevo en unos momentos.",
