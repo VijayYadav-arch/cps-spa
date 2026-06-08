@@ -24,20 +24,21 @@ vi.mock('@/api/billing', async () => {
     escalateDenial: vi.fn(),
     resolveDenial: vi.fn(),
     assignDenial: vi.fn(),
-    draftDenialAppeal: vi.fn(),
+    draftDenialAppealStreaming: vi.fn(),
   };
 });
 
 import {
   analyzeDenial,
   assignDenial,
-  draftDenialAppeal,
+  draftDenialAppealStreaming,
   escalateDenial,
   getDenialById,
   resolveDenial,
   startDenialAppeal,
   submitDenialAppeal,
 } from '@/api/billing';
+import type { DenialAppealDraftStreamHandlers } from '@/api/billing';
 
 function buildDenial(overrides: Partial<{
   status: string;
@@ -190,13 +191,20 @@ describe('DenialDetail', () => {
     expect(assignDenial).toBeDefined();
   });
 
-  it('drafts an AI appeal and shows the result', async () => {
+  it('streams an AI appeal draft, painting deltas and finalising on done', async () => {
     vi.mocked(getDenialById).mockResolvedValueOnce(buildDenial());
-    vi.mocked(draftDenialAppeal).mockResolvedValueOnce({
-      id: 7,
-      draftAppealText: 'Dear Medicare, We are writing to appeal denial CO-50 for the patient ...',
-      draftAppealGeneratedAtUtc: '2026-06-05T19:30:00Z',
-    });
+    vi.mocked(draftDenialAppealStreaming).mockImplementationOnce(
+      async (_id: number, h: DenialAppealDraftStreamHandlers) => {
+        h.onDelta('Dear Medicare, ');
+        h.onDelta('We are writing to appeal denial CO-50 ');
+        h.onDelta('for the patient ...');
+        h.onDone({
+          id: 7,
+          draftAppealText: 'Dear Medicare, We are writing to appeal denial CO-50 for the patient ...',
+          draftAppealGeneratedAtUtc: '2026-06-05T19:30:00Z',
+        });
+      },
+    );
 
     const user = userEvent.setup();
     renderAt();
@@ -208,8 +216,10 @@ describe('DenialDetail', () => {
     await user.click(screen.getByRole('button', { name: /draft appeal/i }));
 
     await waitFor(() => {
-      expect(draftDenialAppeal).toHaveBeenCalledWith(7);
+      expect(draftDenialAppealStreaming).toHaveBeenCalled();
     });
+    // First arg is the denial id (7); second is the handler bundle.
+    expect(vi.mocked(draftDenialAppealStreaming).mock.calls[0][0]).toBe(7);
     expect(await screen.findByText(/we are writing to appeal denial CO-50/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /regenerate draft/i })).toBeInTheDocument();
   });
@@ -227,9 +237,36 @@ describe('DenialDetail', () => {
     expect(screen.getByRole('button', { name: /regenerate draft/i })).toBeInTheDocument();
   });
 
-  it('shows error when AI draft fails', async () => {
+  it('shows error when AI draft streaming errors and restores prior draft', async () => {
+    vi.mocked(getDenialById).mockResolvedValueOnce(buildDenial({
+      draftAppealText: 'previous draft',
+      draftAppealGeneratedAtUtc: '2026-06-04T10:00:00Z',
+    }));
+    vi.mocked(draftDenialAppealStreaming).mockImplementationOnce(
+      async (_id: number, h: DenialAppealDraftStreamHandlers) => {
+        // Paint a few partial deltas, then surface an error frame.
+        h.onDelta('partial draft text ');
+        h.onError({ status: 0, error: 'ai_provider_unreachable' });
+      },
+    );
+    const user = userEvent.setup();
+    renderAt();
+
+    await waitFor(() => screen.getByRole('button', { name: /regenerate draft/i }));
+    await user.click(screen.getByRole('button', { name: /regenerate draft/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(/couldn't reach the ai service/i);
+    });
+  });
+
+  it('maps rate_limited to the friendly message', async () => {
     vi.mocked(getDenialById).mockResolvedValueOnce(buildDenial());
-    vi.mocked(draftDenialAppeal).mockRejectedValueOnce(new Error('AI provider unavailable'));
+    vi.mocked(draftDenialAppealStreaming).mockImplementationOnce(
+      async (_id: number, h: DenialAppealDraftStreamHandlers) => {
+        h.onError({ status: 429, error: 'rate_limited' });
+      },
+    );
     const user = userEvent.setup();
     renderAt();
 
@@ -237,7 +274,7 @@ describe('DenialDetail', () => {
     await user.click(screen.getByRole('button', { name: /draft appeal/i }));
 
     await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent(/failed to draft appeal/i);
+      expect(screen.getByRole('alert')).toHaveTextContent(/too many ai drafts/i);
     });
   });
 });

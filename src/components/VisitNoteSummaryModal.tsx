@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react';
-import { apiClient } from '@/api/client';
+import { consumeAiStream, type AiStreamErrorEvent } from '@/api/aiStream';
+import { staffAuthHeaders } from '@/api/staffAuthHeaders';
 
-interface SummaryEnvelope {
-  data: {
-    summary: string;
-    inputTokens: number;
-    outputTokens: number;
-    correlationId: string;
-  };
+interface SummaryDoneEvent {
+  summary: string;
+  inputTokens: number;
+  outputTokens: number;
+  correlationId: string;
 }
 
 interface VisitNoteSummaryModalProps {
@@ -17,25 +16,25 @@ interface VisitNoteSummaryModalProps {
 }
 
 type Status =
-  | { kind: 'loading' }
+  | { kind: 'streaming'; text: string }
   | { kind: 'ready'; summary: string }
   | { kind: 'error'; message: string; canRetry: boolean };
 
-function mapError(status: number | undefined): { message: string; canRetry: boolean } {
-  switch (status) {
-    case 404:
+function mapError(error: AiStreamErrorEvent): { message: string; canRetry: boolean } {
+  switch (error.error) {
+    case 'not_found':
       return { message: 'Visit note not found.', canRetry: false };
-    case 429:
+    case 'rate_limited':
       return {
         message: 'Too many summarization requests recently. Please try again in a moment.',
         canRetry: true,
       };
-    case 503:
+    case 'ai_not_available':
       return {
         message: 'The AI assistant is not available for your organization right now.',
         canRetry: false,
       };
-    case 502:
+    case 'ai_provider_unreachable':
       return {
         message: "Couldn't reach the AI service. Try again shortly.",
         canRetry: true,
@@ -50,31 +49,50 @@ export function VisitNoteSummaryModal({
   visitLabel,
   onClose,
 }: VisitNoteSummaryModalProps) {
-  const [status, setStatus] = useState<Status>({ kind: 'loading' });
+  const [status, setStatus] = useState<Status>({ kind: 'streaming', text: '' });
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
-    let cancelled = false;
-    setStatus({ kind: 'loading' });
-    apiClient
-      .post<SummaryEnvelope>(`/clinician/visits/${visitId}/summarize`)
-      .then((res) => {
-        if (!cancelled) {
-          setStatus({ kind: 'ready', summary: res.data.data.summary });
-        }
-      })
-      .catch((err: unknown) => {
-        if (cancelled) return;
-        const status =
-          typeof err === 'object' && err !== null && 'response' in err
-            ? (err as { response?: { status?: number } }).response?.status
-            : undefined;
-        const { message, canRetry } = mapError(status);
-        setStatus({ kind: 'error', message, canRetry });
-      });
-    return () => {
-      cancelled = true;
-    };
+    const ac = new AbortController();
+    let assembled = '';
+    setStatus({ kind: 'streaming', text: '' });
+
+    (async () => {
+      try {
+        const headers = await staffAuthHeaders();
+        await consumeAiStream<SummaryDoneEvent>(
+          {
+            url: `/api/v2/clinician/visits/${visitId}/summarize/stream`,
+            headers,
+            signal: ac.signal,
+          },
+          {
+            onDelta: (text) => {
+              assembled += text;
+              setStatus({ kind: 'streaming', text: assembled });
+            },
+            onDone: (event) => {
+              // The server-side helper may flush a slightly polished version
+              // of the assembled text (trimmed, fallback substituted).
+              // Trust the `done` event as the authoritative result.
+              setStatus({ kind: 'ready', summary: event.summary });
+            },
+            onError: (event) => {
+              const mapped = mapError(event);
+              setStatus({ kind: 'error', message: mapped.message, canRetry: mapped.canRetry });
+            },
+          },
+        );
+      } catch {
+        setStatus({
+          kind: 'error',
+          message: 'Something went wrong generating the summary.',
+          canRetry: true,
+        });
+      }
+    })();
+
+    return () => ac.abort();
   }, [visitId, attempt]);
 
   return (
@@ -110,7 +128,7 @@ export function VisitNoteSummaryModal({
         </h2>
         <p style={{ fontSize: 13, color: '#64748b', marginBottom: 16 }}>{visitLabel}</p>
 
-        {status.kind === 'loading' && (
+        {status.kind === 'streaming' && status.text.length === 0 && (
           <p
             data-testid="summary-loading"
             style={{ fontSize: 14, color: '#475569', padding: '12px 0' }}
@@ -119,7 +137,8 @@ export function VisitNoteSummaryModal({
           </p>
         )}
 
-        {status.kind === 'ready' && (
+        {(status.kind === 'streaming' && status.text.length > 0) ||
+        status.kind === 'ready' ? (
           <blockquote
             data-testid="summary-text"
             style={{
@@ -132,9 +151,23 @@ export function VisitNoteSummaryModal({
               background: '#f0fdfa',
             }}
           >
-            {status.summary}
+            {status.kind === 'ready' ? status.summary : status.text}
+            {status.kind === 'streaming' && (
+              <span
+                data-testid="streaming-cursor"
+                style={{
+                  display: 'inline-block',
+                  width: 6,
+                  height: 14,
+                  marginLeft: 2,
+                  background: '#0d9488',
+                  verticalAlign: 'middle',
+                  animation: 'visit-note-summary-blink 1s steps(2, start) infinite',
+                }}
+              />
+            )}
           </blockquote>
-        )}
+        ) : null}
 
         {status.kind === 'error' && (
           <div

@@ -4,7 +4,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   analyzeDenial,
   assignDenial,
-  draftDenialAppeal,
+  draftDenialAppealStreaming,
   escalateDenial,
   getDenialById,
   resolveDenial,
@@ -159,15 +159,57 @@ export function DenialDetail() {
     if (!item) return;
     setAiDrafting(true);
     setError(null);
+
+    // Live-streamed draft text -- buffer locally, paint to the same draft
+    // textarea via setItem({...item, draftAppealText: assembled}) so the
+    // biller sees the appeal letter painting in real time. The `done` event
+    // is authoritative for the final text + timestamp.
+    let assembled = '';
+    const baseItem = item;
+    let streamErrored = false;
+
     try {
-      const result = await draftDenialAppeal(item.id);
-      setItem({
-        ...item,
-        draftAppealText: result.draftAppealText,
-        draftAppealGeneratedAtUtc: result.draftAppealGeneratedAtUtc,
+      await draftDenialAppealStreaming(item.id, {
+        onDelta: (text) => {
+          assembled += text;
+          setItem({
+            ...baseItem,
+            draftAppealText: assembled,
+            // No timestamp yet -- the server only stamps it after the
+            // database write at the end of stream. Show a blank for now;
+            // `done` fills it in.
+            draftAppealGeneratedAtUtc: null,
+          });
+        },
+        onDone: (result) => {
+          setItem({
+            ...baseItem,
+            draftAppealText: result.draftAppealText,
+            draftAppealGeneratedAtUtc: result.draftAppealGeneratedAtUtc,
+          });
+        },
+        onError: (event) => {
+          streamErrored = true;
+          if (event.error === 'rate_limited') {
+            setError('Too many AI drafts recently. Please try again in a moment.');
+          } else if (event.error === 'ai_not_available') {
+            setError('The AI assistant is not currently available for your organization.');
+          } else if (event.error === 'ai_provider_unreachable') {
+            setError("Couldn't reach the AI service. Please try again shortly.");
+          } else if (event.error === 'not_found') {
+            setError('Denial work item not found.');
+          } else {
+            setError('Failed to draft appeal. Please try again.');
+          }
+          // Restore the prior draft if any deltas had painted before failure.
+          setItem(baseItem);
+        },
       });
     } catch {
-      setError('Failed to draft appeal. Please try again.');
+      if (!streamErrored) {
+        setError('Failed to draft appeal. Please try again.');
+        setItem(baseItem);
+      }
     } finally {
       setAiDrafting(false);
     }

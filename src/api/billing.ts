@@ -1,4 +1,6 @@
 import { apiClient } from './client';
+import { consumeAiStream, type AiStreamErrorEvent } from '@/api/aiStream';
+import { staffAuthHeaders } from '@/api/staffAuthHeaders';
 
 export interface WorkQueueItem {
   id: number;
@@ -389,6 +391,35 @@ export const draftDenialAppeal = (denialId: number): Promise<DenialAppealDraftRe
   apiClient
     .post<{ data: DenialAppealDraftResult }>(`/billing/denials/${denialId}/draft-appeal`)
     .then((r) => r.data.data);
+
+export interface DenialAppealDraftStreamHandlers {
+  onDelta: (text: string) => void;
+  onDone: (result: DenialAppealDraftResult) => void;
+  onError: (event: AiStreamErrorEvent) => void;
+}
+
+/**
+ * Streaming variant of {@link draftDenialAppeal}. Wraps the generic SSE
+ * consumer + staff auth headers. The `done` payload mirrors the
+ * non-streaming response shape (id / draftAppealText /
+ * draftAppealGeneratedAtUtc), so callers can reuse the same state update
+ * after either path.
+ */
+export async function draftDenialAppealStreaming(
+  denialId: number,
+  handlers: DenialAppealDraftStreamHandlers,
+  signal?: AbortSignal,
+): Promise<void> {
+  const headers = await staffAuthHeaders();
+  await consumeAiStream<DenialAppealDraftResult>(
+    {
+      url: `/api/v2/billing/denials/${denialId}/draft-appeal/stream`,
+      headers,
+      signal,
+    },
+    handlers,
+  );
+}
 
 export interface DenialAnalysisResult {
   category: string;
