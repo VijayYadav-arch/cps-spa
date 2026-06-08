@@ -56,6 +56,31 @@
       "columnStatus": "Estado",
       "empty": "No se encontraron visitas",
       "loadFailed": "No se pudieron cargar las visitas. Actualice o comuníquese con su equipo de cuidado."
+    },
+    "chat": {
+      "title": "Pregúntele a CPS",
+      "disclaimerTitle": "Este es un asistente con inteligencia artificial.",
+      "disclaimerBody": "Las respuestas se generan a partir de los datos de su ser querido. El asistente no brinda consejos médicos. Siempre verifique la información importante con su equipo de cuidado.",
+      "empty": "Haga una pregunta para comenzar — por ejemplo, «¿Qué medicamentos está tomando mi mamá actualmente?»",
+      "placeholder": "Escriba su pregunta…",
+      "inputLabel": "Su pregunta",
+      "send": "Enviar",
+      "sending": "Enviando…",
+      "charsLeft": "{{n}} caracteres disponibles",
+      "tooLong": "La pregunta es demasiado larga.",
+      "verifyFooter": "Siempre verifique la información importante con su equipo de cuidado.",
+      "sourcesLabel": "Información utilizada:",
+      "sources": {
+        "patient_summary": "datos del paciente",
+        "medications": "medicamentos",
+        "visits": "historial de visitas",
+        "care_plan": "plan de cuidado"
+      },
+      "errorRateLimited": "Demasiadas preguntas en poco tiempo — espere unos minutos e intente de nuevo.",
+      "errorNotAvailable": "El asistente con IA no está disponible en este momento.",
+      "errorUnreachable": "No se pudo contactar el servicio. Intente de nuevo en unos momentos.",
+      "errorGeneric": "Algo salió mal. Intente de nuevo.",
+      "notAuthenticated": "Inicie sesión para usar el asistente con IA."
     }
   }
 }

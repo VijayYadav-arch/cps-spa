@@ -56,6 +56,31 @@
       "columnStatus": "Status",
       "empty": "No visits found",
       "loadFailed": "Unable to load visits. Please refresh or contact your care team."
+    },
+    "chat": {
+      "title": "Ask CPS",
+      "disclaimerTitle": "This is an AI assistant.",
+      "disclaimerBody": "Answers are generated from your loved one's data on file. The assistant does not give medical advice. Always verify important information with your care team.",
+      "empty": "Ask a question to get started — for example, \"What medications is mom currently taking?\"",
+      "placeholder": "Type your question…",
+      "inputLabel": "Your question",
+      "send": "Send",
+      "sending": "Sending…",
+      "charsLeft": "{{n}} characters left",
+      "tooLong": "Question is too long.",
+      "verifyFooter": "Always verify important information with your care team.",
+      "sourcesLabel": "I used:",
+      "sources": {
+        "patient_summary": "patient summary",
+        "medications": "medications",
+        "visits": "visit history",
+        "care_plan": "care plan"
+      },
+      "errorRateLimited": "Too many questions in a short time — please wait a few minutes and try again.",
+      "errorNotAvailable": "The AI assistant is not currently available.",
+      "errorUnreachable": "Couldn't reach the AI service. Please try again shortly.",
+      "errorGeneric": "Something went wrong. Please try again.",
+      "notAuthenticated": "Please sign in to use the AI assistant."
     }
   }
 }
