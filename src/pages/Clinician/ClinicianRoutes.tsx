@@ -3,6 +3,7 @@ import { ClinicianDashboard } from './ClinicianDashboard';
 import { ClinicianPatients } from './ClinicianPatients';
 import { ClinicianPatientDetail } from './ClinicianPatientDetail';
 import { ClinicianVisitNew } from './ClinicianVisitNew';
+import { ClinicianVisits } from './ClinicianVisits';
 
 export function ClinicianRoutes() {
   return (
@@ -10,6 +11,7 @@ export function ClinicianRoutes() {
       <Route path="dashboard" element={<ClinicianDashboard />} />
       <Route path="patients" element={<ClinicianPatients />} />
       <Route path="patients/:id" element={<ClinicianPatientDetail />} />
+      <Route path="visits" element={<ClinicianVisits />} />
       <Route path="visits/new" element={<ClinicianVisitNew />} />
     </Routes>
   );
