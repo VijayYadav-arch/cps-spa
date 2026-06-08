@@ -307,6 +307,54 @@ describe('FamilyChat', () => {
     expect(screen.queryByTestId('export-conversation')).not.toBeInTheDocument();
   });
 
+  it('does not show clear button when chat is empty', () => {
+    renderChat();
+    expect(screen.queryByTestId('clear-conversation')).not.toBeInTheDocument();
+  });
+
+  it('clear-conversation empties the log after confirm', async () => {
+    postSpy.mockResolvedValueOnce({
+      data: { data: { answer: 'fine', sources: [], inputTokens: 1, outputTokens: 1, correlationId: 'c-clr', followUps: [] } },
+    });
+
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    renderChat();
+    fireEvent.change(screen.getByTestId('family-chat-input'), { target: { value: 'q?' } });
+    fireEvent.click(screen.getByTestId('family-chat-submit'));
+    await waitFor(() => expect(screen.getByTestId('clear-conversation')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByTestId('clear-conversation'));
+
+    expect(confirmSpy).toHaveBeenCalled();
+    expect(screen.queryByTestId('chat-turn')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('clear-conversation')).not.toBeInTheDocument();
+    // Empty-state suggested prompts reappear after a clear.
+    expect(screen.getByTestId('suggested-prompts')).toBeInTheDocument();
+
+    confirmSpy.mockRestore();
+  });
+
+  it('clear-conversation cancellation keeps turns intact', async () => {
+    postSpy.mockResolvedValueOnce({
+      data: { data: { answer: 'fine', sources: [], inputTokens: 1, outputTokens: 1, correlationId: 'c-keep', followUps: [] } },
+    });
+
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    renderChat();
+    fireEvent.change(screen.getByTestId('family-chat-input'), { target: { value: 'q?' } });
+    fireEvent.click(screen.getByTestId('family-chat-submit'));
+    await waitFor(() => expect(screen.getByText('fine')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByTestId('clear-conversation'));
+
+    expect(confirmSpy).toHaveBeenCalled();
+    // Turn is still there.
+    expect(screen.getByText('fine')).toBeInTheDocument();
+    expect(screen.getByTestId('clear-conversation')).toBeInTheDocument();
+
+    confirmSpy.mockRestore();
+  });
+
   it('shows export button after first completed turn', async () => {
     postSpy.mockResolvedValueOnce({
       data: { data: { answer: 'fine', sources: ['patient-summary'], inputTokens: 1, outputTokens: 1, correlationId: 'c-exp', followUps: [] } },

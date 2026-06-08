@@ -212,6 +212,23 @@ export function FamilyChat() {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
+  /**
+   * Resets the chat log to empty after a confirmation prompt. Local state
+   * only -- there's no server-side conversation history to wipe (turns
+   * are ephemeral by design). Asks first because export + clear are
+   * adjacent buttons and a misclick would lose unrecoverable text.
+   */
+  function handleClear() {
+    if (turns.length === 0) return;
+    if (typeof window !== 'undefined') {
+      const confirmed = window.confirm(t('family.chat.clearConfirm'));
+      if (!confirmed) return;
+    }
+    setTurns([]);
+    setQuestion('');
+    setSubmitting(false);
+  }
+
   async function sendFeedback(turn: ChatTurn, helpful: boolean) {
     if (turn.correlationId == null || patientId == null) return;
     if (turn.feedback === 'pending' || turn.feedback === 'helpful' || turn.feedback === 'not-helpful') return;
@@ -264,22 +281,24 @@ export function FamilyChat() {
           {t('family.chat.title')}
         </h1>
         {turns.some((t) => typeof t.answer === 'string' && t.answer.length > 0) && (
-          <button
-            type="button"
-            data-testid="export-conversation"
-            onClick={exportConversation}
-            style={{
-              padding: '6px 12px',
-              fontSize: 13,
-              border: '1px solid #cbd5e1',
-              borderRadius: 6,
-              background: '#f8fafc',
-              color: '#0f172a',
-              cursor: 'pointer',
-            }}
-          >
-            {t('family.chat.exportButton')}
-          </button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              type="button"
+              data-testid="export-conversation"
+              onClick={exportConversation}
+              style={sessionActionBtn}
+            >
+              {t('family.chat.exportButton')}
+            </button>
+            <button
+              type="button"
+              data-testid="clear-conversation"
+              onClick={handleClear}
+              style={{ ...sessionActionBtn, color: '#b91c1c' }}
+            >
+              {t('family.chat.clearButton')}
+            </button>
+          </div>
         )}
       </div>
 
@@ -544,6 +563,16 @@ export function FamilyChat() {
     </section>
   );
 }
+
+const sessionActionBtn: React.CSSProperties = {
+  padding: '6px 12px',
+  fontSize: 13,
+  border: '1px solid #cbd5e1',
+  borderRadius: 6,
+  background: '#f8fafc',
+  color: '#0f172a',
+  cursor: 'pointer',
+};
 
 function feedbackBtn(selected: boolean): React.CSSProperties {
   return {
