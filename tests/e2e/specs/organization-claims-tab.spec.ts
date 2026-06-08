@@ -34,7 +34,10 @@ function claim(id: number, status = 'pending') {
 test.describe('OrganizationClaimsTab /admin/organizations/:id/claims (Step 4 Phase B PR #74)', () => {
   test('renders org claims with cross-org-admin query override', async ({ page }) => {
     await loginAsTestUser(page);
-    let claimsQuery: URLSearchParams | null = null;
+    // Holder object dodges a TS narrowing quirk: `let x: T | null = null`
+    // reassigned only inside a callback gets narrowed to `null` (and then
+    // `never` on optional-chain read) by the strict flow analyzer.
+    const captured: { claimsQuery: URLSearchParams | null } = { claimsQuery: null };
     await mockApi(page, [
       // orgsApi.getById returns OrganizationDetail directly (no { data } envelope).
       { method: 'GET', path: '/organizations/1', body: ORG },
@@ -46,7 +49,7 @@ test.describe('OrganizationClaimsTab /admin/organizations/:id/claims (Step 4 Pha
           pagination: { total: 2, page: 1, pageSize: 50, totalPages: 1 },
         },
         onMatch: (route) => {
-          claimsQuery = new URL(route.request().url()).searchParams;
+          captured.claimsQuery = new URL(route.request().url()).searchParams;
         },
       },
     ]);
@@ -54,7 +57,7 @@ test.describe('OrganizationClaimsTab /admin/organizations/:id/claims (Step 4 Pha
     await page.goto('/admin/organizations/1/claims');
     await expect(page.getByRole('heading', { name: /Acme Hospice.*Claims/i })).toBeVisible();
     await expect(page.getByRole('cell', { name: 'Patient 1' })).toBeVisible();
-    expect(claimsQuery?.get('organizationId')).toBe('1');
+    expect(captured.claimsQuery?.get('organizationId')).toBe('1');
   });
 
   test('switches status filter and refetches with status param', async ({ page }) => {
