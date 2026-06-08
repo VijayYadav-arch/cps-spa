@@ -224,8 +224,28 @@ export function ClinicianDashboard() {
           overflow: 'hidden',
         }}
       >
-        <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9' }}>
+        <div
+          style={{
+            padding: '12px 16px',
+            borderBottom: '1px solid #f1f5f9',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
           <h2 style={{ fontWeight: 600 }}>Today&apos;s Visits</h2>
+          <Link
+            to="/clinician/visits"
+            data-testid="action-all-visits"
+            style={{
+              fontSize: 13,
+              color: '#0d9488',
+              textDecoration: 'none',
+              fontWeight: 500,
+            }}
+          >
+            All visits ›
+          </Link>
         </div>
         <div data-testid="todays-visits-list">
           {data.todaysVisits.map((visit) => (
