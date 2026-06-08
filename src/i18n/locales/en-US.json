@@ -74,8 +74,21 @@
         "patient_summary": "patient summary",
         "medications": "medications",
         "visits": "visit history",
+        "visits_detailed": "visit history (with notes)",
         "care_plan": "care plan"
       },
+      "suggested": {
+        "medications": "What medications is mom currently taking?",
+        "nextVisit": "When is the next visit scheduled?",
+        "carePlan": "What's the current care plan?",
+        "recentVisits": "What happened at the most recent visit?"
+      },
+      "includeVisitDetailsLabel": "Include details from recent visit notes",
+      "feedbackPrompt": "Was this helpful?",
+      "feedbackHelpfulLabel": "Mark as helpful",
+      "feedbackNotHelpfulLabel": "Mark as not helpful",
+      "feedbackThanks": "Thanks for the feedback!",
+      "feedbackFailed": "Couldn't save feedback. Please try again.",
       "errorRateLimited": "Too many questions in a short time — please wait a few minutes and try again.",
       "errorNotAvailable": "The AI assistant is not currently available.",
       "errorUnreachable": "Couldn't reach the AI service. Please try again shortly.",
