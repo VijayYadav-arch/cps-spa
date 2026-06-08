@@ -69,10 +69,12 @@ describe('FamilyChat', () => {
     expect(screen.getAllByText(/Always verify important information/).length).toBeGreaterThanOrEqual(2);
 
     // Backend received the locale tag + the visit-details flag, defaults to off.
+    // recentTurns omitted on first turn (no prior history to send).
     expect(postSpy).toHaveBeenCalledWith('/patients/7/chat', {
       question: 'Which medications am I on?',
       locale: 'en',
       includeVisitDetails: false,
+      recentTurns: undefined,
     });
   });
 
@@ -91,6 +93,7 @@ describe('FamilyChat', () => {
       question: '¿Qué tomo?',
       locale: 'es',
       includeVisitDetails: false,
+      recentTurns: undefined,
     });
   });
 
@@ -174,6 +177,7 @@ describe('FamilyChat', () => {
       question: 'how was the visit?',
       locale: 'en',
       includeVisitDetails: true,
+      recentTurns: undefined,
     });
   });
 
@@ -296,6 +300,62 @@ describe('FamilyChat', () => {
 
     await waitFor(() => expect(screen.getByText(/don't have that information/i)).toBeInTheDocument());
     expect(screen.queryByTestId('follow-ups')).not.toBeInTheDocument();
+  });
+
+  it('sends recentTurns with the second question containing prior Q+A', async () => {
+    postSpy.mockResolvedValueOnce({
+      data: { data: { answer: 'first answer', sources: ['patient-summary'], inputTokens: 1, outputTokens: 1, correlationId: 'family-chat-7-mt1', followUps: [] } },
+    });
+
+    renderChat();
+    fireEvent.change(screen.getByTestId('family-chat-input'), { target: { value: 'first?' } });
+    fireEvent.click(screen.getByTestId('family-chat-submit'));
+    await waitFor(() => expect(screen.getByText('first answer')).toBeInTheDocument());
+
+    postSpy.mockResolvedValueOnce({
+      data: { data: { answer: 'second answer', sources: [], inputTokens: 1, outputTokens: 1, correlationId: 'family-chat-7-mt2', followUps: [] } },
+    });
+    fireEvent.change(screen.getByTestId('family-chat-input'), { target: { value: 'and the second?' } });
+    fireEvent.click(screen.getByTestId('family-chat-submit'));
+
+    await waitFor(() => expect(postSpy).toHaveBeenCalledTimes(2));
+    const secondCall = postSpy.mock.calls[1][1] as { recentTurns: Array<{ question: string; answer: string }> };
+    expect(secondCall.recentTurns).toHaveLength(1);
+    expect(secondCall.recentTurns[0]).toEqual({ question: 'first?', answer: 'first answer' });
+  });
+
+  it('caps recentTurns at 2 on the wire even if more turns exist', async () => {
+    // Drive three completed turns then send a fourth question.
+    for (const [i, body] of [
+      { answer: 'a1' },
+      { answer: 'a2' },
+      { answer: 'a3' },
+    ].entries()) {
+      postSpy.mockResolvedValueOnce({
+        data: { data: { ...body, sources: [], inputTokens: 1, outputTokens: 1, correlationId: `c${i}`, followUps: [] } },
+      });
+    }
+
+    renderChat();
+    for (const q of ['q1', 'q2', 'q3']) {
+      fireEvent.change(screen.getByTestId('family-chat-input'), { target: { value: q } });
+      fireEvent.click(screen.getByTestId('family-chat-submit'));
+      // Wait for that round's answer before submitting the next.
+      // eslint-disable-next-line no-await-in-loop
+      await waitFor(() => expect(postSpy).toHaveBeenCalledTimes(['q1', 'q2', 'q3'].indexOf(q) + 1));
+    }
+
+    postSpy.mockResolvedValueOnce({
+      data: { data: { answer: 'a4', sources: [], inputTokens: 1, outputTokens: 1, correlationId: 'c4', followUps: [] } },
+    });
+    fireEvent.change(screen.getByTestId('family-chat-input'), { target: { value: 'q4' } });
+    fireEvent.click(screen.getByTestId('family-chat-submit'));
+
+    await waitFor(() => expect(postSpy).toHaveBeenCalledTimes(4));
+    const fourth = postSpy.mock.calls[3][1] as { recentTurns: Array<{ question: string; answer: string }> };
+    expect(fourth.recentTurns).toHaveLength(2);
+    // Only q2 and q3 should be sent -- oldest two completed turns dropped client-side.
+    expect(fourth.recentTurns.map((t) => t.question)).toEqual(['q2', 'q3']);
   });
 
   it('shows a failure hint when the feedback POST rejects', async () => {

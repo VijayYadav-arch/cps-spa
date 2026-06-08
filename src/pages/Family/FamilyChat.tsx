@@ -4,6 +4,12 @@ import { familyApi } from '@/portal/familyApi';
 import { usePortalAuth } from '@/portal/PortalAuthContext';
 
 const MAX_QUESTION_LENGTH = 500;
+/**
+ * Maximum number of prior turns the UI sends to the backend for pronoun
+ * resolution. Mirrors IFamilyChatService.MaxRecentTurns -- the server
+ * clamps defensively, but matching here keeps the request body honest.
+ */
+const MAX_RECENT_TURNS = 2;
 
 /** Translation keys for the suggested-question chips shown on first load. */
 const SUGGESTED_PROMPT_KEYS = [
@@ -114,11 +120,19 @@ export function FamilyChat() {
     ]);
     setQuestion('');
     setSubmitting(true);
+    // Build the most-recent-N completed turns (oldest -> newest) so the
+    // backend can resolve pronouns. Only include turns that have a non-null
+    // answer -- in-flight or errored turns don't carry conversational signal.
+    const recentTurns = turns
+      .filter((t) => typeof t.answer === 'string' && t.answer.length > 0)
+      .slice(-MAX_RECENT_TURNS)
+      .map((t) => ({ question: t.question, answer: t.answer as string }));
     try {
       const res = await familyApi.post<AskResponse>(`/patients/${patientId}/chat`, {
         question: trimmed,
         locale: i18n.resolvedLanguage?.startsWith('es') ? 'es' : 'en',
         includeVisitDetails,
+        recentTurns: recentTurns.length > 0 ? recentTurns : undefined,
       });
       setTurns((prev) =>
         prev.map((turn) =>
