@@ -89,6 +89,7 @@
       "feedbackNotHelpfulLabel": "Mark as not helpful",
       "feedbackThanks": "Thanks for the feedback!",
       "feedbackFailed": "Couldn't save feedback. Please try again.",
+      "followUpsLabel": "You might also ask:",
       "errorRateLimited": "Too many questions in a short time — please wait a few minutes and try again.",
       "errorNotAvailable": "The AI assistant is not currently available.",
       "errorUnreachable": "Couldn't reach the AI service. Please try again shortly.",

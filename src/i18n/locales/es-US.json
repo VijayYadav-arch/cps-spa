@@ -89,6 +89,7 @@
       "feedbackNotHelpfulLabel": "Marcar como no útil",
       "feedbackThanks": "¡Gracias por sus comentarios!",
       "feedbackFailed": "No se pudo guardar el comentario. Intente de nuevo.",
+      "followUpsLabel": "También podría preguntar:",
       "errorRateLimited": "Demasiadas preguntas en poco tiempo — espere unos minutos e intente de nuevo.",
       "errorNotAvailable": "El asistente con IA no está disponible en este momento.",
       "errorUnreachable": "No se pudo contactar el servicio. Intente de nuevo en unos momentos.",

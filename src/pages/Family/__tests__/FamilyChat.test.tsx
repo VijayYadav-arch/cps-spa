@@ -49,6 +49,7 @@ describe('FamilyChat', () => {
           inputTokens: 120,
           outputTokens: 18,
           correlationId: 'family-chat-7-test',
+          followUps: [],
         },
       },
     });
@@ -77,7 +78,7 @@ describe('FamilyChat', () => {
 
   it('forwards the active locale to the backend', async () => {
     postSpy.mockResolvedValue({
-      data: { data: { answer: 'ok', sources: [], inputTokens: 1, outputTokens: 1, correlationId: 'c' } },
+      data: { data: { answer: 'ok', sources: [], inputTokens: 1, outputTokens: 1, correlationId: 'c', followUps: [] } },
     });
     await i18n.changeLanguage('es-US');
 
@@ -129,7 +130,7 @@ describe('FamilyChat', () => {
 
   it('renders suggested-prompt chips on empty state and sends one on click', async () => {
     postSpy.mockResolvedValue({
-      data: { data: { answer: 'fine', sources: [], inputTokens: 1, outputTokens: 1, correlationId: 'c1' } },
+      data: { data: { answer: 'fine', sources: [], inputTokens: 1, outputTokens: 1, correlationId: 'c1', followUps: [] } },
     });
 
     renderChat();
@@ -146,7 +147,7 @@ describe('FamilyChat', () => {
 
   it('hides the suggested prompts after the first turn lands', async () => {
     postSpy.mockResolvedValue({
-      data: { data: { answer: 'fine', sources: [], inputTokens: 1, outputTokens: 1, correlationId: 'c1' } },
+      data: { data: { answer: 'fine', sources: [], inputTokens: 1, outputTokens: 1, correlationId: 'c1', followUps: [] } },
     });
 
     renderChat();
@@ -160,7 +161,7 @@ describe('FamilyChat', () => {
 
   it('passes includeVisitDetails=true to the backend when checkbox is ticked', async () => {
     postSpy.mockResolvedValue({
-      data: { data: { answer: 'ok', sources: [], inputTokens: 1, outputTokens: 1, correlationId: 'c' } },
+      data: { data: { answer: 'ok', sources: [], inputTokens: 1, outputTokens: 1, correlationId: 'c', followUps: [] } },
     });
 
     renderChat();
@@ -217,6 +218,84 @@ describe('FamilyChat', () => {
         && (body as { helpful: boolean }).helpful === false,
       )).toBe(true);
     });
+  });
+
+  it('renders follow-up chips when the response includes followUps', async () => {
+    postSpy.mockResolvedValueOnce({
+      data: {
+        data: {
+          answer: 'You have 2 active medications.',
+          sources: ['patient-summary', 'medications'],
+          inputTokens: 80,
+          outputTokens: 15,
+          correlationId: 'family-chat-7-fup',
+          followUps: ['What is the dose?', 'Who prescribed them?', 'When was the last refill?'],
+        },
+      },
+    });
+
+    renderChat();
+    fireEvent.change(screen.getByTestId('family-chat-input'), { target: { value: 'meds?' } });
+    fireEvent.click(screen.getByTestId('family-chat-submit'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('follow-ups')).toBeInTheDocument();
+    });
+    const chips = screen.getAllByTestId('follow-up-chip');
+    expect(chips).toHaveLength(3);
+    expect(chips[0]).toHaveTextContent('What is the dose?');
+    expect(screen.getByText(/You might also ask/)).toBeInTheDocument();
+  });
+
+  it('clicking a follow-up chip submits it as the next question', async () => {
+    postSpy.mockResolvedValueOnce({
+      data: {
+        data: {
+          answer: 'first answer',
+          sources: ['patient-summary'],
+          inputTokens: 1,
+          outputTokens: 1,
+          correlationId: 'family-chat-7-1',
+          followUps: ['Follow-up A?', 'Follow-up B?'],
+        },
+      },
+    });
+
+    renderChat();
+    fireEvent.change(screen.getByTestId('family-chat-input'), { target: { value: 'first' } });
+    fireEvent.click(screen.getByTestId('family-chat-submit'));
+    await waitFor(() => expect(screen.getByTestId('follow-ups')).toBeInTheDocument());
+
+    postSpy.mockResolvedValueOnce({
+      data: { data: { answer: 'b answer', sources: [], inputTokens: 1, outputTokens: 1, correlationId: 'family-chat-7-2', followUps: [] } },
+    });
+    fireEvent.click(screen.getAllByTestId('follow-up-chip')[1]);
+
+    await waitFor(() => expect(postSpy).toHaveBeenCalledTimes(2));
+    expect(postSpy.mock.calls[1][0]).toBe('/patients/7/chat');
+    expect((postSpy.mock.calls[1][1] as { question: string }).question).toBe('Follow-up B?');
+  });
+
+  it('hides the follow-up row when the backend returns no followUps', async () => {
+    postSpy.mockResolvedValueOnce({
+      data: {
+        data: {
+          answer: "I don't have that information — please contact your care coordinator.",
+          sources: ['patient-summary'],
+          inputTokens: 50,
+          outputTokens: 12,
+          correlationId: 'family-chat-7-empty',
+          followUps: [],
+        },
+      },
+    });
+
+    renderChat();
+    fireEvent.change(screen.getByTestId('family-chat-input'), { target: { value: 'unanswerable' } });
+    fireEvent.click(screen.getByTestId('family-chat-submit'));
+
+    await waitFor(() => expect(screen.getByText(/don't have that information/i)).toBeInTheDocument());
+    expect(screen.queryByTestId('follow-ups')).not.toBeInTheDocument();
   });
 
   it('shows a failure hint when the feedback POST rejects', async () => {
