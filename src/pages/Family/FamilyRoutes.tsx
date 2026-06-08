@@ -5,6 +5,7 @@ import { FamilyLoginPage } from './FamilyLoginPage';
 import { FamilyDashboard } from './FamilyDashboard';
 import { FamilyBilling } from './FamilyBilling';
 import { FamilyCarePlan } from './FamilyCarePlan';
+import { FamilyChat } from './FamilyChat';
 import { FamilyDocuments } from './FamilyDocuments';
 import { FamilyMedications } from './FamilyMedications';
 import { FamilyPreferences } from './FamilyPreferences';
@@ -75,6 +76,14 @@ export function FamilyRoutes() {
         element={
           <RequireFamilyAuth>
             <FamilyVisits />
+          </RequireFamilyAuth>
+        }
+      />
+      <Route
+        path="chat"
+        element={
+          <RequireFamilyAuth>
+            <FamilyChat />
           </RequireFamilyAuth>
         }
       />
