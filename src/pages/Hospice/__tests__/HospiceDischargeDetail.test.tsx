@@ -6,6 +6,15 @@ import * as hospiceApi from '@/api/hospice';
 
 vi.mock('@/api/hospice');
 
+// Mock the /me query seam so usePermission resolves synchronously without a
+// QueryClientProvider. Real usePermission logic still runs against this data.
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue({ data: { permissions } } as unknown as ReturnType<typeof useUserRoles>);
+}
+
 function makeDischarge(overrides: any = {}) {
   return {
     id: 1, organizationId: 1, electionId: 42,
@@ -32,7 +41,12 @@ function renderDetail(dischargeId = '1') {
 }
 
 describe('HospiceDischargeDetail', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // Default: user holds hospice:discharge_manage so the edit-form Save button
+    // is enabled for existing behaviour tests. Gating tests override.
+    setPermissions(['hospice:discharge_manage']);
+  });
 
   it('renders discharge summary', async () => {
     vi.mocked(hospiceApi.getDischarge).mockResolvedValueOnce(makeDischarge());
@@ -85,5 +99,25 @@ describe('HospiceDischargeDetail', () => {
     await waitFor(() => screen.getByRole('button', { name: /edit discharge/i }));
     fireEvent.click(screen.getByRole('button', { name: /edit discharge/i }));
     expect(screen.getByLabelText(/idg approval date/i)).toBeInTheDocument();
+  });
+
+  it('disables Save with a permission tooltip when the user lacks hospice:discharge_manage', async () => {
+    setPermissions([]); // no hospice:discharge_manage
+    vi.mocked(hospiceApi.getDischarge).mockResolvedValueOnce(makeDischarge());
+    renderDetail();
+    await waitFor(() => screen.getByRole('button', { name: /edit discharge/i }));
+    fireEvent.click(screen.getByRole('button', { name: /edit discharge/i }));
+    const btn = screen.getByRole('button', { name: /^save$/i });
+    expect(btn).toBeDisabled();
+    expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+  });
+
+  it('enables Save when the user has hospice:discharge_manage', async () => {
+    setPermissions(['hospice:discharge_manage']);
+    vi.mocked(hospiceApi.getDischarge).mockResolvedValueOnce(makeDischarge());
+    renderDetail();
+    await waitFor(() => screen.getByRole('button', { name: /edit discharge/i }));
+    fireEvent.click(screen.getByRole('button', { name: /edit discharge/i }));
+    expect(screen.getByRole('button', { name: /^save$/i })).toBeEnabled();
   });
 });

@@ -13,7 +13,17 @@ vi.mock('@/api/claims', () => ({
   predictClaimDenial: vi.fn(),
 }));
 
-import { getClaim, downloadClaimPdf, scrubClaimById, predictClaimDenial } from '@/api/claims';
+import { getClaim, submitClaim, downloadClaimPdf, scrubClaimById, predictClaimDenial } from '@/api/claims';
+
+// Mock the /me query seam so usePermission resolves synchronously without a
+// QueryClientProvider. Real usePermission logic still runs against this data.
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+const ALL_CLAIM_PERMS = ['claims:view', 'claims:submit', 'billing:scrub', 'claims:print'];
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue({ data: { permissions } } as unknown as ReturnType<typeof useUserRoles>);
+}
 
 function claim(over: Partial<ClaimDetailType> = {}): ClaimDetailType {
   return {
@@ -44,6 +54,9 @@ function renderPage() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // Default: user holds every claim-related permission so existing
+  // behaviour tests see enabled buttons. Permission-gating tests override.
+  setPermissions(ALL_CLAIM_PERMS);
   // jsdom doesn't ship a URL.createObjectURL — stub it so the print handler runs cleanly
   Object.assign(URL, {
     createObjectURL: vi.fn(() => 'blob:fake'),
@@ -207,5 +220,84 @@ describe('ClaimDetail — AI denial prediction', () => {
     await user.click(screen.getByRole('button', { name: /Predict denial risk/i }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(/AI provider unavailable/i);
+  });
+});
+
+describe('ClaimDetail — submit', () => {
+  it('submits the claim and reflects the refreshed status', async () => {
+    const user = userEvent.setup();
+    vi.mocked(getClaim).mockResolvedValue(claim({ status: 'draft' }));
+    vi.mocked(submitClaim).mockResolvedValue(claim({ status: 'submitted' }));
+
+    renderPage();
+    await screen.findByText(/Claim #5/i);
+
+    await user.click(screen.getByRole('button', { name: /Submit Claim/i }));
+
+    await waitFor(() => {
+      expect(submitClaim).toHaveBeenCalledWith(5);
+    });
+    // Status flips to submitted, which hides the Submit button.
+    await waitFor(() => {
+      expect(screen.queryByRole('button', { name: /Submit Claim/i })).not.toBeInTheDocument();
+    });
+  });
+
+  it('surfaces an "already being submitted" error on a 409 ALREADY_SUBMITTING', async () => {
+    const user = userEvent.setup();
+    vi.mocked(getClaim).mockResolvedValue(claim({ status: 'draft' }));
+    vi.mocked(submitClaim).mockRejectedValue({
+      response: { status: 409, data: { code: 'ALREADY_SUBMITTING' } },
+    });
+
+    renderPage();
+    await screen.findByText(/Claim #5/i);
+    await user.click(screen.getByRole('button', { name: /Submit Claim/i }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(/already being submitted/i);
+  });
+});
+
+describe('ClaimDetail — permission gating', () => {
+  it('disables Submit Claim with a permission tooltip when the user lacks claims:submit', async () => {
+    setPermissions(['claims:view', 'billing:scrub', 'claims:print']); // no claims:submit
+    vi.mocked(getClaim).mockResolvedValue(claim({ status: 'draft' }));
+
+    renderPage();
+    await screen.findByText(/Claim #5/i);
+
+    const btn = screen.getByRole('button', { name: /Submit Claim/i });
+    expect(btn).toBeDisabled();
+    expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+  });
+
+  it('enables Submit Claim when the user has claims:submit', async () => {
+    setPermissions(['claims:view', 'claims:submit']);
+    vi.mocked(getClaim).mockResolvedValue(claim({ status: 'draft' }));
+
+    renderPage();
+    await screen.findByText(/Claim #5/i);
+
+    expect(screen.getByRole('button', { name: /Submit Claim/i })).toBeEnabled();
+  });
+
+  it('disables Validate when the user lacks billing:scrub', async () => {
+    setPermissions(['claims:view']); // no billing:scrub
+    vi.mocked(getClaim).mockResolvedValue(claim());
+
+    renderPage();
+    await screen.findByText(/Claim #5/i);
+
+    expect(screen.getByRole('button', { name: /^Validate$/ })).toBeDisabled();
+  });
+
+  it('disables Print Claim Form when the user lacks claims:print', async () => {
+    setPermissions(['claims:view']); // no claims:print
+    vi.mocked(getClaim).mockResolvedValue(claim());
+
+    renderPage();
+    await screen.findByText(/Claim #5/i);
+
+    expect(screen.getByRole('button', { name: /Print Claim Form/i })).toBeDisabled();
   });
 });

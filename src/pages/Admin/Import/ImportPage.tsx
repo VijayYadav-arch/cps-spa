@@ -1,5 +1,9 @@
 import { useRef, useState } from 'react';
 import { apiClient } from '@/api/client';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 interface ImportError {
   row: number;
@@ -47,6 +51,9 @@ export function ImportPage() {
   const [result, setResult] = useState<ImportResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Import → POST /import/patients|claims → [Authorize(Policy = "admin:import")].
+  const canImport = usePermission(PERMISSIONS.ADMIN_IMPORT);
 
   const fields = importType === 'patients' ? PATIENT_FIELDS : CLAIM_FIELDS;
 
@@ -242,7 +249,8 @@ export function ImportPage() {
         <button
           type="button"
           onClick={handleImport}
-          disabled={importing}
+          disabled={importing || !canImport}
+          title={!canImport ? NO_PERMISSION : undefined}
           className="px-6 py-2.5 bg-teal-600 text-white rounded-lg font-medium hover:bg-teal-700 disabled:opacity-50 mb-6"
         >
           {importing ? 'Importing...' : `Import ${importType === 'patients' ? 'Patients' : 'Claims'}`}

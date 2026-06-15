@@ -9,6 +9,10 @@ import {
 } from '@/api/qapi';
 import { RcaForm, type RcaFormSubmitPayload } from '@/components/RcaForm';
 import { AdverseEventBadge } from '@/components/AdverseEventBadge';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 const NEXT_STATUSES: Record<HospiceAdverseEventStatus, HospiceAdverseEventStatus[]> = {
   Draft: ['Active', 'DismissedAsNonEvent'],
@@ -23,6 +27,11 @@ export function AdverseEventDetailPage() {
   const id = Number(eventId);
   const [ev, setEv] = useState<HospiceAdverseEvent | null>(null);
   const [notes, setNotes] = useState('');
+
+  // Status transitions hit PATCH /adverse-events/{id}, gated by
+  // hospice:qapi_adverse_event_manage. (The RCA create endpoint is gated by the
+  // same policy; its submit button lives in the shared RcaForm component.)
+  const canManage = usePermission(PERMISSIONS.HOSPICE_QAPI_ADVERSE_EVENT_MANAGE);
 
   const reload = async () => { setEv(await getAdverseEvent(id)); };
   useEffect(() => { void reload(); }, [id]);
@@ -60,7 +69,15 @@ export function AdverseEventDetailPage() {
           <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3} />
           <div>
             {NEXT_STATUSES[ev.status].map(next => (
-              <button key={next} onClick={() => handleTransition(next)}>Move to {next}</button>
+              <button
+                key={next}
+                onClick={() => handleTransition(next)}
+                disabled={!canManage}
+                title={!canManage ? NO_PERMISSION : undefined}
+                style={{ cursor: !canManage ? 'not-allowed' : 'pointer' }}
+              >
+                Move to {next}
+              </button>
             ))}
           </div>
         </section>

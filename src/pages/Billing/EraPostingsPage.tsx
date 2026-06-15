@@ -4,6 +4,10 @@ import {
   postEra,
   type EraPostingRow,
 } from '@/api/billing';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 const PAGE_SIZE = 25;
 
@@ -26,6 +30,10 @@ export function EraPostingsPage() {
   const [submissionId, setSubmissionId] = useState('');
   const [uploadMessage, setUploadMessage] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+
+  // The manual 835 post (POST /billing/era) is gated by billing:era. The
+  // upload-form toggle and pagination are not state-changing → not gated.
+  const canPostEra = usePermission(PERMISSIONS.BILLING_ERA);
 
   const load = async () => {
     setIsLoading(true);
@@ -144,8 +152,9 @@ export function EraPostingsPage() {
           </label>
           <button
             type="button"
-            disabled={uploading}
+            disabled={uploading || !canPostEra}
             aria-busy={uploading}
+            title={!canPostEra ? NO_PERMISSION : undefined}
             onClick={() => { void submitUpload(); }}
           >
             {uploading ? 'Uploading…' : 'Post ERA'}

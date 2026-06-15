@@ -1,10 +1,18 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { QapiReviewLogPage } from '@/pages/Quality/QapiReviewLogPage';
 import * as qapiApi from '@/api/qapi';
 
 vi.mock('@/api/qapi');
+
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue({ data: { permissions } } as unknown as ReturnType<typeof useUserRoles>);
+}
 
 function makeReview(overrides: Partial<qapiApi.HospiceQapiReview> = {}): qapiApi.HospiceQapiReview {
   return {
@@ -22,7 +30,10 @@ function makeReview(overrides: Partial<qapiApi.HospiceQapiReview> = {}): qapiApi
 }
 
 describe('QapiReviewLogPage', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    setPermissions(['hospice:qapi_review_view', 'hospice:qapi_review_manage']);
+  });
 
   it('renders review rows from listReviews mock', async () => {
     vi.mocked(qapiApi.listReviews).mockResolvedValueOnce([
@@ -37,5 +48,31 @@ describe('QapiReviewLogPage', () => {
     expect(screen.getByText('Dr. Smith, Nurse Jones')).toBeInTheDocument();
     expect(screen.getByText('Dr. Lee, Admin Brown')).toBeInTheDocument();
     expect(screen.getByText('Approve new PIP')).toBeInTheDocument();
+  });
+
+  describe('permission gating', () => {
+    it('disables Log Review with a permission tooltip when the user lacks review-manage', async () => {
+      setPermissions(['hospice:qapi_review_view']); // no manage
+      vi.mocked(qapiApi.listReviews).mockResolvedValue([]);
+
+      render(<MemoryRouter><QapiReviewLogPage /></MemoryRouter>);
+
+      await userEvent.click(screen.getByRole('button', { name: /Log New Review/i }));
+
+      const btn = screen.getByRole('button', { name: /^Log Review$/i });
+      expect(btn).toBeDisabled();
+      expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+    });
+
+    it('enables Log Review when the user has review-manage', async () => {
+      setPermissions(['hospice:qapi_review_view', 'hospice:qapi_review_manage']);
+      vi.mocked(qapiApi.listReviews).mockResolvedValue([]);
+
+      render(<MemoryRouter><QapiReviewLogPage /></MemoryRouter>);
+
+      await userEvent.click(screen.getByRole('button', { name: /Log New Review/i }));
+
+      expect(screen.getByRole('button', { name: /^Log Review$/i })).toBeEnabled();
+    });
   });
 });

@@ -6,6 +6,13 @@ import * as qapiApi from '@/api/qapi';
 
 vi.mock('@/api/qapi');
 
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue({ data: { permissions } } as unknown as ReturnType<typeof useUserRoles>);
+}
+
 function makePip(overrides: Partial<qapiApi.HospiceQapiPip> = {}): qapiApi.HospiceQapiPip {
   return {
     id: 7,
@@ -41,7 +48,10 @@ function renderDetail(pipId = '7') {
 }
 
 describe('QapiPipDetailPage', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    setPermissions(['hospice:qapi_pip_view', 'hospice:qapi_pip_manage']);
+  });
 
   it('shows PipScorecard title for the given pipId', async () => {
     vi.mocked(qapiApi.listPips).mockResolvedValueOnce([makePip()]);
@@ -62,5 +72,37 @@ describe('QapiPipDetailPage', () => {
       expect(screen.getByText(/Reduce medication errors across all patients/i)).toBeInTheDocument(),
     );
     expect(screen.getByText(/Status: Active/i)).toBeInTheDocument();
+  });
+
+  describe('permission gating', () => {
+    it('disables Save with a permission tooltip when the user lacks pip-manage', async () => {
+      setPermissions(['hospice:qapi_pip_view']); // no manage
+      vi.mocked(qapiApi.listPips).mockResolvedValueOnce([makePip()]);
+
+      renderDetail('7');
+
+      const btn = await screen.findByRole('button', { name: /^Save$/i });
+      expect(btn).toBeDisabled();
+      expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+    });
+
+    it('disables Complete when the user lacks pip-manage', async () => {
+      setPermissions(['hospice:qapi_pip_view']); // no manage
+      vi.mocked(qapiApi.listPips).mockResolvedValueOnce([makePip({ status: 'Active' })]);
+
+      renderDetail('7');
+
+      expect(await screen.findByRole('button', { name: /^Complete$/i })).toBeDisabled();
+    });
+
+    it('enables Save and Complete when the user has pip-manage', async () => {
+      setPermissions(['hospice:qapi_pip_view', 'hospice:qapi_pip_manage']);
+      vi.mocked(qapiApi.listPips).mockResolvedValueOnce([makePip({ status: 'Active' })]);
+
+      renderDetail('7');
+
+      expect(await screen.findByRole('button', { name: /^Save$/i })).toBeEnabled();
+      expect(screen.getByRole('button', { name: /^Complete$/i })).toBeEnabled();
+    });
   });
 });

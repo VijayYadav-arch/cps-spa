@@ -7,6 +7,10 @@ import {
   type Branch,
   type CreateBranchRequest,
 } from '@/api/admin';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 function extractError(err: unknown, fallback: string): string {
   return (
@@ -35,6 +39,11 @@ export function BranchesPage() {
   const [editing, setEditing] = useState<Branch | null>(null);
   const [form, setForm] = useState<CreateBranchRequest>(EMPTY_FORM);
   const [showForm, setShowForm] = useState(false);
+
+  // Create / update / delete branches all require admin:manage_branches
+  // (POST|PUT|DELETE /branches are gated by that policy). The list (GET) is
+  // open to any authenticated user, so viewing isn't gated.
+  const canManage = usePermission(PERMISSIONS.ADMIN_MANAGE_BRANCHES);
 
   async function refresh() {
     setIsLoading(true);
@@ -148,7 +157,15 @@ export function BranchesPage() {
             optionally assigned to a branch for operational reporting.
           </p>
         </div>
-        <button type="button" onClick={startCreate}>+ New Branch</button>
+        <button
+          type="button"
+          onClick={startCreate}
+          disabled={!canManage}
+          title={!canManage ? NO_PERMISSION : undefined}
+          style={{ cursor: !canManage ? 'not-allowed' : 'pointer' }}
+        >
+          + New Branch
+        </button>
       </header>
 
       {error && <div role="alert" style={{ color: '#b91c1c' }}>{error}</div>}
@@ -239,7 +256,14 @@ export function BranchesPage() {
             />
           </label>
           <div style={{ gridColumn: '1 / -1', display: 'flex', gap: 8 }}>
-            <button type="submit">{editing ? 'Save' : 'Create'}</button>
+            <button
+              type="submit"
+              disabled={!canManage}
+              title={!canManage ? NO_PERMISSION : undefined}
+              style={{ cursor: !canManage ? 'not-allowed' : 'pointer' }}
+            >
+              {editing ? 'Save' : 'Create'}
+            </button>
             <button type="button" onClick={() => setShowForm(false)}>Cancel</button>
           </div>
         </form>
@@ -284,14 +308,18 @@ export function BranchesPage() {
                   <button
                     type="button"
                     onClick={() => void handleToggleActive(b)}
-                    style={{ fontSize: 12 }}
+                    disabled={!canManage}
+                    title={!canManage ? NO_PERMISSION : undefined}
+                    style={{ fontSize: 12, cursor: !canManage ? 'not-allowed' : 'pointer' }}
                   >
                     {b.isActive ? 'Deactivate' : 'Reactivate'}
                   </button>
                   <button
                     type="button"
                     onClick={() => void handleDelete(b)}
-                    style={{ fontSize: 12, color: '#b91c1c' }}
+                    disabled={!canManage}
+                    title={!canManage ? NO_PERMISSION : undefined}
+                    style={{ fontSize: 12, color: '#b91c1c', cursor: !canManage ? 'not-allowed' : 'pointer' }}
                   >
                     Delete
                   </button>

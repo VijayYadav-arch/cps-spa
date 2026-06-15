@@ -11,6 +11,16 @@ vi.mock('@/api/hospice', () => ({
 
 import { getElection, buildPerDiemClaim } from '@/api/hospice';
 
+// Mock the /me query seam so usePermission resolves synchronously without a
+// QueryClientProvider. Real usePermission logic still runs against this data.
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+const ALL_PERMS = ['hospice:view', 'hospice:per_diem_billing'];
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue({ data: { permissions } } as unknown as ReturnType<typeof useUserRoles>);
+}
+
 const electionFixture = {
   id: 7,
   patientId: 1,
@@ -48,7 +58,10 @@ function renderPage() {
 }
 
 describe('HospicePerDiemClaim', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    setPermissions(ALL_PERMS);
+  });
 
   it('shows loading then prefills date range from current period', async () => {
     vi.mocked(getElection).mockResolvedValueOnce(electionFixture);
@@ -146,5 +159,24 @@ describe('HospicePerDiemClaim', () => {
     await waitFor(() =>
       expect(screen.getByRole('alert')).toHaveTextContent('No unbilled days'),
     );
+  });
+
+  describe('permission gating', () => {
+    it('disables Build Per-Diem Claim with a permission tooltip when the user lacks hospice:per_diem_billing', async () => {
+      setPermissions(['hospice:view']); // no hospice:per_diem_billing
+      vi.mocked(getElection).mockResolvedValueOnce(electionFixture);
+      renderPage();
+      const btn = await screen.findByRole('button', { name: /Build Per-Diem Claim/i });
+      expect(btn).toBeDisabled();
+      expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+    });
+
+    it('enables Build Per-Diem Claim when the user has hospice:per_diem_billing', async () => {
+      setPermissions(['hospice:view', 'hospice:per_diem_billing']);
+      vi.mocked(getElection).mockResolvedValueOnce(electionFixture);
+      renderPage();
+      const btn = await screen.findByRole('button', { name: /Build Per-Diem Claim/i });
+      expect(btn).toBeEnabled();
+    });
   });
 });

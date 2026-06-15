@@ -6,6 +6,10 @@ import {
   type AuditSearchParams,
   type PaginationMeta,
 } from '@/api/platform';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 const EVENT_TYPES = [
   '', 'phi-access', 'phi-modify', 'phi-export',
@@ -70,6 +74,9 @@ export function AuditLogSearchPage() {
   const [pagination, setPagination] = useState<PaginationMeta | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // CSV export hits GET /audit/export, gated by admin:audit_logs.
+  const canExport = usePermission(PERMISSIONS.ADMIN_AUDIT_LOGS);
 
   useEffect(() => {
     let cancelled = false;
@@ -181,7 +188,15 @@ export function AuditLogSearchPage() {
         <div style={{ gridColumn: 'span 4', display: 'flex', gap: 8 }}>
           <button type="submit">Search</button>
           <button type="button" onClick={onClear}>Clear</button>
-          <button type="button" onClick={onExport}>Download CSV</button>
+          <button
+            type="button"
+            onClick={onExport}
+            disabled={!canExport}
+            title={!canExport ? NO_PERMISSION : undefined}
+            style={{ cursor: !canExport ? 'not-allowed' : 'pointer' }}
+          >
+            Download CSV
+          </button>
         </div>
       </form>
 

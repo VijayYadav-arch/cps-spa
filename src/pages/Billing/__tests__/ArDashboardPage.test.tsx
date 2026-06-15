@@ -12,6 +12,16 @@ vi.mock('@/api/billing', () => ({
 
 import { getArDashboard, logArCall } from '@/api/billing';
 
+// Mock the /me query seam so usePermission resolves synchronously without a
+// QueryClientProvider. Real usePermission logic still runs against this data.
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+const ALL_PERMS = ['billing:ar-followup'];
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue({ data: { permissions } } as unknown as ReturnType<typeof useUserRoles>);
+}
+
 function summary(over: Partial<ArDashboardSummary> = {}): ArDashboardSummary {
   return {
     asOfUtc: '2026-05-19T12:00:00Z',
@@ -79,7 +89,12 @@ function renderPage() {
 }
 
 describe('ArDashboardPage', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // Default: user holds every permission this page uses so existing
+    // behaviour tests see enabled buttons. Permission-gating tests override.
+    setPermissions(ALL_PERMS);
+  });
 
   it('renders metric cards', async () => {
     vi.mocked(getArDashboard).mockResolvedValueOnce(summary());
@@ -162,6 +177,25 @@ describe('ArDashboardPage', () => {
     renderPage();
     await waitFor(() => {
       expect(screen.getByText(/Great job staying on top of AR/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('permission gating', () => {
+    it('disables Log Call with a permission tooltip when the user lacks billing:ar-followup', async () => {
+      setPermissions([]); // no billing:ar-followup
+      vi.mocked(getArDashboard).mockResolvedValueOnce(summary());
+      renderPage();
+      const [firstLogBtn] = await screen.findAllByRole('button', { name: 'Log Call' });
+      expect(firstLogBtn).toBeDisabled();
+      expect(firstLogBtn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+    });
+
+    it('enables Log Call when the user has billing:ar-followup', async () => {
+      setPermissions(['billing:ar-followup']);
+      vi.mocked(getArDashboard).mockResolvedValueOnce(summary());
+      renderPage();
+      const [firstLogBtn] = await screen.findAllByRole('button', { name: 'Log Call' });
+      expect(firstLogBtn).toBeEnabled();
     });
   });
 });

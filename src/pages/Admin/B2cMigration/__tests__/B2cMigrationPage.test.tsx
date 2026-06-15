@@ -17,6 +17,15 @@ vi.mock('@/api/b2cMigration', async () => {
 
 import { listB2cOrganizations, migrateOrgToB2c } from '@/api/b2cMigration';
 
+// Mock the /me query seam so usePermission resolves synchronously without a
+// QueryClientProvider. Real usePermission logic still runs against this data.
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue({ data: { permissions } } as unknown as ReturnType<typeof useUserRoles>);
+}
+
 function buildOrg(overrides: Partial<{ b2CMigrated: boolean }> = {}) {
   return {
     orgId: 1,
@@ -40,6 +49,9 @@ function renderPage() {
 describe('B2cMigrationPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Default: user holds platform:admin so existing behaviour tests see an
+    // enabled Send Invitations button. Permission-gating tests override.
+    setPermissions(['platform:admin']);
   });
 
   it('renders heading + loads org cards', async () => {
@@ -105,6 +117,28 @@ describe('B2cMigrationPage', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent(/graph api unreachable/i);
+    });
+  });
+
+  describe('permission gating', () => {
+    it('disables Send Invitations with a permission tooltip when the user lacks platform:admin', async () => {
+      setPermissions([]); // no platform:admin
+      vi.mocked(listB2cOrganizations).mockResolvedValueOnce([buildOrg()]);
+      renderPage();
+
+      const btn = await screen.findByRole('button', { name: /send invitations/i });
+      expect(btn).toBeDisabled();
+      expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+    });
+
+    it('enables Send Invitations when the user has platform:admin', async () => {
+      setPermissions(['platform:admin']);
+      vi.mocked(listB2cOrganizations).mockResolvedValueOnce([buildOrg()]);
+      renderPage();
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /send invitations/i })).toBeEnabled();
+      });
     });
   });
 });

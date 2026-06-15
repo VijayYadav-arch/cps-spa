@@ -6,6 +6,10 @@ import {
   type IdgMeeting,
   type IdgAttendee,
 } from '@/api/hospice';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 const DEFAULT_ATTENDEES: IdgAttendee[] = [
   { userId: 0, role: 'physician' },
@@ -23,6 +27,9 @@ export function HospiceIdgScheduler() {
     new Date().toISOString().slice(0, 16),
   );
   const [submitting, setSubmitting] = useState(false);
+
+  // Schedule hits POST /hospice/idg-meetings → [Authorize(hospice:manage)].
+  const canManage = usePermission(PERMISSIONS.HOSPICE_MANAGE);
 
   async function refresh() {
     setLoading(true);
@@ -92,7 +99,12 @@ export function HospiceIdgScheduler() {
               style={{ display: 'block', marginTop: 4 }}
             />
           </label>
-          <button onClick={handleSchedule} disabled={submitting}>
+          <button
+            onClick={handleSchedule}
+            disabled={submitting || !canManage}
+            title={!canManage ? NO_PERMISSION : undefined}
+            style={{ cursor: (submitting || !canManage) ? 'not-allowed' : 'pointer' }}
+          >
             {submitting ? 'Scheduling…' : 'Schedule'}
           </button>
         </div>

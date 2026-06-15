@@ -17,7 +17,20 @@ import {
   refreshPriorAuthStatusNow,
 } from '@/api/billing';
 
-beforeEach(() => vi.clearAllMocks());
+// Mock the /me query seam so usePermission resolves synchronously without a
+// QueryClientProvider. Real usePermission logic still runs against this data.
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+const ALL_PERMS = ['clinical:prior_auth'];
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue({ data: { permissions } } as unknown as ReturnType<typeof useUserRoles>);
+}
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  setPermissions(ALL_PERMS);
+});
 
 function pa(over: Partial<PriorAuth> = {}): PriorAuth {
   return {
@@ -170,5 +183,46 @@ describe('PriorAuthDetailPage', () => {
     vi.mocked(getPriorAuth).mockRejectedValueOnce({ response: { status: 404 } });
     renderAt(99);
     expect(await screen.findByText(/Prior auth not found/i)).toBeInTheDocument();
+  });
+
+  describe('permission gating', () => {
+    it('disables decision actions with tooltips when lacking clinical:prior_auth', async () => {
+      setPermissions([]); // no clinical:prior_auth
+      vi.mocked(getPriorAuth).mockResolvedValue(pa());
+      renderAt(42);
+      await screen.findByText(/Prior auth #42/);
+
+      const refreshBtn = screen.getByRole('button', { name: /Refresh status now/i });
+      expect(refreshBtn).toBeDisabled();
+      expect(refreshBtn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+
+      const approvalBtn = screen.getByRole('button', { name: /Record approval/i });
+      expect(approvalBtn).toBeDisabled();
+      expect(approvalBtn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+
+      const denialBtn = screen.getByRole('button', { name: /Record denial/i });
+      expect(denialBtn).toBeDisabled();
+      expect(denialBtn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+    });
+
+    it('enables decision actions when the user has clinical:prior_auth', async () => {
+      setPermissions(['clinical:prior_auth']);
+      vi.mocked(getPriorAuth).mockResolvedValue(pa());
+      renderAt(42);
+      await screen.findByText(/Prior auth #42/);
+      expect(screen.getByRole('button', { name: /Refresh status now/i })).toBeEnabled();
+      expect(screen.getByRole('button', { name: /Record approval/i })).toBeEnabled();
+      expect(screen.getByRole('button', { name: /Record denial/i })).toBeEnabled();
+    });
+
+    it('disables the modal Save button when lacking clinical:prior_auth is irrelevant; enables when permitted', async () => {
+      setPermissions(['clinical:prior_auth']);
+      const user = userEvent.setup();
+      vi.mocked(getPriorAuth).mockResolvedValue(pa());
+      renderAt(42);
+      await screen.findByText(/Prior auth #42/);
+      await user.click(screen.getByRole('button', { name: /Record approval/i }));
+      expect(screen.getByRole('button', { name: /^Save$/ })).toBeEnabled();
+    });
   });
 });

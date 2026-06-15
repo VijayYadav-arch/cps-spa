@@ -5,6 +5,10 @@ import {
   type Secondary837Result,
   type SecondaryEligibleClaim,
 } from '@/api/billing';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 const CLEARINGHOUSES = [
   'availity',
@@ -38,6 +42,9 @@ export function SecondaryClaimsPage() {
   const [actionMsg, setActionMsg] = useState<string | null>(null);
   const [building, setBuilding] = useState<number | null>(null);
   const [result, setResult] = useState<Secondary837Result | null>(null);
+
+  // Build 837 calls POST /billing/secondary-claims/{id}/build → billing:scrub.
+  const canBuild = usePermission(PERMISSIONS.BILLING_SCRUB);
 
   async function refresh() {
     setIsLoading(true);
@@ -163,7 +170,8 @@ export function SecondaryClaimsPage() {
                   <button
                     type="button"
                     onClick={() => void handleBuild(c)}
-                    disabled={building === c.claimId}
+                    disabled={building === c.claimId || !canBuild}
+                    title={!canBuild ? NO_PERMISSION : undefined}
                     style={{ fontSize: 12 }}
                   >
                     {building === c.claimId ? 'Building…' : 'Build 837'}

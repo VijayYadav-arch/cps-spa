@@ -6,6 +6,10 @@ import {
   cancelIdgMeeting,
   type IdgMeeting,
 } from '@/api/hospice';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 export function HospiceIdgMeeting() {
   const { meetingId } = useParams<{ meetingId: string }>();
@@ -16,6 +20,10 @@ export function HospiceIdgMeeting() {
   const [notes, setNotes] = useState('');
   const [actionItems, setActionItems] = useState('');
   const [working, setWorking] = useState(false);
+
+  // Complete & cancel hit POST /hospice/idg-meetings/{id}/{complete|cancel}
+  // → [Authorize(hospice:manage)].
+  const canManage = usePermission(PERMISSIONS.HOSPICE_MANAGE);
 
   useEffect(() => {
     if (!meetingId) return;
@@ -111,10 +119,20 @@ export function HospiceIdgMeeting() {
 
       {meeting.status === 'Scheduled' && (
         <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={handleComplete} disabled={working}>
+          <button
+            onClick={handleComplete}
+            disabled={working || !canManage}
+            title={!canManage ? NO_PERMISSION : undefined}
+            style={{ cursor: (working || !canManage) ? 'not-allowed' : 'pointer' }}
+          >
             Mark Completed
           </button>
-          <button onClick={handleCancel} disabled={working}>
+          <button
+            onClick={handleCancel}
+            disabled={working || !canManage}
+            title={!canManage ? NO_PERMISSION : undefined}
+            style={{ cursor: (working || !canManage) ? 'not-allowed' : 'pointer' }}
+          >
             Cancel Meeting
           </button>
         </div>

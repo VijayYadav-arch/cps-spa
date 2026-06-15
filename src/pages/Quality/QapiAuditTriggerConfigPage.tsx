@@ -6,6 +6,10 @@ import {
   type HospiceAdverseEventCategory,
   type HospiceAdverseEventSeverity,
 } from '@/api/qapi';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 const CATEGORIES: HospiceAdverseEventCategory[] = ['PatientFall', 'MedicationError', 'UnscheduledHospitalization', 'Complaint', 'GipDeath', 'Other'];
 const SEVERITIES: HospiceAdverseEventSeverity[] = ['Minor', 'Moderate', 'Major', 'Critical'];
@@ -15,6 +19,10 @@ export function QapiAuditTriggerConfigPage() {
   const [newCode, setNewCode] = useState('');
   const [newCategory, setNewCategory] = useState<HospiceAdverseEventCategory>('PatientFall');
   const [newSeverity, setNewSeverity] = useState<HospiceAdverseEventSeverity>('Moderate');
+
+  // Add / toggle / edit all hit PUT /audit-triggers, gated by
+  // hospice:qapi_audit_trigger_manage.
+  const canManage = usePermission(PERMISSIONS.HOSPICE_QAPI_AUDIT_TRIGGER_MANAGE);
 
   const reload = async () => { setTriggers(await listAuditTriggers()); };
   useEffect(() => { void reload(); }, []);
@@ -67,7 +75,14 @@ export function QapiAuditTriggerConfigPage() {
         <select value={newSeverity} onChange={e => setNewSeverity(e.target.value as HospiceAdverseEventSeverity)}>
           {SEVERITIES.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
-        <button type="submit">Add Trigger</button>
+        <button
+          type="submit"
+          disabled={!canManage}
+          title={!canManage ? NO_PERMISSION : undefined}
+          style={{ cursor: !canManage ? 'not-allowed' : 'pointer' }}
+        >
+          Add Trigger
+        </button>
       </form>
 
       <table>
@@ -77,18 +92,28 @@ export function QapiAuditTriggerConfigPage() {
             <tr key={t.id}>
               <td>{t.auditEventCode}</td>
               <td>
-                <select value={t.category} onChange={e => handleUpdate(t, { category: e.target.value as HospiceAdverseEventCategory })}>
+                <select
+                  value={t.category}
+                  onChange={e => handleUpdate(t, { category: e.target.value as HospiceAdverseEventCategory })}
+                  disabled={!canManage}
+                  title={!canManage ? NO_PERMISSION : undefined}
+                >
                   {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </td>
               <td>
-                <select value={t.severity} onChange={e => handleUpdate(t, { severity: e.target.value as HospiceAdverseEventSeverity })}>
+                <select
+                  value={t.severity}
+                  onChange={e => handleUpdate(t, { severity: e.target.value as HospiceAdverseEventSeverity })}
+                  disabled={!canManage}
+                  title={!canManage ? NO_PERMISSION : undefined}
+                >
                   {SEVERITIES.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </td>
               <td>
-                <label>
-                  <input type="checkbox" checked={t.isEnabled} onChange={() => handleToggle(t)} />
+                <label title={!canManage ? NO_PERMISSION : undefined}>
+                  <input type="checkbox" checked={t.isEnabled} onChange={() => handleToggle(t)} disabled={!canManage} />
                   {t.isEnabled ? 'Enabled' : 'Disabled'}
                 </label>
               </td>

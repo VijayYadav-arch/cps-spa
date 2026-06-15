@@ -6,6 +6,10 @@ import {
   approvePlan,
   type HospiceQapiPlan,
 } from '@/api/qapi';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 export function QapiPlanPage() {
   const [activePlan, setActivePlan] = useState<HospiceQapiPlan | null>(null);
@@ -14,6 +18,9 @@ export function QapiPlanPage() {
   const [title, setTitle] = useState('');
   const [bodyMarkdown, setBodyMarkdown] = useState('');
   const [effectiveDate, setEffectiveDate] = useState('');
+
+  // Create-draft + approve both hit endpoints gated by hospice:qapi_plan_manage.
+  const canManage = usePermission(PERMISSIONS.HOSPICE_QAPI_PLAN_MANAGE);
 
   const reload = async () => {
     const [active, list] = await Promise.all([getActivePlan(), listPlanVersions()]);
@@ -51,7 +58,14 @@ export function QapiPlanPage() {
           <textarea id="plan-body" value={bodyMarkdown} onChange={e => setBodyMarkdown(e.target.value)} rows={10} required />
           <label htmlFor="plan-effective">Effective Date</label>
           <input id="plan-effective" type="date" value={effectiveDate} onChange={e => setEffectiveDate(e.target.value)} required />
-          <button type="submit">Create Draft</button>
+          <button
+            type="submit"
+            disabled={!canManage}
+            title={!canManage ? NO_PERMISSION : undefined}
+            style={{ cursor: !canManage ? 'not-allowed' : 'pointer' }}
+          >
+            Create Draft
+          </button>
         </form>
       )}
 
@@ -78,7 +92,16 @@ export function QapiPlanPage() {
                 <td>{v.effectiveDate}</td>
                 <td>{v.status}</td>
                 <td>
-                  {v.status === 'Draft' && <button onClick={() => handleApprove(v.id)}>Approve</button>}
+                  {v.status === 'Draft' && (
+                    <button
+                      onClick={() => handleApprove(v.id)}
+                      disabled={!canManage}
+                      title={!canManage ? NO_PERMISSION : undefined}
+                      style={{ cursor: !canManage ? 'not-allowed' : 'pointer' }}
+                    >
+                      Approve
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}

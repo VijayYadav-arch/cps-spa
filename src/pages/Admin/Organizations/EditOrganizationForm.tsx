@@ -3,6 +3,10 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { orgsApi } from './orgsApi';
 import { initialOrgForm, type CreateOrgRequest, type OrganizationDetail } from './orgsTypes';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 /**
  * Mirror of NewOrganizationForm with pre-population from the backend.
@@ -21,6 +25,10 @@ export function EditOrganizationForm() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<Partial<Record<keyof CreateOrgRequest, string>>>({});
+
+  // Both update (PUT) and restore are gated by admin:manage_orgs on
+  // OrganizationsController. The detail GET is claims:view (route guard covers it).
+  const canManage = usePermission(PERMISSIONS.ADMIN_MANAGE_ORGS);
 
   useEffect(() => {
     if (!id) return;
@@ -118,8 +126,9 @@ export function EditOrganizationForm() {
             </button>
             <button
               type="button"
-              disabled={submitting}
+              disabled={submitting || !canManage}
               onClick={onRestore}
+              title={!canManage ? NO_PERMISSION : undefined}
               className="px-4 py-2 min-h-12 md:min-h-11 lg:min-h-10 rounded-md bg-teal-600 text-white disabled:opacity-50"
             >
               {submitting ? 'Restoring…' : 'Restore'}
@@ -247,7 +256,8 @@ export function EditOrganizationForm() {
           </button>
           <button
             type="submit"
-            disabled={submitting}
+            disabled={submitting || !canManage}
+            title={!canManage ? NO_PERMISSION : undefined}
             className="px-6 py-2 min-h-12 md:min-h-11 lg:min-h-10 rounded-md bg-teal-600 text-white disabled:opacity-50"
           >
             {submitting ? 'Saving…' : 'Save'}

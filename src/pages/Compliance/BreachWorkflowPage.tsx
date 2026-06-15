@@ -15,6 +15,10 @@ import {
   type BreachStatus,
   type BreachWorkflowSummary,
 } from '@/api/compliance';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 const STATUS_COLORS: Record<BreachStatus, { bg: string; fg: string }> = {
   draft: { bg: '#f1f5f9', fg: '#475569' },
@@ -105,6 +109,12 @@ export function BreachWorkflowPage() {
 
   // Notification / close form
   const [actionNotes, setActionNotes] = useState('');
+
+  // Every breach mutation (register, assess-risk, send-*, close) lives on
+  // BreachWorkflowController / BreachNotificationsController, both gated by
+  // [Authorize(Policy = compliance:breaches)]. The list/detail GETs share that
+  // policy with the route guard, so only the action triggers are gated.
+  const canManage = usePermission(PERMISSIONS.COMPLIANCE_BREACHES);
 
   async function refresh() {
     setIsLoading(true);
@@ -258,7 +268,13 @@ export function BreachWorkflowPage() {
             §164.408, §164.414(b).
           </p>
         </div>
-        <button type="button" onClick={() => openModal('register')}>
+        <button
+          type="button"
+          onClick={() => openModal('register')}
+          disabled={!canManage}
+          title={!canManage ? NO_PERMISSION : undefined}
+          style={{ cursor: !canManage ? 'not-allowed' : 'pointer' }}
+        >
           + Register breach
         </button>
       </header>
@@ -352,29 +368,60 @@ export function BreachWorkflowPage() {
 
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {selected.confirmedAt && selected.riskAssessmentAt === null && (
-              <button onClick={() => openModal('assess', selected)}>Assess Risk</button>
+              <button
+                onClick={() => openModal('assess', selected)}
+                disabled={!canManage}
+                title={!canManage ? NO_PERMISSION : undefined}
+                style={{ cursor: !canManage ? 'not-allowed' : 'pointer' }}
+              >
+                Assess Risk
+              </button>
             )}
             {selected.riskAssessmentAt
               && selected.patientNotificationsSentAt === null
               && selected.status !== 'closed' && (
-                <button onClick={() => openModal('send-patients')}>
+                <button
+                  onClick={() => openModal('send-patients')}
+                  disabled={!canManage}
+                  title={!canManage ? NO_PERMISSION : undefined}
+                  style={{ cursor: !canManage ? 'not-allowed' : 'pointer' }}
+                >
                   Mark Patient Notifications Sent
                 </button>
               )}
             {selected.mediaNoticeRequired
               && selected.mediaNoticeSentAt === null
               && selected.status !== 'closed' && (
-                <button onClick={() => openModal('send-media')}>
+                <button
+                  onClick={() => openModal('send-media')}
+                  disabled={!canManage}
+                  title={!canManage ? NO_PERMISSION : undefined}
+                  style={{ cursor: !canManage ? 'not-allowed' : 'pointer' }}
+                >
                   Mark Media Notice Sent
                 </button>
               )}
             {selected.riskAssessmentAt
               && selected.hhsNotifiedAt === null
               && selected.status !== 'closed' && (
-                <button onClick={() => openModal('send-hhs')}>Mark HHS Notified</button>
+                <button
+                  onClick={() => openModal('send-hhs')}
+                  disabled={!canManage}
+                  title={!canManage ? NO_PERMISSION : undefined}
+                  style={{ cursor: !canManage ? 'not-allowed' : 'pointer' }}
+                >
+                  Mark HHS Notified
+                </button>
               )}
             {selected.status !== 'closed' && (
-              <button onClick={() => openModal('close')}>Close Breach</button>
+              <button
+                onClick={() => openModal('close')}
+                disabled={!canManage}
+                title={!canManage ? NO_PERMISSION : undefined}
+                style={{ cursor: !canManage ? 'not-allowed' : 'pointer' }}
+              >
+                Close Breach
+              </button>
             )}
           </div>
 

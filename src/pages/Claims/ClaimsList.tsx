@@ -6,8 +6,12 @@ import {
   getClaims,
   type ClaimSummary,
 } from '@/api/claims';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
 
 const BATCH_LIMIT = 50;
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 type BatchAction = 'submit' | 'void';
 
@@ -22,6 +26,9 @@ export function ClaimsList() {
   const [pendingAction, setPendingAction] = useState<BatchAction | null>(null);
   const [batchSummary, setBatchSummary] = useState<string | null>(null);
   const [submittingBatch, setSubmittingBatch] = useState(false);
+
+  // Batch submit/void both hit POST /billing/batch/* — gated by billing:batch.
+  const canBatch = usePermission(PERMISSIONS.BILLING_BATCH);
 
   const loadClaims = () => {
     setIsLoading(true);
@@ -238,8 +245,9 @@ export function ClaimsList() {
               <button
                 type="button"
                 onClick={() => { void runBatch(); }}
-                disabled={submittingBatch}
+                disabled={submittingBatch || !canBatch}
                 aria-busy={submittingBatch}
+                title={!canBatch ? NO_PERMISSION : undefined}
                 style={pendingAction === 'void' ? { background: '#dc2626', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: 4 } : undefined}
               >
                 {submittingBatch ? 'Working…' : pendingAction === 'submit' ? 'Submit' : 'Void'}

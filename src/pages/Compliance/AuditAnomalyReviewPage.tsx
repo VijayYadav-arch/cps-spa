@@ -7,6 +7,10 @@ import {
   type AuditAnomalyAlert,
   type AnomalyStatus,
 } from '@/api/compliance';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 const STATUS_FILTERS: { value: AnomalyStatus | ''; label: string }[] = [
   { value: 'open', label: 'Open' },
@@ -39,6 +43,12 @@ export function AuditAnomalyReviewPage() {
   const [refreshCount, setRefreshCount] = useState(0);
   const [expandedNarrativeId, setExpandedNarrativeId] = useState<number | null>(null);
   const [narrateResult, setNarrateResult] = useState<string | null>(null);
+
+  // All state-changing endpoints on this page (PATCH status, scan-now,
+  // narrate-now) live on AuditAnomalyAlertsController, gated by
+  // [Authorize(Policy = compliance:phi_review)]. The list (GET) shares that
+  // policy with the route guard, so only the action buttons are gated.
+  const canReview = usePermission(PERMISSIONS.COMPLIANCE_PHI_REVIEW);
 
   useEffect(() => {
     let cancelled = false;
@@ -129,8 +139,24 @@ export function AuditAnomalyReviewPage() {
             ))}
           </select>
         </label>
-        <button type="button" onClick={runScan}>Scan now</button>
-        <button type="button" onClick={runNarrate}>Generate narratives</button>
+        <button
+          type="button"
+          onClick={runScan}
+          disabled={!canReview}
+          title={!canReview ? NO_PERMISSION : undefined}
+          style={{ cursor: !canReview ? 'not-allowed' : 'pointer' }}
+        >
+          Scan now
+        </button>
+        <button
+          type="button"
+          onClick={runNarrate}
+          disabled={!canReview}
+          title={!canReview ? NO_PERMISSION : undefined}
+          style={{ cursor: !canReview ? 'not-allowed' : 'pointer' }}
+        >
+          Generate narratives
+        </button>
         {scanResult && <span style={{ color: '#15803d' }}>{scanResult}</span>}
         {narrateResult && <span style={{ color: '#15803d' }}>{narrateResult}</span>}
       </div>
@@ -205,13 +231,18 @@ export function AuditAnomalyReviewPage() {
                           <button
                             type="button"
                             onClick={() => openAction(r.id, 'dismissed')}
-                            style={{ marginRight: 8 }}
+                            disabled={!canReview}
+                            title={!canReview ? NO_PERMISSION : undefined}
+                            style={{ marginRight: 8, cursor: !canReview ? 'not-allowed' : 'pointer' }}
                           >
                             Dismiss
                           </button>
                           <button
                             type="button"
                             onClick={() => openAction(r.id, 'escalated')}
+                            disabled={!canReview}
+                            title={!canReview ? NO_PERMISSION : undefined}
+                            style={{ cursor: !canReview ? 'not-allowed' : 'pointer' }}
                           >
                             Escalate
                           </button>

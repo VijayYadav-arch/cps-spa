@@ -6,6 +6,10 @@ import {
   type ArTicklerRow,
   type TicklerStatus,
 } from '@/api/billing';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 const STATUS_TABS: { value: TicklerStatus; label: string; tone: string }[] = [
   { value: 'overdue', label: 'Overdue', tone: '#b91c1c' },
@@ -42,6 +46,9 @@ export function ArTicklerPage() {
     note: '',
     nextFollowUpDate: '',
   });
+
+  // Bulk log call posts to /billing/ar-followup/claims/bulk-notes → billing:ar-followup.
+  const canFollowUp = usePermission(PERMISSIONS.BILLING_AR_FOLLOW_UP);
 
   const load = async () => {
     setIsLoading(true);
@@ -130,7 +137,8 @@ export function ArTicklerPage() {
         <button
           type="button"
           onClick={() => setBulkOpen(true)}
-          disabled={selected.size === 0}
+          disabled={selected.size === 0 || !canFollowUp}
+          title={!canFollowUp ? NO_PERMISSION : undefined}
         >
           Bulk log call ({selected.size})
         </button>
@@ -268,7 +276,14 @@ export function ArTicklerPage() {
             </label>
             <div style={{ display: 'flex', gap: 8, marginTop: 12, justifyContent: 'flex-end' }}>
               <button type="button" onClick={() => setBulkOpen(false)}>Cancel</button>
-              <button type="button" onClick={() => { void submitBulk(); }}>Apply to {selected.size}</button>
+              <button
+                type="button"
+                onClick={() => { void submitBulk(); }}
+                disabled={!canFollowUp}
+                title={!canFollowUp ? NO_PERMISSION : undefined}
+              >
+                Apply to {selected.size}
+              </button>
             </div>
           </div>
         </div>

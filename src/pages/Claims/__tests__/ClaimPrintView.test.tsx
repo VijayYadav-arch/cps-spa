@@ -24,6 +24,16 @@ vi.mock('@/api/claims', async () => {
 
 import { getClaimForPrint, downloadClaimPdf } from '@/api/claims';
 
+// Mock the /me query seam so usePermission resolves synchronously without a
+// QueryClientProvider. Real usePermission logic still runs against this data.
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+const ALL_PRINT_PERMS = ['claims:view', 'claims:print'];
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue({ data: { permissions } } as unknown as ReturnType<typeof useUserRoles>);
+}
+
 function buildClaim(overrides: Partial<Record<string, unknown>> = {}) {
   return {
     id: 7,
@@ -69,6 +79,9 @@ describe('ClaimPrintView', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockNavigate.mockReset();
+    // Default: user holds every print-related permission so existing behaviour
+    // tests see an enabled download button. Permission-gating tests override.
+    setPermissions(ALL_PRINT_PERMS);
   });
 
   it('renders CMS-1500 form when claim loads', async () => {
@@ -143,6 +156,26 @@ describe('ClaimPrintView', () => {
     await waitFor(() => {
       expect(downloadClaimPdf).toHaveBeenCalledWith(7);
       expect(URL.createObjectURL).toHaveBeenCalledWith(fakeBlob);
+    });
+  });
+
+  describe('permission gating', () => {
+    it('disables Download PDF with a permission tooltip when the user lacks claims:print', async () => {
+      setPermissions(['claims:view']); // no claims:print
+      vi.mocked(getClaimForPrint).mockResolvedValueOnce(buildClaim());
+      renderAt('/claims/7/print');
+
+      const btn = await screen.findByRole('button', { name: /download pdf/i });
+      expect(btn).toBeDisabled();
+      expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+    });
+
+    it('enables Download PDF when the user has claims:print', async () => {
+      setPermissions(['claims:view', 'claims:print']);
+      vi.mocked(getClaimForPrint).mockResolvedValueOnce(buildClaim());
+      renderAt('/claims/7/print');
+
+      expect(await screen.findByRole('button', { name: /download pdf/i })).toBeEnabled();
     });
   });
 });

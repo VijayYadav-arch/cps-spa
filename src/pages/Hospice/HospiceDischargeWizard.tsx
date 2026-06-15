@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { createDischarge, type HospiceDischargeReason } from '@/api/hospice';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 const REASONS: { value: HospiceDischargeReason; label: string }[] = [
   { value: 'Transfer', label: 'Transfer to another hospice' },
@@ -25,6 +29,9 @@ export function HospiceDischargeWizard() {
   const [notes, setNotes] = useState('');
   const [invalidState, setInvalidState] = useState<{ msg: string; currentStatus: string } | null>(null);
   const [serverError, setServerError] = useState<string | null>(null);
+
+  // Submit → createDischarge → POST .../discharge [Policy=hospice:discharge_manage]
+  const canManage = usePermission(PERMISSIONS.HOSPICE_DISCHARGE_MANAGE);
 
   if (invalidState) {
     return (
@@ -245,7 +252,15 @@ export function HospiceDischargeWizard() {
 
           <div style={{ marginTop: 20, display: 'flex', gap: 8 }}>
             <button type="button" onClick={() => setStep(2)}>Back</button>
-            <button type="button" onClick={submit}>Submit</button>
+            <button
+              type="button"
+              onClick={submit}
+              disabled={!canManage}
+              title={!canManage ? NO_PERMISSION : undefined}
+              style={{ cursor: !canManage ? 'not-allowed' : 'pointer' }}
+            >
+              Submit
+            </button>
           </div>
         </section>
       )}

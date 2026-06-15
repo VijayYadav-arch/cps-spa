@@ -1,5 +1,9 @@
 import { useEffect, useState } from 'react';
 import { apiClient } from '@/api/client';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 interface SSOFormData {
   provider: 'saml' | 'oidc';
@@ -53,6 +57,10 @@ export function CommercialSettingsSSOPage() {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(
     null,
   );
+
+  // Save hits PUT /auth/sso/config/{orgId}, gated by [Authorize(Policy = "platform:sso")].
+  // Test Connection is a client-side simulation (no endpoint) → not guarded.
+  const canSave = usePermission(PERMISSIONS.PLATFORM_SSO);
 
   useEffect(() => {
     let cancelled = false;
@@ -493,7 +501,8 @@ export function CommercialSettingsSSOPage() {
         <button
           data-testid="submit-sso"
           onClick={handleSave}
-          disabled={saving}
+          disabled={saving || !canSave}
+          title={!canSave ? NO_PERMISSION : undefined}
           style={{
             padding: '10px 24px',
             background: '#0d9488',
@@ -501,7 +510,7 @@ export function CommercialSettingsSSOPage() {
             border: 'none',
             borderRadius: 8,
             fontWeight: 500,
-            cursor: 'pointer',
+            cursor: (saving || !canSave) ? 'not-allowed' : 'pointer',
           }}
         >
           {saving ? 'Saving…' : 'Save Configuration'}

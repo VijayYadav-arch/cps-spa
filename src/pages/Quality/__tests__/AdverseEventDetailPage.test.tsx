@@ -6,6 +6,13 @@ import * as qapiApi from '@/api/qapi';
 
 vi.mock('@/api/qapi');
 
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue({ data: { permissions } } as unknown as ReturnType<typeof useUserRoles>);
+}
+
 function makeEvent(overrides: Partial<qapiApi.HospiceAdverseEvent> = {}): qapiApi.HospiceAdverseEvent {
   return {
     id: 5,
@@ -41,7 +48,10 @@ function renderDetail(eventId = '5') {
 }
 
 describe('AdverseEventDetailPage', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    setPermissions(['hospice:qapi_adverse_event_view', 'hospice:qapi_adverse_event_manage']);
+  });
 
   it('shows RCA form when event has no rca and is not dismissed', async () => {
     vi.mocked(qapiApi.getAdverseEvent).mockResolvedValueOnce(makeEvent({ rca: null, status: 'Active' }));
@@ -76,5 +86,27 @@ describe('AdverseEventDetailPage', () => {
     );
     expect(screen.getByText(/Understaffing at shift handoff/i)).toBeInTheDocument();
     expect(screen.queryByLabelText(/RCA form/i)).not.toBeInTheDocument();
+  });
+
+  describe('permission gating', () => {
+    it('disables status-transition buttons with a tooltip when the user lacks adverse-event-manage', async () => {
+      setPermissions(['hospice:qapi_adverse_event_view']); // no manage
+      vi.mocked(qapiApi.getAdverseEvent).mockResolvedValueOnce(makeEvent({ status: 'Active' }));
+
+      renderDetail();
+
+      const btn = await screen.findByRole('button', { name: /Move to Closed/i });
+      expect(btn).toBeDisabled();
+      expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+    });
+
+    it('enables status-transition buttons when the user has adverse-event-manage', async () => {
+      setPermissions(['hospice:qapi_adverse_event_view', 'hospice:qapi_adverse_event_manage']);
+      vi.mocked(qapiApi.getAdverseEvent).mockResolvedValueOnce(makeEvent({ status: 'Active' }));
+
+      renderDetail();
+
+      expect(await screen.findByRole('button', { name: /Move to Closed/i })).toBeEnabled();
+    });
   });
 });

@@ -11,6 +11,10 @@ import {
   type StatementRun,
   type StatementRunStatus,
 } from '@/api/billing';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 const STATUS_COLORS: Record<StatementRunStatus, { bg: string; fg: string }> = {
   draft: { bg: '#f1f5f9', fg: '#475569' },
@@ -70,6 +74,9 @@ export function StatementsPage() {
   const [error, setError] = useState<string | null>(null);
   const [actionMsg, setActionMsg] = useState<string | null>(null);
   const [selected, setSelected] = useState<StatementRun | null>(null);
+
+  // All state-changing actions hit /billing/statements/runs/* → billing:statements.
+  const canManage = usePermission(PERMISSIONS.BILLING_STATEMENTS);
 
   async function refresh() {
     setIsLoading(true);
@@ -170,7 +177,13 @@ export function StatementsPage() {
             Statement runs and dunning cadence (30 / 60 / 90 day notices).
           </p>
         </div>
-        <button type="button" onClick={() => void handleGenerate()}>
+        <button
+          type="button"
+          onClick={() => void handleGenerate()}
+          disabled={!canManage}
+          title={!canManage ? NO_PERMISSION : undefined}
+          style={{ cursor: !canManage ? 'not-allowed' : 'pointer' }}
+        >
           + Generate Statement
         </button>
       </header>
@@ -257,7 +270,9 @@ export function StatementsPage() {
                     <button
                       type="button"
                       onClick={() => void handleMarkSent(r)}
-                      style={{ fontSize: 12 }}
+                      disabled={!canManage}
+                      title={!canManage ? NO_PERMISSION : undefined}
+                      style={{ fontSize: 12, cursor: !canManage ? 'not-allowed' : 'pointer' }}
                     >
                       Mark Sent
                     </button>
@@ -266,7 +281,9 @@ export function StatementsPage() {
                     <button
                       type="button"
                       onClick={() => void handleRecordPayment(r)}
-                      style={{ fontSize: 12 }}
+                      disabled={!canManage}
+                      title={!canManage ? NO_PERMISSION : undefined}
+                      style={{ fontSize: 12, cursor: !canManage ? 'not-allowed' : 'pointer' }}
                     >
                       Record Payment
                     </button>
@@ -276,7 +293,9 @@ export function StatementsPage() {
                       <button
                         type="button"
                         onClick={() => void handleEscalate(r)}
-                        style={{ fontSize: 12 }}
+                        disabled={!canManage}
+                        title={!canManage ? NO_PERMISSION : undefined}
+                        style={{ fontSize: 12, cursor: !canManage ? 'not-allowed' : 'pointer' }}
                       >
                         Escalate
                       </button>
@@ -285,7 +304,9 @@ export function StatementsPage() {
                     <button
                       type="button"
                       onClick={() => void handleWriteOff(r)}
-                      style={{ fontSize: 12, color: '#b91c1c' }}
+                      disabled={!canManage}
+                      title={!canManage ? NO_PERMISSION : undefined}
+                      style={{ fontSize: 12, color: '#b91c1c', cursor: !canManage ? 'not-allowed' : 'pointer' }}
                     >
                       Write Off
                     </button>
@@ -397,7 +418,9 @@ export function StatementsPage() {
                     <button
                       type="button"
                       onClick={() => void handleEscalate({ ...runs[0], id: e.runId, dunningCycle: e.currentCycle, patientBalance: e.patientBalance } as StatementRun)}
-                      style={{ fontSize: 12 }}
+                      disabled={!canManage}
+                      title={!canManage ? NO_PERMISSION : undefined}
+                      style={{ fontSize: 12, cursor: !canManage ? 'not-allowed' : 'pointer' }}
                     >
                       Send Cycle {e.nextCycle} Notice
                     </button>

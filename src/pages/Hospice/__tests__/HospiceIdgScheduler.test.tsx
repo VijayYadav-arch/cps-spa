@@ -11,6 +11,17 @@ vi.mock('@/api/hospice', () => ({
 
 import { listUpcomingIdg, scheduleIdgMeeting } from '@/api/hospice';
 
+// Mock the /me query seam so usePermission resolves synchronously without a
+// QueryClientProvider. Real usePermission logic still runs against this data.
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue(
+    { data: { permissions } } as unknown as ReturnType<typeof useUserRoles>,
+  );
+}
+
 function renderPage() {
   return render(
     <MemoryRouter initialEntries={['/patients/1/hospice/7/idg']}>
@@ -25,7 +36,12 @@ function renderPage() {
 }
 
 describe('HospiceIdgScheduler', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // Default: user holds hospice:manage so existing behaviour tests see an
+    // enabled Schedule button. Permission-gating tests override.
+    setPermissions(['hospice:view', 'hospice:manage']);
+  });
 
   it('renders empty state when no upcoming meetings', async () => {
     vi.mocked(listUpcomingIdg).mockResolvedValueOnce({ data: [] });
@@ -62,5 +78,21 @@ describe('HospiceIdgScheduler', () => {
         ]),
       })),
     );
+  });
+
+  it('disables Schedule with a permission tooltip when the user lacks hospice:manage', async () => {
+    setPermissions(['hospice:view']); // no hospice:manage
+    vi.mocked(listUpcomingIdg).mockResolvedValue({ data: [] });
+    renderPage();
+    const btn = await screen.findByRole('button', { name: /Schedule/i });
+    expect(btn).toBeDisabled();
+    expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+  });
+
+  it('enables Schedule when the user has hospice:manage', async () => {
+    setPermissions(['hospice:view', 'hospice:manage']);
+    vi.mocked(listUpcomingIdg).mockResolvedValue({ data: [] });
+    renderPage();
+    expect(await screen.findByRole('button', { name: /Schedule/i })).toBeEnabled();
   });
 });

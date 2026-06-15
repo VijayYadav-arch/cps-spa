@@ -17,7 +17,10 @@ import {
 } from '@/api/hospice';
 import { BereavementContactForm } from '@/components/BereavementContactForm';
 import { BereavementEncounterForm } from '@/components/BereavementEncounterForm';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
 
+const NO_PERMISSION = 'You do not have permission to perform this action';
 const RISK_LEVELS: BereavementRiskLevel[] = ['Low', 'Moderate', 'High'];
 
 export function HospiceBereavementProgramDetail() {
@@ -32,6 +35,10 @@ export function HospiceBereavementProgramDetail() {
   const [riskLevel, setRiskLevel] = useState<BereavementRiskLevel>('Moderate');
   const [riskNotes, setRiskNotes] = useState('');
   const [closeReason, setCloseReason] = useState('');
+
+  // All state-changing actions on this page (complete/close/add-risk program +
+  // set-primary/opt-out/delete contact) hit endpoints gated by hospice:bereavement.
+  const canManage = usePermission(PERMISSIONS.HOSPICE_BEREAVEMENT);
 
   async function refresh() {
     setIsLoading(true);
@@ -164,14 +171,28 @@ export function HospiceBereavementProgramDetail() {
 
       {!readOnly && (
         <section style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-          <button onClick={handleComplete}>Complete Program</button>
+          <button
+            onClick={handleComplete}
+            disabled={!canManage}
+            title={!canManage ? NO_PERMISSION : undefined}
+            style={{ cursor: !canManage ? 'not-allowed' : 'pointer' }}
+          >
+            Complete Program
+          </button>
           <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
             <input
               placeholder="Closure reason"
               value={closeReason}
               onChange={(e) => setCloseReason(e.target.value)}
             />
-            <button onClick={handleClose}>Close Program</button>
+            <button
+              onClick={handleClose}
+              disabled={!canManage}
+              title={!canManage ? NO_PERMISSION : undefined}
+              style={{ cursor: !canManage ? 'not-allowed' : 'pointer' }}
+            >
+              Close Program
+            </button>
           </div>
         </section>
       )}
@@ -207,7 +228,14 @@ export function HospiceBereavementProgramDetail() {
               onChange={(e) => setRiskNotes(e.target.value)}
               style={{ minWidth: 280 }}
             />
-            <button onClick={handleAddRisk}>Add Risk Assessment</button>
+            <button
+              onClick={handleAddRisk}
+              disabled={!canManage}
+              title={!canManage ? NO_PERMISSION : undefined}
+              style={{ cursor: !canManage ? 'not-allowed' : 'pointer' }}
+            >
+              Add Risk Assessment
+            </button>
           </div>
         )}
       </section>
@@ -240,13 +268,34 @@ export function HospiceBereavementProgramDetail() {
                   <td style={{ padding: '6px 10px' }}>{c.optedOut ? 'Yes' : ''}</td>
                   <td style={{ padding: '6px 10px', display: 'flex', gap: 6 }}>
                     {!readOnly && !c.isPrimaryContact && (
-                      <button onClick={() => handleSetPrimary(c.id)}>Set Primary</button>
+                      <button
+                        onClick={() => handleSetPrimary(c.id)}
+                        disabled={!canManage}
+                        title={!canManage ? NO_PERMISSION : undefined}
+                        style={{ cursor: !canManage ? 'not-allowed' : 'pointer' }}
+                      >
+                        Set Primary
+                      </button>
                     )}
                     {!readOnly && !c.optedOut && (
-                      <button onClick={() => handleOptOut(c.id)}>Opt Out</button>
+                      <button
+                        onClick={() => handleOptOut(c.id)}
+                        disabled={!canManage}
+                        title={!canManage ? NO_PERMISSION : undefined}
+                        style={{ cursor: !canManage ? 'not-allowed' : 'pointer' }}
+                      >
+                        Opt Out
+                      </button>
                     )}
                     {!readOnly && (
-                      <button onClick={() => handleDeleteContact(c.id)}>Delete</button>
+                      <button
+                        onClick={() => handleDeleteContact(c.id)}
+                        disabled={!canManage}
+                        title={!canManage ? NO_PERMISSION : undefined}
+                        style={{ cursor: !canManage ? 'not-allowed' : 'pointer' }}
+                      >
+                        Delete
+                      </button>
                     )}
                   </td>
                 </tr>

@@ -10,6 +10,10 @@ import {
   type PriorAuthStatus,
   type SubmitPriorAuthRequest,
 } from '@/api/billing';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 const STATUS_COLORS: Record<PriorAuthStatus, { bg: string; fg: string }> = {
   pending: { bg: '#fef3c7', fg: '#92400e' },
@@ -88,6 +92,9 @@ export function PriorAuthPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionMsg, setActionMsg] = useState<string | null>(null);
+
+  // Submit / decision / refresh-status all hit /billing/prior-auth/* → clinical:prior_auth.
+  const canManage = usePermission(PERMISSIONS.CLINICAL_PRIOR_AUTH);
 
   async function refresh() {
     setIsLoading(true);
@@ -200,8 +207,9 @@ export function PriorAuthPage() {
                 setRefreshing(false);
               }
             }}
-            disabled={refreshing}
+            disabled={refreshing || !canManage}
             aria-busy={refreshing}
+            title={!canManage ? NO_PERMISSION : undefined}
           >
             {refreshing ? 'Refreshing…' : 'Refresh pending'}
           </button>
@@ -340,7 +348,12 @@ export function PriorAuthPage() {
               placeholder="C50.911, Z80.3" style={{ width: '100%' }} />
           </label>
           <div style={{ gridColumn: '1 / -1' }}>
-            <button type="submit" disabled={submitting}>
+            <button
+              type="submit"
+              disabled={submitting || !canManage}
+              title={!canManage ? NO_PERMISSION : undefined}
+              style={{ cursor: (submitting || !canManage) ? 'not-allowed' : 'pointer' }}
+            >
               {submitting ? 'Submitting…' : 'Submit Prior Auth'}
             </button>
           </div>
@@ -416,10 +429,22 @@ export function PriorAuthPage() {
                   </button>
                   {a.status === 'pending' && (
                     <>
-                      <button type="button" onClick={() => void handleApprove(a)} style={{ fontSize: 12 }}>
+                      <button
+                        type="button"
+                        onClick={() => void handleApprove(a)}
+                        disabled={!canManage}
+                        title={!canManage ? NO_PERMISSION : undefined}
+                        style={{ fontSize: 12, cursor: !canManage ? 'not-allowed' : 'pointer' }}
+                      >
                         Approve
                       </button>
-                      <button type="button" onClick={() => void handleDeny(a)} style={{ fontSize: 12, color: '#b91c1c' }}>
+                      <button
+                        type="button"
+                        onClick={() => void handleDeny(a)}
+                        disabled={!canManage}
+                        title={!canManage ? NO_PERMISSION : undefined}
+                        style={{ fontSize: 12, color: '#b91c1c', cursor: !canManage ? 'not-allowed' : 'pointer' }}
+                      >
                         Deny
                       </button>
                     </>

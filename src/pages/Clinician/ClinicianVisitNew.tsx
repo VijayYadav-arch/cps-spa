@@ -2,6 +2,10 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { apiClient } from '@/api/client';
 import { useAuth } from '@/auth/useAuth';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 const visitTypes = [
   { value: 'skilled-nursing', label: 'Skilled Nursing' },
@@ -32,6 +36,10 @@ export function ClinicianVisitNew() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+
+  // Save Visit Note hits POST /clinician/visits, gated by the
+  // clinical:visit_notes policy on VisitNotesController.
+  const canCreate = usePermission(PERMISSIONS.CLINICAL_VISIT_NOTES);
 
   const [patients, setPatients] = useState<
     { id: number; firstName: string; lastName: string }[]
@@ -427,7 +435,8 @@ export function ClinicianVisitNew() {
 
         <button
           type="submit"
-          disabled={loading || success}
+          disabled={loading || success || !canCreate}
+          title={!canCreate ? NO_PERMISSION : undefined}
           data-testid="submit-visit"
           style={{
             width: '100%',
@@ -437,8 +446,8 @@ export function ClinicianVisitNew() {
             fontWeight: 600,
             border: 'none',
             borderRadius: 12,
-            cursor: loading || success ? 'not-allowed' : 'pointer',
-            opacity: loading || success ? 0.5 : 1,
+            cursor: loading || success || !canCreate ? 'not-allowed' : 'pointer',
+            opacity: loading || success || !canCreate ? 0.5 : 1,
             fontSize: 16,
             minHeight: 56,
           }}

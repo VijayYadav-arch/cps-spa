@@ -8,6 +8,10 @@ import {
   type ApiKeyCreateResponse,
   type CreateApiKeyRequest,
 } from '@/api/platform';
+import { useAnyPermission } from '@/permissions/useAnyPermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 const PAGE_SIZE = 25;
 
@@ -35,6 +39,13 @@ export function ApiKeysPage() {
   const [creating, setCreating] = useState(false);
   const [createdSecret, setCreatedSecret] = useState<ApiKeyCreateResponse | null>(null);
   const [copyMsg, setCopyMsg] = useState<string | null>(null);
+
+  // Backend api-keys endpoints use a compound OR policy (apikey_management =
+  // org:api_keys OR platform:api_keys) — satisfied by EITHER permission.
+  const canManageKeys = useAnyPermission([
+    PERMISSIONS.ORG_API_KEYS,
+    PERMISSIONS.PLATFORM_API_KEYS,
+  ]);
 
   const load = async () => {
     setIsLoading(true);
@@ -112,7 +123,12 @@ export function ApiKeysPage() {
           </p>
           <Link to="/platform" style={{ fontSize: 13 }}>← Platform dashboard</Link>
         </div>
-        <button type="button" onClick={() => setShowForm((s) => !s)}>
+        <button
+          type="button"
+          onClick={() => setShowForm((s) => !s)}
+          disabled={!canManageKeys}
+          title={!canManageKeys ? NO_PERMISSION : undefined}
+        >
           {showForm ? 'Cancel' : '+ New API key'}
         </button>
       </header>
@@ -194,7 +210,8 @@ export function ApiKeysPage() {
           </label>
           <button
             type="button"
-            disabled={creating || !form.name.trim()}
+            disabled={creating || !form.name.trim() || !canManageKeys}
+            title={!canManageKeys ? NO_PERMISSION : undefined}
             aria-busy={creating}
             onClick={() => { void handleCreate(); }}
           >
@@ -253,6 +270,8 @@ export function ApiKeysPage() {
                     <button
                       type="button"
                       onClick={() => { void handleRevoke(k); }}
+                      disabled={!canManageKeys}
+                      title={!canManageKeys ? NO_PERMISSION : undefined}
                       style={{ color: '#b91c1c', fontSize: 12 }}
                     >
                       Revoke

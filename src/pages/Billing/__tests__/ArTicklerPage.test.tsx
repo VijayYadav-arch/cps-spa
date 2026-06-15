@@ -12,7 +12,20 @@ vi.mock('@/api/billing', () => ({
 
 import { getArTicklers, bulkLogArCalls } from '@/api/billing';
 
-beforeEach(() => vi.clearAllMocks());
+// Mock the /me query seam so usePermission resolves synchronously without a
+// QueryClientProvider. Real usePermission logic still runs against this data.
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+const ALL_PERMS = ['billing:ar-followup'];
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue({ data: { permissions } } as unknown as ReturnType<typeof useUserRoles>);
+}
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  setPermissions(ALL_PERMS);
+});
 
 function row(over: Partial<ArTicklerRow> = {}): ArTicklerRow {
   return {
@@ -143,5 +156,44 @@ describe('ArTicklerPage', () => {
     vi.mocked(getArTicklers).mockRejectedValueOnce(new Error('boom'));
     renderPage();
     expect(await screen.findByRole('alert')).toHaveTextContent(/Failed to load/i);
+  });
+
+  describe('permission gating', () => {
+    it('disables Bulk log call with a permission tooltip when the user lacks billing:ar-followup', async () => {
+      setPermissions([]); // no billing:ar-followup
+      const user = userEvent.setup();
+      vi.mocked(getArTicklers).mockResolvedValue({ data: [row()] });
+      renderPage();
+      await screen.findByText('CLM-001');
+      // Select a row so the disabled state isn't just the empty-selection guard
+      await user.click(screen.getByLabelText(/Select claim CLM-001/i));
+
+      const btn = screen.getByRole('button', { name: /Bulk log call \(1\)/i });
+      expect(btn).toBeDisabled();
+      expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+    });
+
+    it('enables Bulk log call when the user has billing:ar-followup and rows are selected', async () => {
+      setPermissions(['billing:ar-followup']);
+      const user = userEvent.setup();
+      vi.mocked(getArTicklers).mockResolvedValue({ data: [row()] });
+      renderPage();
+      await screen.findByText('CLM-001');
+      await user.click(screen.getByLabelText(/Select claim CLM-001/i));
+
+      expect(screen.getByRole('button', { name: /Bulk log call \(1\)/i })).toBeEnabled();
+    });
+
+    it('enables the modal Apply button when the user has billing:ar-followup', async () => {
+      setPermissions(['billing:ar-followup']);
+      const user = userEvent.setup();
+      vi.mocked(getArTicklers).mockResolvedValue({ data: [row()] });
+      renderPage();
+      await screen.findByText('CLM-001');
+      await user.click(screen.getByLabelText(/Select claim CLM-001/i));
+      await user.click(screen.getByRole('button', { name: /Bulk log call \(1\)/i }));
+
+      expect(screen.getByRole('button', { name: /Apply to 1/i })).toBeEnabled();
+    });
   });
 });

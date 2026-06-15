@@ -3,6 +3,10 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { orgsApi } from './orgsApi';
 import { initialOrgForm, type CreateOrgRequest } from './orgsTypes';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 /**
  * Single-page create form. Validates name + slug client-side. On success,
@@ -17,6 +21,9 @@ export function NewOrganizationForm() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<Partial<Record<keyof CreateOrgRequest, string>>>({});
+
+  // POST /organizations is gated by platform:admin on OrganizationsController.Create.
+  const canCreate = usePermission(PERMISSIONS.PLATFORM_ADMIN);
 
   function set<K extends keyof CreateOrgRequest>(field: K, value: CreateOrgRequest[K]) {
     setForm((p) => ({ ...p, [field]: value }));
@@ -161,7 +168,8 @@ export function NewOrganizationForm() {
           </button>
           <button
             type="submit"
-            disabled={submitting}
+            disabled={submitting || !canCreate}
+            title={!canCreate ? NO_PERMISSION : undefined}
             className="px-6 py-2 min-h-12 md:min-h-11 lg:min-h-10 rounded-md bg-teal-600 text-white disabled:opacity-50"
           >
             {submitting ? 'Creating…' : 'Create'}

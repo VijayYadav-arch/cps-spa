@@ -5,6 +5,10 @@ import {
   type EligibilityCheck,
   type VerifyEligibilityRequest,
 } from '@/api/billing';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 const COMMON_PAYERS = [
   { id: '00100', name: 'Medicare Part A/B' },
@@ -67,6 +71,9 @@ export function EligibilityPage() {
   const [recent, setRecent] = useState<EligibilityCheck[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Verify posts to /billing/eligibility/verify → billing:scrub.
+  const canVerify = usePermission(PERMISSIONS.BILLING_SCRUB);
 
   async function refresh() {
     setIsLoading(true);
@@ -199,7 +206,12 @@ export function EligibilityPage() {
           />
         </label>
         <div style={{ gridColumn: '1 / -1' }}>
-          <button type="submit" disabled={submitting}>
+          <button
+            type="submit"
+            disabled={submitting || !canVerify}
+            title={!canVerify ? NO_PERMISSION : undefined}
+            style={{ cursor: (submitting || !canVerify) ? 'not-allowed' : 'pointer' }}
+          >
             {submitting ? 'Verifying…' : 'Verify Eligibility'}
           </button>
         </div>

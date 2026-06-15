@@ -10,8 +10,20 @@ vi.mock('@/api/client', () => ({
 
 import { apiClient } from '@/api/client';
 
+// Mock the /me query seam so usePermission resolves synchronously without a
+// QueryClientProvider. Real usePermission logic still runs against this data.
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue({ data: { permissions } } as unknown as ReturnType<typeof useUserRoles>);
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
+  // Default: user holds the manage permission so existing behaviour tests see
+  // enabled buttons. Permission-gating tests override.
+  setPermissions(['admin:system_config']);
 });
 
 function renderPage() {
@@ -191,5 +203,35 @@ describe('AiOptInPage', () => {
 
     renderPage();
     await waitFor(() => expect(screen.getByTestId('empty-state')).toBeInTheDocument());
+  });
+
+  describe('permission gating', () => {
+    it('disables the editor confirm with a tooltip when the user lacks admin:system_config', async () => {
+      setPermissions([]); // no admin:system_config
+      vi.mocked(apiClient.get)
+        .mockResolvedValueOnce({ data: { data: [org(1, 'Alpha')] } } as never)
+        .mockResolvedValueOnce({ data: { data: [] } } as never);
+
+      renderPage();
+      await waitFor(() => expect(screen.getByTestId('enable-1')).toBeInTheDocument());
+      await userEvent.click(screen.getByTestId('enable-1'));
+
+      const confirm = screen.getByTestId('editor-confirm');
+      expect(confirm).toBeDisabled();
+      expect(confirm).toHaveAttribute('title', expect.stringMatching(/permission/i));
+    });
+
+    it('enables the editor confirm when the user has admin:system_config', async () => {
+      setPermissions(['admin:system_config']);
+      vi.mocked(apiClient.get)
+        .mockResolvedValueOnce({ data: { data: [org(1, 'Alpha')] } } as never)
+        .mockResolvedValueOnce({ data: { data: [] } } as never);
+
+      renderPage();
+      await waitFor(() => expect(screen.getByTestId('enable-1')).toBeInTheDocument());
+      await userEvent.click(screen.getByTestId('enable-1'));
+
+      expect(screen.getByTestId('editor-confirm')).toBeEnabled();
+    });
   });
 });

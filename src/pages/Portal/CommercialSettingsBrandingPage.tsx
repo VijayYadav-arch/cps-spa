@@ -1,5 +1,9 @@
 import { useEffect, useState } from 'react';
 import { apiClient } from '@/api/client';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 interface BrandingFormData {
   logoUrl: string;
@@ -63,6 +67,9 @@ export function CommercialSettingsBrandingPage() {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(
     null,
   );
+
+  // Save hits PUT /branding/{orgId}, gated by [Authorize(Policy = "portal:branding")].
+  const canSave = usePermission(PERMISSIONS.PORTAL_BRANDING);
 
   useEffect(() => {
     let cancelled = false;
@@ -347,7 +354,8 @@ export function CommercialSettingsBrandingPage() {
           <button
             data-testid="submit-branding"
             onClick={handleSave}
-            disabled={saving}
+            disabled={saving || !canSave}
+            title={!canSave ? NO_PERMISSION : undefined}
             style={{
               padding: '10px 24px',
               background: '#0d9488',
@@ -355,7 +363,7 @@ export function CommercialSettingsBrandingPage() {
               border: 'none',
               borderRadius: 8,
               fontWeight: 500,
-              cursor: 'pointer',
+              cursor: (saving || !canSave) ? 'not-allowed' : 'pointer',
               alignSelf: 'flex-start',
             }}
           >

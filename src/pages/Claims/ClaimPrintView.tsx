@@ -3,6 +3,10 @@ import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import CMS1500Form, { type CmsClaimPayload } from './CMS1500Form';
 import { downloadClaimPdf, getClaimForPrint } from '@/api/claims';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 export function ClaimPrintView() {
   const { id } = useParams<{ id: string }>();
@@ -11,6 +15,9 @@ export function ClaimPrintView() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDownloading, setIsDownloading] = useState(false);
+
+  // Download PDF hits GET /billing/claims/{id}/print — gated by claims:print.
+  const canPrint = usePermission(PERMISSIONS.CLAIMS_PRINT);
 
   useEffect(() => {
     if (!id) return;
@@ -86,7 +93,8 @@ export function ClaimPrintView() {
         <button
           type="button"
           onClick={handleDownloadPdf}
-          disabled={isDownloading}
+          disabled={isDownloading || !canPrint}
+          title={!canPrint ? NO_PERMISSION : undefined}
           className="px-3 py-1.5 text-sm rounded-md bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
         >
           {isDownloading ? 'Generating...' : 'Download PDF'}

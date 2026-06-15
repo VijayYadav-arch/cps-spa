@@ -23,6 +23,16 @@ import {
   markClaimSubmissionSubmitted,
 } from '@/api/hospice';
 
+// Mock the /me query seam so usePermission resolves synchronously without a
+// QueryClientProvider. Real usePermission logic still runs against this data.
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+const ALL_PERMS = ['hospice:per_diem_billing'];
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue({ data: { permissions } } as unknown as ReturnType<typeof useUserRoles>);
+}
+
 function renderPage(claimId = '700') {
   return render(
     <MemoryRouter initialEntries={[`/hospice/claims/${claimId}/submissions`]}>
@@ -75,7 +85,10 @@ function fullDetail(over: Partial<ClaimSubmissionDetail> = {}): ClaimSubmissionD
 }
 
 describe('HospiceClaimSubmissionsPage', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    setPermissions(ALL_PERMS);
+  });
 
   it('loads submissions on mount', async () => {
     vi.mocked(listClaimSubmissions).mockResolvedValueOnce({
@@ -178,5 +191,37 @@ describe('HospiceClaimSubmissionsPage', () => {
     expect(
       screen.queryByRole('button', { name: /Mark Submitted/i }),
     ).not.toBeInTheDocument();
+  });
+
+  describe('permission gating', () => {
+    it('disables Generate 837I with a permission tooltip when the user lacks hospice:per_diem_billing', async () => {
+      setPermissions([]); // no hospice:per_diem_billing
+      vi.mocked(listClaimSubmissions).mockResolvedValueOnce({ data: [] });
+      renderPage();
+      await screen.findByText('Submissions (0)');
+      const btn = screen.getByRole('button', { name: /Generate 837I/i });
+      expect(btn).toBeDisabled();
+      expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+    });
+
+    it('enables Generate 837I when the user has hospice:per_diem_billing', async () => {
+      setPermissions(['hospice:per_diem_billing']);
+      vi.mocked(listClaimSubmissions).mockResolvedValueOnce({ data: [] });
+      renderPage();
+      await screen.findByText('Submissions (0)');
+      expect(screen.getByRole('button', { name: /Generate 837I/i })).toBeEnabled();
+    });
+
+    it('disables Mark Submitted with a permission tooltip when the user lacks hospice:per_diem_billing', async () => {
+      setPermissions([]); // no hospice:per_diem_billing
+      vi.mocked(listClaimSubmissions).mockResolvedValueOnce({
+        data: [pendingSubmission()],
+      });
+      renderPage();
+      await screen.findByText('pending');
+      const btn = screen.getByRole('button', { name: /Mark Submitted/i });
+      expect(btn).toBeDisabled();
+      expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+    });
   });
 });

@@ -20,6 +20,16 @@ import {
   submitPriorAuth,
 } from '@/api/billing';
 
+// Mock the /me query seam so usePermission resolves synchronously without a
+// QueryClientProvider. Real usePermission logic still runs against this data.
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+const ALL_PERMS = ['clinical:prior_auth'];
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue({ data: { permissions } } as unknown as ReturnType<typeof useUserRoles>);
+}
+
 function pa(over: Partial<PriorAuth> = {}): PriorAuth {
   return {
     id: 1,
@@ -64,7 +74,10 @@ function renderPage() {
 }
 
 describe('PriorAuthPage', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    setPermissions(ALL_PERMS);
+  });
 
   it('renders the prior auth list', async () => {
     vi.mocked(listPriorAuths).mockResolvedValueOnce({ data: [pa()] });
@@ -189,6 +202,52 @@ describe('PriorAuthPage', () => {
     await user.click(screen.getByRole('button', { name: /^approved/ }));
     await waitFor(() => {
       expect(listPriorAuths).toHaveBeenLastCalledWith('approved');
+    });
+  });
+
+  describe('permission gating', () => {
+    it('disables Refresh pending, Approve and Deny with tooltips when lacking clinical:prior_auth', async () => {
+      setPermissions([]); // no clinical:prior_auth
+      vi.mocked(listPriorAuths).mockResolvedValueOnce({ data: [pa()] });
+      vi.mocked(listExpiringPriorAuths).mockResolvedValueOnce({ data: [] });
+      renderPage();
+      await screen.findByText('Medicare Part A/B');
+
+      const refreshBtn = screen.getByRole('button', { name: /Refresh pending/i });
+      expect(refreshBtn).toBeDisabled();
+      expect(refreshBtn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+
+      const approveBtn = screen.getByRole('button', { name: 'Approve' });
+      expect(approveBtn).toBeDisabled();
+      expect(approveBtn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+
+      const denyBtn = screen.getByRole('button', { name: 'Deny' });
+      expect(denyBtn).toBeDisabled();
+      expect(denyBtn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+    });
+
+    it('disables Submit Prior Auth with a tooltip when lacking clinical:prior_auth', async () => {
+      setPermissions([]); // no clinical:prior_auth
+      const user = userEvent.setup();
+      vi.mocked(listPriorAuths).mockResolvedValueOnce({ data: [] });
+      vi.mocked(listExpiringPriorAuths).mockResolvedValueOnce({ data: [] });
+      renderPage();
+      await user.click(await screen.findByRole('button', { name: /New Inquiry/i }));
+
+      const btn = screen.getByRole('button', { name: /Submit Prior Auth/i });
+      expect(btn).toBeDisabled();
+      expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+    });
+
+    it('enables Approve/Deny/Refresh when the user has clinical:prior_auth', async () => {
+      setPermissions(['clinical:prior_auth']);
+      vi.mocked(listPriorAuths).mockResolvedValueOnce({ data: [pa()] });
+      vi.mocked(listExpiringPriorAuths).mockResolvedValueOnce({ data: [] });
+      renderPage();
+      await screen.findByText('Medicare Part A/B');
+      expect(screen.getByRole('button', { name: /Refresh pending/i })).toBeEnabled();
+      expect(screen.getByRole('button', { name: 'Approve' })).toBeEnabled();
+      expect(screen.getByRole('button', { name: 'Deny' })).toBeEnabled();
     });
   });
 });

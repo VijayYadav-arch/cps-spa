@@ -14,6 +14,10 @@ import {
   type OrgUser,
 } from '@/api/onboardingStatus';
 import { getWelcomeSequence } from '@/data/onboardingEmailTemplates';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 interface OnboardingStep {
   number: number;
@@ -60,6 +64,10 @@ export function OnboardingPage() {
   const [assigningOrgId, setAssigningOrgId] = useState<number | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [emailModalOrg, setEmailModalOrg] = useState<OrgStatusRow | null>(null);
+
+  // Assign-manager (PUT .../assign-manager) and send-email (POST .../send-email)
+  // both inherit the controller's [Authorize(Policy = "platform:onboarding")].
+  const canManageOnboarding = usePermission(PERMISSIONS.PLATFORM_ONBOARDING);
 
   useEffect(() => {
     let cancelled = false;
@@ -248,8 +256,9 @@ export function OnboardingPage() {
                         id={`mgr-${o.orgId}`}
                         value={o.assignedManagerUserId ?? ''}
                         onChange={(e) => handleAssignManager(o.orgId, e.target.value)}
-                        disabled={assigningOrgId === o.orgId}
-                        className="text-xs border border-slate-200 rounded px-2 py-1 bg-white"
+                        disabled={assigningOrgId === o.orgId || !canManageOnboarding}
+                        title={!canManageOnboarding ? NO_PERMISSION : undefined}
+                        className="text-xs border border-slate-200 rounded px-2 py-1 bg-white disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <option value="">Unassigned</option>
                         {managers.map((m) => (
@@ -339,6 +348,7 @@ export function OnboardingPage() {
       {emailModalOrg && (
         <SendEmailModal
           org={emailModalOrg}
+          canSend={canManageOnboarding}
           onClose={(message) => {
             setEmailModalOrg(null);
             if (message) setActionMessage(message);
@@ -349,7 +359,7 @@ export function OnboardingPage() {
   );
 }
 
-function SendEmailModal({ org, onClose }: { org: OrgStatusRow; onClose: (msg?: string) => void }) {
+function SendEmailModal({ org, canSend, onClose }: { org: OrgStatusRow; canSend: boolean; onClose: (msg?: string) => void }) {
   const templates = getWelcomeSequence();
   const [users, setUsers] = useState<OrgUser[]>([]);
   const [usersLoading, setUsersLoading] = useState(true);
@@ -469,7 +479,7 @@ function SendEmailModal({ org, onClose }: { org: OrgStatusRow; onClose: (msg?: s
 
         <footer className="mt-5 flex gap-2 justify-end">
           <button type="button" onClick={() => onClose()} disabled={sending} className="px-3 py-1.5 text-sm rounded text-slate-700 hover:bg-slate-100">Cancel</button>
-          <button type="button" onClick={handleSend} disabled={sending || !recipientUserId || !template} className="px-4 py-1.5 text-sm rounded bg-teal-600 text-white hover:bg-teal-700 disabled:opacity-50">
+          <button type="button" onClick={handleSend} disabled={sending || !recipientUserId || !template || !canSend} title={!canSend ? NO_PERMISSION : undefined} className="px-4 py-1.5 text-sm rounded bg-teal-600 text-white hover:bg-teal-700 disabled:opacity-50">
             {sending ? 'Sending...' : 'Send'}
           </button>
         </footer>

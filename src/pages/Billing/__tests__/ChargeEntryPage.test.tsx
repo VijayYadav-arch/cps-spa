@@ -23,6 +23,16 @@ import {
   getPendingChargesSummary,
 } from '@/api/billing';
 
+// Mock the /me query seam so usePermission resolves synchronously without a
+// QueryClientProvider. Real usePermission logic still runs against this data.
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+const ALL_CHARGE_PERMS = ['claims:create', 'claims:edit', 'claims:void'];
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue({ data: { permissions } } as unknown as ReturnType<typeof useUserRoles>);
+}
+
 function charge(over: Partial<ChargeRecord> = {}): ChargeRecord {
   return {
     id: 1,
@@ -55,6 +65,9 @@ function renderPage() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // Default: user holds every charge-related permission so existing behaviour
+  // tests see enabled buttons. Gating tests override.
+  setPermissions(ALL_CHARGE_PERMS);
   // Default to confirm = true so void tests work
   vi.stubGlobal('confirm', vi.fn(() => true));
 });
@@ -219,5 +232,67 @@ describe('ChargeEntryPage', () => {
     expect(await screen.findByText(/3 pending/i)).toBeInTheDocument();
     const summaryBlock = screen.getByText(/3 pending/i).closest('div')!;
     expect(within(summaryBlock).getByText('$2,500.00')).toBeInTheDocument();
+  });
+
+  describe('permission gating', () => {
+    it('disables Save Charge with a permission tooltip when lacking claims:create', async () => {
+      setPermissions(['claims:edit', 'claims:void']); // no claims:create
+      const user = userEvent.setup();
+      vi.mocked(listCharges).mockResolvedValue({ data: [] });
+      renderPage();
+      await screen.findByText(/No charges in this view/i);
+      await user.click(screen.getByRole('button', { name: /New Charge/i }));
+
+      const btn = screen.getByRole('button', { name: /Save Charge/i });
+      expect(btn).toBeDisabled();
+      expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+    });
+
+    it('enables Save Charge when holding claims:create', async () => {
+      setPermissions(['claims:create']);
+      const user = userEvent.setup();
+      vi.mocked(listCharges).mockResolvedValue({ data: [] });
+      renderPage();
+      await screen.findByText(/No charges in this view/i);
+      await user.click(screen.getByRole('button', { name: /New Charge/i }));
+      expect(screen.getByRole('button', { name: /Save Charge/i })).toBeEnabled();
+    });
+
+    it('disables Mark reviewed with a permission tooltip when lacking claims:edit', async () => {
+      setPermissions(['claims:create', 'claims:void']); // no claims:edit
+      vi.mocked(listCharges).mockResolvedValue({ data: [charge({ id: 7, status: 'pending' })] });
+      renderPage();
+      await screen.findByText('#7');
+
+      const btn = screen.getByRole('button', { name: /Mark reviewed/i });
+      expect(btn).toBeDisabled();
+      expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+    });
+
+    it('disables Void with a permission tooltip when lacking claims:void', async () => {
+      setPermissions(['claims:create', 'claims:edit']); // no claims:void
+      vi.mocked(listCharges).mockResolvedValue({ data: [charge({ id: 8, status: 'pending' })] });
+      renderPage();
+      await screen.findByText('#8');
+
+      const btn = screen.getByRole('button', { name: 'Void' });
+      expect(btn).toBeDisabled();
+      expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+    });
+
+    it('disables Attach to claim with a permission tooltip when lacking claims:edit', async () => {
+      setPermissions(['claims:create', 'claims:void']); // no claims:edit
+      const user = userEvent.setup();
+      vi.mocked(listCharges).mockResolvedValue({
+        data: [charge({ id: 1, status: 'pending', patientId: 100 })],
+      });
+      renderPage();
+      await screen.findByText('#1');
+
+      await user.click(screen.getByLabelText('Select charge 1'));
+      const btn = screen.getByRole('button', { name: /Attach to claim/i });
+      expect(btn).toBeDisabled();
+      expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+    });
   });
 });

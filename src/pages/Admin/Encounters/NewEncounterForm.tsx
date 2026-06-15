@@ -7,6 +7,10 @@ import {
   type CreateEncounterRequest,
   type PatientSearchResult,
 } from './encountersTypes';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 /**
  * Single-page create form. 6 fields: patient (typeahead), service date,
@@ -29,6 +33,9 @@ export function NewEncounterForm() {
   const [patientResults, setPatientResults] = useState<PatientSearchResult[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Create encounter → POST /encounters → [Authorize(Policy = "patients:edit")].
+  const canCreate = usePermission(PERMISSIONS.PATIENTS_EDIT);
 
   function set<K extends keyof CreateEncounterRequest>(field: K, value: CreateEncounterRequest[K]) {
     setForm((p) => ({ ...p, [field]: value }));
@@ -212,7 +219,8 @@ export function NewEncounterForm() {
           </button>
           <button
             type="submit"
-            disabled={submitting}
+            disabled={submitting || !canCreate}
+            title={!canCreate ? NO_PERMISSION : undefined}
             className="px-6 py-2 min-h-12 md:min-h-11 lg:min-h-10 rounded-md bg-teal-600 text-white disabled:opacity-50"
           >
             {submitting ? 'Creating…' : 'Create encounter'}

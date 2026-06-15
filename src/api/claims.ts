@@ -54,11 +54,24 @@ export const getClaim = (id: number): Promise<ClaimDetail> =>
     .get<{ data: ClaimDetail }>(`/claims/${id}`)
     .then((r) => r.data.data);
 
-// PUT /api/v2/claims/{id}/status
-export const submitClaim = (id: number): Promise<ClaimDetail> =>
-  apiClient
-    .put<{ data: ClaimDetail }>(`/claims/${id}/status`, { status: 'submitted' })
-    .then((r) => r.data.data);
+// POST /api/v2/claims/{id}/submit-to-clearinghouse (claims:submit)
+//
+// The backend has two response shapes behind a server feature flag:
+//   - flag OFF (200): { data: <full ClaimDetail> } — legacy synchronous submit
+//   - flag ON  (202): { data: { submissionId, status: 'submitting' } } — async
+// We normalise both to a fresh ClaimDetail so callers are unaffected: if the
+// body carries a full claim (has id + amount) return it directly; otherwise the
+// async submission is in flight, so refetch the canonical claim via getClaim().
+export const submitClaim = async (id: number): Promise<ClaimDetail> => {
+  const res = await apiClient.post<{ data: unknown }>(
+    `/claims/${id}/submit-to-clearinghouse`,
+  );
+  const body = res.data.data as Partial<ClaimDetail> | undefined;
+  if (body && typeof body.id === 'number' && typeof body.amount === 'number') {
+    return body as ClaimDetail;
+  }
+  return getClaim(id);
+};
 
 // AI-assisted pre-submission denial prediction.
 // Returns an ephemeral advisory; nothing is persisted server-side.

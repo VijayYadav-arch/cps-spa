@@ -6,6 +6,15 @@ import * as qapiApi from '@/api/qapi';
 
 vi.mock('@/api/qapi');
 
+// Mock the /me query seam so usePermission resolves synchronously without a
+// QueryClientProvider. Real usePermission logic still runs against this data.
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue({ data: { permissions } } as unknown as ReturnType<typeof useUserRoles>);
+}
+
 function makePlan(overrides: Partial<qapiApi.HospiceQapiPlan> = {}): qapiApi.HospiceQapiPlan {
   return {
     id: 1,
@@ -24,7 +33,11 @@ function makePlan(overrides: Partial<qapiApi.HospiceQapiPlan> = {}): qapiApi.Hos
 }
 
 describe('QapiPlanPage', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // Default: user holds plan-manage so existing behaviour tests see enabled buttons.
+    setPermissions(['hospice:qapi_plan_view', 'hospice:qapi_plan_manage']);
+  });
 
   it('renders the active plan title and version', async () => {
     vi.mocked(qapiApi.getActivePlan).mockResolvedValueOnce(makePlan());
@@ -47,5 +60,29 @@ describe('QapiPlanPage', () => {
     await waitFor(() =>
       expect(screen.getByText(/No active plan\./i)).toBeInTheDocument(),
     );
+  });
+
+  describe('permission gating', () => {
+    it('disables Approve with a permission tooltip when the user lacks plan-manage', async () => {
+      setPermissions(['hospice:qapi_plan_view']); // no manage
+      vi.mocked(qapiApi.getActivePlan).mockResolvedValueOnce(null);
+      vi.mocked(qapiApi.listPlanVersions).mockResolvedValueOnce([makePlan({ status: 'Draft' })]);
+
+      render(<MemoryRouter><QapiPlanPage /></MemoryRouter>);
+
+      const btn = await screen.findByRole('button', { name: /Approve/i });
+      expect(btn).toBeDisabled();
+      expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+    });
+
+    it('enables Approve when the user has plan-manage', async () => {
+      setPermissions(['hospice:qapi_plan_view', 'hospice:qapi_plan_manage']);
+      vi.mocked(qapiApi.getActivePlan).mockResolvedValueOnce(null);
+      vi.mocked(qapiApi.listPlanVersions).mockResolvedValueOnce([makePlan({ status: 'Draft' })]);
+
+      render(<MemoryRouter><QapiPlanPage /></MemoryRouter>);
+
+      expect(await screen.findByRole('button', { name: /Approve/i })).toBeEnabled();
+    });
   });
 });

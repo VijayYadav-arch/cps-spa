@@ -32,6 +32,16 @@ vi.mock('@/api/admin', async () => {
 import { createClaim } from '@/api/claims';
 import { getOrganizations } from '@/api/admin';
 
+// Mock the /me query seam so usePermission resolves synchronously without a
+// QueryClientProvider. Real usePermission logic still runs against this data.
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+const ALL_FORM_PERMS = ['claims:view', 'claims:create'];
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue({ data: { permissions } } as unknown as ReturnType<typeof useUserRoles>);
+}
+
 function renderForm() {
   return render(
     <MemoryRouter>
@@ -44,6 +54,9 @@ describe('NewClaimForm', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockNavigate.mockReset();
+    // Default: user holds every form-related permission so existing behaviour
+    // tests see an enabled submit button. Permission-gating tests override.
+    setPermissions(ALL_FORM_PERMS);
     vi.mocked(getOrganizations).mockResolvedValue({
       data: [
         { id: 1, name: 'Acme Hospice', slug: 'acme', email: null, phone: null, isActive: true, createdAt: '2026-06-01T00:00:00Z' },
@@ -147,5 +160,25 @@ describe('NewClaimForm', () => {
       expect(screen.getByRole('combobox', { name: /client organization/i })).toBeInTheDocument();
     });
     expect(screen.queryByRole('option', { name: 'Acme Hospice' })).not.toBeInTheDocument();
+  });
+
+  describe('permission gating', () => {
+    it('disables Create Claim with a permission tooltip when the user lacks claims:create', async () => {
+      setPermissions(['claims:view']); // no claims:create
+      renderForm();
+      await waitFor(() => expect(getOrganizations).toHaveBeenCalled());
+
+      const btn = screen.getByRole('button', { name: /create claim/i });
+      expect(btn).toBeDisabled();
+      expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+    });
+
+    it('enables Create Claim when the user has claims:create', async () => {
+      setPermissions(['claims:view', 'claims:create']);
+      renderForm();
+      await waitFor(() => expect(getOrganizations).toHaveBeenCalled());
+
+      expect(screen.getByRole('button', { name: /create claim/i })).toBeEnabled();
+    });
   });
 });

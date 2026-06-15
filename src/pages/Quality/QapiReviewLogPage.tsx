@@ -1,5 +1,9 @@
 import { useEffect, useState } from 'react';
 import { listReviews, logReview, type HospiceQapiReview } from '@/api/qapi';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 export function QapiReviewLogPage() {
   const [reviews, setReviews] = useState<HospiceQapiReview[]>([]);
@@ -9,6 +13,9 @@ export function QapiReviewLogPage() {
   const [topicsReviewed, setTopicsReviewed] = useState('');
   const [decisionsMade, setDecisionsMade] = useState('');
   const [nextReviewTargetDate, setNextReviewTargetDate] = useState('');
+
+  // Logging a review hits POST /reviews, gated by hospice:qapi_review_manage.
+  const canManage = usePermission(PERMISSIONS.HOSPICE_QAPI_REVIEW_MANAGE);
 
   const reload = async () => { setReviews(await listReviews()); };
   useEffect(() => { void reload(); }, []);
@@ -36,7 +43,14 @@ export function QapiReviewLogPage() {
           <label>Topics Reviewed <textarea value={topicsReviewed} onChange={e => setTopicsReviewed(e.target.value)} rows={3} /></label>
           <label>Decisions Made <textarea value={decisionsMade} onChange={e => setDecisionsMade(e.target.value)} rows={3} /></label>
           <label>Next Review Target <input type="date" value={nextReviewTargetDate} onChange={e => setNextReviewTargetDate(e.target.value)} required /></label>
-          <button type="submit">Log Review</button>
+          <button
+            type="submit"
+            disabled={!canManage}
+            title={!canManage ? NO_PERMISSION : undefined}
+            style={{ cursor: !canManage ? 'not-allowed' : 'pointer' }}
+          >
+            Log Review
+          </button>
         </form>
       )}
 

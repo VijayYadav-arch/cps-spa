@@ -7,6 +7,15 @@ import * as hospiceApi from '@/api/hospice';
 
 vi.mock('@/api/hospice');
 
+// Mock the /me query seam so usePermission resolves synchronously without a
+// QueryClientProvider. Real usePermission logic still runs against this data.
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue({ data: { permissions } } as unknown as ReturnType<typeof useUserRoles>);
+}
+
 function renderWizard(electionId = '42') {
   return render(
     <MemoryRouter initialEntries={[`/hospice/elections/${electionId}/discharge/new`]}>
@@ -19,7 +28,12 @@ function renderWizard(electionId = '42') {
 }
 
 describe('HospiceDischargeWizard', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // Default: user holds hospice:discharge_manage so the final Submit button
+    // is enabled for existing behaviour tests. Gating tests override.
+    setPermissions(['hospice:discharge_manage']);
+  });
 
   it('Step 1 reason selector renders 5 options', () => {
     renderWizard();
@@ -90,5 +104,29 @@ describe('HospiceDischargeWizard', () => {
   it('Next button disabled until reason + date filled (Step 1)', () => {
     renderWizard();
     expect(screen.getByRole('button', { name: /next/i })).toBeDisabled();
+  });
+
+  it('disables Submit with a permission tooltip when the user lacks hospice:discharge_manage', async () => {
+    setPermissions([]); // no hospice:discharge_manage
+    const user = userEvent.setup();
+    renderWizard();
+    await user.click(screen.getByLabelText(/transfer to another hospice/i));
+    await user.type(screen.getByLabelText(/effective date/i), '2026-02-01');
+    await user.click(screen.getByRole('button', { name: /next/i }));
+    await user.click(screen.getByRole('button', { name: /next/i }));
+    const btn = screen.getByRole('button', { name: /submit/i });
+    expect(btn).toBeDisabled();
+    expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+  });
+
+  it('enables Submit when the user has hospice:discharge_manage', async () => {
+    setPermissions(['hospice:discharge_manage']);
+    const user = userEvent.setup();
+    renderWizard();
+    await user.click(screen.getByLabelText(/transfer to another hospice/i));
+    await user.type(screen.getByLabelText(/effective date/i), '2026-02-01');
+    await user.click(screen.getByRole('button', { name: /next/i }));
+    await user.click(screen.getByRole('button', { name: /next/i }));
+    expect(screen.getByRole('button', { name: /submit/i })).toBeEnabled();
   });
 });

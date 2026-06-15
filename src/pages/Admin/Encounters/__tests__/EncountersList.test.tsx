@@ -16,6 +16,15 @@ vi.mock('@/pages/Admin/Encounters/encountersApi', () => ({
 
 import { encountersApi } from '@/pages/Admin/Encounters/encountersApi';
 
+// Mock the /me query seam so usePermission resolves synchronously without a
+// QueryClientProvider. Real usePermission logic still runs against this data.
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue({ data: { permissions } } as unknown as ReturnType<typeof useUserRoles>);
+}
+
 function makeResponse(overrides: Partial<EncountersListResponse> = {}): EncountersListResponse {
   return {
     data: [
@@ -70,6 +79,9 @@ describe('EncountersList', () => {
     vi.clearAllMocks();
     vi.useFakeTimers({ shouldAdvanceTime: true });
     vi.mocked(encountersApi.list).mockResolvedValue(makeResponse());
+    // Default: user holds clinical:visit_notes so existing behaviour tests see
+    // an enabled Suggest-codes button. Permission-gating tests override.
+    setPermissions(['clinical:visit_notes']);
   });
 
   afterEach(() => {
@@ -283,5 +295,36 @@ describe('EncountersList', () => {
     await user.click(screen.getAllByRole('button', { name: /Suggest codes \(AI\)/i })[0]);
     const alerts = await screen.findAllByRole('alert');
     expect(alerts.some((a) => /AI provider unavailable/i.test(a.textContent ?? ''))).toBe(true);
+  });
+
+  describe('permission gating', () => {
+    it('disables Suggest codes (AI) with a permission tooltip when the user lacks clinical:visit_notes', async () => {
+      setPermissions([]); // no clinical:visit_notes
+      vi.mocked(encountersApi.list).mockResolvedValueOnce(makeResponse());
+      renderList();
+      await act(async () => { await vi.advanceTimersByTimeAsync(300); });
+      await screen.findAllByText('Alice Anderson');
+
+      const buttons = screen.getAllByRole('button', { name: /Suggest codes \(AI\)/i });
+      expect(buttons.length).toBeGreaterThan(0);
+      for (const btn of buttons) {
+        expect(btn).toBeDisabled();
+        expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+      }
+    });
+
+    it('enables Suggest codes (AI) when the user has clinical:visit_notes', async () => {
+      setPermissions(['clinical:visit_notes']);
+      vi.mocked(encountersApi.list).mockResolvedValueOnce(makeResponse());
+      renderList();
+      await act(async () => { await vi.advanceTimersByTimeAsync(300); });
+      await screen.findAllByText('Alice Anderson');
+
+      const buttons = screen.getAllByRole('button', { name: /Suggest codes \(AI\)/i });
+      expect(buttons.length).toBeGreaterThan(0);
+      for (const btn of buttons) {
+        expect(btn).toBeEnabled();
+      }
+    });
   });
 });

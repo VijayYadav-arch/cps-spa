@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { apiClient } from '@/api/client';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 interface OptInRow {
   id: number;
@@ -58,6 +62,10 @@ export function AiOptInPage() {
     submitting: boolean;
     error: string | null;
   } | null>(null);
+
+  // Enable / disable both hit PUT|DELETE /admin/ai/opt-in/{orgId}, whose
+  // controller is class-gated by admin:system_config.
+  const canManage = usePermission(PERMISSIONS.ADMIN_SYSTEM_CONFIG);
 
   useEffect(() => {
     let cancelled = false;
@@ -296,9 +304,13 @@ export function AiOptInPage() {
               <button
                 type="button"
                 onClick={submitEditor}
-                disabled={editor.submitting}
+                disabled={editor.submitting || !canManage}
                 data-testid="editor-confirm"
-                style={editor.targetState === 'enabled' ? primaryBtn : dangerBtn}
+                title={!canManage ? NO_PERMISSION : undefined}
+                style={{
+                  ...(editor.targetState === 'enabled' ? primaryBtn : dangerBtn),
+                  cursor: (editor.submitting || !canManage) ? 'not-allowed' : 'pointer',
+                }}
               >
                 {editor.submitting
                   ? 'Saving…'

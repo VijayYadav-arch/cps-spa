@@ -10,8 +10,21 @@ vi.mock('@/api/client', () => ({
 
 import { apiClient } from '@/api/client';
 
+// Mock the /me query seam so usePermission resolves synchronously without a
+// QueryClientProvider. Real usePermission logic still runs against this data.
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+const ALL_VISIT_PERMS = ['clinical:visit_notes'];
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue({ data: { permissions } } as unknown as ReturnType<typeof useUserRoles>);
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
+  // Default: user holds every clinician-visit permission so existing
+  // behaviour tests see enabled buttons. Permission-gating tests override.
+  setPermissions(ALL_VISIT_PERMS);
 });
 
 function visit(id: number, patientId: number) {
@@ -87,5 +100,33 @@ describe('ClinicianVisits', () => {
     await waitFor(() => {
       expect(screen.getByTestId('empty-state')).toBeTruthy();
     });
+  });
+});
+
+describe('ClinicianVisits — permission gating', () => {
+  it('disables the AI summary button with a permission tooltip when the user lacks clinical:visit_notes', async () => {
+    setPermissions([]); // no clinical:visit_notes
+    vi.mocked(apiClient.get)
+      .mockResolvedValueOnce({ data: { data: [visit(7, 100)] } } as never)
+      .mockResolvedValueOnce({ data: { data: patient(100) } } as never);
+
+    renderPage();
+    await waitFor(() => screen.getByTestId('summarize-7'));
+
+    const btn = screen.getByTestId('summarize-7');
+    expect(btn).toBeDisabled();
+    expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+  });
+
+  it('enables the AI summary button when the user has clinical:visit_notes', async () => {
+    setPermissions(['clinical:visit_notes']);
+    vi.mocked(apiClient.get)
+      .mockResolvedValueOnce({ data: { data: [visit(7, 100)] } } as never)
+      .mockResolvedValueOnce({ data: { data: patient(100) } } as never);
+
+    renderPage();
+    await waitFor(() => screen.getByTestId('summarize-7'));
+
+    expect(screen.getByTestId('summarize-7')).toBeEnabled();
   });
 });

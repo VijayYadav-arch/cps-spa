@@ -5,12 +5,20 @@ import {
   listEligibleForCompletion,
   type BereavementProgram,
 } from '@/api/hospice';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 export function HospiceBereavementEligible() {
   const [programs, setPrograms] = useState<BereavementProgram[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
+
+  // Complete hits POST /hospice/bereavement/programs/{id}/complete
+  // → [Authorize(hospice:bereavement)].
+  const canManage = usePermission(PERMISSIONS.HOSPICE_BEREAVEMENT);
 
   async function refresh() {
     setIsLoading(true);
@@ -78,8 +86,10 @@ export function HospiceBereavementEligible() {
                 <td style={{ padding: '8px 12px' }}>{p.programEndDate}</td>
                 <td style={{ padding: '8px 12px' }}>
                   <button
-                    disabled={busyId === p.id}
+                    disabled={busyId === p.id || !canManage}
                     onClick={() => void handleComplete(p.id)}
+                    title={!canManage ? NO_PERMISSION : undefined}
+                    style={{ cursor: (busyId === p.id || !canManage) ? 'not-allowed' : 'pointer' }}
                   >
                     {busyId === p.id ? 'Completing…' : 'Complete'}
                   </button>

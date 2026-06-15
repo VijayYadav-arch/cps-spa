@@ -16,6 +16,15 @@ vi.mock('@/auth/useAuth', () => ({
 import { getElection, submitNoe } from '@/api/hospice';
 import { useAuth } from '@/auth/useAuth';
 
+// Mock the /me query seam so usePermission resolves synchronously without a
+// QueryClientProvider. Real usePermission logic still runs against this data.
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue({ data: { permissions } } as unknown as ReturnType<typeof useUserRoles>);
+}
+
 const fixture = {
   id: 1,
   patientId: 1,
@@ -72,6 +81,9 @@ describe('HospiceElectionDetail', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAuth();
+    // Default: user holds hospice:manage so the NOE Confirm Submission button
+    // is enabled for existing behaviour tests. Gating tests override.
+    setPermissions(['hospice:manage']);
   });
 
   it('shows loading state initially', () => {
@@ -129,6 +141,31 @@ describe('HospiceElectionDetail', () => {
     await waitFor(() => {
       expect(screen.queryByRole('button', { name: /Discharge Patient/i })).not.toBeInTheDocument();
     });
+  });
+
+  it('disables Confirm Submission with a permission tooltip when the user lacks hospice:manage', async () => {
+    setPermissions([]); // no hospice:manage
+    vi.mocked(getElection).mockResolvedValue(fixture);
+    const user = userEvent.setup();
+    renderDetail();
+    await waitFor(() => screen.getByText(/Submit NOE/i));
+    await user.click(screen.getByRole('button', { name: /Submit NOE/i }));
+    // Select a mode so the only remaining blocker is the missing permission.
+    await user.click(screen.getByRole('button', { name: /Clearinghouse/i }));
+    const btn = screen.getByRole('button', { name: /Confirm Submission/i });
+    expect(btn).toBeDisabled();
+    expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+  });
+
+  it('enables Confirm Submission when the user has hospice:manage and a mode is selected', async () => {
+    setPermissions(['hospice:manage']);
+    vi.mocked(getElection).mockResolvedValue(fixture);
+    const user = userEvent.setup();
+    renderDetail();
+    await waitFor(() => screen.getByText(/Submit NOE/i));
+    await user.click(screen.getByRole('button', { name: /Submit NOE/i }));
+    await user.click(screen.getByRole('button', { name: /Clearinghouse/i }));
+    expect(screen.getByRole('button', { name: /Confirm Submission/i })).toBeEnabled();
   });
 
   it('shows Discharged section with link when election status is Discharged', async () => {

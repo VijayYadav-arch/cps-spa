@@ -35,6 +35,16 @@ vi.mock('@/api/client', () => ({
 
 import { intakeApi } from '@/pages/Patients/intake/intakeApi';
 
+// Mock the /me query seam so usePermission resolves synchronously without a
+// QueryClientProvider. Real usePermission logic still runs against this data.
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+const ALL_PERMS = ['patients:view', 'patients:create', 'patients:intake'];
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue({ data: { permissions } } as unknown as ReturnType<typeof useUserRoles>);
+}
+
 function renderWizard() {
   return render(
     <MemoryRouter>
@@ -47,6 +57,9 @@ describe('IntakeWizard', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockNavigate.mockReset();
+    // Default: user holds every permission the wizard uses so existing
+    // behaviour tests see enabled buttons. Permission-gating tests override.
+    setPermissions(ALL_PERMS);
   });
 
   it('renders DraftResumeBanner when an open draft exists', async () => {
@@ -319,6 +332,77 @@ describe('IntakeWizard', () => {
     });
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith('/patients/555');
+    });
+  });
+
+  describe('permission gating', () => {
+    // A non-hospice draft on its final step (4) so "Complete intake" is visible.
+    const finalDraft = {
+      id: 30,
+      ownerUserId: 'u1',
+      organizationId: 7,
+      currentStep: 4,
+      formJson: JSON.stringify({
+        organizationId: '7',
+        firstName: 'Joe',
+        lastName: 'Smith',
+        admissionType: 'palliative',
+        admittedAt: '2026-06-02',
+      }),
+      createdAt: '2026-06-01T00:00:00Z',
+      updatedAt: '2026-06-02T00:00:00Z',
+      completedAt: null,
+    };
+
+    async function renderOnFinalStep() {
+      vi.mocked(intakeApi.getMyOpenDraft).mockResolvedValueOnce(finalDraft);
+      const user = userEvent.setup();
+      renderWizard();
+      await user.click(await screen.findByRole('button', { name: /resume draft/i }));
+      await screen.findByText(/step 4 of 4/i);
+    }
+
+    it('disables Complete intake with a permission tooltip when the user lacks patients:create', async () => {
+      setPermissions(['patients:view', 'patients:intake']); // no patients:create
+      await renderOnFinalStep();
+
+      const btn = screen.getByRole('button', { name: /complete intake/i });
+      expect(btn).toBeDisabled();
+      expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+    });
+
+    it('disables Complete intake when the user lacks patients:intake', async () => {
+      setPermissions(['patients:view', 'patients:create']); // no patients:intake
+      await renderOnFinalStep();
+
+      expect(screen.getByRole('button', { name: /complete intake/i })).toBeDisabled();
+    });
+
+    it('enables Complete intake when the user has both patients:create and patients:intake', async () => {
+      setPermissions(['patients:view', 'patients:create', 'patients:intake']);
+      await renderOnFinalStep();
+
+      expect(screen.getByRole('button', { name: /complete intake/i })).toBeEnabled();
+    });
+
+    it('disables Next (draft save) with a permission tooltip when the user lacks patients:intake', async () => {
+      setPermissions(['patients:view', 'patients:create']); // no patients:intake
+      vi.mocked(intakeApi.getMyOpenDraft).mockResolvedValueOnce(null);
+      renderWizard();
+      await screen.findByLabelText(/first name/i);
+
+      const btn = screen.getByRole('button', { name: /^next$/i });
+      expect(btn).toBeDisabled();
+      expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+    });
+
+    it('enables Next when the user has patients:intake', async () => {
+      setPermissions(['patients:view', 'patients:intake']);
+      vi.mocked(intakeApi.getMyOpenDraft).mockResolvedValueOnce(null);
+      renderWizard();
+      await screen.findByLabelText(/first name/i);
+
+      expect(screen.getByRole('button', { name: /^next$/i })).toBeEnabled();
     });
   });
 });

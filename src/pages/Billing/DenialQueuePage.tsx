@@ -12,6 +12,10 @@ import {
   type DenialQueueResponse,
   type DenialSummaryResponse,
 } from '@/api/billing';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 const BUCKETS: DenialAgingBucket[] = ['0-7', '8-30', '31-60', '61+'];
 
@@ -64,6 +68,10 @@ export function DenialQueuePage() {
   const [error, setError] = useState<string | null>(null);
   const [actionMsg, setActionMsg] = useState<string | null>(null);
   const [letter, setLetter] = useState<AppealLetterDraft | null>(null);
+
+  // Start/Submit/Resolve all PUT through the billing:denials-gated controller.
+  // The "Letter" action is a read-only GET (same gate as page view) → not gated.
+  const canManageDenials = usePermission(PERMISSIONS.BILLING_DENIALS);
 
   async function refresh() {
     setIsLoading(true);
@@ -263,7 +271,9 @@ export function DenialQueuePage() {
                         <button
                           type="button"
                           onClick={() => void handleStartAppeal(d)}
-                          style={{ fontSize: 12 }}
+                          disabled={!canManageDenials}
+                          title={!canManageDenials ? NO_PERMISSION : undefined}
+                          style={{ fontSize: 12, cursor: canManageDenials ? 'pointer' : 'not-allowed' }}
                         >
                           Start
                         </button>
@@ -272,7 +282,9 @@ export function DenialQueuePage() {
                         <button
                           type="button"
                           onClick={() => void handleSubmitAppeal(d)}
-                          style={{ fontSize: 12 }}
+                          disabled={!canManageDenials}
+                          title={!canManageDenials ? NO_PERMISSION : undefined}
+                          style={{ fontSize: 12, cursor: canManageDenials ? 'pointer' : 'not-allowed' }}
                         >
                           Submit
                         </button>
@@ -281,7 +293,9 @@ export function DenialQueuePage() {
                         <button
                           type="button"
                           onClick={() => void handleResolve(d)}
-                          style={{ fontSize: 12 }}
+                          disabled={!canManageDenials}
+                          title={!canManageDenials ? NO_PERMISSION : undefined}
+                          style={{ fontSize: 12, cursor: canManageDenials ? 'pointer' : 'not-allowed' }}
                         >
                           Resolve
                         </button>
