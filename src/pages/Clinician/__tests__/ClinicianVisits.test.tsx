@@ -10,6 +10,11 @@ vi.mock('@/api/client', () => ({
 
 import { apiClient } from '@/api/client';
 
+// The visit-note summary modal streams via consumeAiStream (SSE), not apiClient.
+vi.mock('@/api/aiStream', () => ({ consumeAiStream: vi.fn() }));
+vi.mock('@/api/staffAuthHeaders', () => ({ staffAuthHeaders: vi.fn().mockResolvedValue({}) }));
+import { consumeAiStream } from '@/api/aiStream';
+
 // Mock the /me query seam so usePermission resolves synchronously without a
 // QueryClientProvider. Real usePermission logic still runs against this data.
 vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
@@ -72,16 +77,10 @@ describe('ClinicianVisits', () => {
         data: { data: [visit(7, 100)] },
       } as never)
       .mockResolvedValueOnce({ data: { data: patient(100) } } as never);
-    vi.mocked(apiClient.post).mockResolvedValueOnce({
-      data: {
-        data: {
-          summary: 'Patient stable.',
-          inputTokens: 1,
-          outputTokens: 1,
-          correlationId: 'c',
-        },
-      },
-    } as never);
+    vi.mocked(consumeAiStream).mockImplementation(async (_req, handlers) => {
+      handlers.onDelta('Patient stable.');
+      handlers.onDone({ summary: 'Patient stable.' } as never);
+    });
 
     renderPage();
 
@@ -91,7 +90,7 @@ describe('ClinicianVisits', () => {
     await waitFor(() => {
       expect(screen.getByTestId('summary-text').textContent).toContain('Patient stable');
     });
-    expect(vi.mocked(apiClient.post)).toHaveBeenCalledWith('/clinician/visits/7/summarize');
+    expect(vi.mocked(consumeAiStream)).toHaveBeenCalled();
   });
 
   it('renders empty state when no visits', async () => {

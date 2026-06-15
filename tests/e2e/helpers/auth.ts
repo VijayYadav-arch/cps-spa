@@ -1,5 +1,6 @@
 // @ts-nocheck — Playwright runner provides node context; cps-spa intentionally lacks @types/node.
 import type { Page } from '@playwright/test';
+import { PERMISSIONS } from '../../../src/permissions/permissions';
 
 /**
  * Seeds the dev-claims sessionStorage entry that AuthContext (dev branch)
@@ -22,46 +23,11 @@ export async function loginAsTestUser(
     userId: 1,
     organizationId: 1,
     roles: ['system_admin'],
-    permissions: [
-      'admin:dashboard',
-      'admin:manage_orgs',
-      'admin:manage_users',
-      'admin:manage_roles',
-      'admin:audit_logs',
-      'admin:system_config',
-      'admin:import',
-      'admin:manage_branches',
-      'claims:view',
-      'claims:create',
-      'claims:submit',
-      'claims:edit',
-      'claims:void',
-      'claims:print',
-      'patients:view',
-      'patients:create',
-      'patients:edit',
-      'patients:intake',
-      'billing:scrub',
-      'billing:era',
-      'billing:denials',
-      'billing:statements',
-      'billing:codes',
-      'billing:queue',
-      'billing:batch',
-      'billing:superbills',
-      'billing:ar-followup',
-      'clinical:visit_notes',
-      'clinical:medications',
-      'clinical:orders',
-      'clinical:referrals',
-      'clinical:quality',
-      'compliance:phi_review',
-      'compliance:surveyor_export',
-      'platform:onboarding',
-      'reports:view',
-      'hospice:manage',
-      'hospice:view',
-    ],
+    // Full permission set — the e2e actor is a system_admin exercising
+    // functionality, not authz. Derive from PERMISSIONS so newly-added
+    // button guards never silently disable controls in e2e (kept in sync
+    // automatically instead of a hand-maintained list).
+    permissions: Object.values(PERMISSIONS) as string[],
     ...overrides,
   };
 

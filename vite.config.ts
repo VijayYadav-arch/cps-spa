@@ -1,5 +1,6 @@
 /// <reference types="vitest" />
 import { defineConfig } from 'vite';
+import { configDefaults } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import path from 'path';
@@ -29,6 +30,10 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./tests/setup.ts'],
+    // tests/parity and tests/e2e are Playwright suites (run via `npm run
+    // test:parity` / `test:e2e`) — they error under jsdom, so keep them out
+    // of the default `vitest run` (unit) glob.
+    exclude: [...configDefaults.exclude, 'tests/parity/**', 'tests/e2e/**'],
     coverage: {
       reporter: ['text', 'html'],
     },
