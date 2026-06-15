@@ -23,6 +23,15 @@ vi.mock('@/pages/Admin/Encounters/encountersApi', () => ({
 
 import { encountersApi } from '@/pages/Admin/Encounters/encountersApi';
 
+// Mock the /me query seam so usePermission resolves synchronously without a
+// QueryClientProvider. Real usePermission logic still runs against this data.
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue({ data: { permissions } } as unknown as ReturnType<typeof useUserRoles>);
+}
+
 function renderForm() {
   return render(
     <MemoryRouter>
@@ -36,6 +45,9 @@ describe('NewEncounterForm', () => {
     vi.clearAllMocks();
     mockNavigate.mockReset();
     vi.mocked(encountersApi.searchPatients).mockResolvedValue([]);
+    // Default: user holds patients:edit so existing behaviour tests see an
+    // enabled submit button. Permission-gating tests override.
+    setPermissions(['patients:edit']);
   });
 
   afterEach(() => {
@@ -157,5 +169,23 @@ describe('NewEncounterForm', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent(/patient not found/i);
     expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  describe('permission gating', () => {
+    it('disables Create encounter with a permission tooltip when the user lacks patients:edit', () => {
+      setPermissions([]); // no patients:edit
+      renderForm();
+
+      const btn = screen.getByRole('button', { name: /create encounter/i });
+      expect(btn).toBeDisabled();
+      expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+    });
+
+    it('enables Create encounter when the user has patients:edit', () => {
+      setPermissions(['patients:edit']);
+      renderForm();
+
+      expect(screen.getByRole('button', { name: /create encounter/i })).toBeEnabled();
+    });
   });
 });

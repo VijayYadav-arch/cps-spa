@@ -8,6 +8,10 @@ import {
   type PriorAuthStatus,
   type UpdatePriorAuthDecisionRequest,
 } from '@/api/billing';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 const STATUS_TONES: Record<PriorAuthStatus, string> = {
   pending: '#b45309',
@@ -74,6 +78,9 @@ export function PriorAuthDetailPage() {
     status: 'approved', authNumber: null, approvedUnits: null,
     authEffectiveDate: null, authExpirationDate: null, denialReason: null,
   });
+
+  // Refresh-status + record-decision hit /billing/prior-auth/* → clinical:prior_auth.
+  const canManage = usePermission(PERMISSIONS.CLINICAL_PRIOR_AUTH);
 
   const loadAuth = async () => {
     if (!id) { setIsLoading(false); return; }
@@ -213,15 +220,26 @@ export function PriorAuthDetailPage() {
             <button
               type="button"
               onClick={() => { void onRefresh(); }}
-              disabled={isRefreshing}
+              disabled={isRefreshing || !canManage}
               aria-busy={isRefreshing}
+              title={!canManage ? NO_PERMISSION : undefined}
             >
               {isRefreshing ? 'Refreshing…' : 'Refresh status now'}
             </button>
-            <button type="button" onClick={() => openDecision('approved')}>
+            <button
+              type="button"
+              onClick={() => openDecision('approved')}
+              disabled={!canManage}
+              title={!canManage ? NO_PERMISSION : undefined}
+            >
               Record approval
             </button>
-            <button type="button" onClick={() => openDecision('denied')}>
+            <button
+              type="button"
+              onClick={() => openDecision('denied')}
+              disabled={!canManage}
+              title={!canManage ? NO_PERMISSION : undefined}
+            >
               Record denial
             </button>
           </>
@@ -350,7 +368,14 @@ export function PriorAuthDetailPage() {
             )}
             <div style={{ display: 'flex', gap: 8, marginTop: 12, justifyContent: 'flex-end' }}>
               <button type="button" onClick={() => setDecisionOpen(null)}>Cancel</button>
-              <button type="button" onClick={() => { void submitDecision(); }}>Save</button>
+              <button
+                type="button"
+                onClick={() => { void submitDecision(); }}
+                disabled={!canManage}
+                title={!canManage ? NO_PERMISSION : undefined}
+              >
+                Save
+              </button>
             </div>
           </div>
         </div>

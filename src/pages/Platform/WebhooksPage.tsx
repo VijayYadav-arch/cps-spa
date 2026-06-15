@@ -10,6 +10,10 @@ import {
   type WebhookCreateResponse,
   type WebhookDeliveryAttempt,
 } from '@/api/platform';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 const PAGE_SIZE = 25;
 
@@ -47,6 +51,11 @@ export function WebhooksPage() {
   // Test signature panel
   const [testSecret, setTestSecret] = useState('');
   const [testResult, setTestResult] = useState<{ payload: string; signature: string } | null>(null);
+
+  // Button-level permission gate. Create + Delete both hit the WebhooksController,
+  // which is gated by the platform:webhooks policy. The Deliveries (GET), signature
+  // Generate (pure compute), and pagination buttons are not state-changing — no guard.
+  const canManage = usePermission(PERMISSIONS.PLATFORM_WEBHOOKS);
 
   const load = async () => {
     setIsLoading(true);
@@ -249,10 +258,11 @@ export function WebhooksPage() {
           </div>
           <button
             type="button"
-            disabled={creating}
+            disabled={creating || !canManage}
             aria-busy={creating}
+            title={!canManage ? NO_PERMISSION : undefined}
             onClick={() => { void handleCreate(); }}
-            style={{ marginTop: 12 }}
+            style={{ marginTop: 12, cursor: (creating || !canManage) ? 'not-allowed' : 'pointer' }}
           >
             {creating ? 'Creating…' : 'Create'}
           </button>
@@ -306,7 +316,9 @@ export function WebhooksPage() {
                     <button
                       type="button"
                       onClick={() => { void handleDelete(w); }}
-                      style={{ fontSize: 12, color: '#b91c1c' }}
+                      disabled={!canManage}
+                      title={!canManage ? NO_PERMISSION : undefined}
+                      style={{ fontSize: 12, color: '#b91c1c', cursor: !canManage ? 'not-allowed' : 'pointer' }}
                     >
                       Delete
                     </button>

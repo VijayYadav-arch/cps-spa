@@ -19,6 +19,15 @@ import {
   updateBranch,
 } from '@/api/admin';
 
+// Mock the /me query seam so usePermission resolves synchronously without a
+// QueryClientProvider. Real usePermission logic still runs against this data.
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue({ data: { permissions } } as unknown as ReturnType<typeof useUserRoles>);
+}
+
 function branch(over: Partial<Branch> = {}): Branch {
   return {
     id: 1,
@@ -46,7 +55,12 @@ function renderPage() {
 }
 
 describe('BranchesPage', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // Default: user holds the manage permission so existing behaviour tests see
+    // enabled buttons. Permission-gating tests override.
+    setPermissions(['admin:manage_branches']);
+  });
 
   it('renders the branch list', async () => {
     vi.mocked(listBranches).mockResolvedValueOnce({
@@ -149,5 +163,33 @@ describe('BranchesPage', () => {
       expect(deleteBranch).toHaveBeenCalledWith(1);
     });
     confirmSpy.mockRestore();
+  });
+
+  describe('permission gating', () => {
+    it('disables New Branch / Deactivate / Delete with a tooltip when the user lacks admin:manage_branches', async () => {
+      setPermissions([]); // no admin:manage_branches
+      vi.mocked(listBranches).mockResolvedValue({ data: [branch()] });
+
+      renderPage();
+      await screen.findByText('Tampa Downtown');
+
+      const newBtn = screen.getByRole('button', { name: /New Branch/i });
+      expect(newBtn).toBeDisabled();
+      expect(newBtn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+      expect(screen.getByRole('button', { name: /Deactivate/i })).toBeDisabled();
+      expect(screen.getByRole('button', { name: /Delete/i })).toBeDisabled();
+    });
+
+    it('enables New Branch / Deactivate / Delete when the user has admin:manage_branches', async () => {
+      setPermissions(['admin:manage_branches']);
+      vi.mocked(listBranches).mockResolvedValue({ data: [branch()] });
+
+      renderPage();
+      await screen.findByText('Tampa Downtown');
+
+      expect(screen.getByRole('button', { name: /New Branch/i })).toBeEnabled();
+      expect(screen.getByRole('button', { name: /Deactivate/i })).toBeEnabled();
+      expect(screen.getByRole('button', { name: /Delete/i })).toBeEnabled();
+    });
   });
 });

@@ -26,6 +26,17 @@ vi.mock('@/pages/Admin/Organizations/orgsApi', () => ({
 
 import { orgsApi } from '@/pages/Admin/Organizations/orgsApi';
 
+// Mock the /me query seam so usePermission resolves synchronously without a
+// QueryClientProvider. Real usePermission logic still runs against this data.
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue(
+    { data: { permissions } } as unknown as ReturnType<typeof useUserRoles>,
+  );
+}
+
 function renderForm() {
   return render(
     <MemoryRouter>
@@ -38,6 +49,9 @@ describe('NewOrganizationForm', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockNavigate.mockReset();
+    // Default: user holds the create permission so existing behaviour tests see
+    // an enabled button. Permission-gating tests override.
+    setPermissions(['platform:admin']);
   });
 
   it('blocks submit when required fields are empty and shows validation errors', async () => {
@@ -105,5 +119,23 @@ describe('NewOrganizationForm', () => {
 
     await user.click(screen.getByRole('button', { name: /^cancel$/i }));
     expect(mockNavigate).toHaveBeenCalledWith(-1);
+  });
+
+  describe('permission gating', () => {
+    it('disables Create with a permission tooltip when the user lacks platform:admin', () => {
+      setPermissions([]); // no platform:admin
+      renderForm();
+
+      const btn = screen.getByRole('button', { name: /^create$/i });
+      expect(btn).toBeDisabled();
+      expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+    });
+
+    it('enables Create when the user has platform:admin', () => {
+      setPermissions(['platform:admin']);
+      renderForm();
+
+      expect(screen.getByRole('button', { name: /^create$/i })).toBeEnabled();
+    });
   });
 });

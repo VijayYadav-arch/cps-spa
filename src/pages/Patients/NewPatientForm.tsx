@@ -4,6 +4,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { apiClient } from '@/api/client';
 import { intakeApi } from './intake/intakeApi';
 import { initialForm, type FormData } from './intake/intakeTypes';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 interface Organization {
   id: number;
@@ -35,6 +39,9 @@ export function NewPatientForm() {
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+
+  // Create Patient submits to POST /patients → [Authorize(Policy = patients:create)].
+  const canCreate = usePermission(PERMISSIONS.PATIENTS_CREATE);
 
   useEffect(() => {
     apiClient
@@ -262,7 +269,8 @@ export function NewPatientForm() {
         <div className="flex items-center gap-3">
           <button
             type="submit"
-            disabled={submitting}
+            disabled={submitting || !canCreate}
+            title={!canCreate ? NO_PERMISSION : undefined}
             className="px-6 py-3 min-h-12 rounded-md bg-teal-600 text-white disabled:opacity-50"
           >
             {submitting ? 'Creating…' : 'Create Patient'}

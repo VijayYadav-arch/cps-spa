@@ -2,6 +2,10 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiClient } from '@/api/client';
 import { VisitNoteSummaryModal } from '@/components/VisitNoteSummaryModal';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 interface VisitNote {
   id: number;
@@ -36,6 +40,10 @@ export function ClinicianVisits() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [summarizing, setSummarizing] = useState<VisitNote | null>(null);
+
+  // AI summary hits POST /clinician/visits/{id}/summarize, gated by the
+  // clinical:visit_notes policy on VisitNoteSummaryController.
+  const canSummarize = usePermission(PERMISSIONS.CLINICAL_VISIT_NOTES);
 
   useEffect(() => {
     let cancelled = false;
@@ -159,6 +167,8 @@ export function ClinicianVisits() {
               type="button"
               data-testid={`summarize-${v.id}`}
               onClick={() => setSummarizing(v)}
+              disabled={!canSummarize}
+              title={!canSummarize ? NO_PERMISSION : undefined}
               style={{
                 padding: '6px 10px',
                 fontSize: 13,
@@ -166,7 +176,7 @@ export function ClinicianVisits() {
                 color: '#0d9488',
                 border: '1px solid #99f6e4',
                 borderRadius: 8,
-                cursor: 'pointer',
+                cursor: canSummarize ? 'pointer' : 'not-allowed',
                 fontWeight: 500,
               }}
             >

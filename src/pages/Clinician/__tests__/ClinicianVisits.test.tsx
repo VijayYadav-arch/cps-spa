@@ -10,8 +10,26 @@ vi.mock('@/api/client', () => ({
 
 import { apiClient } from '@/api/client';
 
+// The visit-note summary modal streams via consumeAiStream (SSE), not apiClient.
+vi.mock('@/api/aiStream', () => ({ consumeAiStream: vi.fn() }));
+vi.mock('@/api/staffAuthHeaders', () => ({ staffAuthHeaders: vi.fn().mockResolvedValue({}) }));
+import { consumeAiStream } from '@/api/aiStream';
+
+// Mock the /me query seam so usePermission resolves synchronously without a
+// QueryClientProvider. Real usePermission logic still runs against this data.
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+const ALL_VISIT_PERMS = ['clinical:visit_notes'];
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue({ data: { permissions } } as unknown as ReturnType<typeof useUserRoles>);
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
+  // Default: user holds every clinician-visit permission so existing
+  // behaviour tests see enabled buttons. Permission-gating tests override.
+  setPermissions(ALL_VISIT_PERMS);
 });
 
 function visit(id: number, patientId: number) {
@@ -59,16 +77,10 @@ describe('ClinicianVisits', () => {
         data: { data: [visit(7, 100)] },
       } as never)
       .mockResolvedValueOnce({ data: { data: patient(100) } } as never);
-    vi.mocked(apiClient.post).mockResolvedValueOnce({
-      data: {
-        data: {
-          summary: 'Patient stable.',
-          inputTokens: 1,
-          outputTokens: 1,
-          correlationId: 'c',
-        },
-      },
-    } as never);
+    vi.mocked(consumeAiStream).mockImplementation(async (_req, handlers) => {
+      handlers.onDelta('Patient stable.');
+      handlers.onDone({ summary: 'Patient stable.' } as never);
+    });
 
     renderPage();
 
@@ -78,7 +90,7 @@ describe('ClinicianVisits', () => {
     await waitFor(() => {
       expect(screen.getByTestId('summary-text').textContent).toContain('Patient stable');
     });
-    expect(vi.mocked(apiClient.post)).toHaveBeenCalledWith('/clinician/visits/7/summarize');
+    expect(vi.mocked(consumeAiStream)).toHaveBeenCalled();
   });
 
   it('renders empty state when no visits', async () => {
@@ -87,5 +99,33 @@ describe('ClinicianVisits', () => {
     await waitFor(() => {
       expect(screen.getByTestId('empty-state')).toBeTruthy();
     });
+  });
+});
+
+describe('ClinicianVisits — permission gating', () => {
+  it('disables the AI summary button with a permission tooltip when the user lacks clinical:visit_notes', async () => {
+    setPermissions([]); // no clinical:visit_notes
+    vi.mocked(apiClient.get)
+      .mockResolvedValueOnce({ data: { data: [visit(7, 100)] } } as never)
+      .mockResolvedValueOnce({ data: { data: patient(100) } } as never);
+
+    renderPage();
+    await waitFor(() => screen.getByTestId('summarize-7'));
+
+    const btn = screen.getByTestId('summarize-7');
+    expect(btn).toBeDisabled();
+    expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+  });
+
+  it('enables the AI summary button when the user has clinical:visit_notes', async () => {
+    setPermissions(['clinical:visit_notes']);
+    vi.mocked(apiClient.get)
+      .mockResolvedValueOnce({ data: { data: [visit(7, 100)] } } as never)
+      .mockResolvedValueOnce({ data: { data: patient(100) } } as never);
+
+    renderPage();
+    await waitFor(() => screen.getByTestId('summarize-7'));
+
+    expect(screen.getByTestId('summarize-7')).toBeEnabled();
   });
 });

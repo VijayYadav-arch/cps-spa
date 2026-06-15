@@ -4,6 +4,10 @@ import { Link } from 'react-router-dom';
 import { encountersApi } from './encountersApi';
 import { CodingSuggestionsModal } from './CodingSuggestionsModal';
 import type { EncounterListItem } from './encountersTypes';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 /**
  * Admin encounters list — mobile-first responsive.
@@ -26,6 +30,10 @@ export function EncountersList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [suggestFor, setSuggestFor] = useState<EncounterListItem | null>(null);
+
+  // Suggest codes (AI) → opens a modal that POSTs /encounters/{id}/suggest-codes
+  // → [Authorize(Policy = "clinical:visit_notes")].
+  const canSuggest = usePermission(PERMISSIONS.CLINICAL_VISIT_NOTES);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -103,7 +111,9 @@ export function EncountersList() {
               <button
                 type="button"
                 onClick={() => setSuggestFor(e)}
-                className="mt-2 text-xs text-teal-700 hover:text-teal-900 underline"
+                disabled={!canSuggest}
+                title={!canSuggest ? NO_PERMISSION : undefined}
+                className="mt-2 text-xs text-teal-700 hover:text-teal-900 underline disabled:opacity-50 disabled:cursor-not-allowed disabled:no-underline"
               >
                 Suggest codes (AI)
               </button>
@@ -147,7 +157,9 @@ export function EncountersList() {
                   <button
                     type="button"
                     onClick={() => setSuggestFor(e)}
-                    className="text-xs text-teal-700 hover:text-teal-900 underline"
+                    disabled={!canSuggest}
+                    title={!canSuggest ? NO_PERMISSION : undefined}
+                    className="text-xs text-teal-700 hover:text-teal-900 underline disabled:opacity-50 disabled:cursor-not-allowed disabled:no-underline"
                   >
                     Suggest codes (AI)
                   </button>

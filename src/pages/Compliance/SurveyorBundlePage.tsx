@@ -4,6 +4,10 @@ import {
   getSurveyorBundleManifest,
   type SurveyorBundleManifest,
 } from '@/api/compliance';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 function defaultRange(): { from: string; to: string } {
   const to = new Date();
@@ -49,6 +53,11 @@ export function SurveyorBundlePage() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [downloadedFile, setDownloadedFile] = useState<string | null>(null);
+
+  // Download maps to GET /compliance/surveyor-bundle/{id} → [Authorize(Policy =
+  // compliance:surveyor_export)]. Preview (manifest) is GET under the same
+  // policy as the route guard, so it stays unguarded.
+  const canExport = usePermission(PERMISSIONS.COMPLIANCE_SURVEYOR_EXPORT);
 
   async function handlePreview(e: React.FormEvent) {
     e.preventDefault();
@@ -219,7 +228,8 @@ export function SurveyorBundlePage() {
             <button
               type="button"
               onClick={() => void handleDownload()}
-              disabled={isDownloading}
+              disabled={isDownloading || !canExport}
+              title={!canExport ? NO_PERMISSION : undefined}
               style={{
                 fontSize: 14,
                 fontWeight: 600,
@@ -228,7 +238,7 @@ export function SurveyorBundlePage() {
                 color: '#fff',
                 border: 'none',
                 borderRadius: 6,
-                cursor: 'pointer',
+                cursor: (isDownloading || !canExport) ? 'not-allowed' : 'pointer',
               }}
             >
               {isDownloading ? 'Generating ZIP…' : 'Download Bundle (.zip)'}

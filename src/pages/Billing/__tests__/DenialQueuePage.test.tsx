@@ -26,6 +26,16 @@ import {
   startDenialAppeal,
 } from '@/api/billing';
 
+// Mock the /me query seam so usePermission resolves synchronously without a
+// QueryClientProvider. Real usePermission logic still runs against this data.
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+const ALL_DENIAL_PERMS = ['billing:denials'];
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue({ data: { permissions } } as unknown as ReturnType<typeof useUserRoles>);
+}
+
 function queueItem(over: Partial<DenialQueueItem> = {}): DenialQueueItem {
   return {
     id: 1,
@@ -82,7 +92,12 @@ function renderPage() {
 }
 
 describe('DenialQueuePage', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // Default: user holds the denial-management permission so existing
+    // behaviour tests see enabled buttons. Gating tests override.
+    setPermissions(ALL_DENIAL_PERMS);
+  });
 
   it('renders metric cards + queue table', async () => {
     vi.mocked(getDenialQueue).mockResolvedValueOnce(queueResp());
@@ -177,5 +192,48 @@ describe('DenialQueuePage', () => {
     await user.click(await screen.findByRole('button', { name: 'Resolve' }));
     expect(resolveDenial).not.toHaveBeenCalled();
     promptSpy.mockRestore();
+  });
+
+  describe('permission gating', () => {
+    it('disables Start with a permission tooltip when lacking billing:denials', async () => {
+      setPermissions([]); // no billing:denials
+      vi.mocked(getDenialQueue).mockResolvedValueOnce(queueResp([queueItem({ status: 'new' })]));
+      vi.mocked(getDenialSummary).mockResolvedValueOnce(summary());
+      renderPage();
+
+      const btn = await screen.findByRole('button', { name: 'Start' });
+      expect(btn).toBeDisabled();
+      expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+    });
+
+    it('enables Start when holding billing:denials', async () => {
+      setPermissions(['billing:denials']);
+      vi.mocked(getDenialQueue).mockResolvedValueOnce(queueResp([queueItem({ status: 'new' })]));
+      vi.mocked(getDenialSummary).mockResolvedValueOnce(summary());
+      renderPage();
+      expect(await screen.findByRole('button', { name: 'Start' })).toBeEnabled();
+    });
+
+    it('disables Submit with a permission tooltip when lacking billing:denials', async () => {
+      setPermissions([]);
+      vi.mocked(getDenialQueue).mockResolvedValueOnce(queueResp([queueItem({ status: 'in-review' })]));
+      vi.mocked(getDenialSummary).mockResolvedValueOnce(summary({ inReview: 1, new: 0 }));
+      renderPage();
+
+      const btn = await screen.findByRole('button', { name: 'Submit' });
+      expect(btn).toBeDisabled();
+      expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+    });
+
+    it('disables Resolve with a permission tooltip when lacking billing:denials', async () => {
+      setPermissions([]);
+      vi.mocked(getDenialQueue).mockResolvedValueOnce(queueResp([queueItem({ status: 'appealing' })]));
+      vi.mocked(getDenialSummary).mockResolvedValueOnce(summary({ appealing: 1, new: 0 }));
+      renderPage();
+
+      const btn = await screen.findByRole('button', { name: 'Resolve' });
+      expect(btn).toBeDisabled();
+      expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+    });
   });
 });

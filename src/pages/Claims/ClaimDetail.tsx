@@ -6,6 +6,10 @@ import {
   type ScrubResult,
   type DenialPrediction,
 } from '@/api/claims';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 export function ClaimDetail() {
   const { id } = useParams<{ id: string }>();
@@ -19,6 +23,13 @@ export function ClaimDetail() {
   const [isScrubbing, setIsScrubbing] = useState(false);
   const [prediction, setPrediction] = useState<DenialPrediction | null>(null);
   const [isPredicting, setIsPredicting] = useState(false);
+
+  // Button-level permission gates. Each maps to the policy on the endpoint the
+  // handler calls: submit→claims:submit, scrub→billing:scrub, print→claims:print.
+  // Predict-denial is gated by claims:view (the route guard already covers it).
+  const canSubmit = usePermission(PERMISSIONS.CLAIMS_SUBMIT);
+  const canScrub = usePermission(PERMISSIONS.BILLING_SCRUB);
+  const canPrint = usePermission(PERMISSIONS.CLAIMS_PRINT);
 
   useEffect(() => {
     if (!id) {
@@ -37,11 +48,17 @@ export function ClaimDetail() {
   const handleSubmit = async () => {
     if (!claim) return;
     setIsSubmitting(true);
+    setError(null);
     try {
       const updated = await submitClaim(claim.id);
       setClaim(updated);
-    } catch {
-      setError('Failed to submit claim.');
+    } catch (err: unknown) {
+      const res = (err as { response?: { status?: number; data?: { code?: string } } })?.response;
+      if (res?.status === 409 || res?.data?.code === 'ALREADY_SUBMITTING') {
+        setError('Claim is already being submitted.');
+      } else {
+        setError('Failed to submit claim.');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -222,9 +239,10 @@ export function ClaimDetail() {
       <div style={{ display: 'flex', gap: 10, marginTop: 16, flexWrap: 'wrap' }}>
         <button
           onClick={() => { void handleValidate(); }}
-          disabled={isScrubbing}
+          disabled={isScrubbing || !canScrub}
           aria-busy={isScrubbing}
-          style={{ padding: '10px 24px', background: '#7c3aed', color: '#fff', border: 'none', borderRadius: 4, fontWeight: 600, cursor: isScrubbing ? 'not-allowed' : 'pointer' }}
+          title={!canScrub ? NO_PERMISSION : undefined}
+          style={{ padding: '10px 24px', background: '#7c3aed', color: '#fff', border: 'none', borderRadius: 4, fontWeight: 600, cursor: (isScrubbing || !canScrub) ? 'not-allowed' : 'pointer' }}
         >
           {isScrubbing ? 'Validating…' : 'Validate'}
         </button>
@@ -243,18 +261,20 @@ export function ClaimDetail() {
         {claim.status !== 'submitted' && claim.status !== 'paid' && (
           <button
             onClick={() => { void handleSubmit(); }}
-            disabled={isSubmitting}
+            disabled={isSubmitting || !canSubmit}
             aria-busy={isSubmitting}
-            style={{ padding: '10px 24px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 4, fontWeight: 600, cursor: isSubmitting ? 'not-allowed' : 'pointer' }}
+            title={!canSubmit ? NO_PERMISSION : undefined}
+            style={{ padding: '10px 24px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 4, fontWeight: 600, cursor: (isSubmitting || !canSubmit) ? 'not-allowed' : 'pointer' }}
           >
             {isSubmitting ? 'Submitting…' : 'Submit Claim'}
           </button>
         )}
         <button
           onClick={() => { void handlePrint(); }}
-          disabled={isPrinting}
+          disabled={isPrinting || !canPrint}
           aria-busy={isPrinting}
-          style={{ padding: '10px 24px', background: '#0ea5e9', color: '#fff', border: 'none', borderRadius: 4, fontWeight: 600, cursor: isPrinting ? 'not-allowed' : 'pointer' }}
+          title={!canPrint ? NO_PERMISSION : undefined}
+          style={{ padding: '10px 24px', background: '#0ea5e9', color: '#fff', border: 'none', borderRadius: 4, fontWeight: 600, cursor: (isPrinting || !canPrint) ? 'not-allowed' : 'pointer' }}
         >
           {isPrinting ? 'Generating…' : 'Print Claim Form'}
         </button>

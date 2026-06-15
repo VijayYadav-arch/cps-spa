@@ -10,7 +10,21 @@ vi.mock('@/api/platform', () => ({
 
 import { getAuditEvents, auditExportUrl } from '@/api/platform';
 
-beforeEach(() => vi.clearAllMocks());
+// Mock the /me query seam so usePermission resolves synchronously without a
+// QueryClientProvider. Real usePermission logic still runs against this data.
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue({ data: { permissions } } as unknown as ReturnType<typeof useUserRoles>);
+}
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  // Default: user holds the audit-log permission so existing behaviour tests
+  // see an enabled export button. Permission-gating tests override.
+  setPermissions(['admin:audit_logs']);
+});
 
 function evt(over: Partial<{ id: number; description: string; result: string; eventType: string }> = {}) {
   return {
@@ -130,6 +144,32 @@ describe('AuditLogSearchPage', () => {
       const calls = vi.mocked(getAuditEvents).mock.calls;
       const last = calls[calls.length - 1][0];
       expect(last).not.toHaveProperty('q');
+    });
+  });
+
+  describe('permission gating', () => {
+    it('disables Download CSV with a tooltip when the user lacks admin:audit_logs', async () => {
+      setPermissions([]); // no admin:audit_logs
+      vi.mocked(getAuditEvents).mockResolvedValue({
+        data: [evt()], pagination: pagination(1),
+      });
+      render(<AuditLogSearchPage />);
+      await screen.findByText('Read patient #99');
+
+      const btn = screen.getByRole('button', { name: /Download CSV/i });
+      expect(btn).toBeDisabled();
+      expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+    });
+
+    it('enables Download CSV when the user has admin:audit_logs', async () => {
+      setPermissions(['admin:audit_logs']);
+      vi.mocked(getAuditEvents).mockResolvedValue({
+        data: [evt()], pagination: pagination(1),
+      });
+      render(<AuditLogSearchPage />);
+      await screen.findByText('Read patient #99');
+
+      expect(screen.getByRole('button', { name: /Download CSV/i })).toBeEnabled();
     });
   });
 });

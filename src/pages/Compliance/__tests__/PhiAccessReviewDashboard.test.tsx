@@ -26,6 +26,16 @@ import {
   recordPhiReview,
 } from '@/api/compliance';
 
+// Mock the /me query seam so usePermission resolves synchronously without a
+// QueryClientProvider. Real usePermission logic still runs against this data.
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+const ALL_PERMS = ['compliance:phi_review'];
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue({ data: { permissions } } as unknown as ReturnType<typeof useUserRoles>);
+}
+
 function renderPage() {
   return render(
     <MemoryRouter>
@@ -106,7 +116,12 @@ function emptyRetention(): RetentionStatus {
 }
 
 describe('PhiAccessReviewDashboard', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // Default: user holds compliance:phi_review so existing behaviour tests
+    // see an enabled Attest button. Gating tests override.
+    setPermissions(ALL_PERMS);
+  });
 
   it('loads anomalies tab by default', async () => {
     vi.mocked(getPhiAnomalies).mockResolvedValueOnce(emptyAnomalies());
@@ -213,6 +228,32 @@ describe('PhiAccessReviewDashboard', () => {
       );
     });
     promptSpy.mockRestore();
+  });
+
+  it('disables Attest Review with a permission tooltip when the user lacks compliance:phi_review', async () => {
+    const user = userEvent.setup();
+    setPermissions([]); // no compliance:phi_review
+    vi.mocked(getPhiAnomalies).mockResolvedValueOnce(emptyAnomalies());
+    vi.mocked(getPhiPatientAccess).mockResolvedValueOnce(emptyPatient());
+    renderPage();
+    await user.click(await screen.findByRole('tab', { name: /By Patient/i }));
+    await user.type(screen.getByLabelText('Patient ID'), '100');
+    await user.click(screen.getByRole('button', { name: 'Apply' }));
+    const btn = await screen.findByRole('button', { name: /Attest Review/i });
+    expect(btn).toBeDisabled();
+    expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+  });
+
+  it('enables Attest Review when the user has compliance:phi_review', async () => {
+    const user = userEvent.setup();
+    setPermissions(['compliance:phi_review']);
+    vi.mocked(getPhiAnomalies).mockResolvedValueOnce(emptyAnomalies());
+    vi.mocked(getPhiPatientAccess).mockResolvedValueOnce(emptyPatient());
+    renderPage();
+    await user.click(await screen.findByRole('tab', { name: /By Patient/i }));
+    await user.type(screen.getByLabelText('Patient ID'), '100');
+    await user.click(screen.getByRole('button', { name: 'Apply' }));
+    expect(await screen.findByRole('button', { name: /Attest Review/i })).toBeEnabled();
   });
 
   it('renders retention buckets', async () => {

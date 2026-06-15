@@ -15,6 +15,16 @@ import {
   getSurveyorBundleManifest,
 } from '@/api/compliance';
 
+// Mock the /me query seam so usePermission resolves synchronously without a
+// QueryClientProvider. Real usePermission logic still runs against this data.
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+const ALL_PERMS = ['compliance:surveyor_export'];
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue({ data: { permissions } } as unknown as ReturnType<typeof useUserRoles>);
+}
+
 function renderPage() {
   return render(
     <MemoryRouter>
@@ -49,7 +59,12 @@ function manifest(over: Partial<SurveyorBundleManifest> = {}): SurveyorBundleMan
 }
 
 describe('SurveyorBundlePage', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // Default: user holds the export permission so existing behaviour
+    // tests see an enabled Download button. Gating tests override.
+    setPermissions(ALL_PERMS);
+  });
 
   it('previews the manifest after entering a patient', async () => {
     const user = userEvent.setup();
@@ -119,6 +134,34 @@ describe('SurveyorBundlePage', () => {
     await user.click(screen.getByRole('button', { name: 'Preview' }));
     await waitFor(() => {
       expect(screen.getByText(/Patient 100 not found/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('permission gating', () => {
+    async function previewManifest(user: ReturnType<typeof userEvent.setup>) {
+      vi.mocked(getSurveyorBundleManifest).mockResolvedValueOnce(manifest());
+      renderPage();
+      await user.type(screen.getByLabelText('Patient ID'), '100');
+      await user.click(screen.getByRole('button', { name: 'Preview' }));
+      await screen.findByRole('button', { name: /Download Bundle/i });
+    }
+
+    it('disables Download Bundle with a permission tooltip when the user lacks compliance:surveyor_export', async () => {
+      const user = userEvent.setup();
+      setPermissions([]); // no compliance:surveyor_export
+      await previewManifest(user);
+
+      const btn = screen.getByRole('button', { name: /Download Bundle/i });
+      expect(btn).toBeDisabled();
+      expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+    });
+
+    it('enables Download Bundle when the user has compliance:surveyor_export', async () => {
+      const user = userEvent.setup();
+      setPermissions(['compliance:surveyor_export']);
+      await previewManifest(user);
+
+      expect(screen.getByRole('button', { name: /Download Bundle/i })).toBeEnabled();
     });
   });
 });

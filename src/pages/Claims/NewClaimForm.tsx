@@ -3,6 +3,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { createClaim, type CreateClaimPayload } from '@/api/claims';
 import { getOrganizations } from '@/api/admin';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 const PAYERS = [
   'Medicare',
@@ -34,6 +38,9 @@ export function NewClaimForm() {
   const [loadingOrgs, setLoadingOrgs] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Create Claim posts to POST /claims — gated by claims:create.
+  const canCreate = usePermission(PERMISSIONS.CLAIMS_CREATE);
 
   const today = useMemo(() => new Date().toISOString().split('T')[0], []);
   const [form, setForm] = useState<FormState>({
@@ -225,7 +232,8 @@ export function NewClaimForm() {
         <div className="md:col-span-2 flex items-center gap-3 pt-4">
           <button
             type="submit"
-            disabled={submitting}
+            disabled={submitting || !canCreate}
+            title={!canCreate ? NO_PERMISSION : undefined}
             className="px-4 py-2 min-h-12 md:min-h-10 rounded-md bg-teal-600 text-white hover:bg-teal-700 disabled:opacity-50"
           >
             {submitting ? 'Creating...' : 'Create Claim'}

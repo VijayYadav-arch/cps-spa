@@ -28,6 +28,16 @@ import {
   writeOffStatement,
 } from '@/api/billing';
 
+// Mock the /me query seam so usePermission resolves synchronously without a
+// QueryClientProvider. Real usePermission logic still runs against this data.
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+const ALL_PERMS = ['billing:statements'];
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue({ data: { permissions } } as unknown as ReturnType<typeof useUserRoles>);
+}
+
 function run(over: Partial<StatementRun> = {}): StatementRun {
   return {
     id: 1,
@@ -77,7 +87,10 @@ function renderPage() {
 }
 
 describe('StatementsPage', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    setPermissions(ALL_PERMS);
+  });
 
   it('renders dunning metric cards + statement table', async () => {
     vi.mocked(listStatementRuns).mockResolvedValueOnce({ data: [run()] });
@@ -186,5 +199,62 @@ describe('StatementsPage', () => {
     expect(screen.getByText(/Run #1/i)).toBeInTheDocument();
     expect(screen.getByText(/Line Items/i)).toBeInTheDocument();
     expect(screen.getByText('C-1')).toBeInTheDocument();
+  });
+
+  describe('permission gating', () => {
+    it('disables Generate Statement with a permission tooltip when lacking billing:statements', async () => {
+      setPermissions([]); // no billing:statements
+      vi.mocked(listStatementRuns).mockResolvedValueOnce({ data: [] });
+      vi.mocked(getStatementDunningQueue).mockResolvedValueOnce(dunning());
+      renderPage();
+      await screen.findByText(/No statement runs match/i);
+      const btn = screen.getByRole('button', { name: /Generate Statement/i });
+      expect(btn).toBeDisabled();
+      expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+    });
+
+    it('disables row actions (Mark Sent, Record Payment, Write Off) when lacking billing:statements', async () => {
+      setPermissions([]); // no billing:statements
+      vi.mocked(listStatementRuns).mockResolvedValueOnce({ data: [run({ status: 'draft' })] });
+      vi.mocked(getStatementDunningQueue).mockResolvedValueOnce(dunning());
+      renderPage();
+      await screen.findByText('Doe, Jane');
+
+      const markSent = screen.getByRole('button', { name: 'Mark Sent' });
+      expect(markSent).toBeDisabled();
+      expect(markSent).toHaveAttribute('title', expect.stringMatching(/permission/i));
+
+      expect(screen.getByRole('button', { name: 'Record Payment' })).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Write Off' })).toBeDisabled();
+    });
+
+    it('disables Escalate (incl. dunning Send Cycle Notice) when lacking billing:statements', async () => {
+      setPermissions([]); // no billing:statements
+      vi.mocked(listStatementRuns).mockResolvedValueOnce({ data: [run({ status: 'sent' })] });
+      vi.mocked(getStatementDunningQueue).mockResolvedValueOnce(dunning({
+        entries: [{
+          runId: 1, patientId: 100, patientName: 'Doe, Jane',
+          currentCycle: 1, nextCycle: 2, sentAt: '2026-04-01T00:00:00Z',
+          daysSinceSent: 35, patientBalance: 300,
+        }],
+      }));
+      renderPage();
+      await screen.findByRole('button', { name: /Send Cycle 2 Notice/i });
+
+      expect(screen.getByRole('button', { name: 'Escalate' })).toBeDisabled();
+      const sendNotice = screen.getByRole('button', { name: /Send Cycle 2 Notice/i });
+      expect(sendNotice).toBeDisabled();
+      expect(sendNotice).toHaveAttribute('title', expect.stringMatching(/permission/i));
+    });
+
+    it('enables row actions when the user has billing:statements', async () => {
+      setPermissions(['billing:statements']);
+      vi.mocked(listStatementRuns).mockResolvedValueOnce({ data: [run({ status: 'draft' })] });
+      vi.mocked(getStatementDunningQueue).mockResolvedValueOnce(dunning());
+      renderPage();
+      await screen.findByText('Doe, Jane');
+      expect(screen.getByRole('button', { name: /Generate Statement/i })).toBeEnabled();
+      expect(screen.getByRole('button', { name: 'Mark Sent' })).toBeEnabled();
+    });
   });
 });

@@ -12,6 +12,16 @@ vi.mock('@/api/billing', () => ({
 
 import { listRecentEligibility, verifyEligibility } from '@/api/billing';
 
+// Mock the /me query seam so usePermission resolves synchronously without a
+// QueryClientProvider. Real usePermission logic still runs against this data.
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+const ALL_PERMS = ['billing:scrub'];
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue({ data: { permissions } } as unknown as ReturnType<typeof useUserRoles>);
+}
+
 function check(over: Partial<EligibilityCheck> = {}): EligibilityCheck {
   return {
     id: 1,
@@ -43,7 +53,10 @@ function renderPage() {
 }
 
 describe('EligibilityPage', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    setPermissions(ALL_PERMS);
+  });
 
   it('renders the form + empty recent list', async () => {
     vi.mocked(listRecentEligibility).mockResolvedValueOnce({ data: [] });
@@ -151,6 +164,26 @@ describe('EligibilityPage', () => {
       expect(verifyEligibility).toHaveBeenCalledWith(
         expect.objectContaining({ payerId: 'AETNA' }),
       );
+    });
+  });
+
+  describe('permission gating', () => {
+    it('disables Verify Eligibility with a permission tooltip when the user lacks billing:scrub', async () => {
+      setPermissions([]); // no billing:scrub
+      vi.mocked(listRecentEligibility).mockResolvedValueOnce({ data: [] });
+      renderPage();
+      await screen.findByText(/New Verification/i);
+      const btn = screen.getByRole('button', { name: /Verify Eligibility/i });
+      expect(btn).toBeDisabled();
+      expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+    });
+
+    it('enables Verify Eligibility when the user has billing:scrub', async () => {
+      setPermissions(['billing:scrub']);
+      vi.mocked(listRecentEligibility).mockResolvedValueOnce({ data: [] });
+      renderPage();
+      await screen.findByText(/New Verification/i);
+      expect(screen.getByRole('button', { name: /Verify Eligibility/i })).toBeEnabled();
     });
   });
 });

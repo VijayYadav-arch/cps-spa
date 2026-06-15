@@ -5,11 +5,19 @@ import {
   type B2cMigrateResult,
   type B2cOrgStatus,
 } from '@/api/b2cMigration';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 function OrgCard({ org }: { org: B2cOrgStatus }) {
   const [result, setResult] = useState<B2cMigrateResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Send Invitations → POST /admin/b2c-migration/{orgId}/migrate → class-level
+  // [Authorize(Policy = Permissions.PlatformAdmin)] ("platform:admin").
+  const canMigrate = usePermission(PERMISSIONS.PLATFORM_ADMIN);
 
   async function handleMigrate() {
     setLoading(true);
@@ -72,7 +80,8 @@ function OrgCard({ org }: { org: B2cOrgStatus }) {
       <button
         type="button"
         onClick={handleMigrate}
-        disabled={loading || org.b2CMigrated}
+        disabled={loading || org.b2CMigrated || !canMigrate}
+        title={!canMigrate ? NO_PERMISSION : undefined}
         className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg"
       >
         {loading ? 'Sending...' : 'Send Invitations'}

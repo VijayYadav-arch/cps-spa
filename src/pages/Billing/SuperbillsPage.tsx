@@ -9,6 +9,10 @@ import {
   type Superbill,
   type SuperbillProcedure,
 } from '@/api/billing';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 const PAGE_SIZE = 25;
 
@@ -64,6 +68,9 @@ export function SuperbillsPage() {
   const [creating, setCreating] = useState(false);
   const [actionMsg, setActionMsg] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<number | null>(null);
+
+  // Create/finalize/PDF all hit the SuperbillsController (policy billing:superbills).
+  const canManage = usePermission(PERMISSIONS.BILLING_SUPERBILLS);
 
   const load = async () => {
     setIsLoading(true);
@@ -314,8 +321,9 @@ export function SuperbillsPage() {
             <button
               type="button"
               onClick={() => { void handleCreate(); }}
-              disabled={creating}
+              disabled={creating || !canManage}
               aria-busy={creating}
+              title={!canManage ? NO_PERMISSION : undefined}
             >
               {creating ? 'Saving…' : 'Save draft'}
             </button>
@@ -378,6 +386,8 @@ export function SuperbillsPage() {
                       <button
                         type="button"
                         onClick={() => { void handleFinalize(sb); }}
+                        disabled={!canManage}
+                        title={!canManage ? NO_PERMISSION : undefined}
                         style={{ fontSize: 12 }}
                       >
                         Finalize
@@ -386,6 +396,8 @@ export function SuperbillsPage() {
                     <button
                       type="button"
                       onClick={() => { void handlePdf(sb); }}
+                      disabled={!canManage}
+                      title={!canManage ? NO_PERMISSION : undefined}
                       style={{ fontSize: 12 }}
                     >
                       PDF

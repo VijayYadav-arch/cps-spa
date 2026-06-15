@@ -7,6 +7,10 @@ import {
   type HospicePerDiemClaimDraft,
 } from '@/api/hospice';
 import { HospiceLevelOfCareBadge } from '@/components/HospiceLevelOfCareBadge';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 export function HospicePerDiemClaim() {
   const { id: patientId, electionId } = useParams<{ id: string; electionId: string }>();
@@ -18,6 +22,10 @@ export function HospicePerDiemClaim() {
   const [to, setTo] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [draft, setDraft] = useState<HospicePerDiemClaimDraft | null>(null);
+
+  // Build-per-diem-claim hits POST /hospice/elections/{id}/per-diem-claim,
+  // gated by hospice:per_diem_billing on the backend.
+  const canBuild = usePermission(PERMISSIONS.HOSPICE_PER_DIEM_BILLING);
 
   useEffect(() => {
     let cancelled = false;
@@ -106,7 +114,12 @@ export function HospicePerDiemClaim() {
               required
             />
           </label>
-          <button type="submit" disabled={submitting || !from || !to}>
+          <button
+            type="submit"
+            disabled={submitting || !from || !to || !canBuild}
+            title={!canBuild ? NO_PERMISSION : undefined}
+            style={{ cursor: (submitting || !from || !to || !canBuild) ? 'not-allowed' : 'pointer' }}
+          >
             {submitting ? 'Building…' : 'Build Per-Diem Claim'}
           </button>
         </form>

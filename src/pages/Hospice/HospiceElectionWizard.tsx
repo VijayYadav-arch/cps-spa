@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { createElection } from '@/api/hospice';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 const PAYER_OPTIONS = [
   { value: 'MEDICARE_A', label: 'Medicare Part A' },
@@ -30,6 +34,9 @@ export function HospiceElectionWizard() {
   const [error, setError] = useState<string | null>(null);
 
   const patientId = id ? parseInt(id, 10) : 0;
+
+  // Confirm submits createElection → POST /hospice/elections [Policy=hospice:manage]
+  const canManage = usePermission(PERMISSIONS.HOSPICE_MANAGE);
 
   async function handleConfirm() {
     setSubmitting(true);
@@ -145,7 +152,12 @@ export function HospiceElectionWizard() {
             <button onClick={() => setStep(2)} disabled={submitting}>
               Back
             </button>
-            <button onClick={handleConfirm} disabled={submitting}>
+            <button
+              onClick={handleConfirm}
+              disabled={submitting || !canManage}
+              title={!canManage ? NO_PERMISSION : undefined}
+              style={{ cursor: (submitting || !canManage) ? 'not-allowed' : 'pointer' }}
+            >
               {submitting ? 'Creating…' : 'Confirm'}
             </button>
           </div>

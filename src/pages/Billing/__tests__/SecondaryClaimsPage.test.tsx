@@ -15,6 +15,16 @@ vi.mock('@/api/billing', () => ({
 
 import { buildSecondary837, listEligibleSecondary } from '@/api/billing';
 
+// Mock the /me query seam so usePermission resolves synchronously without a
+// QueryClientProvider. Real usePermission logic still runs against this data.
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+const ALL_PERMS = ['billing:queue', 'billing:scrub'];
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue({ data: { permissions } } as unknown as ReturnType<typeof useUserRoles>);
+}
+
 function eligible(over: Partial<SecondaryEligibleClaim> = {}): SecondaryEligibleClaim {
   return {
     claimId: 1,
@@ -51,7 +61,12 @@ function renderPage() {
 }
 
 describe('SecondaryClaimsPage', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // Default: user holds every permission this page uses so existing
+    // behaviour tests see enabled buttons. Permission-gating tests override.
+    setPermissions(ALL_PERMS);
+  });
 
   it('lists eligible claims', async () => {
     vi.mocked(listEligibleSecondary).mockResolvedValueOnce({ data: [eligible()] });
@@ -119,6 +134,24 @@ describe('SecondaryClaimsPage', () => {
     await waitFor(() => {
       expect(screen.getByText(/already has an open secondary submission/i)).toBeInTheDocument();
     });
+  });
+
+  it('disables Build 837 with a permission tooltip when the user lacks billing:scrub', async () => {
+    setPermissions(['billing:queue']); // no billing:scrub
+    vi.mocked(listEligibleSecondary).mockResolvedValue({ data: [eligible()] });
+
+    renderPage();
+    const btn = await screen.findByRole('button', { name: 'Build 837' });
+    expect(btn).toBeDisabled();
+    expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+  });
+
+  it('enables Build 837 when the user has billing:scrub', async () => {
+    setPermissions(['billing:queue', 'billing:scrub']);
+    vi.mocked(listEligibleSecondary).mockResolvedValue({ data: [eligible()] });
+
+    renderPage();
+    expect(await screen.findByRole('button', { name: 'Build 837' })).toBeEnabled();
   });
 
   it('changes clearinghouse selection', async () => {

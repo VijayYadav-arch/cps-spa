@@ -339,7 +339,11 @@ export default function App() {
             />
             <Route
               path="compliance/anomalies"
-              element={<AuditAnomalyReviewPage />}
+              element={
+                <RoleRoute required={PERMISSIONS.COMPLIANCE_PHI_REVIEW}>
+                  <AuditAnomalyReviewPage />
+                </RoleRoute>
+              }
             />
             <Route
               path="integrations/fhir-feed"

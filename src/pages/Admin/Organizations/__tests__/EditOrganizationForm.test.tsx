@@ -27,6 +27,17 @@ vi.mock('@/pages/Admin/Organizations/orgsApi', () => ({
 
 import { orgsApi } from '@/pages/Admin/Organizations/orgsApi';
 
+// Mock the /me query seam so usePermission resolves synchronously without a
+// QueryClientProvider. Real usePermission logic still runs against this data.
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue(
+    { data: { permissions } } as unknown as ReturnType<typeof useUserRoles>,
+  );
+}
+
 function makeOrg(overrides: Partial<OrganizationDetail> = {}): OrganizationDetail {
   return {
     id: 7,
@@ -61,6 +72,9 @@ describe('EditOrganizationForm', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockNavigate.mockReset();
+    // Default: user holds admin:manage_orgs so existing behaviour tests see
+    // enabled Save / Restore buttons. Permission-gating tests override.
+    setPermissions(['admin:manage_orgs']);
   });
 
   it('preloads form via orgsApi.getById on mount', async () => {
@@ -108,5 +122,35 @@ describe('EditOrganizationForm', () => {
     expect(screen.getByRole('button', { name: /^restore$/i })).toBeInTheDocument();
     // The form's Save button should NOT be present.
     expect(screen.queryByRole('button', { name: /^save$/i })).not.toBeInTheDocument();
+  });
+
+  describe('permission gating', () => {
+    it('disables Save with a permission tooltip when the user lacks admin:manage_orgs', async () => {
+      setPermissions([]); // no admin:manage_orgs
+      vi.mocked(orgsApi.getById).mockResolvedValueOnce(makeOrg());
+      renderEdit();
+
+      const btn = await screen.findByRole('button', { name: /^save$/i });
+      expect(btn).toBeDisabled();
+      expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+    });
+
+    it('enables Save when the user has admin:manage_orgs', async () => {
+      setPermissions(['admin:manage_orgs']);
+      vi.mocked(orgsApi.getById).mockResolvedValueOnce(makeOrg());
+      renderEdit();
+
+      expect(await screen.findByRole('button', { name: /^save$/i })).toBeEnabled();
+    });
+
+    it('disables Restore (soft-deleted branch) when the user lacks admin:manage_orgs', async () => {
+      setPermissions([]); // no admin:manage_orgs
+      vi.mocked(orgsApi.getById).mockResolvedValueOnce(makeOrg({ isDeleted: true }));
+      renderEdit();
+
+      const btn = await screen.findByRole('button', { name: /^restore$/i });
+      expect(btn).toBeDisabled();
+      expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+    });
   });
 });

@@ -10,6 +10,10 @@ import { Step2ContactAndFacility } from './steps/Step2ContactAndFacility';
 import { Step3InsuranceAndClinical } from './steps/Step3InsuranceAndClinical';
 import { Step4Admission } from './steps/Step4Admission';
 import { Step5Certification } from './steps/Step5Certification';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 export function IntakeWizard() {
   const navigate = useNavigate();
@@ -20,6 +24,13 @@ export function IntakeWizard() {
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  // Button-level permission gates:
+  //  - Next persists a draft (POST/PATCH /patients/intake-drafts) → patients:intake.
+  //  - Complete intake submits POST /patients (patients:create) AND deletes the
+  //    draft (patients:intake), so it requires both policies.
+  const canSaveDraft = usePermission(PERMISSIONS.PATIENTS_INTAKE);
+  const canComplete = usePermission([PERMISSIONS.PATIENTS_CREATE, PERMISSIONS.PATIENTS_INTAKE]);
 
   useEffect(() => {
     intakeApi.getMyOpenDraft().then((d) => {
@@ -142,7 +153,8 @@ export function IntakeWizard() {
         {step < totalSteps ? (
           <button
             onClick={advanceStep}
-            disabled={saving}
+            disabled={saving || !canSaveDraft}
+            title={!canSaveDraft ? NO_PERMISSION : undefined}
             className="px-6 py-3 min-h-12 rounded-md bg-teal-600 text-white disabled:opacity-50"
           >
             {saving ? 'Saving…' : 'Next'}
@@ -150,7 +162,8 @@ export function IntakeWizard() {
         ) : (
           <button
             onClick={submitFinal}
-            disabled={submitting}
+            disabled={submitting || !canComplete}
+            title={!canComplete ? NO_PERMISSION : undefined}
             className="px-6 py-3 min-h-12 rounded-md bg-teal-600 text-white disabled:opacity-50"
           >
             {submitting ? 'Submitting…' : 'Complete intake'}

@@ -12,6 +12,17 @@ vi.mock('@/api/billing', () => ({
 
 import { getStatementRun, recordStatementPayment } from '@/api/billing';
 
+// Mock the /me query seam so usePermission resolves synchronously without a
+// QueryClientProvider. Real usePermission logic still runs against this data.
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue(
+    { data: { permissions } } as unknown as ReturnType<typeof useUserRoles>,
+  );
+}
+
 function run(over: Partial<StatementRun> = {}): StatementRun {
   return {
     id: 7,
@@ -45,7 +56,12 @@ function renderPage(runId = '7') {
 }
 
 describe('PortalPaymentPage', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // Default: user holds billing:statements so existing behaviour tests
+    // see an enabled Pay button. Permission-gating tests override.
+    setPermissions(['billing:statements']);
+  });
 
   it('renders the statement header + payment form with prefilled balance', async () => {
     vi.mocked(getStatementRun).mockResolvedValueOnce(run());
@@ -136,6 +152,30 @@ describe('PortalPaymentPage', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/exceeds remaining balance/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('permission gating', () => {
+    it('disables Pay with a permission tooltip when the user lacks billing:statements', async () => {
+      setPermissions([]); // no billing:statements
+      vi.mocked(getStatementRun).mockResolvedValueOnce(run());
+
+      renderPage();
+      await screen.findByText(/Pay Your Statement/i);
+
+      const btn = screen.getByRole('button', { name: /Pay/i });
+      expect(btn).toBeDisabled();
+      expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+    });
+
+    it('enables Pay when the user has billing:statements', async () => {
+      setPermissions(['billing:statements']);
+      vi.mocked(getStatementRun).mockResolvedValueOnce(run());
+
+      renderPage();
+      await screen.findByText(/Pay Your Statement/i);
+
+      expect(screen.getByRole('button', { name: /Pay/i })).toBeEnabled();
     });
   });
 });

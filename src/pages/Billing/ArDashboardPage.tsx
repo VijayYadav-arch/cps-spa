@@ -6,6 +6,10 @@ import {
   type ArActionQueueItem,
   type ArDashboardSummary,
 } from '@/api/billing';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 const VALID_OUTCOMES = [
   'pending',
@@ -56,6 +60,9 @@ export function ArDashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionMsg, setActionMsg] = useState<string | null>(null);
+
+  // Log Call posts to /billing/ar-followup/claims/{id}/notes → billing:ar-followup.
+  const canFollowUp = usePermission(PERMISSIONS.BILLING_AR_FOLLOW_UP);
 
   async function refresh() {
     setIsLoading(true);
@@ -210,7 +217,9 @@ export function ArDashboardPage() {
                         <button
                           type="button"
                           onClick={() => void handleLogCall(c)}
-                          style={{ fontSize: 12 }}
+                          disabled={!canFollowUp}
+                          title={!canFollowUp ? NO_PERMISSION : undefined}
+                          style={{ fontSize: 12, cursor: !canFollowUp ? 'not-allowed' : 'pointer' }}
                         >
                           Log Call
                         </button>

@@ -25,6 +25,15 @@ import {
   sendOnboardingEmail,
 } from '@/api/onboardingStatus';
 
+// Mock the /me query seam so usePermission resolves synchronously without a
+// QueryClientProvider. Real usePermission logic still runs against this data.
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue({ data: { permissions } } as unknown as ReturnType<typeof useUserRoles>);
+}
+
 function renderPage() {
   return render(
     <MemoryRouter>
@@ -103,6 +112,9 @@ const BRAVO_USERS = [
 describe('OnboardingPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Default: user holds platform:onboarding so existing behaviour tests see
+    // enabled assign-manager + send controls. Permission-gating tests override.
+    setPermissions(['platform:onboarding']);
     vi.mocked(getOrgsStatus).mockResolvedValue(STATUS_RESPONSE as never);
     vi.mocked(listOnboardingManagers).mockResolvedValue(MANAGERS as never);
     vi.mocked(listOrgUsers).mockResolvedValue(BRAVO_USERS as never);
@@ -253,5 +265,44 @@ describe('OnboardingPage', () => {
     expect(payload.templateId).toBeTruthy();
     // {{organizationName}} substituted in subject preview text
     expect(payload.subject).toContain('Welcome');
+  });
+
+  describe('permission gating', () => {
+    it('disables the assign-manager dropdown with a permission tooltip when the user lacks platform:onboarding', async () => {
+      setPermissions([]); // no platform:onboarding
+      vi.mocked(apiClient.get).mockResolvedValue({ data: HOSPICE_FLOW } as never);
+      renderPage();
+      await waitFor(() => expect(screen.getByText('Acme Hospice')).toBeInTheDocument());
+
+      const select = screen.getByLabelText('Manager for Acme Hospice');
+      expect(select).toBeDisabled();
+      expect(select).toHaveAttribute('title', expect.stringMatching(/permission/i));
+    });
+
+    it('enables the assign-manager dropdown when the user has platform:onboarding', async () => {
+      setPermissions(['platform:onboarding']);
+      vi.mocked(apiClient.get).mockResolvedValue({ data: HOSPICE_FLOW } as never);
+      renderPage();
+      await waitFor(() => expect(screen.getByText('Acme Hospice')).toBeInTheDocument());
+
+      expect(screen.getByLabelText('Manager for Acme Hospice')).toBeEnabled();
+    });
+
+    it('disables the modal Send button with a permission tooltip when the user lacks platform:onboarding', async () => {
+      setPermissions([]); // no platform:onboarding
+      vi.mocked(apiClient.get).mockResolvedValue({ data: HOSPICE_FLOW } as never);
+      const user = userEvent.setup();
+      renderPage();
+      await waitFor(() => expect(screen.getByText('Bravo Home Health')).toBeInTheDocument());
+
+      const sendButtons = screen.getAllByRole('button', { name: /send email/i });
+      await user.click(sendButtons[1]); // Bravo row
+      await waitFor(() => expect(screen.getByRole('dialog')).toBeInTheDocument());
+      await waitFor(() => expect(listOrgUsers).toHaveBeenCalledWith(2));
+
+      const sendBtn = screen.getByRole('button', { name: /^send$/i });
+      expect(sendBtn).toBeDisabled();
+      expect(sendBtn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+    });
   });
 });

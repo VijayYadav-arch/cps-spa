@@ -13,6 +13,10 @@ import {
   type DenialAnalysisResult,
   type DenialItem,
 } from '@/api/billing';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 const STATUS_BADGE: Record<string, string> = {
   new: 'bg-red-100 text-red-700',
@@ -154,6 +158,11 @@ export function DenialDetail() {
   const [copied, setCopied] = useState(false);
   const [aiDrafting, setAiDrafting] = useState(false);
   const [aiDraftCopied, setAiDraftCopied] = useState(false);
+
+  // All denial state-changing endpoints (appeal/submit/escalate/resolve/assign
+  // and the AI draft-appeal) sit behind the controller-wide billing:denials
+  // policy. Gate the action-triggering buttons accordingly.
+  const canManageDenials = usePermission(PERMISSIONS.BILLING_DENIALS);
 
   async function handleDraftAppeal() {
     if (!item) return;
@@ -390,7 +399,8 @@ export function DenialDetail() {
           <button
             type="button"
             onClick={handleDraftAppeal}
-            disabled={aiDrafting}
+            disabled={aiDrafting || !canManageDenials}
+            title={!canManageDenials ? NO_PERMISSION : undefined}
             className="text-sm bg-teal-600 text-white px-3 py-1.5 rounded hover:bg-teal-700 disabled:opacity-50"
           >
             {aiDrafting
@@ -465,7 +475,9 @@ export function DenialDetail() {
             <button
               type="button"
               onClick={() => setModal(primaryAction)}
-              className="px-5 py-2 bg-navy-900 text-white text-sm rounded-lg hover:bg-navy-800"
+              disabled={!canManageDenials}
+              title={!canManageDenials ? NO_PERMISSION : undefined}
+              className="px-5 py-2 bg-navy-900 text-white text-sm rounded-lg hover:bg-navy-800 disabled:opacity-50"
             >
               {primaryAction === 'appeal'
                 ? 'Start Appeal'
@@ -478,7 +490,9 @@ export function DenialDetail() {
             <button
               type="button"
               onClick={() => setModal('assign')}
-              className="px-5 py-2 bg-navy-100 text-navy-700 text-sm rounded-lg hover:bg-navy-200"
+              disabled={!canManageDenials}
+              title={!canManageDenials ? NO_PERMISSION : undefined}
+              className="px-5 py-2 bg-navy-100 text-navy-700 text-sm rounded-lg hover:bg-navy-200 disabled:opacity-50"
             >
               Assign
             </button>

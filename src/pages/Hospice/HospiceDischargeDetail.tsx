@@ -6,12 +6,19 @@ import {
 } from '@/api/hospice';
 import { HospiceDischargeTaskRow } from '@/components/HospiceDischargeTaskRow';
 import { HospiceDischargeReasonBadge } from '@/components/HospiceDischargeReasonBadge';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 export function HospiceDischargeDetail() {
   const { dischargeId } = useParams<{ dischargeId: string }>();
   const [discharge, setDischarge] = useState<HospiceDischarge | null>(null);
   const [editing, setEditing] = useState(false);
   const [idgDate, setIdgDate] = useState('');
+
+  // Save → editDischarge → PATCH /hospice/discharges/{id} [Policy=hospice:discharge_manage]
+  const canManage = usePermission(PERMISSIONS.HOSPICE_DISCHARGE_MANAGE);
 
   useEffect(() => {
     void getDischarge(Number(dischargeId)).then(setDischarge);
@@ -62,7 +69,15 @@ export function HospiceDischargeDetail() {
           <h2>Edit Discharge</h2>
           <label htmlFor="edit-idg">IDG approval date</label>
           <input id="edit-idg" type="date" value={idgDate} onChange={e => setIdgDate(e.target.value)} />
-          <button type="button" onClick={handleSaveEdit}>Save</button>
+          <button
+            type="button"
+            onClick={handleSaveEdit}
+            disabled={!canManage}
+            title={!canManage ? NO_PERMISSION : undefined}
+            style={{ cursor: !canManage ? 'not-allowed' : 'pointer' }}
+          >
+            Save
+          </button>
         </section>
       )}
 

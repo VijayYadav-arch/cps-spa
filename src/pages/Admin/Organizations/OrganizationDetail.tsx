@@ -3,6 +3,10 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { orgsApi } from './orgsApi';
 import type { OrganizationDetail as Org } from './orgsTypes';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 /**
  * Read-only organization detail with Edit / Soft-delete / Restore actions.
@@ -21,6 +25,11 @@ export function OrganizationDetail() {
   const [org, setOrg] = useState<Org | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  // Soft-delete (DELETE) and restore both hit endpoints gated by
+  // admin:manage_orgs on OrganizationsController. The detail GET is claims:view
+  // (the route guard already covers it), so the page load + nav links aren't gated.
+  const canManage = usePermission(PERMISSIONS.ADMIN_MANAGE_ORGS);
 
   function load() {
     if (!id) return;
@@ -131,8 +140,9 @@ export function OrganizationDetail() {
           {!org.isDeleted && (
             <button
               type="button"
-              disabled={busy}
+              disabled={busy || !canManage}
               onClick={onDelete}
+              title={!canManage ? NO_PERMISSION : undefined}
               className={`${btnCls} border border-red-600 text-red-600 hover:bg-red-50 disabled:opacity-50`}
             >
               Soft-delete
@@ -141,8 +151,9 @@ export function OrganizationDetail() {
           {org.isDeleted && (
             <button
               type="button"
-              disabled={busy}
+              disabled={busy || !canManage}
               onClick={onRestore}
+              title={!canManage ? NO_PERMISSION : undefined}
               className={`${btnCls} bg-teal-600 text-white hover:bg-teal-700 disabled:opacity-50`}
             >
               Restore

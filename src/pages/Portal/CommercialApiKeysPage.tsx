@@ -1,5 +1,9 @@
 import { useEffect, useState, useCallback } from 'react';
 import { apiClient } from '@/api/client';
+import { useAnyPermission } from '@/permissions/useAnyPermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 interface ApiKeyItem {
   id: number;
@@ -49,6 +53,13 @@ export function CommercialApiKeysPage() {
   const [createdKey, setCreatedKey] = useState<{ fullKey: string; name: string } | null>(
     null,
   );
+
+  // Backend api-keys endpoints use a compound OR policy (apikey_management =
+  // org:api_keys OR platform:api_keys) — satisfied by EITHER permission.
+  const canManageKeys = useAnyPermission([
+    PERMISSIONS.ORG_API_KEYS,
+    PERMISSIONS.PLATFORM_API_KEYS,
+  ]);
 
   const fetchKeys = useCallback(async () => {
     try {
@@ -124,6 +135,8 @@ export function CommercialApiKeysPage() {
             setShowCreate(true);
             setCreatedKey(null);
           }}
+          disabled={!canManageKeys}
+          title={!canManageKeys ? NO_PERMISSION : undefined}
           style={{
             padding: '10px 16px',
             background: '#0d9488',
@@ -131,7 +144,7 @@ export function CommercialApiKeysPage() {
             border: 'none',
             borderRadius: 8,
             fontWeight: 500,
-            cursor: 'pointer',
+            cursor: canManageKeys ? 'pointer' : 'not-allowed',
           }}
         >
           Create API Key
@@ -341,11 +354,13 @@ export function CommercialApiKeysPage() {
                       <button
                         data-testid="action-revoke-key"
                         onClick={() => handleRevoke(key.id)}
+                        disabled={!canManageKeys}
+                        title={!canManageKeys ? NO_PERMISSION : undefined}
                         style={{
                           background: 'transparent',
                           color: '#dc2626',
                           border: 'none',
-                          cursor: 'pointer',
+                          cursor: canManageKeys ? 'pointer' : 'not-allowed',
                           fontWeight: 500,
                           fontSize: 12,
                         }}

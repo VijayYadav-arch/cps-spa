@@ -4,6 +4,7 @@ vi.mock('@/api/client', () => ({
   apiClient: {
     get: vi.fn(),
     put: vi.fn(),
+    post: vi.fn(),
     delete: vi.fn(),
   },
 }));
@@ -53,16 +54,47 @@ describe('claims API', () => {
     expect(result).toEqual({ id: 99, status: 'pending' });
   });
 
-  it('submitClaim() calls PUT /claims/{id}/status with submitted status', async () => {
+  it('submitClaim() POSTs to /claims/{id}/submit-to-clearinghouse', async () => {
     const { apiClient } = await import('@/api/client');
     const { submitClaim } = await import('@/api/claims');
 
-    vi.mocked(apiClient.put).mockResolvedValueOnce({
-      data: { data: { id: 42, status: 'submitted' } },
+    // 200 legacy shape: full ClaimDetail (has id + amount)
+    vi.mocked(apiClient.post).mockResolvedValueOnce({
+      data: { data: { id: 42, amount: 100, status: 'submitted' } },
     });
 
     await submitClaim(42);
-    expect(apiClient.put).toHaveBeenCalledWith('/claims/42/status', { status: 'submitted' });
+    expect(apiClient.post).toHaveBeenCalledWith('/claims/42/submit-to-clearinghouse');
+  });
+
+  it('submitClaim() returns the full claim directly when the 200 shape is returned', async () => {
+    const { apiClient } = await import('@/api/client');
+    const { submitClaim } = await import('@/api/claims');
+
+    const full = { id: 42, amount: 100, status: 'submitted' };
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: full } });
+
+    const result = await submitClaim(42);
+    expect(result).toEqual(full);
+    // No refetch needed when the full claim is in the response body.
+    expect(apiClient.get).not.toHaveBeenCalled();
+  });
+
+  it('submitClaim() refetches via getClaim() when the 202 submitting shape is returned', async () => {
+    const { apiClient } = await import('@/api/client');
+    const { submitClaim } = await import('@/api/claims');
+
+    // 202 shape: { submissionId, status } — not a full claim
+    vi.mocked(apiClient.post).mockResolvedValueOnce({
+      data: { data: { submissionId: 7, status: 'submitting' } },
+    });
+    const refreshed = { id: 42, amount: 100, status: 'submitting' };
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ data: { data: refreshed } });
+
+    const result = await submitClaim(42);
+    expect(apiClient.post).toHaveBeenCalledWith('/claims/42/submit-to-clearinghouse');
+    expect(apiClient.get).toHaveBeenCalledWith('/claims/42');
+    expect(result).toEqual(refreshed);
   });
 
   it('deleteServiceLine() calls DELETE /claims/{id}/service-lines/{lineId}', async () => {

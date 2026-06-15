@@ -13,6 +13,10 @@ import {
   type ReviewResult,
   type UserAccessReport,
 } from '@/api/compliance';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 type Tab = 'anomalies' | 'patient' | 'user' | 'retention';
 
@@ -137,6 +141,11 @@ export function PhiAccessReviewDashboard() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [actionMsg, setActionMsg] = useState<string | null>(null);
+
+  // Attest maps to POST /compliance/phi-access/reviews → [Authorize(Policy =
+  // compliance:phi_review)]. The read endpoints share the same policy as the
+  // route guard, so only the state-changing attestation is gated here.
+  const canReview = usePermission(PERMISSIONS.COMPLIANCE_PHI_REVIEW);
 
   async function loadAnomalies() {
     setIsLoading(true);
@@ -357,6 +366,9 @@ export function PhiAccessReviewDashboard() {
               onClick={() =>
                 void attest('patient', patientReport.patientId, patientReport.totalEvents)
               }
+              disabled={!canReview}
+              title={!canReview ? NO_PERMISSION : undefined}
+              style={{ cursor: !canReview ? 'not-allowed' : 'pointer' }}
             >
               Attest Review
             </button>
@@ -392,6 +404,9 @@ export function PhiAccessReviewDashboard() {
               onClick={() =>
                 void attest('user', userReport.userId, userReport.totalEvents)
               }
+              disabled={!canReview}
+              title={!canReview ? NO_PERMISSION : undefined}
+              style={{ cursor: !canReview ? 'not-allowed' : 'pointer' }}
             >
               Attest Review
             </button>

@@ -12,7 +12,22 @@ vi.mock('@/api/billing', () => ({
 
 import { listEraPostings, postEra } from '@/api/billing';
 
-beforeEach(() => vi.clearAllMocks());
+// Mock the /me query seam so usePermission resolves synchronously without a
+// QueryClientProvider. Real usePermission logic still runs against this data.
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+const ALL_ERA_PERMS = ['billing:era'];
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue({ data: { permissions } } as unknown as ReturnType<typeof useUserRoles>);
+}
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  // Default: user holds the ERA permission so existing behaviour tests see
+  // enabled buttons. Gating tests override.
+  setPermissions(ALL_ERA_PERMS);
+});
 
 function row(over: Partial<EraPostingRow> = {}): EraPostingRow {
   return {
@@ -135,5 +150,31 @@ describe('EraPostingsPage', () => {
     });
     renderPage();
     expect(await screen.findByRole('alert')).toHaveTextContent('forbidden');
+  });
+
+  describe('permission gating', () => {
+    it('disables Post ERA with a permission tooltip when lacking billing:era', async () => {
+      setPermissions([]); // no billing:era
+      const user = userEvent.setup();
+      vi.mocked(listEraPostings).mockResolvedValue({ data: [], total: 0 });
+      renderPage();
+      await waitFor(() => expect(listEraPostings).toHaveBeenCalled());
+
+      await user.click(screen.getByRole('button', { name: /Manual upload/i }));
+      const btn = screen.getByRole('button', { name: /^Post ERA$/ });
+      expect(btn).toBeDisabled();
+      expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+    });
+
+    it('enables Post ERA when holding billing:era', async () => {
+      setPermissions(['billing:era']);
+      const user = userEvent.setup();
+      vi.mocked(listEraPostings).mockResolvedValue({ data: [], total: 0 });
+      renderPage();
+      await waitFor(() => expect(listEraPostings).toHaveBeenCalled());
+
+      await user.click(screen.getByRole('button', { name: /Manual upload/i }));
+      expect(screen.getByRole('button', { name: /^Post ERA$/ })).toBeEnabled();
+    });
   });
 });

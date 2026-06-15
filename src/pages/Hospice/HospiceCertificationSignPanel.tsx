@@ -6,6 +6,10 @@ import {
   countersignCertification,
   type HospiceCertification,
 } from '@/api/hospice';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 export function HospiceCertificationSignPanel() {
   const { electionId, certId } = useParams<{ electionId: string; certId: string }>();
@@ -15,6 +19,10 @@ export function HospiceCertificationSignPanel() {
   const [error, setError] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
   const [countersignerId, setCountersignerId] = useState('');
+
+  // Sign (POST /hospice/certifications/{id}/sign) and countersign
+  // (.../countersign) are both gated by hospice:clinical_assessment.
+  const canSign = usePermission(PERMISSIONS.HOSPICE_CLINICAL_ASSESSMENT);
 
   useEffect(() => {
     if (!electionId || !certId) return;
@@ -88,7 +96,12 @@ export function HospiceCertificationSignPanel() {
       )}
 
       {cert.status === 'Draft' && (
-        <button onClick={handleSign} disabled={working}>
+        <button
+          onClick={handleSign}
+          disabled={working || !canSign}
+          title={!canSign ? NO_PERMISSION : undefined}
+          style={{ cursor: (working || !canSign) ? 'not-allowed' : 'pointer' }}
+        >
           {working ? 'Signing…' : 'Sign'}
         </button>
       )}
@@ -104,7 +117,12 @@ export function HospiceCertificationSignPanel() {
               style={{ display: 'block', marginTop: 4 }}
             />
           </label>
-          <button onClick={handleCountersign} disabled={working || !countersignerId}>
+          <button
+            onClick={handleCountersign}
+            disabled={working || !countersignerId || !canSign}
+            title={!canSign ? NO_PERMISSION : undefined}
+            style={{ cursor: (working || !countersignerId || !canSign) ? 'not-allowed' : 'pointer' }}
+          >
             {working ? 'Countersigning…' : 'Countersign'}
           </button>
         </div>

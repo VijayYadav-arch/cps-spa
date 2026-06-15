@@ -31,6 +31,16 @@ import {
   sendBreachPatientNotifications,
 } from '@/api/compliance';
 
+// Mock the /me query seam so usePermission resolves synchronously without a
+// QueryClientProvider. Real usePermission logic still runs against this data.
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+const ALL_PERMS = ['compliance:breaches'];
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue({ data: { permissions } } as unknown as ReturnType<typeof useUserRoles>);
+}
+
 function renderPage() {
   return render(
     <MemoryRouter>
@@ -73,7 +83,12 @@ function activity(over: Partial<BreachActivity> = {}): BreachActivity {
 }
 
 describe('BreachWorkflowPage', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // Default: user holds compliance:breaches so existing behaviour tests
+    // see enabled action buttons. Gating tests override.
+    setPermissions(ALL_PERMS);
+  });
 
   it('renders the breach list with status badges and deadline', async () => {
     vi.mocked(listBreachesWorkflow).mockResolvedValueOnce({
@@ -290,5 +305,48 @@ describe('BreachWorkflowPage', () => {
       }));
     });
     expect(await screen.findByText(/Breach registered/i)).toBeInTheDocument();
+  });
+
+  describe('permission gating', () => {
+    it('disables Register breach with a permission tooltip when the user lacks compliance:breaches', async () => {
+      setPermissions([]); // no compliance:breaches
+      vi.mocked(listBreachesWorkflow).mockResolvedValue({ data: [] });
+      renderPage();
+      await waitFor(() => expect(listBreachesWorkflow).toHaveBeenCalled());
+
+      const btn = screen.getByRole('button', { name: /Register breach/i });
+      expect(btn).toBeDisabled();
+      expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+    });
+
+    it('disables detail-panel workflow actions when the user lacks compliance:breaches', async () => {
+      const user = userEvent.setup();
+      const b = summary();
+      setPermissions([]); // no compliance:breaches
+      vi.mocked(listBreachesWorkflow).mockResolvedValue({ data: [b] });
+      vi.mocked(getBreachWorkflow).mockResolvedValueOnce(b);
+      vi.mocked(getBreachActivity).mockResolvedValueOnce({ data: [] });
+
+      renderPage();
+      await user.click(await screen.findByRole('button', { name: 'Open' }));
+
+      expect(await screen.findByRole('button', { name: /Assess Risk/i })).toBeDisabled();
+      expect(screen.getByRole('button', { name: /Close Breach/i })).toBeDisabled();
+    });
+
+    it('enables workflow actions when the user has compliance:breaches', async () => {
+      const user = userEvent.setup();
+      const b = summary();
+      setPermissions(['compliance:breaches']);
+      vi.mocked(listBreachesWorkflow).mockResolvedValue({ data: [b] });
+      vi.mocked(getBreachWorkflow).mockResolvedValueOnce(b);
+      vi.mocked(getBreachActivity).mockResolvedValueOnce({ data: [] });
+
+      renderPage();
+      await user.click(await screen.findByRole('button', { name: 'Open' }));
+
+      expect(await screen.findByRole('button', { name: /Assess Risk/i })).toBeEnabled();
+      expect(screen.getByRole('button', { name: /Register breach/i })).toBeEnabled();
+    });
   });
 });

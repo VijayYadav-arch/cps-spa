@@ -9,6 +9,10 @@ import {
   type HopeAssessment,
   type HopeSubmissionType,
 } from '@/api/hospice';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 const SUBMISSION_TYPES: HopeSubmissionType[] = [
   'Admission',
@@ -31,6 +35,11 @@ export function HospiceHopeForm() {
   const [payload, setPayload] = useState('{}');
   const [error, setError] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
+
+  // Start (POST .../hope), save payload (PUT .../payload), sign (POST .../sign)
+  // and submit-to-CMS (POST .../submit) are all gated by
+  // hospice:clinical_assessment on the backend.
+  const canAssess = usePermission(PERMISSIONS.HOSPICE_CLINICAL_ASSESSMENT);
 
   useEffect(() => {
     if (!assessmentId) return;
@@ -167,7 +176,12 @@ export function HospiceHopeForm() {
               style={{ display: 'block', marginTop: 4, width: '100%', fontFamily: 'monospace' }}
             />
           </label>
-          <button onClick={handleStart} disabled={working}>
+          <button
+            onClick={handleStart}
+            disabled={working || !canAssess}
+            title={!canAssess ? NO_PERMISSION : undefined}
+            style={{ cursor: (working || !canAssess) ? 'not-allowed' : 'pointer' }}
+          >
             {working ? 'Starting…' : 'Start HOPE Assessment'}
           </button>
         </div>
@@ -186,16 +200,31 @@ export function HospiceHopeForm() {
           <div style={{ display: 'flex', gap: 8 }}>
             {assessment.status === 'Draft' && (
               <>
-                <button onClick={handleSavePayload} disabled={working}>
+                <button
+                  onClick={handleSavePayload}
+                  disabled={working || !canAssess}
+                  title={!canAssess ? NO_PERMISSION : undefined}
+                  style={{ cursor: (working || !canAssess) ? 'not-allowed' : 'pointer' }}
+                >
                   Save Payload
                 </button>
-                <button onClick={handleSign} disabled={working}>
+                <button
+                  onClick={handleSign}
+                  disabled={working || !canAssess}
+                  title={!canAssess ? NO_PERMISSION : undefined}
+                  style={{ cursor: (working || !canAssess) ? 'not-allowed' : 'pointer' }}
+                >
                   Sign
                 </button>
               </>
             )}
             {assessment.status === 'Signed' && (
-              <button onClick={handleSubmit} disabled={working}>
+              <button
+                onClick={handleSubmit}
+                disabled={working || !canAssess}
+                title={!canAssess ? NO_PERMISSION : undefined}
+                style={{ cursor: (working || !canAssess) ? 'not-allowed' : 'pointer' }}
+              >
                 Submit to CMS
               </button>
             )}

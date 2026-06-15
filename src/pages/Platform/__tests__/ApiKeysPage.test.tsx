@@ -13,8 +13,22 @@ vi.mock('@/api/platform', () => ({
 
 import { getApiKeys, createApiKey, revokeApiKey } from '@/api/platform';
 
+// Mock the /me query seam so useAnyPermission resolves synchronously without a
+// QueryClientProvider. Real useAnyPermission logic still runs against this data.
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue(
+    { data: { permissions } } as unknown as ReturnType<typeof useUserRoles>,
+  );
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
+  // Default: user holds ONE of the two api-key permissions so existing
+  // behaviour tests see enabled buttons. Gating tests override.
+  setPermissions(['platform:api_keys']);
   vi.stubGlobal('confirm', vi.fn(() => true));
   // navigator.clipboard is a getter-only property in jsdom; use defineProperty
   Object.defineProperty(navigator, 'clipboard', {
@@ -136,5 +150,51 @@ describe('ApiKeysPage', () => {
     });
     renderPage();
     expect(await screen.findByRole('alert')).toHaveTextContent('forbidden');
+  });
+});
+
+describe('ApiKeysPage — permission gating', () => {
+  // Backend endpoints use a compound OR policy (apikey_management =
+  // org:api_keys OR platform:api_keys), so the buttons are guarded with
+  // useAnyPermission over both constants.
+  it('disables New + Revoke with a tooltip when the user has NEITHER api-key permission', async () => {
+    setPermissions(['claims:view']); // neither org:api_keys nor platform:api_keys
+    vi.mocked(getApiKeys).mockResolvedValue({
+      data: [key()],
+      pagination: { total: 1, page: 1, pageSize: 25, totalPages: 1 },
+    });
+    renderPage();
+
+    const newBtn = screen.getByRole('button', { name: /New API key/i });
+    expect(newBtn).toBeDisabled();
+    expect(newBtn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+
+    const revoke = await screen.findByRole('button', { name: /^Revoke$/i });
+    expect(revoke).toBeDisabled();
+    expect(revoke).toHaveAttribute('title', expect.stringMatching(/permission/i));
+  });
+
+  it('enables New + Revoke when the user has org:api_keys', async () => {
+    setPermissions(['org:api_keys']);
+    vi.mocked(getApiKeys).mockResolvedValue({
+      data: [key()],
+      pagination: { total: 1, page: 1, pageSize: 25, totalPages: 1 },
+    });
+    renderPage();
+
+    expect(screen.getByRole('button', { name: /New API key/i })).toBeEnabled();
+    expect(await screen.findByRole('button', { name: /^Revoke$/i })).toBeEnabled();
+  });
+
+  it('enables New + Revoke when the user has platform:api_keys', async () => {
+    setPermissions(['platform:api_keys']);
+    vi.mocked(getApiKeys).mockResolvedValue({
+      data: [key()],
+      pagination: { total: 1, page: 1, pageSize: 25, totalPages: 1 },
+    });
+    renderPage();
+
+    expect(screen.getByRole('button', { name: /New API key/i })).toBeEnabled();
+    expect(await screen.findByRole('button', { name: /^Revoke$/i })).toBeEnabled();
   });
 });

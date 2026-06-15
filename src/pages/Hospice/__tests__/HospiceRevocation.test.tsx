@@ -10,6 +10,15 @@ vi.mock('@/api/hospice', () => ({
 
 import { revokeElection } from '@/api/hospice';
 
+// Mock the /me query seam so usePermission resolves synchronously without a
+// QueryClientProvider. Real usePermission logic still runs against this data.
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue({ data: { permissions } } as unknown as ReturnType<typeof useUserRoles>);
+}
+
 function renderPage() {
   return render(
     <MemoryRouter initialEntries={['/patients/1/hospice/5/revoke']}>
@@ -25,7 +34,12 @@ function renderPage() {
 }
 
 describe('HospiceRevocation', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // Default: user holds hospice:manage so existing behaviour tests see the
+    // Revoke button gated only by the acknowledgment checkboxes.
+    setPermissions(['hospice:manage']);
+  });
 
   it('disables submit until all three checkboxes are checked', async () => {
     const user = userEvent.setup();
@@ -72,5 +86,24 @@ describe('HospiceRevocation', () => {
     for (const cb of screen.getAllByRole('checkbox')) await user.click(cb);
     await user.click(screen.getByRole('button', { name: /Revoke Election/i }));
     await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
+  });
+
+  it('disables Revoke Election with a permission tooltip when the user lacks hospice:manage', async () => {
+    setPermissions([]); // no hospice:manage
+    const user = userEvent.setup();
+    renderPage();
+    // Check all acks so the only remaining blocker is the missing permission.
+    for (const cb of screen.getAllByRole('checkbox')) await user.click(cb);
+    const btn = screen.getByRole('button', { name: /Revoke Election/i });
+    expect(btn).toBeDisabled();
+    expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+  });
+
+  it('enables Revoke Election when the user has hospice:manage and all acks are checked', async () => {
+    setPermissions(['hospice:manage']);
+    const user = userEvent.setup();
+    renderPage();
+    for (const cb of screen.getAllByRole('checkbox')) await user.click(cb);
+    expect(screen.getByRole('button', { name: /Revoke Election/i })).toBeEnabled();
   });
 });

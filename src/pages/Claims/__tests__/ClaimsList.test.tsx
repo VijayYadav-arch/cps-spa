@@ -16,6 +16,16 @@ import {
   batchVoidClaims,
 } from '@/api/claims';
 
+// Mock the /me query seam so usePermission resolves synchronously without a
+// QueryClientProvider. Real usePermission logic still runs against this data.
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+const ALL_LIST_PERMS = ['claims:view', 'billing:batch'];
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue({ data: { permissions } } as unknown as ReturnType<typeof useUserRoles>);
+}
+
 function claim(over: Partial<{ id: number; patientName: string; status: string; amount: number }> = {}) {
   return {
     id: 1,
@@ -38,7 +48,12 @@ function renderList() {
 }
 
 describe('ClaimsList', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // Default: user holds every list-related permission so existing behaviour
+    // tests see enabled buttons. Permission-gating tests override.
+    setPermissions(ALL_LIST_PERMS);
+  });
 
   it('renders loading state initially', () => {
     vi.mocked(getClaims).mockReturnValue(new Promise(() => {}));
@@ -161,5 +176,59 @@ describe('ClaimsList', () => {
     expect(batchSubmitClaims).not.toHaveBeenCalled();
     // Dialog dismissed; toolbar still visible
     expect(screen.getByText('1 selected')).toBeInTheDocument();
+  });
+
+  describe('permission gating', () => {
+    it('disables the confirm Submit button with a permission tooltip when the user lacks billing:batch', async () => {
+      setPermissions(['claims:view']); // no billing:batch
+      const user = userEvent.setup();
+      vi.mocked(getClaims).mockResolvedValueOnce({
+        data: [claim()],
+        pagination: pagination(),
+      });
+      renderList();
+      await screen.findByText('Jane Doe');
+
+      await user.click(screen.getByLabelText(/Select claim 1/i));
+      await user.click(screen.getByRole('button', { name: /Submit 1/i }));
+
+      const confirm = screen.getByRole('button', { name: /^Submit$/ });
+      expect(confirm).toBeDisabled();
+      expect(confirm).toHaveAttribute('title', expect.stringMatching(/permission/i));
+    });
+
+    it('disables the confirm Void button when the user lacks billing:batch', async () => {
+      setPermissions(['claims:view']); // no billing:batch
+      const user = userEvent.setup();
+      vi.mocked(getClaims).mockResolvedValueOnce({
+        data: [claim()],
+        pagination: pagination(),
+      });
+      renderList();
+      await screen.findByText('Jane Doe');
+
+      await user.click(screen.getByLabelText(/Select claim 1/i));
+      await user.click(screen.getByRole('button', { name: /Void 1/i }));
+
+      const confirm = screen.getByRole('button', { name: /^Void$/ });
+      expect(confirm).toBeDisabled();
+      expect(confirm).toHaveAttribute('title', expect.stringMatching(/permission/i));
+    });
+
+    it('enables the confirm Submit button when the user has billing:batch', async () => {
+      setPermissions(['claims:view', 'billing:batch']);
+      const user = userEvent.setup();
+      vi.mocked(getClaims).mockResolvedValueOnce({
+        data: [claim()],
+        pagination: pagination(),
+      });
+      renderList();
+      await screen.findByText('Jane Doe');
+
+      await user.click(screen.getByLabelText(/Select claim 1/i));
+      await user.click(screen.getByRole('button', { name: /Submit 1/i }));
+
+      expect(screen.getByRole('button', { name: /^Submit$/ })).toBeEnabled();
+    });
   });
 });

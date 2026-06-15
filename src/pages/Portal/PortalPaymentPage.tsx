@@ -5,6 +5,10 @@ import {
   recordStatementPayment,
   type StatementRun,
 } from '@/api/billing';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 /**
  * Patient-portal-style payment preview. Renders the patient-facing UX
@@ -51,6 +55,10 @@ export function PortalPaymentPage() {
   const [expiry, setExpiry] = useState('');
   const [cvv, setCvv] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // record-payment hits POST /billing/statements/runs/{id}/record-payment,
+  // gated by [Authorize(Policy = "billing:statements")].
+  const canPay = usePermission(PERMISSIONS.BILLING_STATEMENTS);
 
   useEffect(() => {
     if (!Number.isFinite(id) || id <= 0) {
@@ -265,11 +273,12 @@ export function PortalPaymentPage() {
 
         <button
           type="submit"
-          disabled={submitting}
+          disabled={submitting || !canPay}
+          title={!canPay ? NO_PERMISSION : undefined}
           style={{
             fontSize: 16, fontWeight: 600, padding: '12px 24px',
             background: '#0ea5e9', color: '#fff', border: 'none',
-            borderRadius: 6, cursor: 'pointer',
+            borderRadius: 6, cursor: (submitting || !canPay) ? 'not-allowed' : 'pointer',
           }}
         >
           {submitting ? 'Processing…' : `Pay ${formatMoney(Number(amount) || 0)}`}

@@ -8,6 +8,10 @@ import {
 } from '@/api/hospice';
 import { HospiceNotrCard } from '@/components/HospiceNotrCard';
 import { useAuth } from '@/auth/useAuth';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 function badgeStyle(color: string): CSSProperties {
   return {
@@ -36,6 +40,8 @@ export function HospiceElectionDetail() {
   const { auth } = useAuth();
   const canManageDischarge = auth.user?.roles.some(r =>
     ['physician', 'client_admin', 'system_admin'].includes(r)) ?? false;
+  // Confirm Submission → submitNoe → POST .../noe/submit [Policy=hospice:manage]
+  const canManage = usePermission(PERMISSIONS.HOSPICE_MANAGE);
   const [election, setElection] = useState<HospiceElection | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -411,8 +417,9 @@ export function HospiceElectionDetail() {
               <button
                 onClick={handleSubmitNoe}
                 disabled={
-                  submitting || !noeMode || (noeMode === 'Manual' && !noeUrl)
+                  submitting || !canManage || !noeMode || (noeMode === 'Manual' && !noeUrl)
                 }
+                title={!canManage ? NO_PERMISSION : undefined}
               >
                 {submitting ? 'Submitting…' : 'Confirm Submission'}
               </button>

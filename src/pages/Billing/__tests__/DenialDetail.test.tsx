@@ -40,6 +40,16 @@ import {
 } from '@/api/billing';
 import type { DenialAppealDraftStreamHandlers } from '@/api/billing';
 
+// Mock the /me query seam so usePermission resolves synchronously without a
+// QueryClientProvider. Real usePermission logic still runs against this data.
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+const ALL_DENIAL_PERMS = ['billing:denials'];
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue({ data: { permissions } } as unknown as ReturnType<typeof useUserRoles>);
+}
+
 function buildDenial(overrides: Partial<{
   status: string;
   appealHistory: string | null;
@@ -80,6 +90,9 @@ describe('DenialDetail', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockNavigate.mockReset();
+    // Default: user holds the denial-management permission so existing
+    // behaviour tests see enabled buttons. Gating tests override.
+    setPermissions(ALL_DENIAL_PERMS);
     vi.mocked(analyzeDenial).mockResolvedValue({
       category: 'medical-necessity',
       description: 'Not medically necessary',
@@ -275,6 +288,49 @@ describe('DenialDetail', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent(/too many ai drafts/i);
+    });
+  });
+
+  describe('permission gating', () => {
+    it('disables the primary action with a permission tooltip when lacking billing:denials', async () => {
+      setPermissions([]); // no billing:denials
+      vi.mocked(getDenialById).mockResolvedValueOnce(buildDenial({ status: 'new' }));
+      renderAt();
+      await waitFor(() => screen.getByRole('button', { name: /start appeal/i }));
+
+      const btn = screen.getByRole('button', { name: /start appeal/i });
+      expect(btn).toBeDisabled();
+      expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+    });
+
+    it('enables the primary action when holding billing:denials', async () => {
+      setPermissions(['billing:denials']);
+      vi.mocked(getDenialById).mockResolvedValueOnce(buildDenial({ status: 'new' }));
+      renderAt();
+      await waitFor(() => screen.getByRole('button', { name: /start appeal/i }));
+      expect(screen.getByRole('button', { name: /start appeal/i })).toBeEnabled();
+    });
+
+    it('disables Assign with a permission tooltip when lacking billing:denials', async () => {
+      setPermissions([]);
+      vi.mocked(getDenialById).mockResolvedValueOnce(buildDenial({ status: 'new' }));
+      renderAt();
+      await waitFor(() => screen.getByRole('button', { name: /^assign$/i }));
+
+      const btn = screen.getByRole('button', { name: /^assign$/i });
+      expect(btn).toBeDisabled();
+      expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+    });
+
+    it('disables Draft appeal with a permission tooltip when lacking billing:denials', async () => {
+      setPermissions([]);
+      vi.mocked(getDenialById).mockResolvedValueOnce(buildDenial({ status: 'new' }));
+      renderAt();
+      await waitFor(() => screen.getByRole('button', { name: /draft appeal/i }));
+
+      const btn = screen.getByRole('button', { name: /draft appeal/i });
+      expect(btn).toBeDisabled();
+      expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
     });
   });
 });

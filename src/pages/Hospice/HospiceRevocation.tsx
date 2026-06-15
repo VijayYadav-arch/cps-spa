@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { revokeElection } from '@/api/hospice';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 const ACKNOWLEDGMENTS = [
   'The patient (or authorized representative) has been informed of the revocation and its consequences.',
@@ -25,6 +29,9 @@ export function HospiceRevocation() {
   const [error, setError] = useState<string | null>(null);
 
   const allAcked = acks.every(Boolean);
+
+  // Revoke Election → revokeElection → POST .../revoke [Policy=hospice:manage]
+  const canManage = usePermission(PERMISSIONS.HOSPICE_MANAGE);
 
   async function handleSubmit() {
     if (!electionId) return;
@@ -118,12 +125,14 @@ export function HospiceRevocation() {
         </button>
         <button
           onClick={handleSubmit}
-          disabled={!allAcked || submitting}
+          disabled={!allAcked || submitting || !canManage}
+          title={!canManage ? NO_PERMISSION : undefined}
           style={{
             background: '#b91c1c',
             color: '#fff',
             padding: '8px 16px',
             borderRadius: 4,
+            cursor: (!allAcked || submitting || !canManage) ? 'not-allowed' : 'pointer',
           }}
         >
           {submitting ? 'Revoking…' : 'Revoke Election'}

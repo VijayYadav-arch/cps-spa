@@ -19,7 +19,22 @@ import {
   narrateAnomaliesNow,
 } from '@/api/compliance';
 
-beforeEach(() => vi.clearAllMocks());
+// Mock the /me query seam so usePermission resolves synchronously without a
+// QueryClientProvider. Real usePermission logic still runs against this data.
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+const ALL_PERMS = ['compliance:phi_review'];
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue({ data: { permissions } } as unknown as ReturnType<typeof useUserRoles>);
+}
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  // Default: user holds compliance:phi_review so existing behaviour tests
+  // see enabled action buttons. Gating tests override.
+  setPermissions(ALL_PERMS);
+});
 
 function alert(over: Partial<{
   id: number; status: AnomalyStatus; anomalyType: AnomalyType;
@@ -171,5 +186,40 @@ describe('AuditAnomalyReviewPage', () => {
 
     await user.click(screen.getByRole('button', { name: /generate narratives/i }));
     expect(await screen.findByText(/Generated narratives for 4 alert/i)).toBeInTheDocument();
+  });
+
+  describe('permission gating', () => {
+    it('disables Scan now and Generate narratives with a tooltip when the user lacks compliance:phi_review', async () => {
+      setPermissions([]); // no compliance:phi_review
+      vi.mocked(listAnomalies).mockResolvedValue({ data: [], total: 0 });
+      render(<AuditAnomalyReviewPage />);
+      await waitFor(() => expect(listAnomalies).toHaveBeenCalled());
+
+      const scan = screen.getByRole('button', { name: /Scan now/i });
+      const narrate = screen.getByRole('button', { name: /Generate narratives/i });
+      expect(scan).toBeDisabled();
+      expect(scan).toHaveAttribute('title', expect.stringMatching(/permission/i));
+      expect(narrate).toBeDisabled();
+    });
+
+    it('disables Dismiss and Escalate row actions when the user lacks compliance:phi_review', async () => {
+      setPermissions([]); // no compliance:phi_review
+      vi.mocked(listAnomalies).mockResolvedValue({ data: [alert()], total: 1 });
+      render(<AuditAnomalyReviewPage />);
+      await screen.findByText(/52 distinct patients/);
+
+      expect(screen.getByRole('button', { name: /Dismiss/i })).toBeDisabled();
+      expect(screen.getByRole('button', { name: /Escalate/i })).toBeDisabled();
+    });
+
+    it('enables action buttons when the user has compliance:phi_review', async () => {
+      setPermissions(['compliance:phi_review']);
+      vi.mocked(listAnomalies).mockResolvedValue({ data: [alert()], total: 1 });
+      render(<AuditAnomalyReviewPage />);
+      await screen.findByText(/52 distinct patients/);
+
+      expect(screen.getByRole('button', { name: /Scan now/i })).toBeEnabled();
+      expect(screen.getByRole('button', { name: /Dismiss/i })).toBeEnabled();
+    });
   });
 });

@@ -16,6 +16,16 @@ vi.mock('@/api/claims', async () => {
 
 import { batchSubmitClaims, batchVoidClaims, getClaims } from '@/api/claims';
 
+// Mock the /me query seam so usePermission resolves synchronously without a
+// QueryClientProvider. Real usePermission logic still runs against this data.
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+const ALL_PERMS = ['billing:queue', 'billing:batch'];
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue({ data: { permissions } } as unknown as ReturnType<typeof useUserRoles>);
+}
+
 function claim(id: number, status = 'pending') {
   return {
     id,
@@ -39,6 +49,9 @@ function renderPage() {
 describe('BatchOperationsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Default: user holds every permission this page uses so existing
+    // behaviour tests see enabled buttons. Permission-gating tests override.
+    setPermissions(ALL_PERMS);
     vi.mocked(getClaims).mockResolvedValue({
       data: [claim(1), claim(2, 'submitted')],
       pagination: { total: 2, page: 1, pageSize: 50, totalPages: 1 },
@@ -101,6 +114,44 @@ describe('BatchOperationsPage', () => {
 
     await waitFor(() => {
       expect(batchVoidClaims).toHaveBeenCalledWith([1]);
+    });
+  });
+
+  describe('permission gating', () => {
+    it('disables Submit selected with a permission tooltip when the user lacks billing:batch', async () => {
+      setPermissions(['billing:queue']); // no billing:batch
+      const user = userEvent.setup();
+      renderPage();
+      await waitFor(() => screen.getByLabelText('Select claim 1'));
+      // Select one so the only remaining disabled reason is the missing permission
+      await user.click(screen.getByLabelText('Select claim 1'));
+
+      const btn = screen.getByRole('button', { name: /submit selected/i });
+      expect(btn).toBeDisabled();
+      expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+    });
+
+    it('disables Void selected with a permission tooltip when the user lacks billing:batch', async () => {
+      setPermissions(['billing:queue']); // no billing:batch
+      const user = userEvent.setup();
+      renderPage();
+      await waitFor(() => screen.getByLabelText('Select claim 1'));
+      await user.click(screen.getByLabelText('Select claim 1'));
+
+      const btn = screen.getByRole('button', { name: /void selected/i });
+      expect(btn).toBeDisabled();
+      expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+    });
+
+    it('enables Submit/Void selected when the user has billing:batch and rows are selected', async () => {
+      setPermissions(['billing:queue', 'billing:batch']);
+      const user = userEvent.setup();
+      renderPage();
+      await waitFor(() => screen.getByLabelText('Select claim 1'));
+      await user.click(screen.getByLabelText('Select claim 1'));
+
+      expect(screen.getByRole('button', { name: /submit selected/i })).toBeEnabled();
+      expect(screen.getByRole('button', { name: /void selected/i })).toBeEnabled();
     });
   });
 });

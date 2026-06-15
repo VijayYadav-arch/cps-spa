@@ -22,8 +22,21 @@ import {
   downloadSuperbillPdf,
 } from '@/api/billing';
 
+// Mock the /me query seam so usePermission resolves synchronously without a
+// QueryClientProvider. Real usePermission logic still runs against this data.
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+const ALL_PERMS = ['billing:queue', 'billing:superbills'];
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue({ data: { permissions } } as unknown as ReturnType<typeof useUserRoles>);
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
+  // Default: user holds every permission this page uses so existing
+  // behaviour tests see enabled buttons. Permission-gating tests override.
+  setPermissions(ALL_PERMS);
   // jsdom doesn't ship URL.createObjectURL — stub it for PDF download
   Object.assign(URL, {
     createObjectURL: vi.fn(() => 'blob:fake'),
@@ -181,5 +194,61 @@ describe('SuperbillsPage', () => {
     });
     renderPage();
     expect(await screen.findByRole('alert')).toHaveTextContent('forbidden');
+  });
+
+  describe('permission gating', () => {
+    it('disables Save draft with a permission tooltip when the user lacks billing:superbills', async () => {
+      setPermissions(['billing:queue']); // no billing:superbills
+      const user = userEvent.setup();
+      vi.mocked(listSuperbills).mockResolvedValue({
+        data: [], pagination: { total: 0, page: 1, pageSize: 25 },
+      });
+
+      renderPage();
+      await waitFor(() => expect(listSuperbills).toHaveBeenCalled());
+      await user.click(screen.getByRole('button', { name: /New superbill/i }));
+
+      const btn = screen.getByRole('button', { name: /Save draft/i });
+      expect(btn).toBeDisabled();
+      expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+    });
+
+    it('enables Save draft when the user has billing:superbills', async () => {
+      setPermissions(['billing:queue', 'billing:superbills']);
+      const user = userEvent.setup();
+      vi.mocked(listSuperbills).mockResolvedValue({
+        data: [], pagination: { total: 0, page: 1, pageSize: 25 },
+      });
+
+      renderPage();
+      await waitFor(() => expect(listSuperbills).toHaveBeenCalled());
+      await user.click(screen.getByRole('button', { name: /New superbill/i }));
+
+      expect(screen.getByRole('button', { name: /Save draft/i })).toBeEnabled();
+    });
+
+    it('disables Finalize when the user lacks billing:superbills', async () => {
+      setPermissions(['billing:queue']); // no billing:superbills
+      vi.mocked(listSuperbills).mockResolvedValue({
+        data: [sb()],
+        pagination: { total: 1, page: 1, pageSize: 25 },
+      });
+
+      renderPage();
+      await screen.findByText('#1');
+      expect(screen.getByRole('button', { name: /^Finalize$/ })).toBeDisabled();
+    });
+
+    it('disables PDF when the user lacks billing:superbills', async () => {
+      setPermissions(['billing:queue']); // no billing:superbills
+      vi.mocked(listSuperbills).mockResolvedValue({
+        data: [sb({ status: 'finalized' })],
+        pagination: { total: 1, page: 1, pageSize: 25 },
+      });
+
+      renderPage();
+      await screen.findByText('#1');
+      expect(screen.getByRole('button', { name: /^PDF$/ })).toBeDisabled();
+    });
   });
 });

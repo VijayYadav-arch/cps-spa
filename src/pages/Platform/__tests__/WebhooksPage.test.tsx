@@ -21,9 +21,22 @@ import {
   testWebhookSignature,
 } from '@/api/platform';
 
+// Mock the /me query seam so usePermission resolves synchronously without a
+// QueryClientProvider. Real usePermission logic still runs against this data.
+vi.mock('@/permissions/useUserRoles', () => ({ useUserRoles: vi.fn() }));
+import { useUserRoles } from '@/permissions/useUserRoles';
+
+const ALL_WEBHOOK_PERMS = ['platform:webhooks'];
+function setPermissions(permissions: string[]) {
+  vi.mocked(useUserRoles).mockReturnValue({ data: { permissions } } as unknown as ReturnType<typeof useUserRoles>);
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   vi.stubGlobal('confirm', vi.fn(() => true));
+  // Default: user holds every webhook-related permission so existing
+  // behaviour tests see enabled buttons. Permission-gating tests override.
+  setPermissions(ALL_WEBHOOK_PERMS);
 });
 
 function hook(over: Partial<Webhook> = {}): Webhook {
@@ -168,5 +181,65 @@ describe('WebhooksPage', () => {
     await user.click(screen.getByRole('button', { name: /^Delete$/ }));
 
     await waitFor(() => expect(deleteWebhook).toHaveBeenCalledWith(1));
+  });
+});
+
+describe('WebhooksPage — permission gating', () => {
+  it('disables Create with a permission tooltip when the user lacks platform:webhooks', async () => {
+    const user = userEvent.setup();
+    setPermissions([]); // no platform:webhooks
+    vi.mocked(getWebhooks).mockResolvedValue({
+      data: [], pagination: { total: 0, page: 1, pageSize: 25, totalPages: 1 },
+    });
+
+    renderPage();
+    await waitFor(() => expect(getWebhooks).toHaveBeenCalled());
+    await user.click(screen.getByRole('button', { name: /New webhook/i }));
+
+    const btn = screen.getByRole('button', { name: /^Create$/ });
+    expect(btn).toBeDisabled();
+    expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+  });
+
+  it('enables Create when the user has platform:webhooks', async () => {
+    const user = userEvent.setup();
+    setPermissions(['platform:webhooks']);
+    vi.mocked(getWebhooks).mockResolvedValue({
+      data: [], pagination: { total: 0, page: 1, pageSize: 25, totalPages: 1 },
+    });
+
+    renderPage();
+    await waitFor(() => expect(getWebhooks).toHaveBeenCalled());
+    await user.click(screen.getByRole('button', { name: /New webhook/i }));
+
+    expect(screen.getByRole('button', { name: /^Create$/ })).toBeEnabled();
+  });
+
+  it('disables Delete with a permission tooltip when the user lacks platform:webhooks', async () => {
+    setPermissions([]); // no platform:webhooks
+    vi.mocked(getWebhooks).mockResolvedValue({
+      data: [hook()],
+      pagination: { total: 1, page: 1, pageSize: 25, totalPages: 1 },
+    });
+
+    renderPage();
+    await screen.findByText('https://partner.example.com/webhook');
+
+    const btn = screen.getByRole('button', { name: /^Delete$/ });
+    expect(btn).toBeDisabled();
+    expect(btn).toHaveAttribute('title', expect.stringMatching(/permission/i));
+  });
+
+  it('enables Delete when the user has platform:webhooks', async () => {
+    setPermissions(['platform:webhooks']);
+    vi.mocked(getWebhooks).mockResolvedValue({
+      data: [hook()],
+      pagination: { total: 1, page: 1, pageSize: 25, totalPages: 1 },
+    });
+
+    renderPage();
+    await screen.findByText('https://partner.example.com/webhook');
+
+    expect(screen.getByRole('button', { name: /^Delete$/ })).toBeEnabled();
   });
 });

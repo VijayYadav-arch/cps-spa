@@ -11,6 +11,10 @@ import {
   type Clearinghouse,
   type Hospice837IExportResult,
 } from '@/api/hospice';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 const STATUS_COLORS: Record<ClaimSubmissionStatus, { bg: string; fg: string }> = {
   pending: { bg: '#fef3c7', fg: '#92400e' },
@@ -60,6 +64,11 @@ export function HospiceClaimSubmissionsPage() {
   const [isExporting, setIsExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [actionMsg, setActionMsg] = useState<string | null>(null);
+
+  // Export 837I (POST .../export-837i) and mark-submitted
+  // (POST /hospice/claim-submissions/{id}/mark-submitted) are both gated by
+  // hospice:per_diem_billing on the backend.
+  const canBill = usePermission(PERMISSIONS.HOSPICE_PER_DIEM_BILLING);
 
   async function refresh() {
     setIsLoading(true);
@@ -188,8 +197,9 @@ export function HospiceClaimSubmissionsPage() {
           </label>
           <button
             type="submit"
-            disabled={isExporting}
-            style={{ justifySelf: 'start' }}
+            disabled={isExporting || !canBill}
+            title={!canBill ? NO_PERMISSION : undefined}
+            style={{ justifySelf: 'start', cursor: (isExporting || !canBill) ? 'not-allowed' : 'pointer' }}
           >
             {isExporting ? 'Generating…' : 'Generate 837I'}
           </button>
@@ -268,7 +278,9 @@ export function HospiceClaimSubmissionsPage() {
                       <button
                         type="button"
                         onClick={() => void handleMarkSubmitted(s.id)}
-                        style={{ fontSize: 12 }}
+                        disabled={!canBill}
+                        title={!canBill ? NO_PERMISSION : undefined}
+                        style={{ fontSize: 12, cursor: !canBill ? 'not-allowed' : 'pointer' }}
                       >
                         Mark Submitted
                       </button>

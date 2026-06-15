@@ -6,6 +6,10 @@ import {
   getClaims,
   type ClaimSummary,
 } from '@/api/claims';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 const STATUS_TABS = [
   { label: 'All', value: '' },
@@ -41,6 +45,9 @@ export function BatchOperationsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [batchResult, setBatchResult] = useState<BatchResult | null>(null);
   const [showVoidConfirm, setShowVoidConfirm] = useState(false);
+
+  // Both batch actions POST to BatchController (policy billing:batch).
+  const canBatch = usePermission(PERMISSIONS.BILLING_BATCH);
 
   useEffect(() => {
     let cancelled = false;
@@ -158,7 +165,8 @@ export function BatchOperationsPage() {
         <span className="text-sm text-slate-600">{selectedIds.size} selected</span>
         <button
           type="button"
-          disabled={selectedIds.size === 0 || submitting}
+          disabled={selectedIds.size === 0 || submitting || !canBatch}
+          title={!canBatch ? NO_PERMISSION : undefined}
           onClick={() => runBatch('submit')}
           className="px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-md hover:bg-teal-700 disabled:opacity-50"
         >
@@ -166,7 +174,8 @@ export function BatchOperationsPage() {
         </button>
         <button
           type="button"
-          disabled={selectedIds.size === 0 || submitting}
+          disabled={selectedIds.size === 0 || submitting || !canBatch}
+          title={!canBatch ? NO_PERMISSION : undefined}
           onClick={() => setShowVoidConfirm(true)}
           className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 disabled:opacity-50"
         >
@@ -251,7 +260,8 @@ export function BatchOperationsPage() {
               <button
                 type="button"
                 onClick={() => runBatch('void')}
-                disabled={submitting}
+                disabled={submitting || !canBatch}
+                title={!canBatch ? NO_PERMISSION : undefined}
                 className="px-5 py-2 bg-red-600 text-white text-sm rounded-md hover:bg-red-700 disabled:opacity-50"
               >
                 {submitting ? 'Voiding...' : 'Confirm void'}

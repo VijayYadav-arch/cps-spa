@@ -13,6 +13,10 @@ import {
   type CreateChargeRequest,
   type PendingChargesSummary,
 } from '@/api/billing';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
 
 const STATUS_COLORS: Record<ChargeStatus, { bg: string; fg: string }> = {
   pending: { bg: '#fef3c7', fg: '#92400e' },
@@ -76,6 +80,12 @@ export function ChargeEntryPage() {
   const [pendingSummary, setPendingSummary] = useState<PendingChargesSummary | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [attachingClaimId, setAttachingClaimId] = useState('');
+
+  // Button gates mapped to the ChargesController action policies:
+  // create→claims:create, reviewed/attach→claims:edit, void→claims:void.
+  const canCreate = usePermission(PERMISSIONS.CLAIMS_CREATE);
+  const canEdit = usePermission(PERMISSIONS.CLAIMS_EDIT);
+  const canVoid = usePermission(PERMISSIONS.CLAIMS_VOID);
 
   async function reload() {
     setLoading(true);
@@ -376,14 +386,15 @@ export function ChargeEntryPage() {
           <div style={{ gridColumn: 'span 2' }}>
             <button
               type="submit"
-              disabled={submitting}
+              disabled={submitting || !canCreate}
+              title={!canCreate ? NO_PERMISSION : undefined}
               style={{
-                background: submitting ? '#94a3b8' : '#0ea5e9',
+                background: (submitting || !canCreate) ? '#94a3b8' : '#0ea5e9',
                 color: '#fff',
                 border: 'none',
                 padding: '8px 14px',
                 borderRadius: 6,
-                cursor: submitting ? 'not-allowed' : 'pointer',
+                cursor: (submitting || !canCreate) ? 'not-allowed' : 'pointer',
                 fontWeight: 600,
               }}
             >
@@ -463,13 +474,15 @@ export function ChargeEntryPage() {
           <button
             type="button"
             onClick={handleAttach}
+            disabled={!canEdit}
+            title={!canEdit ? NO_PERMISSION : undefined}
             style={{
-              background: '#0ea5e9',
+              background: canEdit ? '#0ea5e9' : '#94a3b8',
               color: '#fff',
               border: 'none',
               padding: '6px 12px',
               borderRadius: 4,
-              cursor: 'pointer',
+              cursor: canEdit ? 'pointer' : 'not-allowed',
               fontWeight: 600,
             }}
           >
@@ -553,12 +566,14 @@ export function ChargeEntryPage() {
                       <button
                         type="button"
                         onClick={() => handleReview(c.id)}
+                        disabled={!canEdit}
+                        title={!canEdit ? NO_PERMISSION : undefined}
                         style={{
                           background: 'transparent',
                           border: '1px solid #cbd5e1',
                           padding: '2px 8px',
                           borderRadius: 4,
-                          cursor: 'pointer',
+                          cursor: canEdit ? 'pointer' : 'not-allowed',
                           marginRight: 4,
                           fontSize: 12,
                         }}
@@ -570,13 +585,15 @@ export function ChargeEntryPage() {
                       <button
                         type="button"
                         onClick={() => handleVoid(c.id)}
+                        disabled={!canVoid}
+                        title={!canVoid ? NO_PERMISSION : undefined}
                         style={{
                           background: 'transparent',
                           border: '1px solid #fecaca',
                           color: '#991b1b',
                           padding: '2px 8px',
                           borderRadius: 4,
-                          cursor: 'pointer',
+                          cursor: canVoid ? 'pointer' : 'not-allowed',
                           fontSize: 12,
                         }}
                       >
