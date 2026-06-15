@@ -62,6 +62,7 @@ vi.mock('@/pages/Documents/DocumentsList', () => ({ DocumentsList: () => <div>Do
 vi.mock('@/pages/Platform/PlatformDashboard', () => ({ PlatformDashboard: () => <div>Platform</div> }));
 vi.mock('@/pages/Admin/AdminDashboard', () => ({ AdminDashboard: () => <div>Admin</div> }));
 vi.mock('@/pages/Hospice/HospiceWorkQueue', () => ({ HospiceWorkQueue: () => <div>Hospice Work Queue Page</div> }));
+vi.mock('@/pages/Compliance/AuditAnomalyReviewPage', () => ({ AuditAnomalyReviewPage: () => <div>Anomaly Review Page</div> }));
 
 import App from '@/App';
 
@@ -108,5 +109,20 @@ describe('App routing', () => {
     window.history.pushState({}, '', '/hospice/work-queue');
     render(<App />);
     expect(screen.getByText('Hospice Work Queue Page')).toBeInTheDocument();
+  });
+
+  it('renders the anomaly review page at /compliance/anomalies for a user with compliance:phi_review', () => {
+    setDevClaims({ userId: 1, organizationId: 5, roles: ['compliance'], permissions: ['compliance:phi_review'] });
+    window.history.pushState({}, '', '/compliance/anomalies');
+    render(<App />);
+    expect(screen.getByText('Anomaly Review Page')).toBeInTheDocument();
+  });
+
+  it('blocks /compliance/anomalies for a user lacking compliance:phi_review', () => {
+    setDevClaims({ userId: 1, organizationId: 5, roles: ['billing_clerk'], permissions: ['claims:view'] });
+    window.history.pushState({}, '', '/compliance/anomalies');
+    render(<App />);
+    // RoleRoute should redirect to /unauthorized; the page must NOT render.
+    expect(screen.queryByText('Anomaly Review Page')).not.toBeInTheDocument();
   });
 });
