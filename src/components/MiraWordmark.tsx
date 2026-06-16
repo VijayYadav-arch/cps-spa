@@ -46,6 +46,21 @@ export function MiraWordmark({
       </text>
       {/* Amber sentinel i-dot (vector — always renders). */}
       <path d="M 77 4 Q 77 13 86 13 Q 77 13 77 22 Q 77 13 68 13 Q 77 13 77 4 Z" fill="#f59e0b" />
+      {/* Trademark superscript. Visual only — kept out of the aria-label so
+          screen readers don't announce "trademark" on every page. */}
+      <text
+        x="161"
+        y="30"
+        aria-hidden="true"
+        style={{
+          fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          fontWeight: 700,
+          fontSize: '20px',
+          fill: '#0d9488',
+        }}
+      >
+        ™
+      </text>
     </svg>
   );
 }
