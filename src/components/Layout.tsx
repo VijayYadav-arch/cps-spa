@@ -60,8 +60,14 @@ const navItems: NavEntry[] = [
   { kind: 'leaf', to: '/', label: 'Dashboard', exact: true },
   { kind: 'leaf', to: '/inbox', label: 'Inbox' },
   { kind: 'leaf', to: '/claims', label: 'Claims' },
-  { kind: 'leaf', to: '/patients', label: 'Patients' },
-  { kind: 'leaf', to: '/patients/intake', label: 'New Patient', exact: true },
+  {
+    kind: 'group',
+    label: 'Patients',
+    items: [
+      { kind: 'leaf', to: '/patients', label: 'All Patients', exact: true },
+      { kind: 'leaf', to: '/patients/intake', label: 'New Patient' },
+    ],
+  },
   { kind: 'leaf', to: '/analytics', label: 'Analytics' },
   {
     kind: 'group',
@@ -99,8 +105,15 @@ const navItems: NavEntry[] = [
     ],
   },
   { kind: 'leaf', to: '/documents', label: 'Documents' },
-  { kind: 'leaf', to: '/org/rollup', label: 'Parent-Org Rollup' },
-  { kind: 'leaf', to: '/admin/branches', label: 'Branches' },
+  {
+    kind: 'group',
+    label: 'Organization',
+    items: [
+      { kind: 'leaf', to: '/admin/organizations', label: 'Organizations' },
+      { kind: 'leaf', to: '/admin/branches', label: 'Branches' },
+      { kind: 'leaf', to: '/org/rollup', label: 'Parent-Org Rollup' },
+    ],
+  },
   {
     kind: 'group',
     label: 'Quality',
@@ -334,7 +347,7 @@ export function Layout() {
                       <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                         {entry.items.map((sub) => (
                           <li key={sub.to}>
-                            <NavLink to={sub.to} style={(s) => leafStyle(s, true)}>
+                            <NavLink to={sub.to} end={sub.exact} style={(s) => leafStyle(s, true)}>
                               {sub.label}
                             </NavLink>
                           </li>
