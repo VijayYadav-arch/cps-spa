@@ -2,6 +2,7 @@ import { useSearchParams } from 'react-router-dom';
 import { SsoButton } from '@/auth/SsoButton';
 import { DevLoginForm } from '@/auth/DevLoginForm';
 import { useDevAuth } from '@/auth/msalConfig';
+import { MiraWordmark } from '@/components/MiraWordmark';
 
 export function Login() {
   const [searchParams] = useSearchParams();
@@ -11,7 +12,7 @@ export function Login() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-cream px-4 py-10">
       <header className="flex flex-col items-center text-center">
-        <img src="/brand/mira-wordmark.svg" alt="Mira" className="h-14 w-auto" />
+        <MiraWordmark className="h-14 w-auto" />
         <p className="mt-2 max-w-xs text-sm font-medium tracking-wide text-slate-500">
           The AI-native platform for hospice &amp; home-health.
         </p>

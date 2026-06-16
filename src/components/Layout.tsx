@@ -3,6 +3,7 @@ import { useAuth } from '@/auth/useAuth';
 import { InboxBadge } from '@/components/InboxBadge';
 import { NotificationToasts } from '@/components/NotificationToasts';
 import { LanguagePicker } from '@/i18n/LanguagePicker';
+import { MiraWordmark } from '@/components/MiraWordmark';
 
 interface NavLeaf {
   kind: 'leaf';
@@ -127,7 +128,7 @@ export function Layout() {
         }}
       >
         <div style={{ padding: '0 20px 24px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-          <img src="/brand/mira-wordmark.svg" alt="Mira" style={{ height: 30, width: 'auto' }} />
+          <MiraWordmark style={{ height: 30, width: 'auto' }} />
         </div>
 
         <ul style={{ listStyle: 'none', padding: '16px 0', margin: 0, flex: 1 }}>
