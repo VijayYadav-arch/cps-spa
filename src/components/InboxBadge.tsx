@@ -41,8 +41,10 @@ export function InboxBadge() {
   }, []);
 
   if (!stats) return null;
-  const total = stats.pending + stats.inProgress;
-  if (total === 0) return null;
+  // Defensive: if the API ever returns partial/empty stats, treat missing
+  // counts as 0 so the badge never renders "NaN".
+  const total = (stats.pending ?? 0) + (stats.inProgress ?? 0);
+  if (!Number.isFinite(total) || total <= 0) return null;
 
   const isCritical = stats.critical > 0;
   const isOverdue = !isCritical && stats.overdue > 0;
