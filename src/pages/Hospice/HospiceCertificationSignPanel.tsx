@@ -66,32 +66,49 @@ export function HospiceCertificationSignPanel() {
     }
   }
 
-  if (loading) return <div role="status">Loading…</div>;
-  if (!cert) return <div role="alert">Certification not found.</div>;
+  if (loading) return <div role="status" className="text-slate-500">Loading…</div>;
+  if (!cert)
+    return (
+      <div
+        role="alert"
+        className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800"
+      >
+        Certification not found.
+      </div>
+    );
 
   return (
-    <div style={{ padding: 24, maxWidth: 600 }}>
-      <button onClick={() => navigate(-1)} style={{ marginBottom: 16 }}>
-        ← Back
-      </button>
-      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 4 }}>
-        Certification #{cert.id}
-      </h2>
-      <p style={{ color: '#64748b', marginBottom: 16 }}>
-        Status: <strong>{cert.status}</strong> • Certifying physician:{' '}
-        {cert.certifyingPhysicianId}
-      </p>
+    <div className="grid max-w-[600px] gap-6 p-6">
+      <div>
+        <button
+          onClick={() => navigate(-1)}
+          className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+        >
+          ← Back
+        </button>
+      </div>
+      <header className="space-y-2">
+        <h2 className="text-2xl">Certification #{cert.id}</h2>
+        <div className="section-line" />
+        <p className="max-w-3xl text-slate-500">
+          Status: <strong>{cert.status}</strong> • Certifying physician:{' '}
+          {cert.certifyingPhysicianId}
+        </p>
+      </header>
 
       {error && (
-        <div role="alert" style={{ color: '#b91c1c', marginBottom: 12 }}>
+        <div
+          role="alert"
+          className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800"
+        >
           {error}
         </div>
       )}
 
       {cert.narrativeText && (
-        <section style={{ marginBottom: 16 }}>
-          <h3 style={{ fontSize: 14, fontWeight: 700 }}>Narrative</h3>
-          <p style={{ whiteSpace: 'pre-wrap' }}>{cert.narrativeText}</p>
+        <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <h3 className="text-lg font-semibold">Narrative</h3>
+          <p className="mt-2 whitespace-pre-wrap text-slate-700">{cert.narrativeText}</p>
         </section>
       )}
 
@@ -100,28 +117,30 @@ export function HospiceCertificationSignPanel() {
           onClick={handleSign}
           disabled={working || !canSign}
           title={!canSign ? NO_PERMISSION : undefined}
-          style={{ cursor: (working || !canSign) ? 'not-allowed' : 'pointer' }}
+          className="btn-primary justify-self-start"
         >
           {working ? 'Signing…' : 'Sign'}
         </button>
       )}
 
       {cert.status === 'Signed' && (
-        <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
-          <label>
-            Countersigning physician user id
+        <div className="flex flex-wrap items-end gap-4">
+          <label className="grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">
+              Countersigning physician user id
+            </span>
             <input
               type="number"
+              className="form-input"
               value={countersignerId}
               onChange={(e) => setCountersignerId(e.target.value)}
-              style={{ display: 'block', marginTop: 4 }}
             />
           </label>
           <button
             onClick={handleCountersign}
             disabled={working || !countersignerId || !canSign}
             title={!canSign ? NO_PERMISSION : undefined}
-            style={{ cursor: (working || !countersignerId || !canSign) ? 'not-allowed' : 'pointer' }}
+            className="btn-primary"
           >
             {working ? 'Countersigning…' : 'Countersign'}
           </button>
@@ -129,7 +148,9 @@ export function HospiceCertificationSignPanel() {
       )}
 
       {cert.status === 'Countersigned' && (
-        <p style={{ color: '#15803d' }}>Certification is fully countersigned.</p>
+        <p className="rounded-lg border-l-4 border-success bg-green-50 px-4 py-3 font-semibold text-green-800">
+          Certification is fully countersigned.
+        </p>
       )}
     </div>
   );

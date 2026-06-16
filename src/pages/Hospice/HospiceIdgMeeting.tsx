@@ -72,71 +72,81 @@ export function HospiceIdgMeeting() {
     }
   }
 
-  if (loading) return <div role="status">Loading…</div>;
-  if (error && !meeting) return <div role="alert">{error}</div>;
+  if (loading) return <div role="status" className="text-slate-500">Loading…</div>;
+  if (error && !meeting) return <div role="alert" className="m-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">{error}</div>;
   if (!meeting) return null;
 
   return (
-    <div style={{ padding: 24, maxWidth: 720 }}>
-      <button onClick={() => navigate(-1)} style={{ marginBottom: 16 }}>
-        ← Back
-      </button>
-      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 4 }}>
-        IDG Meeting #{meeting.id}
-      </h2>
-      <p style={{ color: '#64748b', marginBottom: 16 }}>
-        {new Date(meeting.meetingDate).toLocaleString()} • Status:{' '}
-        <strong>{meeting.status}</strong>
-      </p>
+    <div className="grid max-w-3xl gap-6 p-6">
+      <div>
+        <button
+          className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+          onClick={() => navigate(-1)}
+        >
+          ← Back
+        </button>
+      </div>
+      <header className="space-y-2">
+        <h2 className="text-2xl">
+          IDG Meeting #{meeting.id}
+        </h2>
+        <div className="section-line" />
+        <p className="text-slate-500">
+          {new Date(meeting.meetingDate).toLocaleString()} • Status:{' '}
+          <strong className="text-slate-800">{meeting.status}</strong>
+        </p>
+      </header>
 
       {error && (
-        <div role="alert" style={{ color: '#b91c1c', marginBottom: 12 }}>
+        <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">
           {error}
         </div>
       )}
 
-      <label style={{ display: 'block', marginBottom: 12 }}>
-        Notes
-        <textarea
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          rows={4}
-          disabled={meeting.status !== 'Scheduled'}
-          style={{ display: 'block', marginTop: 4, width: '100%' }}
-        />
-      </label>
+      <div className="grid gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <label className="grid gap-1.5">
+          <span className="text-sm font-medium text-slate-600">Notes</span>
+          <textarea
+            className="form-input"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows={4}
+            disabled={meeting.status !== 'Scheduled'}
+          />
+        </label>
 
-      <label style={{ display: 'block', marginBottom: 12 }}>
-        Action items
-        <textarea
-          value={actionItems}
-          onChange={(e) => setActionItems(e.target.value)}
-          rows={3}
-          disabled={meeting.status !== 'Scheduled'}
-          style={{ display: 'block', marginTop: 4, width: '100%' }}
-        />
-      </label>
+        <label className="grid gap-1.5">
+          <span className="text-sm font-medium text-slate-600">Action items</span>
+          <textarea
+            className="form-input"
+            value={actionItems}
+            onChange={(e) => setActionItems(e.target.value)}
+            rows={3}
+            disabled={meeting.status !== 'Scheduled'}
+          />
+        </label>
 
-      {meeting.status === 'Scheduled' && (
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button
-            onClick={handleComplete}
-            disabled={working || !canManage}
-            title={!canManage ? NO_PERMISSION : undefined}
-            style={{ cursor: (working || !canManage) ? 'not-allowed' : 'pointer' }}
-          >
-            Mark Completed
-          </button>
-          <button
-            onClick={handleCancel}
-            disabled={working || !canManage}
-            title={!canManage ? NO_PERMISSION : undefined}
-            style={{ cursor: (working || !canManage) ? 'not-allowed' : 'pointer' }}
-          >
-            Cancel Meeting
-          </button>
-        </div>
-      )}
+        {meeting.status === 'Scheduled' && (
+          <div className="flex gap-2">
+            <button
+              className="btn-primary"
+              onClick={handleComplete}
+              disabled={working || !canManage}
+              title={!canManage ? NO_PERMISSION : undefined}
+            >
+              Mark Completed
+            </button>
+            <button
+              className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+              onClick={handleCancel}
+              disabled={working || !canManage}
+              title={!canManage ? NO_PERMISSION : undefined}
+            >
+              Cancel Meeting
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

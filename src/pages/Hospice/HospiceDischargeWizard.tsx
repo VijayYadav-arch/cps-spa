@@ -35,10 +35,18 @@ export function HospiceDischargeWizard() {
 
   if (invalidState) {
     return (
-      <div role="alert" className="alert alert-danger">
+      <div
+        role="alert"
+        className="m-6 grid max-w-3xl gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800"
+      >
         <p>{invalidState.msg}</p>
         <p>Current status: {invalidState.currentStatus}</p>
-        <Link to={`/hospice/elections/${electionId}`}>Return to Election</Link>
+        <Link
+          to={`/hospice/elections/${electionId}`}
+          className="font-medium text-teal-700 hover:underline"
+        >
+          Return to Election
+        </Link>
       </div>
     );
   }
@@ -74,28 +82,33 @@ export function HospiceDischargeWizard() {
   }
 
   return (
-    <div className="discharge-wizard" style={{ padding: 24, maxWidth: 640 }}>
-      <h1 style={{ fontSize: 22, fontWeight: 700 }}>Discharge Patient</h1>
+    <div className="discharge-wizard grid max-w-3xl gap-6 p-6">
+      <header className="space-y-2">
+        <h2 className="text-2xl">Discharge Patient</h2>
+        <div className="section-line" />
+      </header>
 
-      <div aria-label="Progress" style={{ marginBottom: 24, color: '#475569' }}>
+      <div
+        aria-label="Progress"
+        className="text-sm font-medium text-slate-600"
+      >
         Step {step} of 3
       </div>
 
       {step === 1 && (
-        <section>
-          <h2>Step 1: Reason + Effective Date</h2>
-          <fieldset style={{ border: 'none', padding: 0, margin: 0 }}>
-            <legend style={{ fontWeight: 600, marginBottom: 8 }}>Discharge reason</legend>
+        <section className="grid gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <h3 className="text-lg font-semibold">Step 1: Reason + Effective Date</h3>
+          <fieldset className="m-0 grid gap-2 border-none p-0">
+            <legend className="mb-2 text-sm font-semibold text-slate-700">Discharge reason</legend>
             {REASONS.map(r => (
-              <div key={r.value} style={{ marginBottom: 8 }}>
-                <label>
+              <div key={r.value}>
+                <label className="flex items-center gap-2 text-slate-700">
                   <input
                     type="radio"
                     name="reason"
                     aria-label={r.label}
                     checked={reason === r.value}
                     onChange={() => setReason(r.value)}
-                    style={{ marginRight: 8 }}
                   />
                   {r.label}
                 </label>
@@ -103,21 +116,21 @@ export function HospiceDischargeWizard() {
             ))}
           </fieldset>
 
-          <div style={{ marginTop: 16 }}>
-            <label htmlFor="effective-date" style={{ display: 'block', marginBottom: 4 }}>
-              Effective date
-            </label>
+          <label className="grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">Effective date</span>
             <input
               id="effective-date"
               type="date"
+              className="form-input"
               value={effectiveDate}
               onChange={e => setEffectiveDate(e.target.value)}
             />
-          </div>
+          </label>
 
-          <div style={{ marginTop: 20 }}>
+          <div>
             <button
               type="button"
+              className="btn-primary"
               onClick={() => setStep(2)}
               disabled={!reason || !effectiveDate}
             >
@@ -128,136 +141,143 @@ export function HospiceDischargeWizard() {
       )}
 
       {step === 2 && (
-        <section>
-          <h2>Step 2: Reason-specific details</h2>
+        <section className="grid gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <h3 className="text-lg font-semibold">Step 2: Reason-specific details</h3>
 
           {reason === 'Transfer' && (
-            <div style={{ marginBottom: 12 }}>
-              <label htmlFor="receiving-agency" style={{ display: 'block', marginBottom: 4 }}>
-                Receiving agency
-              </label>
+            <label className="grid gap-1.5">
+              <span className="text-sm font-medium text-slate-600">Receiving agency</span>
               <input
                 id="receiving-agency"
+                className="form-input"
                 value={receivingAgency}
                 onChange={e => setReceivingAgency(e.target.value)}
               />
-            </div>
+            </label>
           )}
 
           {reason === 'OutOfServiceArea' && (
-            <div style={{ marginBottom: 12 }}>
-              <label htmlFor="destination" style={{ display: 'block', marginBottom: 4 }}>
-                Destination
-              </label>
+            <label className="grid gap-1.5">
+              <span className="text-sm font-medium text-slate-600">Destination</span>
               <input
                 id="destination"
+                className="form-input"
                 value={outOfArea}
                 onChange={e => setOutOfArea(e.target.value)}
               />
-            </div>
+            </label>
           )}
 
           {reason === 'ForCause' && (
             <>
-              <div style={{ marginBottom: 12 }}>
-                <label htmlFor="advance-notice" style={{ display: 'block', marginBottom: 4 }}>
-                  Advance notice date
-                </label>
+              <label className="grid gap-1.5">
+                <span className="text-sm font-medium text-slate-600">Advance notice date</span>
                 <input
                   id="advance-notice"
                   type="date"
+                  className="form-input"
                   value={advanceNotice}
                   onChange={e => setAdvanceNotice(e.target.value)}
                 />
-              </div>
-              <div style={{ marginBottom: 12 }}>
-                <label htmlFor="idg-approval" style={{ display: 'block', marginBottom: 4 }}>
-                  IDG approval date
-                </label>
+              </label>
+              <label className="grid gap-1.5">
+                <span className="text-sm font-medium text-slate-600">IDG approval date</span>
                 <input
                   id="idg-approval"
                   type="date"
+                  className="form-input"
                   value={idgApproval}
                   onChange={e => setIdgApproval(e.target.value)}
                 />
-              </div>
-              <div style={{ marginBottom: 12 }}>
-                <label htmlFor="physician-id" style={{ display: 'block', marginBottom: 4 }}>
-                  Physician sign-off (user ID)
-                </label>
+              </label>
+              <label className="grid gap-1.5">
+                <span className="text-sm font-medium text-slate-600">Physician sign-off (user ID)</span>
                 <input
                   id="physician-id"
+                  className="form-input"
                   value={physicianId}
                   onChange={e => setPhysicianId(e.target.value)}
                 />
-              </div>
-              <div style={{ marginBottom: 12 }}>
-                <label htmlFor="alt-arr" style={{ display: 'block', marginBottom: 4 }}>
-                  Alternative arrangements
-                </label>
+              </label>
+              <label className="grid gap-1.5">
+                <span className="text-sm font-medium text-slate-600">Alternative arrangements</span>
                 <textarea
                   id="alt-arr"
+                  className="form-input"
                   value={altArrangements}
                   onChange={e => setAltArrangements(e.target.value)}
                 />
-              </div>
+              </label>
             </>
           )}
 
           {reason === 'AgencyClosure' && (
-            <div style={{ marginBottom: 12 }}>
-              <label htmlFor="receiving-agency-closure" style={{ display: 'block', marginBottom: 4 }}>
-                Receiving agency (optional)
-              </label>
+            <label className="grid gap-1.5">
+              <span className="text-sm font-medium text-slate-600">Receiving agency (optional)</span>
               <input
                 id="receiving-agency-closure"
+                className="form-input"
                 value={receivingAgency}
                 onChange={e => setReceivingAgency(e.target.value)}
               />
-            </div>
+            </label>
           )}
 
-          <div style={{ marginBottom: 12 }}>
-            <label htmlFor="notes" style={{ display: 'block', marginBottom: 4 }}>
-              Notes
-            </label>
+          <label className="grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">Notes</span>
             <textarea
               id="notes"
+              className="form-input"
               value={notes}
               onChange={e => setNotes(e.target.value)}
             />
-          </div>
+          </label>
 
-          <div style={{ marginTop: 20, display: 'flex', gap: 8 }}>
-            <button type="button" onClick={() => setStep(1)}>Back</button>
-            <button type="button" onClick={() => setStep(3)}>Next</button>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+              onClick={() => setStep(1)}
+            >
+              Back
+            </button>
+            <button type="button" className="btn-primary" onClick={() => setStep(3)}>Next</button>
           </div>
         </section>
       )}
 
       {step === 3 && (
-        <section>
-          <h2>Step 3: Review + Confirm</h2>
-          <p>Reason: {reason}</p>
-          <p>Effective: {effectiveDate}</p>
-          {receivingAgency && <p>Receiving agency: {receivingAgency}</p>}
-          {advanceNotice && <p>Advance notice: {advanceNotice}</p>}
-          {notes && <p>Notes: {notes}</p>}
+        <section className="grid gap-2 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <h3 className="text-lg font-semibold">Step 3: Review + Confirm</h3>
+          <p className="text-slate-700">Reason: {reason}</p>
+          <p className="text-slate-700">Effective: {effectiveDate}</p>
+          {receivingAgency && <p className="text-slate-700">Receiving agency: {receivingAgency}</p>}
+          {advanceNotice && <p className="text-slate-700">Advance notice: {advanceNotice}</p>}
+          {notes && <p className="text-slate-700">Notes: {notes}</p>}
 
           {serverError && (
-            <p role="alert" className="alert-danger" style={{ color: '#b91c1c' }}>
+            <p
+              role="alert"
+              className="alert-danger rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800"
+            >
               {serverError}
             </p>
           )}
 
-          <div style={{ marginTop: 20, display: 'flex', gap: 8 }}>
-            <button type="button" onClick={() => setStep(2)}>Back</button>
+          <div className="mt-2 flex gap-2">
             <button
               type="button"
+              className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+              onClick={() => setStep(2)}
+            >
+              Back
+            </button>
+            <button
+              type="button"
+              className="btn-primary"
               onClick={submit}
               disabled={!canManage}
               title={!canManage ? NO_PERMISSION : undefined}
-              style={{ cursor: !canManage ? 'not-allowed' : 'pointer' }}
             >
               Submit
             </button>

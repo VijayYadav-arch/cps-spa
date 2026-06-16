@@ -10,46 +10,29 @@ import {
   type HospiceCahpsCase,
 } from '@/api/hospice';
 
-const STATUS_COLORS: Record<CahpsCaseStatus, { bg: string; fg: string }> = {
-  Pending: { bg: '#fef3c7', fg: '#92400e' },
-  Eligible: { bg: '#dbeafe', fg: '#1e40af' },
-  Ineligible: { bg: '#f1f5f9', fg: '#475569' },
-  SubmittedToVendor: { bg: '#dcfce7', fg: '#166534' },
-  Excluded: { bg: '#fee2e2', fg: '#991b1b' },
+const STATUS_BADGE: Record<CahpsCaseStatus, string> = {
+  Pending: 'bg-amber-100 text-amber-800',
+  Eligible: 'bg-blue-100 text-blue-800',
+  Ineligible: 'bg-slate-100 text-slate-600',
+  SubmittedToVendor: 'bg-green-100 text-green-800',
+  Excluded: 'bg-red-100 text-red-800',
 };
 
-function metricCard(label: string, value: string, color: string) {
+function metricCard(label: string, value: string, tone: string) {
   return (
-    <div
-      style={{
-        border: '1px solid #e2e8f0',
-        borderRadius: 8,
-        padding: 16,
-        background: '#fff',
-        minWidth: 180,
-      }}
-    >
-      <div style={{ color: '#64748b', fontSize: 13 }}>{label}</div>
-      <div style={{ fontSize: 22, fontWeight: 700, color, marginTop: 6 }}>
-        {value}
+    <div className="card-hover rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
+        {label}
       </div>
+      <div className={`mt-1.5 text-2xl font-bold ${tone}`}>{value}</div>
     </div>
   );
 }
 
 function statusBadge(status: CahpsCaseStatus) {
-  const { bg, fg } = STATUS_COLORS[status];
   return (
     <span
-      style={{
-        background: bg,
-        color: fg,
-        padding: '2px 8px',
-        borderRadius: 6,
-        fontSize: 12,
-        fontWeight: 600,
-        whiteSpace: 'nowrap',
-      }}
+      className={`inline-block whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-semibold ${STATUS_BADGE[status]}`}
     >
       {status}
     </span>
@@ -148,31 +131,33 @@ export function HospiceCahpsDashboard() {
   }
 
   return (
-    <div style={{ padding: 24, maxWidth: 1200, display: 'grid', gap: 24 }}>
-      <header>
-        <h2 style={{ fontSize: 22, fontWeight: 700 }}>CAHPS Hospice Survey</h2>
-        <p style={{ color: '#64748b', marginTop: 4 }}>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <header className="space-y-2">
+        <h2 className="text-2xl">CAHPS Hospice Survey</h2>
+        <div className="section-line" />
+        <p className="max-w-3xl text-slate-500">
           Per-decedent case lifecycle. Eligibility: adult (≥ 18), on hospice ≥ 48 hours,
           familial primary caregiver. Submission rate is computed over the at-risk
           eligible pool (submitted decedents count toward the denominator).
         </p>
       </header>
 
-      <form style={{ display: 'flex', gap: 12, alignItems: 'end', flexWrap: 'wrap' }}>
-        <label style={{ display: 'grid', gap: 4 }}>
-          <span>Year</span>
+      <form className="flex flex-wrap items-end gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <label className="grid gap-1.5">
+          <span className="text-sm font-medium text-slate-600">Year</span>
           <input
             type="number"
+            className="form-input w-28"
             value={year}
             min={2020}
             max={2100}
             onChange={(e) => setYear(Number(e.target.value))}
-            style={{ width: 100 }}
           />
         </label>
-        <label style={{ display: 'grid', gap: 4 }}>
-          <span>Quarter</span>
+        <label className="grid gap-1.5">
+          <span className="text-sm font-medium text-slate-600">Quarter</span>
           <select
+            className="form-input w-44"
             value={quarter}
             onChange={(e) => setQuarter(Number(e.target.value))}
           >
@@ -182,57 +167,77 @@ export function HospiceCahpsDashboard() {
             <option value={4}>Q4 (Oct-Dec)</option>
           </select>
         </label>
-        <div style={{ color: '#64748b', fontSize: 13, paddingBottom: 4 }}>
+        <div className="pb-2 text-sm text-slate-500">
           {range.from} → {range.to}
         </div>
       </form>
 
-      {isLoading && <div role="status">Loading…</div>}
-      {error && <div role="alert">{error}</div>}
+      {isLoading && (
+        <div role="status" className="text-slate-500">
+          Loading…
+        </div>
+      )}
+      {error && (
+        <div
+          role="alert"
+          className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800"
+        >
+          {error}
+        </div>
+      )}
       {actionError && (
-        <div role="alert" style={{ color: '#b91c1c' }}>
+        <div
+          role="alert"
+          className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800"
+        >
           {actionError}
         </div>
       )}
 
       {summary && !isLoading && (
         <>
-          <section style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          <section className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-7">
             {metricCard(
               'Submission Rate',
               `${summary.submissionRatePercentage.toFixed(1)}%`,
-              summary.submissionRatePercentage >= 90 ? '#15803d' : '#b45309',
+              summary.submissionRatePercentage >= 90
+                ? 'text-success'
+                : 'text-accent-600',
             )}
-            {metricCard('Total Decedents', summary.totalDecedents.toString(), '#0f172a')}
-            {metricCard('Eligible', summary.eligibleCount.toString(), '#1e40af')}
-            {metricCard('Submitted', summary.submittedCount.toString(), '#166534')}
+            {metricCard(
+              'Total Decedents',
+              summary.totalDecedents.toString(),
+              'text-navy-900',
+            )}
+            {metricCard('Eligible', summary.eligibleCount.toString(), 'text-blue-800')}
+            {metricCard(
+              'Submitted',
+              summary.submittedCount.toString(),
+              'text-success',
+            )}
             {metricCard(
               'Not Yet Submitted',
               summary.notYetSubmittedCount.toString(),
-              summary.notYetSubmittedCount > 0 ? '#b45309' : '#0f172a',
+              summary.notYetSubmittedCount > 0
+                ? 'text-accent-600'
+                : 'text-navy-900',
             )}
-            {metricCard('Ineligible', summary.ineligibleCount.toString(), '#475569')}
-            {metricCard('Excluded', summary.excludedCount.toString(), '#991b1b')}
+            {metricCard(
+              'Ineligible',
+              summary.ineligibleCount.toString(),
+              'text-slate-500',
+            )}
+            {metricCard('Excluded', summary.excludedCount.toString(), 'text-error')}
           </section>
 
           <section
-            style={{
-              padding: 12,
-              borderRadius: 6,
-              background:
-                summary.notYetSubmittedCount === 0 && summary.eligibleCount > 0
-                  ? '#f0fdf4'
-                  : summary.notYetSubmittedCount > 0
-                    ? '#fef3c7'
-                    : '#f8fafc',
-              color:
-                summary.notYetSubmittedCount === 0 && summary.eligibleCount > 0
-                  ? '#166534'
-                  : summary.notYetSubmittedCount > 0
-                    ? '#92400e'
-                    : '#475569',
-              fontWeight: 600,
-            }}
+            className={`rounded-lg border-l-4 px-4 py-3 font-semibold ${
+              summary.notYetSubmittedCount === 0 && summary.eligibleCount > 0
+                ? 'border-success bg-green-50 text-green-800'
+                : summary.notYetSubmittedCount > 0
+                  ? 'border-warning bg-amber-50 text-amber-800'
+                  : 'border-slate-300 bg-slate-50 text-slate-600'
+            }`}
           >
             {summary.eligibleCount === 0
               ? `No eligible decedents in Q${quarter} ${year}.`
@@ -243,77 +248,82 @@ export function HospiceCahpsDashboard() {
         </>
       )}
 
-      <section style={{ display: 'grid', gap: 12 }}>
-        <h3 style={{ fontSize: 18, fontWeight: 600 }}>
-          Cases ({cases.length})
-        </h3>
+      <section className="grid gap-3">
+        <h3 className="text-lg font-semibold">Cases ({cases.length})</h3>
         {cases.length === 0 ? (
-          <p style={{ color: '#64748b' }}>No decedents in this quarter.</p>
+          <p className="text-slate-500">No decedents in this quarter.</p>
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-                <th style={{ padding: '6px 10px' }}>Death</th>
-                <th style={{ padding: '6px 10px' }}>Patient</th>
-                <th style={{ padding: '6px 10px' }}>Age</th>
-                <th style={{ padding: '6px 10px' }}>Days on Hospice</th>
-                <th style={{ padding: '6px 10px' }}>Status</th>
-                <th style={{ padding: '6px 10px' }}>Caregiver</th>
-                <th style={{ padding: '6px 10px' }}>Vendor</th>
-                <th style={{ padding: '6px 10px' }}></th>
-              </tr>
-            </thead>
-            <tbody>
-              {cases.map((c) => (
-                <tr key={c.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td style={{ padding: '6px 10px' }}>{c.dateOfDeath}</td>
-                  <td style={{ padding: '6px 10px' }}>#{c.patientId}</td>
-                  <td style={{ padding: '6px 10px' }}>{c.ageAtDeath}</td>
-                  <td style={{ padding: '6px 10px' }}>{c.daysOnHospice}</td>
-                  <td style={{ padding: '6px 10px' }}>{statusBadge(c.status)}</td>
-                  <td style={{ padding: '6px 10px', color: '#64748b' }}>
-                    {c.caregiverName ?? '—'}
-                    {c.caregiverIsFamilial === false && (
-                      <span style={{ color: '#b91c1c', marginLeft: 6 }}>
-                        (nonfamilial)
-                      </span>
-                    )}
-                  </td>
-                  <td style={{ padding: '6px 10px', color: '#64748b' }}>
-                    {c.vendorName ?? '—'}
-                  </td>
-                  <td style={{ padding: '6px 10px', display: 'flex', gap: 6 }}>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedCase(c)}
-                      style={{ fontSize: 12 }}
-                    >
-                      Details
-                    </button>
-                    {c.status === 'Eligible' && (
-                      <button
-                        type="button"
-                        onClick={() => void handleSubmit(c)}
-                        style={{ fontSize: 12 }}
-                      >
-                        Submit
-                      </button>
-                    )}
-                    {c.status !== 'SubmittedToVendor'
-                      && c.status !== 'Excluded' && (
+          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                  <th className="px-4 py-3">Death</th>
+                  <th className="px-4 py-3">Patient</th>
+                  <th className="px-4 py-3">Age</th>
+                  <th className="px-4 py-3">Days on Hospice</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3">Caregiver</th>
+                  <th className="px-4 py-3">Vendor</th>
+                  <th className="px-4 py-3"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {cases.map((c) => (
+                  <tr
+                    key={c.id}
+                    className="border-t border-slate-100 hover:bg-slate-50"
+                  >
+                    <td className="px-4 py-3 text-slate-700">{c.dateOfDeath}</td>
+                    <td className="px-4 py-3 text-slate-700">#{c.patientId}</td>
+                    <td className="px-4 py-3 text-slate-700">{c.ageAtDeath}</td>
+                    <td className="px-4 py-3 text-slate-700">
+                      {c.daysOnHospice}
+                    </td>
+                    <td className="px-4 py-3">{statusBadge(c.status)}</td>
+                    <td className="px-4 py-3 text-slate-500">
+                      {c.caregiverName ?? '—'}
+                      {c.caregiverIsFamilial === false && (
+                        <span className="ml-1.5 text-error">(nonfamilial)</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-slate-500">
+                      {c.vendorName ?? '—'}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-1.5">
                         <button
                           type="button"
-                          onClick={() => void handleExclude(c)}
-                          style={{ fontSize: 12 }}
+                          onClick={() => setSelectedCase(c)}
+                          className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
                         >
-                          Exclude
+                          Details
                         </button>
-                      )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                        {c.status === 'Eligible' && (
+                          <button
+                            type="button"
+                            onClick={() => void handleSubmit(c)}
+                            className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                          >
+                            Submit
+                          </button>
+                        )}
+                        {c.status !== 'SubmittedToVendor'
+                          && c.status !== 'Excluded' && (
+                            <button
+                              type="button"
+                              onClick={() => void handleExclude(c)}
+                              className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                            >
+                              Exclude
+                            </button>
+                          )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
 
@@ -373,42 +383,39 @@ function CahpsCaseDetail({ caseRow, onClose, onChange }: DetailProps) {
   }
 
   return (
-    <section
-      style={{
-        border: '1px solid #cbd5e1',
-        borderRadius: 8,
-        padding: 16,
-        background: '#f8fafc',
-        display: 'grid',
-        gap: 12,
-      }}
-    >
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+    <section className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="flex justify-between">
         <div>
-          <h3 style={{ fontSize: 16, fontWeight: 600 }}>
+          <h3 className="text-lg font-semibold">
             Case #{caseRow.id} — Patient #{caseRow.patientId}
           </h3>
-          <div style={{ color: '#64748b', fontSize: 13 }}>
+          <div className="text-sm text-slate-500">
             Death {caseRow.dateOfDeath} · Admit {caseRow.admittedAt} ·
             {' '}{caseRow.daysOnHospice} days · age {caseRow.ageAtDeath} ·
             {' '}{statusBadge(caseRow.status)}
           </div>
         </div>
-        <button type="button" onClick={onClose}>Close</button>
+        <button
+          type="button"
+          onClick={onClose}
+          className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+        >
+          Close
+        </button>
       </div>
 
       {caseRow.ineligibleReason && (
-        <div style={{ color: '#b45309' }}>
+        <div className="text-accent-600">
           <strong>Ineligible:</strong> {caseRow.ineligibleReason}
         </div>
       )}
       {caseRow.exclusionReason && (
-        <div style={{ color: '#991b1b' }}>
+        <div className="text-error">
           <strong>Excluded:</strong> {caseRow.exclusionReason}
         </div>
       )}
       {caseRow.submittedToVendorAt && (
-        <div style={{ color: '#166534' }}>
+        <div className="text-success">
           <strong>Submitted</strong> {caseRow.submittedToVendorAt.slice(0, 10)} to
           {' '}{caseRow.vendorName}
           {caseRow.vendorConfirmation
@@ -416,45 +423,61 @@ function CahpsCaseDetail({ caseRow, onClose, onChange }: DetailProps) {
         </div>
       )}
 
-      <form onSubmit={save} style={{ display: 'grid', gap: 8 }}>
-        <h4 style={{ fontSize: 14, fontWeight: 600, margin: 0 }}>
+      <form onSubmit={save} className="grid gap-3">
+        <h4 className="m-0 text-sm font-semibold text-slate-800">
           Primary Caregiver
         </h4>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+        <div className="grid grid-cols-2 gap-3">
           <input
+            className="form-input"
             placeholder="Name"
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
           <input
+            className="form-input"
             placeholder="Phone"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
           />
         </div>
         <input
+          className="form-input"
           placeholder="Address"
           value={address}
           onChange={(e) => setAddress(e.target.value)}
         />
-        <label style={{ display: 'grid', gap: 4 }}>
-          <span style={{ fontSize: 12, color: '#64748b' }}>
+        <label className="grid gap-1.5">
+          <span className="text-sm font-medium text-slate-600">
             Relationship (nonfamilial legal guardians make case ineligible)
           </span>
-          <select value={isFamilial} onChange={(e) => setIsFamilial(e.target.value)}>
+          <select
+            className="form-input"
+            value={isFamilial}
+            onChange={(e) => setIsFamilial(e.target.value)}
+          >
             <option value="">— Not specified —</option>
             <option value="true">Familial / informal</option>
             <option value="false">Nonfamilial legal guardian</option>
           </select>
         </label>
         <textarea
+          className="form-input"
           placeholder="Notes (optional)"
           rows={3}
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
         />
-        {err && <div role="alert" style={{ color: '#b91c1c' }}>{err}</div>}
-        <button type="submit" disabled={saving} style={{ justifySelf: 'start' }}>
+        {err && (
+          <div role="alert" className="text-error">
+            {err}
+          </div>
+        )}
+        <button
+          type="submit"
+          className="btn-primary justify-self-start"
+          disabled={saving}
+        >
           {saving ? 'Saving…' : 'Save Caregiver'}
         </button>
       </form>

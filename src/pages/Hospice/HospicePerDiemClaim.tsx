@@ -64,24 +64,38 @@ export function HospicePerDiemClaim() {
     }
   }
 
-  if (isLoading) return <div role="status">Loading…</div>;
-  if (error && !draft) return <div role="alert">{error}</div>;
+  if (isLoading) return <div role="status" className="text-slate-500">Loading…</div>;
+  if (error && !draft)
+    return (
+      <div
+        role="alert"
+        className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800"
+      >
+        {error}
+      </div>
+    );
   if (!election) return null;
 
   return (
-    <div style={{ padding: 24, maxWidth: 900 }}>
-      <button
-        onClick={() => navigate(`/patients/${patientId}/hospice/${election.id}`)}
-        style={{ marginBottom: 16 }}
-      >
-        ← Back to Election
-      </button>
-      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 16 }}>
-        Generate Per-Diem Claim
-      </h2>
+    <div className="grid max-w-[900px] gap-6 p-6">
+      <div>
+        <button
+          onClick={() => navigate(`/patients/${patientId}/hospice/${election.id}`)}
+          className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+        >
+          ← Back to Election
+        </button>
+      </div>
+      <header className="space-y-2">
+        <h2 className="text-2xl">Generate Per-Diem Claim</h2>
+        <div className="section-line" />
+      </header>
 
       {error && draft == null && (
-        <div role="alert" style={{ color: '#b91c1c', marginBottom: 12 }}>
+        <div
+          role="alert"
+          className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800"
+        >
           {error}
         </div>
       )}
@@ -92,25 +106,25 @@ export function HospicePerDiemClaim() {
             e.preventDefault();
             handleBuild();
           }}
-          style={{ display: 'grid', gap: 12, maxWidth: 480 }}
+          className="grid max-w-[480px] gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
         >
-          <label style={{ display: 'block' }}>
-            From
+          <label className="grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">From</span>
             <input
               type="date"
+              className="form-input"
               value={from}
               onChange={(e) => setFrom(e.target.value)}
-              style={{ display: 'block', marginTop: 4 }}
               required
             />
           </label>
-          <label style={{ display: 'block' }}>
-            To
+          <label className="grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">To</span>
             <input
               type="date"
+              className="form-input"
               value={to}
               onChange={(e) => setTo(e.target.value)}
-              style={{ display: 'block', marginTop: 4 }}
               required
             />
           </label>
@@ -118,18 +132,16 @@ export function HospicePerDiemClaim() {
             type="submit"
             disabled={submitting || !from || !to || !canBuild}
             title={!canBuild ? NO_PERMISSION : undefined}
-            style={{ cursor: (submitting || !from || !to || !canBuild) ? 'not-allowed' : 'pointer' }}
+            className="btn-primary justify-self-start"
           >
             {submitting ? 'Building…' : 'Build Per-Diem Claim'}
           </button>
         </form>
       ) : (
-        <section>
-          <div style={{ marginBottom: 16 }}>
-            <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>
-              Claim {draft.claimNumber}
-            </h3>
-            <p style={{ color: '#64748b' }}>
+        <section className="grid gap-4">
+          <div>
+            <h3 className="text-lg font-semibold">Claim {draft.claimNumber}</h3>
+            <p className="text-slate-500">
               Total: <strong>${draft.totalCharges.toFixed(2)}</strong> across{' '}
               {draft.attendanceDayIds.length} attendance day(s)
             </p>
@@ -138,54 +150,55 @@ export function HospicePerDiemClaim() {
           {draft.warnings.length > 0 && (
             <div
               role="alert"
-              style={{
-                background: '#fef3c7',
-                border: '1px solid #f59e0b',
-                color: '#92400e',
-                padding: 12,
-                borderRadius: 4,
-                marginBottom: 16,
-              }}
+              className="rounded-lg border-l-4 border-warning bg-amber-50 px-4 py-3 font-semibold text-amber-800"
             >
               {draft.warnings.map((w, i) => (
-                <p key={i} style={{ margin: i > 0 ? '8px 0 0 0' : 0 }}>
+                <p key={i} className={i > 0 ? 'mt-2' : undefined}>
                   ⚠ {w}
                 </p>
               ))}
             </div>
           )}
 
-          <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 16 }}>
-            <thead>
-              <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-                <th style={{ padding: '8px 12px' }}>Level of Care</th>
-                <th style={{ padding: '8px 12px' }}>Tier</th>
-                <th style={{ padding: '8px 12px' }}>Revenue Code</th>
-                <th style={{ padding: '8px 12px' }}>Units</th>
-                <th style={{ padding: '8px 12px' }}>Unit Amount</th>
-                <th style={{ padding: '8px 12px' }}>Line Charges</th>
-              </tr>
-            </thead>
-            <tbody>
-              {draft.lines.map((line, i) => (
-                <tr key={i} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td style={{ padding: '8px 12px' }}>
-                    <HospiceLevelOfCareBadge loc={line.levelOfCare} />
-                  </td>
-                  <td style={{ padding: '8px 12px' }}>{line.tier}</td>
-                  <td style={{ padding: '8px 12px' }}>{line.revenueCode}</td>
-                  <td style={{ padding: '8px 12px' }}>{line.units}</td>
-                  <td style={{ padding: '8px 12px' }}>${line.unitAmount.toFixed(2)}</td>
-                  <td style={{ padding: '8px 12px' }}>${line.lineCharges.toFixed(2)}</td>
+          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                  <th className="px-4 py-3">Level of Care</th>
+                  <th className="px-4 py-3">Tier</th>
+                  <th className="px-4 py-3">Revenue Code</th>
+                  <th className="px-4 py-3">Units</th>
+                  <th className="px-4 py-3">Unit Amount</th>
+                  <th className="px-4 py-3">Line Charges</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {draft.lines.map((line, i) => (
+                  <tr key={i} className="border-t border-slate-100 hover:bg-slate-50">
+                    <td className="px-4 py-3">
+                      <HospiceLevelOfCareBadge loc={line.levelOfCare} />
+                    </td>
+                    <td className="px-4 py-3 text-slate-700">{line.tier}</td>
+                    <td className="px-4 py-3 text-slate-700">{line.revenueCode}</td>
+                    <td className="px-4 py-3 text-slate-700">{line.units}</td>
+                    <td className="px-4 py-3 text-slate-700">${line.unitAmount.toFixed(2)}</td>
+                    <td className="px-4 py-3 text-slate-700">${line.lineCharges.toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={() => navigate(`/claims/${draft.claimId}`)}>View Claim</button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => navigate(`/claims/${draft.claimId}`)}
+              className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+            >
+              View Claim
+            </button>
             <button
               onClick={() => navigate(`/hospice/claims/${draft.claimId}/submissions`)}
+              className="btn-primary"
             >
               Submit 837I →
             </button>

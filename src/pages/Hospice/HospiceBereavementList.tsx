@@ -24,67 +24,95 @@ export function HospiceBereavementList() {
   }, [status]);
 
   return (
-    <div style={{ padding: 24, maxWidth: 1000 }}>
-      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 16 }}>
-        Bereavement Programs
-      </h2>
-      <div role="tablist" style={{ display: 'flex', gap: 0, borderBottom: '2px solid #e2e8f0', marginBottom: 16 }}>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <header className="space-y-2">
+        <h2 className="text-2xl">Bereavement Programs</h2>
+        <div className="section-line" />
+      </header>
+      <div role="tablist" className="flex gap-0 border-b-2 border-slate-200">
         {STATUSES.map((s) => (
           <button
             key={s}
             role="tab"
             aria-selected={status === s}
             onClick={() => setStatus(s)}
-            style={{
-              padding: '8px 16px',
-              border: 'none',
-              background: 'none',
-              borderBottom: status === s ? '2px solid #2563eb' : 'none',
-              marginBottom: -2,
-              fontWeight: status === s ? 700 : 400,
-            }}
+            className={`-mb-0.5 px-4 py-2 transition-colors ${
+              status === s
+                ? 'border-b-2 border-teal-600 font-bold text-navy-900'
+                : 'font-normal text-slate-600 hover:text-navy-900'
+            }`}
           >
             {s}
           </button>
         ))}
       </div>
 
-      {isLoading && <div role="status">Loading…</div>}
-      {error && <div role="alert">{error}</div>}
+      {isLoading && (
+        <div role="status" className="text-slate-500">
+          Loading…
+        </div>
+      )}
+      {error && (
+        <div
+          role="alert"
+          className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800"
+        >
+          {error}
+        </div>
+      )}
       {!isLoading && !error && programs.length === 0 && (
-        <p style={{ color: '#64748b' }}>No programs in this status.</p>
+        <p className="text-slate-500">No programs in this status.</p>
       )}
       {!isLoading && !error && programs.length > 0 && (
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-              <th style={{ padding: '8px 12px' }}>Program #</th>
-              <th style={{ padding: '8px 12px' }}>Patient ID</th>
-              <th style={{ padding: '8px 12px' }}>Date of Death</th>
-              <th style={{ padding: '8px 12px' }}>Program Ends</th>
-              <th style={{ padding: '8px 12px' }}>Days Remaining</th>
-              <th style={{ padding: '8px 12px' }}>Risk</th>
-              <th style={{ padding: '8px 12px' }}>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {programs.map((p) => (
-              <tr key={p.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                <td style={{ padding: '8px 12px' }}>{p.id}</td>
-                <td style={{ padding: '8px 12px' }}>
-                  <Link to={`/patients/${p.patientId}`}>#{p.patientId}</Link>
-                </td>
-                <td style={{ padding: '8px 12px' }}>{p.dateOfDeath}</td>
-                <td style={{ padding: '8px 12px' }}>{p.programEndDate}</td>
-                <td style={{ padding: '8px 12px' }}>{p.daysUntilProgramEnd}</td>
-                <td style={{ padding: '8px 12px' }}>{p.initialRiskLevel ?? '—'}</td>
-                <td style={{ padding: '8px 12px' }}>
-                  <Link to={`/hospice/bereavement/${p.id}`}>Open</Link>
-                </td>
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                <th className="px-4 py-3">Program #</th>
+                <th className="px-4 py-3">Patient ID</th>
+                <th className="px-4 py-3">Date of Death</th>
+                <th className="px-4 py-3">Program Ends</th>
+                <th className="px-4 py-3">Days Remaining</th>
+                <th className="px-4 py-3">Risk</th>
+                <th className="px-4 py-3">Action</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {programs.map((p) => (
+                <tr
+                  key={p.id}
+                  className="border-t border-slate-100 hover:bg-slate-50"
+                >
+                  <td className="px-4 py-3 text-slate-700">{p.id}</td>
+                  <td className="px-4 py-3 text-slate-700">
+                    <Link
+                      to={`/patients/${p.patientId}`}
+                      className="font-medium text-teal-700 hover:underline"
+                    >
+                      #{p.patientId}
+                    </Link>
+                  </td>
+                  <td className="px-4 py-3 text-slate-700">{p.dateOfDeath}</td>
+                  <td className="px-4 py-3 text-slate-700">{p.programEndDate}</td>
+                  <td className="px-4 py-3 text-slate-700">
+                    {p.daysUntilProgramEnd}
+                  </td>
+                  <td className="px-4 py-3 text-slate-700">
+                    {p.initialRiskLevel ?? '—'}
+                  </td>
+                  <td className="px-4 py-3 text-slate-700">
+                    <Link
+                      to={`/hospice/bereavement/${p.id}`}
+                      className="font-medium text-teal-700 hover:underline"
+                    >
+                      Open
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

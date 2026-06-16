@@ -66,107 +66,134 @@ export function HospiceCarePlanReviewLog() {
     }
   }
 
-  if (loading) return <div role="status">Loading reviews…</div>;
+  if (loading)
+    return (
+      <div role="status" className="text-slate-500">
+        Loading reviews…
+      </div>
+    );
 
   return (
-    <div style={{ padding: 24, maxWidth: 800 }}>
-      <button onClick={() => navigate(-1)} style={{ marginBottom: 16 }}>
-        ← Back
-      </button>
-      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 16 }}>
-        Care Plan #{carePlanId} — Review Log
-      </h2>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <header className="space-y-2">
+        <button
+          onClick={() => navigate(-1)}
+          className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+        >
+          ← Back
+        </button>
+        <h2 className="text-2xl">Care Plan #{carePlanId} — Review Log</h2>
+        <div className="section-line" />
+      </header>
 
       {error && (
-        <div role="alert" style={{ color: '#b91c1c', marginBottom: 12 }}>
+        <div
+          role="alert"
+          className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800"
+        >
           {error}
         </div>
       )}
 
       {!showForm ? (
-        <button onClick={() => setShowForm(true)} style={{ marginBottom: 16 }}>
+        <button
+          onClick={() => setShowForm(true)}
+          className="btn-primary justify-self-start"
+        >
           Record New Review
         </button>
       ) : (
-        <section
-          style={{
-            border: '1px solid #e2e8f0',
-            borderRadius: 8,
-            padding: 16,
-            marginBottom: 16,
-          }}
-        >
-          <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>
-            New review
-          </h3>
-          <label style={{ display: 'block', marginBottom: 8 }}>
-            Review Date
-            <input
-              type="date"
-              value={reviewDate}
-              onChange={(e) => setReviewDate(e.target.value)}
-              style={{ display: 'block', marginTop: 4 }}
-            />
-          </label>
-          <label style={{ display: 'block', marginBottom: 8 }}>
-            Outcome
-            <select
-              value={outcome}
-              onChange={(e) => setOutcome(e.target.value as CarePlanReviewOutcome)}
-              style={{ display: 'block', marginTop: 4 }}
-            >
-              {OUTCOMES.map((o) => (
-                <option key={o} value={o}>
-                  {o}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label style={{ display: 'block', marginBottom: 8 }}>
-            Changes Summary (optional)
-            <textarea
-              value={summary}
-              onChange={(e) => setSummary(e.target.value)}
-              rows={3}
-              style={{ display: 'block', marginTop: 4, width: '100%' }}
-            />
-          </label>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={() => setShowForm(false)} disabled={submitting}>
-              Cancel
-            </button>
-            <button onClick={handleSubmit} disabled={submitting}>
-              {submitting ? 'Recording…' : 'Record'}
-            </button>
+        <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <h3 className="text-lg font-semibold">New review</h3>
+          <div className="mt-4 grid gap-4">
+            <label className="grid gap-1.5">
+              <span className="text-sm font-medium text-slate-600">
+                Review Date
+              </span>
+              <input
+                type="date"
+                value={reviewDate}
+                onChange={(e) => setReviewDate(e.target.value)}
+                className="form-input w-48"
+              />
+            </label>
+            <label className="grid gap-1.5">
+              <span className="text-sm font-medium text-slate-600">Outcome</span>
+              <select
+                value={outcome}
+                onChange={(e) =>
+                  setOutcome(e.target.value as CarePlanReviewOutcome)
+                }
+                className="form-input w-48"
+              >
+                {OUTCOMES.map((o) => (
+                  <option key={o} value={o}>
+                    {o}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="grid gap-1.5">
+              <span className="text-sm font-medium text-slate-600">
+                Changes Summary (optional)
+              </span>
+              <textarea
+                value={summary}
+                onChange={(e) => setSummary(e.target.value)}
+                rows={3}
+                className="form-input"
+              />
+            </label>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowForm(false)}
+                disabled={submitting}
+                className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={submitting}
+                className="btn-primary"
+              >
+                {submitting ? 'Recording…' : 'Record'}
+              </button>
+            </div>
           </div>
         </section>
       )}
 
       {reviews.length === 0 ? (
-        <p style={{ color: '#64748b' }}>No reviews recorded.</p>
+        <p className="text-slate-500">No reviews recorded.</p>
       ) : (
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-              <th style={{ padding: '8px 12px' }}>Review Date</th>
-              <th style={{ padding: '8px 12px' }}>Outcome</th>
-              <th style={{ padding: '8px 12px' }}>Next Review</th>
-              <th style={{ padding: '8px 12px' }}>Summary</th>
-            </tr>
-          </thead>
-          <tbody>
-            {reviews.map((r) => (
-              <tr key={r.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                <td style={{ padding: '8px 12px' }}>{r.reviewDate}</td>
-                <td style={{ padding: '8px 12px' }}>{r.outcome}</td>
-                <td style={{ padding: '8px 12px' }}>{r.nextReviewDate}</td>
-                <td style={{ padding: '8px 12px', color: '#64748b' }}>
-                  {r.changesSummary ?? '—'}
-                </td>
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                <th className="px-4 py-3">Review Date</th>
+                <th className="px-4 py-3">Outcome</th>
+                <th className="px-4 py-3">Next Review</th>
+                <th className="px-4 py-3">Summary</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {reviews.map((r) => (
+                <tr
+                  key={r.id}
+                  className="border-t border-slate-100 hover:bg-slate-50"
+                >
+                  <td className="px-4 py-3 text-slate-700">{r.reviewDate}</td>
+                  <td className="px-4 py-3 text-slate-700">{r.outcome}</td>
+                  <td className="px-4 py-3 text-slate-700">{r.nextReviewDate}</td>
+                  <td className="px-4 py-3 text-slate-500">
+                    {r.changesSummary ?? '—'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

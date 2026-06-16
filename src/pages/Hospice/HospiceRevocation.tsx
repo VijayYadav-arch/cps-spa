@@ -51,55 +51,44 @@ export function HospiceRevocation() {
   }
 
   return (
-    <div style={{ padding: 24, maxWidth: 600 }}>
-      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 16 }}>
-        Revoke Hospice Election
-      </h2>
+    <div className="grid max-w-[600px] gap-6 p-6">
+      <header className="space-y-2">
+        <h2 className="text-2xl">Revoke Hospice Election</h2>
+        <div className="section-line" />
+      </header>
       {error && (
-        <div role="alert" style={{ color: '#b91c1c', marginBottom: 12 }}>
+        <div
+          role="alert"
+          className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800"
+        >
           {error}
         </div>
       )}
 
-      <label style={{ display: 'block', marginBottom: 12 }}>
-        Revocation Date
+      <label className="grid gap-1.5">
+        <span className="text-sm font-medium text-slate-600">Revocation Date</span>
         <input
           type="date"
+          className="form-input"
           value={revocationDate}
           onChange={(e) => setRevocationDate(e.target.value)}
-          style={{ display: 'block', marginTop: 4 }}
         />
       </label>
 
-      <label style={{ display: 'block', marginBottom: 12 }}>
-        Reason (optional)
+      <label className="grid gap-1.5">
+        <span className="text-sm font-medium text-slate-600">Reason (optional)</span>
         <textarea
+          className="form-input"
           value={reason}
           onChange={(e) => setReason(e.target.value)}
           rows={3}
-          style={{ display: 'block', marginTop: 4, width: '100%' }}
         />
       </label>
 
-      <fieldset
-        style={{
-          marginTop: 16,
-          border: '1px solid #e2e8f0',
-          borderRadius: 8,
-          padding: 12,
-        }}
-      >
-        <legend>Acknowledgments</legend>
+      <fieldset className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <legend className="text-sm font-medium text-slate-600">Acknowledgments</legend>
         {ACKNOWLEDGMENTS.map((text, idx) => (
-          <label
-            key={idx}
-            style={{
-              display: 'flex',
-              gap: 8,
-              alignItems: 'flex-start',
-              marginTop: 8,
-            }}
-          >
+          <label key={idx} className="mt-2 flex items-start gap-2">
             <input
               type="checkbox"
               checked={acks[idx]}
@@ -109,17 +98,18 @@ export function HospiceRevocation() {
                 setAcks(next);
               }}
             />
-            <span>{text}</span>
+            <span className="text-slate-700">{text}</span>
           </label>
         ))}
       </fieldset>
 
-      <div style={{ marginTop: 16, display: 'flex', gap: 8 }}>
+      <div className="flex gap-2">
         <button
           onClick={() =>
             navigate(`/patients/${patientId}/hospice/${electionId}`)
           }
           disabled={submitting}
+          className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
         >
           Cancel
         </button>
@@ -127,13 +117,7 @@ export function HospiceRevocation() {
           onClick={handleSubmit}
           disabled={!allAcked || submitting || !canManage}
           title={!canManage ? NO_PERMISSION : undefined}
-          style={{
-            background: '#b91c1c',
-            color: '#fff',
-            padding: '8px 16px',
-            borderRadius: 4,
-            cursor: (!allAcked || submitting || !canManage) ? 'not-allowed' : 'pointer',
-          }}
+          className="rounded-lg bg-error px-4 py-2 font-semibold text-white transition-colors hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {submitting ? 'Revoking…' : 'Revoke Election'}
         </button>

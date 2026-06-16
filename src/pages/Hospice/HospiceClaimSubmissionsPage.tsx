@@ -16,26 +16,18 @@ import { PERMISSIONS } from '@/permissions/permissions';
 
 const NO_PERMISSION = 'You do not have permission to perform this action';
 
-const STATUS_COLORS: Record<ClaimSubmissionStatus, { bg: string; fg: string }> = {
-  pending: { bg: '#fef3c7', fg: '#92400e' },
-  submitted: { bg: '#dbeafe', fg: '#1e40af' },
-  accepted: { bg: '#dcfce7', fg: '#166534' },
-  rejected: { bg: '#fee2e2', fg: '#991b1b' },
-  paid: { bg: '#d1fae5', fg: '#065f46' },
+const STATUS_BADGE: Record<ClaimSubmissionStatus, string> = {
+  pending: 'bg-amber-100 text-amber-800',
+  submitted: 'bg-blue-100 text-blue-800',
+  accepted: 'bg-green-100 text-green-800',
+  rejected: 'bg-red-100 text-red-800',
+  paid: 'bg-teal-100 text-teal-700',
 };
 
 function statusBadge(s: ClaimSubmissionStatus) {
-  const { bg, fg } = STATUS_COLORS[s];
   return (
     <span
-      style={{
-        background: bg,
-        color: fg,
-        padding: '2px 8px',
-        borderRadius: 6,
-        fontSize: 12,
-        fontWeight: 600,
-      }}
+      className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${STATUS_BADGE[s]}`}
     >
       {s}
     </span>
@@ -135,39 +127,43 @@ export function HospiceClaimSubmissionsPage() {
   }
 
   return (
-    <div style={{ padding: 24, maxWidth: 1200, display: 'grid', gap: 24 }}>
-      <header>
-        <h2 style={{ fontSize: 22, fontWeight: 700 }}>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <header className="space-y-2">
+        <h2 className="text-2xl">
           Hospice Claim #{claimId} — 837I Submissions
         </h2>
-        <p style={{ color: '#64748b', marginTop: 4 }}>
+        <div className="section-line" />
+        <p className="max-w-3xl text-slate-500">
           Generate an X12 837I EDI body for this hospice claim and track each
           submission through clearinghouse acknowledgement and final
           adjudication.
         </p>
       </header>
 
-      {error && <div role="alert" style={{ color: '#b91c1c' }}>{error}</div>}
-      {actionMsg && <div style={{ color: '#15803d' }}>{actionMsg}</div>}
+      {error && (
+        <div
+          role="alert"
+          className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800"
+        >
+          {error}
+        </div>
+      )}
+      {actionMsg && (
+        <div className="rounded-lg border-l-4 border-success bg-green-50 px-4 py-3 font-semibold text-green-800">
+          {actionMsg}
+        </div>
+      )}
 
-      <section
-        style={{
-          border: '1px solid #e2e8f0',
-          borderRadius: 8,
-          padding: 16,
-          background: '#fff',
-        }}
-      >
-        <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12 }}>
-          Export 837I
-        </h3>
+      <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <h3 className="mb-3 text-lg font-semibold">Export 837I</h3>
         <form
           onSubmit={handleExport}
-          style={{ display: 'grid', gap: 12, gridTemplateColumns: '1fr 1fr', alignItems: 'end' }}
+          className="grid grid-cols-1 items-end gap-4 sm:grid-cols-2"
         >
-          <label style={{ display: 'grid', gap: 4 }}>
-            <span>Clearinghouse</span>
+          <label className="grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">Clearinghouse</span>
             <select
+              className="form-input"
               value={clearinghouse}
               onChange={(e) => setClearinghouse(e.target.value as Clearinghouse)}
             >
@@ -179,18 +175,20 @@ export function HospiceClaimSubmissionsPage() {
               <option value="mock">Mock (test)</option>
             </select>
           </label>
-          <label style={{ display: 'grid', gap: 4 }}>
-            <span>Prior auth number (optional)</span>
+          <label className="grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">Prior auth number (optional)</span>
             <input
               type="text"
+              className="form-input"
               value={priorAuth}
               onChange={(e) => setPriorAuth(e.target.value)}
             />
           </label>
-          <label style={{ display: 'grid', gap: 4, gridColumn: '1 / -1' }}>
-            <span>Claim note (optional)</span>
+          <label className="grid gap-1.5 sm:col-span-2">
+            <span className="text-sm font-medium text-slate-600">Claim note (optional)</span>
             <input
               type="text"
+              className="form-input"
               value={claimNote}
               onChange={(e) => setClaimNote(e.target.value)}
             />
@@ -199,22 +197,14 @@ export function HospiceClaimSubmissionsPage() {
             type="submit"
             disabled={isExporting || !canBill}
             title={!canBill ? NO_PERMISSION : undefined}
-            style={{ justifySelf: 'start', cursor: (isExporting || !canBill) ? 'not-allowed' : 'pointer' }}
+            className="btn-primary justify-self-start"
           >
             {isExporting ? 'Generating…' : 'Generate 837I'}
           </button>
         </form>
 
         {lastExport && (
-          <div
-            style={{
-              marginTop: 12,
-              padding: 10,
-              borderRadius: 6,
-              background: '#f0fdf4',
-              color: '#166534',
-            }}
-          >
+          <div className="mt-3 rounded-lg border-l-4 border-success bg-green-50 px-4 py-3 text-green-800">
             <div>
               <strong>Control #{lastExport.controlNumber}</strong>
               {' · '}TypeOfBill {lastExport.typeOfBill}
@@ -222,9 +212,9 @@ export function HospiceClaimSubmissionsPage() {
               {' · '}${lastExport.totalCharges.toFixed(2)}
             </div>
             {lastExport.warnings.length > 0 && (
-              <ul style={{ paddingLeft: 18, marginTop: 6 }}>
+              <ul className="mt-1.5 list-disc pl-5">
                 {lastExport.warnings.map((w, i) => (
-                  <li key={i} style={{ color: '#b45309' }}>{w}</li>
+                  <li key={i} className="text-accent-700">{w}</li>
                 ))}
               </ul>
             )}
@@ -232,103 +222,94 @@ export function HospiceClaimSubmissionsPage() {
         )}
       </section>
 
-      <section style={{ display: 'grid', gap: 12 }}>
-        <h3 style={{ fontSize: 18, fontWeight: 600 }}>
+      <section className="grid gap-3">
+        <h3 className="text-lg font-semibold">
           Submissions ({submissions.length})
         </h3>
-        {isLoading && <div role="status">Loading…</div>}
+        {isLoading && <div role="status" className="text-slate-500">Loading…</div>}
         {!isLoading && submissions.length === 0 && (
-          <p style={{ color: '#64748b' }}>No submissions yet.</p>
+          <p className="text-slate-500">No submissions yet.</p>
         )}
         {!isLoading && submissions.length > 0 && (
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-                <th style={{ padding: '6px 10px' }}>Created</th>
-                <th style={{ padding: '6px 10px' }}>Clearinghouse</th>
-                <th style={{ padding: '6px 10px' }}>Status</th>
-                <th style={{ padding: '6px 10px' }}>Submitted</th>
-                <th style={{ padding: '6px 10px' }}>Tracking</th>
-                <th style={{ padding: '6px 10px' }}>Ack</th>
-                <th style={{ padding: '6px 10px' }}></th>
-              </tr>
-            </thead>
-            <tbody>
-              {submissions.map((s) => (
-                <tr key={s.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td style={{ padding: '6px 10px' }}>{s.createdAt.slice(0, 10)}</td>
-                  <td style={{ padding: '6px 10px' }}>{s.clearinghouse}</td>
-                  <td style={{ padding: '6px 10px' }}>{statusBadge(s.status)}</td>
-                  <td style={{ padding: '6px 10px', color: '#64748b' }}>
-                    {s.submittedAt?.slice(0, 10) ?? '—'}
-                  </td>
-                  <td style={{ padding: '6px 10px', color: '#64748b', fontFamily: 'monospace', fontSize: 12 }}>
-                    {s.clearinghouseTrackingId ?? '—'}
-                  </td>
-                  <td style={{ padding: '6px 10px', color: '#64748b' }}>{s.ackStatus ?? '—'}</td>
-                  <td style={{ padding: '6px 10px', display: 'flex', gap: 6 }}>
-                    <button
-                      type="button"
-                      onClick={() => void openDetail(s.id)}
-                      style={{ fontSize: 12 }}
-                    >
-                      View EDI
-                    </button>
-                    {s.status === 'pending' && (
-                      <button
-                        type="button"
-                        onClick={() => void handleMarkSubmitted(s.id)}
-                        disabled={!canBill}
-                        title={!canBill ? NO_PERMISSION : undefined}
-                        style={{ fontSize: 12, cursor: !canBill ? 'not-allowed' : 'pointer' }}
-                      >
-                        Mark Submitted
-                      </button>
-                    )}
-                  </td>
+          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                  <th className="px-4 py-3">Created</th>
+                  <th className="px-4 py-3">Clearinghouse</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3">Submitted</th>
+                  <th className="px-4 py-3">Tracking</th>
+                  <th className="px-4 py-3">Ack</th>
+                  <th className="px-4 py-3"></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {submissions.map((s) => (
+                  <tr key={s.id} className="border-t border-slate-100 hover:bg-slate-50">
+                    <td className="px-4 py-3 text-slate-700">{s.createdAt.slice(0, 10)}</td>
+                    <td className="px-4 py-3 text-slate-700">{s.clearinghouse}</td>
+                    <td className="px-4 py-3">{statusBadge(s.status)}</td>
+                    <td className="px-4 py-3 text-slate-500">
+                      {s.submittedAt?.slice(0, 10) ?? '—'}
+                    </td>
+                    <td className="px-4 py-3 font-mono text-xs text-slate-500">
+                      {s.clearinghouseTrackingId ?? '—'}
+                    </td>
+                    <td className="px-4 py-3 text-slate-500">{s.ackStatus ?? '—'}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => void openDetail(s.id)}
+                          className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                        >
+                          View EDI
+                        </button>
+                        {s.status === 'pending' && (
+                          <button
+                            type="button"
+                            onClick={() => void handleMarkSubmitted(s.id)}
+                            disabled={!canBill}
+                            title={!canBill ? NO_PERMISSION : undefined}
+                            className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                          >
+                            Mark Submitted
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
 
       {selected && (
-        <section
-          style={{
-            border: '1px solid #cbd5e1',
-            borderRadius: 8,
-            padding: 16,
-            background: '#f8fafc',
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-            <h3 style={{ fontSize: 16, fontWeight: 600 }}>
+        <section className="rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-sm">
+          <div className="mb-3 flex justify-between">
+            <h3 className="text-lg font-semibold">
               Submission #{selected.id} EDI body
             </h3>
-            <button type="button" onClick={() => setSelected(null)}>Close</button>
+            <button
+              type="button"
+              onClick={() => setSelected(null)}
+              className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+            >
+              Close
+            </button>
           </div>
-          <div style={{ color: '#64748b', fontSize: 13, marginBottom: 8 }}>
+          <div className="mb-2 text-sm text-slate-500">
             {selected.clearinghouse} · {statusBadge(selected.status)}
             {selected.ackMessage && (
-              <span style={{ marginLeft: 12, color: '#475569' }}>
+              <span className="ml-3 text-slate-600">
                 Ack: {selected.ackMessage}
               </span>
             )}
           </div>
-          <pre
-            style={{
-              background: '#0f172a',
-              color: '#e2e8f0',
-              padding: 12,
-              borderRadius: 6,
-              maxHeight: 360,
-              overflow: 'auto',
-              fontSize: 11,
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-all',
-            }}
-          >
+          <pre className="max-h-90 overflow-auto whitespace-pre-wrap break-all rounded-md bg-navy-900 p-3 text-[11px] text-slate-200">
             {selected.edi837 ?? '(no EDI body persisted)'}
           </pre>
         </section>

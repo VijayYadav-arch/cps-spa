@@ -102,8 +102,21 @@ export function HospiceWorkQueue() {
       .finally(() => setIsLoading(false));
   }, []);
 
-  if (isLoading) return <div role="status">Loading work queue…</div>;
-  if (error) return <div role="alert">{error}</div>;
+  if (isLoading)
+    return (
+      <div role="status" className="p-6 text-slate-500">
+        Loading work queue…
+      </div>
+    );
+  if (error)
+    return (
+      <div
+        role="alert"
+        className="m-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800"
+      >
+        {error}
+      </div>
+    );
 
   const electionLists: Record<
     'recerts' | 'noe' | 'hope' | 'idg' | 'reviews' | 'addendum' | 'notr' | 'ftf',
@@ -134,20 +147,15 @@ export function HospiceWorkQueue() {
   const isSurveyRiskTab = tab === 'surveyRiskDischarges';
 
   return (
-    <div style={{ padding: 24, maxWidth: 900 }}>
-      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 16 }}>
-        Hospice Work Queue
-      </h2>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <header className="space-y-2">
+        <h2 className="text-2xl">Hospice Work Queue</h2>
+        <div className="section-line" />
+      </header>
 
       <div
         role="tablist"
-        style={{
-          display: 'flex',
-          gap: 0,
-          borderBottom: '2px solid #e2e8f0',
-          marginBottom: 16,
-          flexWrap: 'wrap',
-        }}
+        className="flex flex-wrap gap-0 border-b-2 border-slate-200"
       >
         {(Object.keys(TAB_META) as Tab[]).map((t) => (
           <button
@@ -155,14 +163,11 @@ export function HospiceWorkQueue() {
             role="tab"
             aria-selected={tab === t}
             onClick={() => setTab(t)}
-            style={{
-              padding: '8px 16px',
-              border: 'none',
-              background: 'none',
-              borderBottom: tab === t ? '2px solid #2563eb' : 'none',
-              marginBottom: -2,
-              fontWeight: tab === t ? 700 : 400,
-            }}
+            className={`-mb-0.5 border-b-2 px-4 py-2 transition-colors ${
+              tab === t
+                ? 'border-teal-600 font-bold text-navy-900'
+                : 'border-transparent font-normal text-slate-600 hover:text-navy-900'
+            }`}
           >
             {TAB_META[t].label} ({counts[t]})
           </button>
@@ -170,175 +175,247 @@ export function HospiceWorkQueue() {
       </div>
 
       {counts[tab] === 0 ? (
-        <p style={{ color: '#64748b' }}>{meta.emptyMessage}</p>
+        <p className="text-slate-500">{meta.emptyMessage}</p>
       ) : isDischargeTasksTab ? (
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-              <th style={{ padding: '8px 12px' }}>Patient</th>
-              <th style={{ padding: '8px 12px' }}>Task</th>
-              <th style={{ padding: '8px 12px' }}>Due Date</th>
-              <th style={{ padding: '8px 12px' }}>Days Until Due</th>
-              <th style={{ padding: '8px 12px' }}>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {dischargeTasksDue.map((item, idx) => (
-              <tr
-                key={`discharge-task-${item.dischargeId}-${idx}`}
-                style={{ borderBottom: '1px solid #f1f5f9' }}
-              >
-                <td style={{ padding: '8px 12px' }}>
-                  {item.patientName ? (
-                    <Link to={`/patients/${item.patientId}`}>{item.patientName}</Link>
-                  ) : (
-                    <span style={{ color: '#64748b' }}>Patient #{item.patientId}</span>
-                  )}
-                </td>
-                <td style={{ padding: '8px 12px' }}>{item.taskTitle}</td>
-                <td style={{ padding: '8px 12px' }}>{item.dueDate}</td>
-                <td style={{ padding: '8px 12px' }}>{item.daysUntilDue}</td>
-                <td style={{ padding: '8px 12px' }}>
-                  <Link to={`/hospice/discharges/${item.dischargeId}`}>Open Discharge</Link>
-                </td>
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                <th className="px-4 py-3">Patient</th>
+                <th className="px-4 py-3">Task</th>
+                <th className="px-4 py-3">Due Date</th>
+                <th className="px-4 py-3">Days Until Due</th>
+                <th className="px-4 py-3">Action</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {dischargeTasksDue.map((item, idx) => (
+                <tr
+                  key={`discharge-task-${item.dischargeId}-${idx}`}
+                  className="border-t border-slate-100 hover:bg-slate-50"
+                >
+                  <td className="px-4 py-3">
+                    {item.patientName ? (
+                      <Link
+                        to={`/patients/${item.patientId}`}
+                        className="font-medium text-teal-700 hover:underline"
+                      >
+                        {item.patientName}
+                      </Link>
+                    ) : (
+                      <span className="text-slate-500">
+                        Patient #{item.patientId}
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-slate-700">{item.taskTitle}</td>
+                  <td className="px-4 py-3 text-slate-700">{item.dueDate}</td>
+                  <td className="px-4 py-3 text-slate-700">
+                    {item.daysUntilDue}
+                  </td>
+                  <td className="px-4 py-3">
+                    <Link
+                      to={`/hospice/discharges/${item.dischargeId}`}
+                      className="font-medium text-teal-700 hover:underline"
+                    >
+                      Open Discharge
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       ) : isSurveyRiskTab ? (
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-              <th style={{ padding: '8px 12px' }}>Patient</th>
-              <th style={{ padding: '8px 12px' }}>Reason</th>
-              <th style={{ padding: '8px 12px' }}>Effective Date</th>
-              <th style={{ padding: '8px 12px' }}>Risk Flags</th>
-              <th style={{ padding: '8px 12px' }}>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {surveyRiskDischarges.map((item, idx) => (
-              <tr
-                key={`survey-risk-${item.dischargeId}-${idx}`}
-                style={{ borderBottom: '1px solid #f1f5f9' }}
-              >
-                <td style={{ padding: '8px 12px' }}>
-                  {item.patientName ? (
-                    <Link to={`/patients/${item.patientId}`}>{item.patientName}</Link>
-                  ) : (
-                    <span style={{ color: '#64748b' }}>Patient #{item.patientId}</span>
-                  )}
-                </td>
-                <td style={{ padding: '8px 12px' }}>{item.reason}</td>
-                <td style={{ padding: '8px 12px' }}>{item.effectiveDate}</td>
-                <td style={{ padding: '8px 12px' }}>{item.surveyRiskFlags.join(', ')}</td>
-                <td style={{ padding: '8px 12px' }}>
-                  <Link to={`/hospice/discharges/${item.dischargeId}`}>Review</Link>
-                </td>
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                <th className="px-4 py-3">Patient</th>
+                <th className="px-4 py-3">Reason</th>
+                <th className="px-4 py-3">Effective Date</th>
+                <th className="px-4 py-3">Risk Flags</th>
+                <th className="px-4 py-3">Action</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {surveyRiskDischarges.map((item, idx) => (
+                <tr
+                  key={`survey-risk-${item.dischargeId}-${idx}`}
+                  className="border-t border-slate-100 hover:bg-slate-50"
+                >
+                  <td className="px-4 py-3">
+                    {item.patientName ? (
+                      <Link
+                        to={`/patients/${item.patientId}`}
+                        className="font-medium text-teal-700 hover:underline"
+                      >
+                        {item.patientName}
+                      </Link>
+                    ) : (
+                      <span className="text-slate-500">
+                        Patient #{item.patientId}
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-slate-700">{item.reason}</td>
+                  <td className="px-4 py-3 text-slate-700">
+                    {item.effectiveDate}
+                  </td>
+                  <td className="px-4 py-3 text-slate-700">
+                    {item.surveyRiskFlags.join(', ')}
+                  </td>
+                  <td className="px-4 py-3">
+                    <Link
+                      to={`/hospice/discharges/${item.dischargeId}`}
+                      className="font-medium text-teal-700 hover:underline"
+                    >
+                      Review
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       ) : isBereavementTab ? (
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-              <th style={{ padding: '8px 12px' }}>Patient</th>
-              <th style={{ padding: '8px 12px' }}>Due Date</th>
-              <th style={{ padding: '8px 12px' }}>Days Overdue</th>
-              <th style={{ padding: '8px 12px' }}>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {bereavementLists[
-              tab as 'bereavementFollowUps' | 'bereavementOverdueContact'
-            ].map((item, idx) => (
-              <tr
-                key={`${item.type}-${item.programId}-${idx}`}
-                style={{ borderBottom: '1px solid #f1f5f9' }}
-              >
-                <td style={{ padding: '8px 12px' }}>
-                  {item.patientName ? (
-                    <Link to={`/patients/${item.patientId}`}>{item.patientName}</Link>
-                  ) : (
-                    <span style={{ color: '#64748b' }}>Patient #{item.patientId}</span>
-                  )}
-                </td>
-                <td style={{ padding: '8px 12px' }}>{item.dueDate}</td>
-                <td style={{ padding: '8px 12px' }}>{item.daysOverdue}</td>
-                <td style={{ padding: '8px 12px' }}>
-                  <Link to={`/hospice/bereavement/${item.programId}`}>Open</Link>
-                </td>
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                <th className="px-4 py-3">Patient</th>
+                <th className="px-4 py-3">Due Date</th>
+                <th className="px-4 py-3">Days Overdue</th>
+                <th className="px-4 py-3">Action</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {bereavementLists[
+                tab as 'bereavementFollowUps' | 'bereavementOverdueContact'
+              ].map((item, idx) => (
+                <tr
+                  key={`${item.type}-${item.programId}-${idx}`}
+                  className="border-t border-slate-100 hover:bg-slate-50"
+                >
+                  <td className="px-4 py-3">
+                    {item.patientName ? (
+                      <Link
+                        to={`/patients/${item.patientId}`}
+                        className="font-medium text-teal-700 hover:underline"
+                      >
+                        {item.patientName}
+                      </Link>
+                    ) : (
+                      <span className="text-slate-500">
+                        Patient #{item.patientId}
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-slate-700">{item.dueDate}</td>
+                  <td className="px-4 py-3 text-slate-700">
+                    {item.daysOverdue}
+                  </td>
+                  <td className="px-4 py-3">
+                    <Link
+                      to={`/hospice/bereavement/${item.programId}`}
+                      className="font-medium text-teal-700 hover:underline"
+                    >
+                      Open
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       ) : (
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-              <th style={{ padding: '8px 12px' }}>Patient</th>
-              <th style={{ padding: '8px 12px' }}>Due Date</th>
-              <th style={{ padding: '8px 12px' }}>
-                {tab === 'recerts' || tab === 'ftf'
-                  ? 'Days Until Due'
-                  : 'Days Overdue'}
-              </th>
-              {(tab === 'recerts' || tab === 'ftf') && (
-                <th style={{ padding: '8px 12px' }}>Period</th>
-              )}
-              <th style={{ padding: '8px 12px' }}>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {electionLists[
-              tab as
-                | 'recerts'
-                | 'noe'
-                | 'hope'
-                | 'idg'
-                | 'reviews'
-                | 'addendum'
-                | 'notr'
-                | 'ftf'
-            ].map((item, idx) => (
-              <tr
-                key={`${item.type}-${item.electionId}-${idx}`}
-                style={{ borderBottom: '1px solid #f1f5f9' }}
-              >
-                <td style={{ padding: '8px 12px' }}>
-                  {item.patientName ? (
-                    <Link to={`/patients/${item.patientId}`}>{item.patientName}</Link>
-                  ) : (
-                    <span style={{ color: '#64748b' }}>Patient #{item.patientId}</span>
-                  )}
-                </td>
-                <td style={{ padding: '8px 12px' }}>{item.dueDate}</td>
-                <td style={{ padding: '8px 12px' }}>
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                <th className="px-4 py-3">Patient</th>
+                <th className="px-4 py-3">Due Date</th>
+                <th className="px-4 py-3">
                   {tab === 'recerts' || tab === 'ftf'
-                    ? item.daysUntilDue
-                    : item.daysOverdue}
-                </td>
+                    ? 'Days Until Due'
+                    : 'Days Overdue'}
+                </th>
                 {(tab === 'recerts' || tab === 'ftf') && (
-                  <td style={{ padding: '8px 12px' }}>{item.periodNumber}</td>
+                  <th className="px-4 py-3">Period</th>
                 )}
-                <td style={{ padding: '8px 12px' }}>
-                  {tab === 'addendum' ? (
-                    <Link to={`/hospice/elections/${item.electionId}/addendum`}>
-                      Open Addendum
-                    </Link>
-                  ) : item.electionId > 0 ? (
-                    <Link to={`/patients/${item.patientId}/hospice/${item.electionId}`}>
-                      View
-                    </Link>
-                  ) : (
-                    <Link to={`/patients/${item.patientId}`}>Open Patient</Link>
-                  )}
-                </td>
+                <th className="px-4 py-3">Action</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {electionLists[
+                tab as
+                  | 'recerts'
+                  | 'noe'
+                  | 'hope'
+                  | 'idg'
+                  | 'reviews'
+                  | 'addendum'
+                  | 'notr'
+                  | 'ftf'
+              ].map((item, idx) => (
+                <tr
+                  key={`${item.type}-${item.electionId}-${idx}`}
+                  className="border-t border-slate-100 hover:bg-slate-50"
+                >
+                  <td className="px-4 py-3">
+                    {item.patientName ? (
+                      <Link
+                        to={`/patients/${item.patientId}`}
+                        className="font-medium text-teal-700 hover:underline"
+                      >
+                        {item.patientName}
+                      </Link>
+                    ) : (
+                      <span className="text-slate-500">
+                        Patient #{item.patientId}
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-slate-700">{item.dueDate}</td>
+                  <td className="px-4 py-3 text-slate-700">
+                    {tab === 'recerts' || tab === 'ftf'
+                      ? item.daysUntilDue
+                      : item.daysOverdue}
+                  </td>
+                  {(tab === 'recerts' || tab === 'ftf') && (
+                    <td className="px-4 py-3 text-slate-700">
+                      {item.periodNumber}
+                    </td>
+                  )}
+                  <td className="px-4 py-3">
+                    {tab === 'addendum' ? (
+                      <Link
+                        to={`/hospice/elections/${item.electionId}/addendum`}
+                        className="font-medium text-teal-700 hover:underline"
+                      >
+                        Open Addendum
+                      </Link>
+                    ) : item.electionId > 0 ? (
+                      <Link
+                        to={`/patients/${item.patientId}/hospice/${item.electionId}`}
+                        className="font-medium text-teal-700 hover:underline"
+                      >
+                        View
+                      </Link>
+                    ) : (
+                      <Link
+                        to={`/patients/${item.patientId}`}
+                        className="font-medium text-teal-700 hover:underline"
+                      >
+                        Open Patient
+                      </Link>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

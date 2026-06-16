@@ -84,16 +84,17 @@ export function HospiceFtfPage() {
     }
   }
 
-  if (isLoading) return <div role="status">Loading Face-to-Face data…</div>;
-  if (error) return <div role="alert">{error}</div>;
+  if (isLoading) return <div role="status" className="text-slate-500">Loading Face-to-Face data…</div>;
+  if (error) return <div role="alert" className="m-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">{error}</div>;
 
   return (
-    <div style={{ padding: 24, maxWidth: 900, display: 'grid', gap: 24 }}>
-      <header>
-        <h2 style={{ fontSize: 22, fontWeight: 700 }}>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <header className="space-y-2">
+        <h2 className="text-2xl">
           Face-to-Face Encounter — Election #{electionId}, Period #{periodId}
         </h2>
-        <p style={{ color: '#64748b', marginTop: 4 }}>
+        <div className="section-line" />
+        <p className="max-w-3xl text-slate-500">
           Required by 42 CFR 418.22(a)(4) prior to the start of the 3rd benefit period
           and every recertification thereafter. Must occur in the 30 days before period
           start.
@@ -101,35 +102,37 @@ export function HospiceFtfPage() {
       </header>
 
       {periodFtf ? (
-        <section style={{ border: '1px solid #e2e8f0', borderRadius: 8, padding: 16 }}>
-          <h3 style={{ fontSize: 16, fontWeight: 600 }}>Recorded for this period</h3>
-          <p style={{ marginTop: 6 }}>
+        <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <h3 className="text-lg font-semibold">Recorded for this period</h3>
+          <p className="mt-2 text-slate-700">
             <strong>{periodFtf.encounterDate}</strong> · {periodFtf.clinicianType} ·
             User #{periodFtf.clinicianUserId}
           </p>
-          <p style={{ marginTop: 8, whiteSpace: 'pre-wrap' }}>
+          <p className="mt-2 whitespace-pre-wrap text-slate-700">
             {periodFtf.attestationText}
           </p>
         </section>
       ) : (
         <form
           onSubmit={handleSubmit}
-          style={{ display: 'grid', gap: 12, maxWidth: 600 }}
+          className="grid max-w-3xl gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
         >
-          <h3 style={{ fontSize: 16, fontWeight: 600 }}>Record New FTF Encounter</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            <label style={{ display: 'grid', gap: 4 }}>
-              <span>Encounter Date</span>
+          <h3 className="text-lg font-semibold">Record New FTF Encounter</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <label className="grid gap-1.5">
+              <span className="text-sm font-medium text-slate-600">Encounter Date</span>
               <input
                 type="date"
+                className="form-input"
                 value={encounterDate}
                 onChange={(e) => setEncounterDate(e.target.value)}
                 required
               />
             </label>
-            <label style={{ display: 'grid', gap: 4 }}>
-              <span>Clinician Type</span>
+            <label className="grid gap-1.5">
+              <span className="text-sm font-medium text-slate-600">Clinician Type</span>
               <select
+                className="form-input"
                 value={clinicianType}
                 onChange={(e) =>
                   setClinicianType(e.target.value as FtfClinicianType)
@@ -140,19 +143,21 @@ export function HospiceFtfPage() {
               </select>
             </label>
           </div>
-          <label style={{ display: 'grid', gap: 4 }}>
-            <span>Clinician User ID</span>
+          <label className="grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">Clinician User ID</span>
             <input
               type="number"
+              className="form-input"
               value={clinicianUserId}
               onChange={(e) => setClinicianUserId(e.target.value)}
               min={1}
               required
             />
           </label>
-          <label style={{ display: 'grid', gap: 4 }}>
-            <span>Attestation Text (required per CMS)</span>
+          <label className="grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">Attestation Text (required per CMS)</span>
             <textarea
+              className="form-input"
               value={attestationText}
               onChange={(e) => setAttestationText(e.target.value)}
               rows={5}
@@ -161,39 +166,43 @@ export function HospiceFtfPage() {
             />
           </label>
           {actionError && (
-            <div role="alert" style={{ color: '#b91c1c' }}>
+            <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">
               {actionError}
             </div>
           )}
-          <button type="submit" disabled={busy}>
-            {busy ? 'Saving…' : 'Record FTF Encounter'}
-          </button>
+          <div>
+            <button type="submit" className="btn-primary" disabled={busy}>
+              {busy ? 'Saving…' : 'Record FTF Encounter'}
+            </button>
+          </div>
         </form>
       )}
 
       {history.length > 0 && (
-        <section style={{ display: 'grid', gap: 12 }}>
-          <h3 style={{ fontSize: 18, fontWeight: 600 }}>History (all periods)</h3>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-                <th style={{ padding: '6px 10px' }}>Period</th>
-                <th style={{ padding: '6px 10px' }}>Date</th>
-                <th style={{ padding: '6px 10px' }}>Clinician Type</th>
-                <th style={{ padding: '6px 10px' }}>Clinician</th>
-              </tr>
-            </thead>
-            <tbody>
-              {history.map((h) => (
-                <tr key={h.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td style={{ padding: '6px 10px' }}>#{h.periodNumber}</td>
-                  <td style={{ padding: '6px 10px' }}>{h.encounterDate}</td>
-                  <td style={{ padding: '6px 10px' }}>{h.clinicianType}</td>
-                  <td style={{ padding: '6px 10px' }}>#{h.clinicianUserId}</td>
+        <section className="grid gap-3">
+          <h3 className="text-lg font-semibold">History (all periods)</h3>
+          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                  <th className="px-4 py-3">Period</th>
+                  <th className="px-4 py-3">Date</th>
+                  <th className="px-4 py-3">Clinician Type</th>
+                  <th className="px-4 py-3">Clinician</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {history.map((h) => (
+                  <tr key={h.id} className="border-t border-slate-100 hover:bg-slate-50">
+                    <td className="px-4 py-3 text-slate-700">#{h.periodNumber}</td>
+                    <td className="px-4 py-3 text-slate-700">{h.encounterDate}</td>
+                    <td className="px-4 py-3 text-slate-700">{h.clinicianType}</td>
+                    <td className="px-4 py-3 text-slate-700">#{h.clinicianUserId}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </section>
       )}
     </div>
