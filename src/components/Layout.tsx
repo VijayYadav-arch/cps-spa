@@ -1,9 +1,29 @@
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/auth/useAuth';
 import { InboxBadge } from '@/components/InboxBadge';
 import { NotificationToasts } from '@/components/NotificationToasts';
 import { LanguagePicker } from '@/i18n/LanguagePicker';
 import { MiraWordmark } from '@/components/MiraWordmark';
+
+const COLLAPSE_KEY = 'mira_nav_collapsed';
+
+const toggleBtnStyle: React.CSSProperties = {
+  background: 'rgba(255,255,255,0.08)',
+  border: '1px solid rgba(255,255,255,0.16)',
+  color: '#cbd5e1',
+  borderRadius: 6,
+  width: 30,
+  height: 30,
+  cursor: 'pointer',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontSize: 16,
+  lineHeight: 1,
+  flexShrink: 0,
+  transition: 'background 0.15s ease',
+};
 
 interface NavLeaf {
   kind: 'leaf';
@@ -106,6 +126,34 @@ function leafStyle({ isActive }: { isActive: boolean }, indented = false): React
 export function Layout() {
   const { auth, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const mainRef = useRef<HTMLElement>(null);
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(COLLAPSE_KEY) === '1';
+    } catch {
+      return false;
+    }
+  });
+
+  // Reset the content scroll to the top whenever the route changes, so clicking
+  // a nav item near the bottom of the (independently scrolling) sidebar never
+  // leaves the new page scrolled partway down.
+  useEffect(() => {
+    mainRef.current?.scrollTo({ top: 0, left: 0 });
+  }, [location.pathname]);
+
+  const toggleCollapsed = () => {
+    setCollapsed((c) => {
+      const next = !c;
+      try {
+        localStorage.setItem(COLLAPSE_KEY, next ? '1' : '0');
+      } catch {
+        /* ignore persistence failures (private mode, etc.) */
+      }
+      return next;
+    });
+  };
 
   const handleLogout = () => {
     logout();
@@ -113,8 +161,33 @@ export function Layout() {
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
-      {/* Sidebar */}
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+      {/* Sidebar — collapsed to a slim rail or the full nav. */}
+      {collapsed ? (
+        <nav
+          aria-label="Main navigation"
+          style={{
+            width: 48,
+            background: 'linear-gradient(180deg, #0B1D3A 0%, #0f2f44 100%)',
+            flexShrink: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            paddingTop: 24,
+          }}
+        >
+          <button
+            type="button"
+            aria-label="Expand navigation"
+            aria-expanded={false}
+            title="Expand navigation"
+            onClick={toggleCollapsed}
+            style={toggleBtnStyle}
+          >
+            »
+          </button>
+        </nav>
+      ) : (
       <nav
         aria-label="Main navigation"
         style={{
@@ -123,15 +196,36 @@ export function Layout() {
           color: '#f8fafc',
           display: 'flex',
           flexDirection: 'column',
-          padding: '24px 0',
+          paddingTop: 24,
           flexShrink: 0,
+          height: '100%',
         }}
       >
-        <div style={{ padding: '0 20px 24px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 8,
+            padding: '0 16px 24px',
+            borderBottom: '1px solid rgba(255,255,255,0.08)',
+            flexShrink: 0,
+          }}
+        >
           <MiraWordmark style={{ height: 30, width: 'auto' }} />
+          <button
+            type="button"
+            aria-label="Collapse navigation"
+            aria-expanded={true}
+            title="Collapse navigation"
+            onClick={toggleCollapsed}
+            style={toggleBtnStyle}
+          >
+            «
+          </button>
         </div>
 
-        <ul style={{ listStyle: 'none', padding: '16px 0', margin: 0, flex: 1 }}>
+        <ul style={{ listStyle: 'none', padding: '16px 0', margin: 0, flex: 1, overflowY: 'auto' }}>
           {navItems.map((entry) =>
             entry.kind === 'leaf' ? (
               <li key={entry.to}>
@@ -177,7 +271,7 @@ export function Layout() {
           )}
         </ul>
 
-        <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+        <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(255,255,255,0.08)', flexShrink: 0 }}>
           <div style={{ marginBottom: 12, color: '#94a3b8' }}>
             <LanguagePicker />
           </div>
@@ -201,9 +295,10 @@ export function Layout() {
           </button>
         </div>
       </nav>
+      )}
 
-      {/* Main content */}
-      <main style={{ flex: 1, padding: 32, background: '#FAFAF5', overflow: 'auto' }}>
+      {/* Main content — its own scroll region, reset to top on navigation. */}
+      <main ref={mainRef} style={{ flex: 1, padding: 32, background: '#FAFAF5', overflowY: 'auto', height: '100%' }}>
         <Outlet />
       </main>
 
