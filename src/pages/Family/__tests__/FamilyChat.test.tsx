@@ -77,7 +77,7 @@ describe('FamilyChat (streaming)', () => {
   it('renders disclaimer banner and empty state in English', () => {
     renderChat();
     expect(screen.getByText(/AI assistant/i)).toBeInTheDocument();
-    expect(screen.getByText(/Ask CPS/)).toBeInTheDocument();
+    expect(screen.getByText(/Ask Mira/)).toBeInTheDocument();
     expect(screen.getByText(/Ask a question to get started/)).toBeInTheDocument();
   });
 
@@ -85,7 +85,7 @@ describe('FamilyChat (streaming)', () => {
     await i18n.changeLanguage('es-US');
     renderChat();
     expect(screen.getByText(/asistente con inteligencia artificial/i)).toBeInTheDocument();
-    expect(screen.getByText(/Pregúntele a CPS/)).toBeInTheDocument();
+    expect(screen.getByText(/Pregúntele a Mira/)).toBeInTheDocument();
   });
 
   it('streams deltas in order and assembles the final answer + sources', async () => {
@@ -431,7 +431,7 @@ describe('FamilyChat (streaming)', () => {
       reader.onerror = () => reject(reader.error);
       reader.readAsText(blobs[0]);
     });
-    expect(text).toContain('CPS Family Chat');
+    expect(text).toContain('Mira Family Chat');
     expect(text).toContain('[Q1] meds?');
     expect(text).toContain('[A1] You are taking Acetaminophen.');
     expect(text).toContain('I used:');

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 80" role="img" aria-label="Mira">
+  <title>Mira</title>
+  <style>
+    .wm {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-weight: 700;
+      font-size: 72px;
+      letter-spacing: -3.5px;
+      fill: #0f766e;
+    }
+  </style>
+  <text x="6" y="60" class="wm">m&#x131;ra</text>
+  <path d="M 77 4 Q 77 13 86 13 Q 77 13 77 22 Q 77 13 68 13 Q 77 13 77 4 Z" fill="#0f766e"/>
+</svg>

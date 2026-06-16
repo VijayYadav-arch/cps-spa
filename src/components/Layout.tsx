@@ -91,12 +91,14 @@ const navItems: NavEntry[] = [
 function leafStyle({ isActive }: { isActive: boolean }, indented = false): React.CSSProperties {
   return {
     display: 'block',
-    padding: indented ? '8px 20px 8px 36px' : '10px 20px',
-    color: isActive ? '#f8fafc' : '#94a3b8',
-    background: isActive ? '#2563eb' : 'transparent',
+    padding: indented ? '8px 20px 8px 33px' : '10px 17px',
+    borderLeft: isActive ? '3px solid #2dd4bf' : '3px solid transparent',
+    color: isActive ? '#5eead4' : '#cbd5e1',
+    background: isActive ? 'rgba(13, 148, 136, 0.18)' : 'transparent',
     textDecoration: 'none',
     fontSize: indented ? 13 : 14,
     fontWeight: isActive ? 600 : 400,
+    transition: 'color 0.15s ease, background 0.15s ease',
   };
 }
 
@@ -116,7 +118,7 @@ export function Layout() {
         aria-label="Main navigation"
         style={{
           width: 220,
-          background: '#1e293b',
+          background: 'linear-gradient(180deg, #0B1D3A 0%, #0f2f44 100%)',
           color: '#f8fafc',
           display: 'flex',
           flexDirection: 'column',
@@ -124,8 +126,8 @@ export function Layout() {
           flexShrink: 0,
         }}
       >
-        <div style={{ padding: '0 20px 24px', borderBottom: '1px solid #334155' }}>
-          <span style={{ fontWeight: 700, fontSize: 18, letterSpacing: '-0.02em' }}>CPS</span>
+        <div style={{ padding: '0 20px 24px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+          <img src="/brand/mira-wordmark.svg" alt="Mira" style={{ height: 30, width: 'auto' }} />
         </div>
 
         <ul style={{ listStyle: 'none', padding: '16px 0', margin: 0, flex: 1 }}>
@@ -174,7 +176,7 @@ export function Layout() {
           )}
         </ul>
 
-        <div style={{ padding: '16px 20px', borderTop: '1px solid #334155' }}>
+        <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
           <div style={{ marginBottom: 12, color: '#94a3b8' }}>
             <LanguagePicker />
           </div>
@@ -187,9 +189,9 @@ export function Layout() {
               width: '100%',
               padding: '8px 0',
               background: 'transparent',
-              border: '1px solid #475569',
-              borderRadius: 4,
-              color: '#94a3b8',
+              border: '1px solid rgba(255,255,255,0.2)',
+              borderRadius: 6,
+              color: '#cbd5e1',
               cursor: 'pointer',
               fontSize: 13,
             }}
@@ -200,7 +202,7 @@ export function Layout() {
       </nav>
 
       {/* Main content */}
-      <main style={{ flex: 1, padding: 32, background: '#f8fafc', overflow: 'auto' }}>
+      <main style={{ flex: 1, padding: 32, background: '#FAFAF5', overflow: 'auto' }}>
         <Outlet />
       </main>
 
