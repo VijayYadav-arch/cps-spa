@@ -286,7 +286,7 @@ export function FamilyChat() {
 
   if (patientId == null) {
     return (
-      <p role="alert" style={{ padding: 16, color: '#dc2626' }}>
+      <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">
         {t('family.chat.notAuthenticated')}
       </p>
     );
@@ -296,29 +296,18 @@ export function FamilyChat() {
   const overLimit = question.length > MAX_QUESTION_LENGTH;
 
   return (
-    <section style={{ padding: 16, maxWidth: 720 }}>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 8,
-          marginBottom: 12,
-        }}
-      >
-        <h1
-          data-testid="page-title"
-          style={{ fontSize: 24, fontWeight: 600, color: '#1e293b', margin: 0 }}
-        >
+    <section className="grid max-w-[720px] gap-4 p-6">
+      <div className="flex items-center justify-between gap-2">
+        <h1 data-testid="page-title" className="m-0 text-2xl">
           {t('family.chat.title')}
         </h1>
         {turns.some((t) => typeof t.answer === 'string' && t.answer.length > 0) && (
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div className="flex gap-2">
             <button
               type="button"
               data-testid="export-conversation"
               onClick={exportConversation}
-              style={sessionActionBtn}
+              className={SESSION_ACTION_BTN}
             >
               {t('family.chat.exportButton')}
             </button>
@@ -326,7 +315,7 @@ export function FamilyChat() {
               type="button"
               data-testid="clear-conversation"
               onClick={handleClear}
-              style={{ ...sessionActionBtn, color: '#b91c1c' }}
+              className={`${SESSION_ACTION_BTN} text-red-700 border-red-200 hover:bg-red-50`}
             >
               {t('family.chat.clearButton')}
             </button>
@@ -336,36 +325,20 @@ export function FamilyChat() {
 
       <div
         role="note"
-        style={{
-          background: '#fef3c7',
-          border: '1px solid #f59e0b',
-          color: '#92400e',
-          padding: '12px 14px',
-          borderRadius: 8,
-          fontSize: 13,
-          marginBottom: 16,
-          lineHeight: 1.5,
-        }}
+        className="rounded-lg border-l-4 border-warning bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-800"
       >
         <strong>{t('family.chat.disclaimerTitle')}</strong>
         <br />
         {t('family.chat.disclaimerBody')}
       </div>
 
-      <div data-testid="chat-log" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div data-testid="chat-log" className="flex flex-col gap-3">
         {turns.length === 0 && (
           <div>
-            <p style={{ color: '#94a3b8', fontStyle: 'italic', marginBottom: 12 }}>
+            <p className="mb-3 italic text-slate-400">
               {t('family.chat.empty')}
             </p>
-            <div
-              data-testid="suggested-prompts"
-              style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: 8,
-              }}
-            >
+            <div data-testid="suggested-prompts" className="flex flex-wrap gap-2">
               {SUGGESTED_PROMPT_KEYS.map((key) => {
                 const label = t(key);
                 return (
@@ -375,15 +348,7 @@ export function FamilyChat() {
                     data-testid="suggested-prompt"
                     onClick={() => void askQuestion(label)}
                     disabled={submitting}
-                    style={{
-                      padding: '6px 12px',
-                      border: '1px solid #cbd5e1',
-                      borderRadius: 999,
-                      background: '#f8fafc',
-                      color: '#0f172a',
-                      fontSize: 13,
-                      cursor: submitting ? 'not-allowed' : 'pointer',
-                    }}
+                    className="rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-sm text-slate-900 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {label}
                   </button>
@@ -393,38 +358,17 @@ export function FamilyChat() {
           </div>
         )}
         {turns.map((turn) => (
-          <div key={turn.id} data-testid="chat-turn" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div
-              style={{
-                alignSelf: 'flex-end',
-                background: '#dbeafe',
-                color: '#1e3a8a',
-                padding: '10px 14px',
-                borderRadius: 12,
-                maxWidth: '85%',
-                fontSize: 14,
-              }}
-            >
+          <div key={turn.id} data-testid="chat-turn" className="flex flex-col gap-2">
+            <div className="max-w-[85%] self-end rounded-xl bg-teal-50 px-4 py-2.5 text-sm text-teal-900">
               {turn.question}
             </div>
-            <div
-              style={{
-                alignSelf: 'flex-start',
-                background: '#fff',
-                border: '1px solid #e2e8f0',
-                padding: '10px 14px',
-                borderRadius: 12,
-                maxWidth: '85%',
-                fontSize: 14,
-                color: '#1e293b',
-              }}
-            >
+            <div className="max-w-[85%] self-start rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-navy-900 shadow-sm">
               {turn.answer != null ? (
                 <>
-                  <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{turn.answer}</p>
+                  <p className="m-0 whitespace-pre-wrap">{turn.answer}</p>
                   {turn.sources.length > 0 && (
-                    <p style={{ margin: '8px 0 0', fontSize: 11, color: '#64748b' }}>
-                      <span style={{ fontWeight: 500 }}>
+                    <p className="mt-2 text-xs text-slate-500">
+                      <span className="font-medium">
                         {t('family.chat.sourcesLabel')}
                       </span>{' '}
                       {turn.sources
@@ -432,18 +376,15 @@ export function FamilyChat() {
                         .join(', ')}
                     </p>
                   )}
-                  <p style={{ margin: '6px 0 0', fontSize: 11, color: '#94a3b8', fontStyle: 'italic' }}>
+                  <p className="mt-1.5 text-xs italic text-slate-400">
                     {t('family.chat.verifyFooter')}
                   </p>
                   {turn.followUps.length > 0 && (
-                    <div
-                      data-testid="follow-ups"
-                      style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}
-                    >
-                      <span style={{ fontSize: 11, color: '#64748b', fontWeight: 500 }}>
+                    <div data-testid="follow-ups" className="mt-2.5 flex flex-col gap-1.5">
+                      <span className="text-xs font-medium text-slate-500">
                         {t('family.chat.followUpsLabel')}
                       </span>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      <div className="flex flex-wrap gap-1.5">
                         {turn.followUps.map((q) => (
                           <button
                             key={q}
@@ -451,16 +392,7 @@ export function FamilyChat() {
                             data-testid="follow-up-chip"
                             onClick={() => void askQuestion(q)}
                             disabled={submitting}
-                            style={{
-                              padding: '4px 10px',
-                              border: '1px solid #cbd5e1',
-                              borderRadius: 999,
-                              background: '#f8fafc',
-                              color: '#0f172a',
-                              fontSize: 12,
-                              cursor: submitting ? 'not-allowed' : 'pointer',
-                              textAlign: 'left',
-                            }}
+                            className="rounded-full border border-slate-300 bg-slate-50 px-2.5 py-1 text-left text-xs text-slate-900 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
                           >
                             {q}
                           </button>
@@ -469,11 +401,8 @@ export function FamilyChat() {
                     </div>
                   )}
                   {turn.correlationId != null && (
-                    <div
-                      data-testid="feedback-controls"
-                      style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}
-                    >
-                      <span style={{ fontSize: 11, color: '#64748b' }}>
+                    <div data-testid="feedback-controls" className="mt-2 flex items-center gap-2">
+                      <span className="text-xs text-slate-500">
                         {t('family.chat.feedbackPrompt')}
                       </span>
                       <button
@@ -486,7 +415,7 @@ export function FamilyChat() {
                           || turn.feedback === 'not-helpful'
                         }
                         onClick={() => sendFeedback(turn, true)}
-                        style={feedbackBtn(turn.feedback === 'helpful')}
+                        className={feedbackBtnClass(turn.feedback === 'helpful')}
                       >
                         {turn.feedback === 'helpful' ? '✅' : '👍'}
                       </button>
@@ -500,17 +429,17 @@ export function FamilyChat() {
                           || turn.feedback === 'not-helpful'
                         }
                         onClick={() => sendFeedback(turn, false)}
-                        style={feedbackBtn(turn.feedback === 'not-helpful')}
+                        className={feedbackBtnClass(turn.feedback === 'not-helpful')}
                       >
                         {turn.feedback === 'not-helpful' ? '☑️' : '👎'}
                       </button>
                       {turn.feedback === 'helpful' || turn.feedback === 'not-helpful' ? (
-                        <span style={{ fontSize: 11, color: '#16a34a' }}>
+                        <span className="text-xs text-success">
                           {t('family.chat.feedbackThanks')}
                         </span>
                       ) : null}
                       {turn.feedback === 'failed' ? (
-                        <span style={{ fontSize: 11, color: '#b91c1c' }}>
+                        <span className="text-xs text-red-700">
                           {t('family.chat.feedbackFailed')}
                         </span>
                       ) : null}
@@ -518,11 +447,11 @@ export function FamilyChat() {
                   )}
                 </>
               ) : turn.errorKey != null ? (
-                <p role="alert" style={{ margin: 0, color: '#b91c1c', fontSize: 13 }}>
+                <p role="alert" className="m-0 text-sm text-red-700">
                   {t(turn.errorKey)}
                 </p>
               ) : (
-                <p style={{ margin: 0, color: '#94a3b8', fontStyle: 'italic' }}>
+                <p className="m-0 italic text-slate-400">
                   {t('common.loading')}
                 </p>
               )}
@@ -532,7 +461,7 @@ export function FamilyChat() {
         <div ref={bottomRef} />
       </div>
 
-      <form onSubmit={handleSubmit} style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-1.5">
         <textarea
           data-testid="family-chat-input"
           value={question}
@@ -541,24 +470,9 @@ export function FamilyChat() {
           rows={3}
           maxLength={MAX_QUESTION_LENGTH + 50}
           aria-label={t('family.chat.inputLabel')}
-          style={{
-            padding: '10px 12px',
-            border: `1px solid ${overLimit ? '#dc2626' : '#cbd5e1'}`,
-            borderRadius: 8,
-            fontSize: 14,
-            fontFamily: 'inherit',
-            resize: 'vertical',
-          }}
+          className={`form-input resize-y ${overLimit ? 'border-error' : ''}`}
         />
-        <label
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            fontSize: 12,
-            color: '#475569',
-          }}
-        >
+        <label className="flex items-center gap-1.5 text-xs text-slate-600">
           <input
             data-testid="include-visit-details"
             type="checkbox"
@@ -567,8 +481,8 @@ export function FamilyChat() {
           />
           {t('family.chat.includeVisitDetailsLabel')}
         </label>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'space-between' }}>
-          <span style={{ fontSize: 11, color: overLimit ? '#dc2626' : '#94a3b8' }}>
+        <div className="flex items-center justify-between gap-2">
+          <span className={`text-xs ${overLimit ? 'text-error' : 'text-slate-400'}`}>
             {charsLeft >= 0
               ? t('family.chat.charsLeft', { n: charsLeft })
               : t('family.chat.tooLong')}
@@ -577,16 +491,7 @@ export function FamilyChat() {
             type="submit"
             data-testid="family-chat-submit"
             disabled={submitting || overLimit || question.trim().length === 0}
-            style={{
-              padding: '8px 16px',
-              border: 'none',
-              background: submitting ? '#94a3b8' : '#0ea5e9',
-              color: '#fff',
-              borderRadius: 6,
-              cursor: submitting ? 'not-allowed' : 'pointer',
-              fontSize: 14,
-              fontWeight: 600,
-            }}
+            className="btn-primary disabled:cursor-not-allowed disabled:opacity-60"
           >
             {submitting ? t('family.chat.sending') : t('family.chat.send')}
           </button>
@@ -596,25 +501,15 @@ export function FamilyChat() {
   );
 }
 
-const sessionActionBtn: React.CSSProperties = {
-  padding: '6px 12px',
-  fontSize: 13,
-  border: '1px solid #cbd5e1',
-  borderRadius: 6,
-  background: '#f8fafc',
-  color: '#0f172a',
-  cursor: 'pointer',
-};
+const SESSION_ACTION_BTN =
+  'rounded-md border border-slate-300 px-2.5 py-1 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50';
 
-function feedbackBtn(selected: boolean): React.CSSProperties {
-  return {
-    border: `1px solid ${selected ? '#16a34a' : '#cbd5e1'}`,
-    background: selected ? '#dcfce7' : '#f8fafc',
-    borderRadius: 6,
-    padding: '4px 8px',
-    fontSize: 14,
-    cursor: 'pointer',
-  };
+function feedbackBtnClass(selected: boolean): string {
+  return `rounded-md border px-2 py-1 text-sm transition-colors ${
+    selected
+      ? 'border-success bg-green-100'
+      : 'border-slate-300 bg-slate-50 hover:bg-slate-100'
+  } disabled:cursor-not-allowed disabled:opacity-60`;
 }
 
 function mapStreamErrorToKey(error: FamilyChatStreamErrorEvent): string {

@@ -79,29 +79,33 @@ export function FamilyPreferences() {
 
   if (fetchError) {
     return (
-      <p data-testid="family-error" role="alert" style={{ color: '#dc2626', padding: 16 }}>
+      <p
+        data-testid="family-error"
+        role="alert"
+        className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800"
+      >
         {fetchError}
       </p>
     );
   }
   if (!loaded) {
     return (
-      <p data-testid="family-loading" style={{ color: '#94a3b8', padding: 16 }}>
+      <p data-testid="family-loading" role="status" className="p-4 text-slate-500">
         Loading…
       </p>
     );
   }
 
   return (
-    <section style={{ padding: 16 }}>
-      <h1
-        data-testid="page-title"
-        style={{ fontSize: 24, fontWeight: 600, color: '#1e293b', marginBottom: 8 }}
-      >
+    <section className="grid max-w-[1200px] gap-6 p-6">
+      <h1 data-testid="page-title" className="text-2xl">
         Notification Preferences
       </h1>
       {saved && (
-        <p data-testid="preferences-saved" style={{ color: '#16a34a', fontSize: 14, marginBottom: 12 }}>
+        <p
+          data-testid="preferences-saved"
+          className="rounded-lg border-l-4 border-success bg-green-50 px-4 py-3 text-sm font-semibold text-green-800"
+        >
           Saved.
         </p>
       )}
@@ -109,40 +113,27 @@ export function FamilyPreferences() {
         <p
           data-testid="preferences-save-error"
           role="alert"
-          style={{ color: '#dc2626', fontSize: 14, marginBottom: 12 }}
+          className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
         >
           {saveError}
         </p>
       )}
-      <div
-        style={{
-          background: '#fff',
-          border: '1px solid #e2e8f0',
-          borderRadius: 12,
-          overflow: 'hidden',
-        }}
-      >
-        <table style={{ width: '100%', fontSize: 14, borderCollapse: 'collapse' }}>
-          <thead style={{ background: '#f8fafc' }}>
-            <tr>
-              <th style={{ padding: '12px 16px', textAlign: 'left', color: '#475569', fontWeight: 500 }}>
-                Event
-              </th>
-              <th style={{ padding: '12px 16px', textAlign: 'center', color: '#475569', fontWeight: 500 }}>
-                SMS
-              </th>
-              <th style={{ padding: '12px 16px', textAlign: 'center', color: '#475569', fontWeight: 500 }}>
-                Email
-              </th>
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr className="bg-navy-900 text-xs font-semibold uppercase tracking-wide text-white">
+              <th className="px-4 py-3 text-left">Event</th>
+              <th className="px-4 py-3 text-center">SMS</th>
+              <th className="px-4 py-3 text-center">Email</th>
             </tr>
           </thead>
           <tbody>
             {EVENT_LABELS.map(({ key, label }) => {
               const ch = prefs[key] ?? DEFAULT_PREFS;
               return (
-                <tr key={key} style={{ borderTop: '1px solid #f1f5f9' }}>
-                  <td style={{ padding: '12px 16px' }}>{label}</td>
-                  <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                <tr key={key} className="border-t border-slate-100 hover:bg-slate-50">
+                  <td className="px-4 py-3 text-slate-700">{label}</td>
+                  <td className="px-4 py-3 text-center">
                     <input
                       type="checkbox"
                       checked={ch.sms}
@@ -153,7 +144,7 @@ export function FamilyPreferences() {
                       data-testid={`pref-${key}-sms`}
                     />
                   </td>
-                  <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                  <td className="px-4 py-3 text-center">
                     <input
                       type="checkbox"
                       checked={ch.email}

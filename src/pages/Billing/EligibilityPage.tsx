@@ -41,17 +41,17 @@ const EMPTY_FORM: VerifyEligibilityRequest = {
 function eligibilityBadge(value: boolean | null) {
   if (value === null) {
     return (
-      <span style={{ background: '#f1f5f9', color: '#475569', padding: '2px 8px', borderRadius: 6, fontSize: 12, fontWeight: 600 }}>
+      <span className="inline-block rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
         Unknown
       </span>
     );
   }
   return value ? (
-    <span style={{ background: '#d1fae5', color: '#065f46', padding: '2px 8px', borderRadius: 6, fontSize: 12, fontWeight: 600 }}>
+    <span className="inline-block rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-800">
       Eligible
     </span>
   ) : (
-    <span style={{ background: '#fee2e2', color: '#991b1b', padding: '2px 8px', borderRadius: 6, fontSize: 12, fontWeight: 600 }}>
+    <span className="inline-block rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-800">
       Not Eligible
     </span>
   );
@@ -106,41 +106,39 @@ export function EligibilityPage() {
   }
 
   return (
-    <div style={{ padding: 24, maxWidth: 1200, display: 'grid', gap: 24 }}>
+    <div className="grid max-w-[1200px] gap-6 p-6">
       <header>
-        <h2 style={{ fontSize: 22, fontWeight: 700 }}>Insurance Eligibility (270/271)</h2>
-        <p style={{ color: '#64748b', marginTop: 4 }}>
+        <h2 className="text-2xl">Insurance Eligibility (270/271)</h2>
+        <div className="section-line mt-2" />
+        <p className="mt-2 max-w-3xl text-slate-500">
           Pre-service insurance verification. Each check submits a 270 inquiry
           to the clearinghouse and persists the 271 response.
         </p>
       </header>
 
-      {error && <div role="alert" style={{ color: '#b91c1c' }}>{error}</div>}
+      {error && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">{error}</div>}
 
       <form
         onSubmit={handleSubmit}
-        style={{
-          border: '1px solid #e2e8f0', borderRadius: 8, padding: 16, background: '#fff',
-          display: 'grid', gap: 12, gridTemplateColumns: '1fr 1fr',
-        }}
+        className="grid grid-cols-2 gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
       >
-        <h3 style={{ gridColumn: '1 / -1', fontSize: 16, fontWeight: 600 }}>New Verification</h3>
+        <h3 className="col-span-full text-lg font-semibold">New Verification</h3>
 
-        <label>
-          <div>Patient ID (optional)</div>
+        <label className="grid gap-1.5">
+          <span className="text-sm font-medium text-slate-600">Patient ID (optional)</span>
           <input
             type="number"
             value={form.patientId ?? ''}
             onChange={(e) => setForm({ ...form, patientId: e.target.value ? Number(e.target.value) : null })}
-            style={{ width: '100%' }}
+            className="form-input"
           />
         </label>
-        <label>
-          <div>Payer *</div>
+        <label className="grid gap-1.5">
+          <span className="text-sm font-medium text-slate-600">Payer *</span>
           <select
             value={form.payerId}
             onChange={(e) => setForm({ ...form, payerId: e.target.value })}
-            style={{ width: '100%' }}
+            className="form-input"
             required
           >
             {COMMON_PAYERS.map((p) => (
@@ -148,69 +146,69 @@ export function EligibilityPage() {
             ))}
           </select>
         </label>
-        <label>
-          <div>Member ID *</div>
+        <label className="grid gap-1.5">
+          <span className="text-sm font-medium text-slate-600">Member ID *</span>
           <input
             value={form.memberId}
             onChange={(e) => setForm({ ...form, memberId: e.target.value })}
-            style={{ width: '100%' }}
+            className="form-input"
             required
           />
         </label>
-        <label>
-          <div>Member DOB *</div>
+        <label className="grid gap-1.5">
+          <span className="text-sm font-medium text-slate-600">Member DOB *</span>
           <input
             type="date"
             value={form.memberDob}
             onChange={(e) => setForm({ ...form, memberDob: e.target.value })}
-            style={{ width: '100%' }}
+            className="form-input"
             required
           />
         </label>
-        <label>
-          <div>Member First Name *</div>
+        <label className="grid gap-1.5">
+          <span className="text-sm font-medium text-slate-600">Member First Name *</span>
           <input
             value={form.memberFirstName}
             onChange={(e) => setForm({ ...form, memberFirstName: e.target.value })}
-            style={{ width: '100%' }}
+            className="form-input"
             required
           />
         </label>
-        <label>
-          <div>Member Last Name *</div>
+        <label className="grid gap-1.5">
+          <span className="text-sm font-medium text-slate-600">Member Last Name *</span>
           <input
             value={form.memberLastName}
             onChange={(e) => setForm({ ...form, memberLastName: e.target.value })}
-            style={{ width: '100%' }}
+            className="form-input"
             required
           />
         </label>
-        <label>
-          <div>Service Type</div>
+        <label className="grid gap-1.5">
+          <span className="text-sm font-medium text-slate-600">Service Type</span>
           <select
             value={form.serviceTypeCode ?? '30'}
             onChange={(e) => setForm({ ...form, serviceTypeCode: e.target.value })}
-            style={{ width: '100%' }}
+            className="form-input"
           >
             {SERVICE_TYPE_CODES.map((s) => (
               <option key={s.code} value={s.code}>{s.label}</option>
             ))}
           </select>
         </label>
-        <label>
-          <div>Provider NPI</div>
+        <label className="grid gap-1.5">
+          <span className="text-sm font-medium text-slate-600">Provider NPI</span>
           <input
             value={form.providerNpi ?? ''}
             onChange={(e) => setForm({ ...form, providerNpi: e.target.value || null })}
-            style={{ width: '100%' }}
+            className="form-input"
           />
         </label>
-        <div style={{ gridColumn: '1 / -1' }}>
+        <div className="col-span-full">
           <button
             type="submit"
             disabled={submitting || !canVerify}
             title={!canVerify ? NO_PERMISSION : undefined}
-            style={{ cursor: (submitting || !canVerify) ? 'not-allowed' : 'pointer' }}
+            className="btn-primary disabled:cursor-not-allowed disabled:opacity-60"
           >
             {submitting ? 'Verifying…' : 'Verify Eligibility'}
           </button>
@@ -219,80 +217,84 @@ export function EligibilityPage() {
 
       {latest && (
         <section
-          style={{
-            border: '1px solid #cbd5e1', borderRadius: 8, padding: 16,
-            background: latest.eligible === true ? '#f0fdf4' : latest.eligible === false ? '#fef2f2' : '#f8fafc',
-            display: 'grid', gap: 8,
-          }}
+          className={`grid gap-2 rounded-xl border p-4 ${
+            latest.eligible === true
+              ? 'border-green-200 bg-green-50'
+              : latest.eligible === false
+                ? 'border-red-200 bg-red-50'
+                : 'border-slate-200 bg-slate-50'
+          }`}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <h3 style={{ fontSize: 16, fontWeight: 600 }}>
+          <div className="flex items-baseline justify-between">
+            <h3 className="text-lg font-semibold">
               Verification #{latest.id} {eligibilityBadge(latest.eligible)}
             </h3>
-            <span style={{ color: '#64748b', fontSize: 13 }}>
+            <span className="text-sm text-slate-500">
               {latest.checkedAtUtc.slice(0, 19).replace('T', ' ')}
             </span>
           </div>
-          <div style={{ color: '#475569' }}>
+          <div className="text-slate-600">
             <strong>{latest.memberFirstName} {latest.memberLastName}</strong> ·
             {' '}{latest.payerName} · Member {latest.memberId}
           </div>
           {latest.planName && (
-            <div><strong>Plan:</strong> {latest.planName}</div>
+            <div className="text-slate-700"><strong>Plan:</strong> {latest.planName}</div>
           )}
           {(latest.coverageStart || latest.coverageEnd) && (
-            <div>
+            <div className="text-slate-700">
               <strong>Coverage:</strong>{' '}
               {latest.coverageStart?.slice(0, 10) ?? '—'} → {latest.coverageEnd?.slice(0, 10) ?? '—'}
             </div>
           )}
           {latest.errorMessage && (
-            <div style={{ color: '#991b1b' }}>
+            <div className="text-red-800">
               <strong>Error:</strong> {latest.errorMessage}
             </div>
           )}
         </section>
       )}
 
-      <section style={{ display: 'grid', gap: 12 }}>
-        <h3 style={{ fontSize: 18, fontWeight: 600 }}>
+      <section className="grid gap-3">
+        <h3 className="text-lg font-semibold">
           Recent Verifications ({recent.length})
         </h3>
-        {isLoading && <div role="status">Loading…</div>}
+        {isLoading && <div role="status" className="text-slate-500">Loading…</div>}
         {!isLoading && recent.length === 0 && (
-          <p style={{ color: '#64748b' }}>No verifications yet.</p>
+          <p className="text-slate-500">No verifications yet.</p>
         )}
         {!isLoading && recent.length > 0 && (
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-                <th style={{ padding: '6px 10px' }}>When</th>
-                <th style={{ padding: '6px 10px' }}>Member</th>
-                <th style={{ padding: '6px 10px' }}>Payer</th>
-                <th style={{ padding: '6px 10px' }}>Plan</th>
-                <th style={{ padding: '6px 10px' }}>Eligible</th>
-                <th style={{ padding: '6px 10px' }}>By</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recent.map((r) => (
-                <tr key={r.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td style={{ padding: '6px 10px', fontSize: 12 }}>
-                    {r.checkedAtUtc.slice(0, 16).replace('T', ' ')}
-                  </td>
-                  <td style={{ padding: '6px 10px' }}>
-                    {r.memberLastName}, {r.memberFirstName} · {r.memberId}
-                  </td>
-                  <td style={{ padding: '6px 10px' }}>{r.payerName}</td>
-                  <td style={{ padding: '6px 10px', color: '#64748b' }}>{r.planName ?? '—'}</td>
-                  <td style={{ padding: '6px 10px' }}>{eligibilityBadge(r.eligible)}</td>
-                  <td style={{ padding: '6px 10px', color: '#64748b', fontSize: 12 }}>
-                    {r.checkedByEmail}
-                  </td>
+          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                  <th className="px-4 py-3">When</th>
+                  <th className="px-4 py-3">Member</th>
+                  <th className="px-4 py-3">Payer</th>
+                  <th className="px-4 py-3">Plan</th>
+                  <th className="px-4 py-3">Eligible</th>
+                  <th className="px-4 py-3">By</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {recent.map((r) => (
+                  <tr key={r.id} className="border-t border-slate-100 hover:bg-slate-50">
+                    <td className="px-4 py-3 text-xs text-slate-700">
+                      {r.checkedAtUtc.slice(0, 16).replace('T', ' ')}
+                    </td>
+                    <td className="px-4 py-3 text-slate-700">
+                      {r.memberLastName}, {r.memberFirstName} · {r.memberId}
+                    </td>
+                    <td className="px-4 py-3 text-slate-700">{r.payerName}</td>
+                    <td className="px-4 py-3 text-slate-500">{r.planName ?? '—'}</td>
+                    <td className="px-4 py-3">{eligibilityBadge(r.eligible)}</td>
+                    <td className="px-4 py-3 text-xs text-slate-500">
+                      {r.checkedByEmail}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
     </div>

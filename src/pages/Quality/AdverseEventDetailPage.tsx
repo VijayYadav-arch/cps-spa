@@ -36,7 +36,7 @@ export function AdverseEventDetailPage() {
   const reload = async () => { setEv(await getAdverseEvent(id)); };
   useEffect(() => { void reload(); }, [id]);
 
-  if (!ev) return <p>Loading…</p>;
+  if (!ev) return <div role="status" className="text-slate-500">Loading…</div>;
 
   const handleTransition = async (to: HospiceAdverseEventStatus) => {
     await updateAdverseEventStatus(id, { status: to, notes: notes || undefined });
@@ -50,31 +50,49 @@ export function AdverseEventDetailPage() {
   };
 
   return (
-    <div>
-      <header>
-        <h1>Event #{ev.id}: {ev.category} <AdverseEventBadge severity={ev.severity} /></h1>
-        <p>Status: {ev.status} • Source: {ev.source} • Date: {ev.eventDate}</p>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <header className="space-y-2">
+        <h2 className="flex flex-wrap items-center gap-2 text-2xl">
+          Event #{ev.id}: {ev.category} <AdverseEventBadge severity={ev.severity} />
+        </h2>
+        <div className="section-line" />
+        <p className="max-w-3xl text-slate-500">
+          Status: {ev.status} • Source: {ev.source} • Date: {ev.eventDate}
+        </p>
       </header>
-      <section>
-        <h2>Summary</h2>
-        <p>{ev.summary}</p>
-        {ev.immediateActionTaken && <><h3>Immediate Action</h3><p>{ev.immediateActionTaken}</p></>}
-        {ev.notes && <><h3>Notes</h3><p>{ev.notes}</p></>}
+
+      <section className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <h3 className="text-lg font-semibold">Summary</h3>
+        <p className="text-slate-700">{ev.summary}</p>
+        {ev.immediateActionTaken && (
+          <>
+            <h4 className="text-sm font-semibold text-slate-700">Immediate Action</h4>
+            <p className="text-slate-700">{ev.immediateActionTaken}</p>
+          </>
+        )}
+        {ev.notes && (
+          <>
+            <h4 className="text-sm font-semibold text-slate-700">Notes</h4>
+            <p className="text-slate-700">{ev.notes}</p>
+          </>
+        )}
       </section>
 
       {NEXT_STATUSES[ev.status].length > 0 && (
-        <section>
-          <h2>Status Transition</h2>
-          <label>Notes (required to dismiss auto-derived)</label>
-          <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3} />
-          <div>
+        <section className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <h3 className="text-lg font-semibold">Status Transition</h3>
+          <label className="grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">Notes (required to dismiss auto-derived)</span>
+            <textarea className="form-input" value={notes} onChange={e => setNotes(e.target.value)} rows={3} />
+          </label>
+          <div className="flex flex-wrap gap-2">
             {NEXT_STATUSES[ev.status].map(next => (
               <button
                 key={next}
                 onClick={() => handleTransition(next)}
                 disabled={!canManage}
                 title={!canManage ? NO_PERMISSION : undefined}
-                style={{ cursor: !canManage ? 'not-allowed' : 'pointer' }}
+                className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Move to {next}
               </button>
@@ -84,19 +102,19 @@ export function AdverseEventDetailPage() {
       )}
 
       {!ev.rca && ev.status !== 'DismissedAsNonEvent' && (
-        <section>
-          <h2>Root Cause Analysis</h2>
+        <section className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <h3 className="text-lg font-semibold">Root Cause Analysis</h3>
           <RcaForm onSubmit={handleRcaSubmit} />
         </section>
       )}
 
       {ev.rca && (
-        <section>
-          <h2>RCA</h2>
-          <p>Method: {ev.rca.rcaMethod}</p>
-          <p>Contributing Factors: {ev.rca.contributingFactors}</p>
-          <p>Root Cause: {ev.rca.rootCauseSummary}</p>
-          {ev.rca.linkedPipId && <p>Linked PIP: #{ev.rca.linkedPipId}</p>}
+        <section className="grid gap-2 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <h3 className="text-lg font-semibold">RCA</h3>
+          <p className="text-slate-700">Method: {ev.rca.rcaMethod}</p>
+          <p className="text-slate-700">Contributing Factors: {ev.rca.contributingFactors}</p>
+          <p className="text-slate-700">Root Cause: {ev.rca.rootCauseSummary}</p>
+          {ev.rca.linkedPipId && <p className="text-slate-700">Linked PIP: #{ev.rca.linkedPipId}</p>}
         </section>
       )}
     </div>

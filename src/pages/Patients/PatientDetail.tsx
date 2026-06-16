@@ -24,40 +24,38 @@ export function PatientDetail() {
     return () => { cancelled = true; };
   }, [id]);
 
-  if (isLoading) return <div role="status">Loading patient…</div>;
-  if (error) return <div role="alert">{error}</div>;
+  if (isLoading) return <div role="status" className="text-slate-500">Loading patient…</div>;
+  if (error) return <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">{error}</div>;
   if (!patient) return null;
 
   return (
-    <div>
-      <button onClick={() => navigate('/patients')} style={{ marginBottom: 16 }}>← Back to Patients</button>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
-        <h2 style={{ fontSize: 20, fontWeight: 700 }}>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <button
+        onClick={() => navigate('/patients')}
+        className="justify-self-start rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+      >
+        ← Back to Patients
+      </button>
+      <div className="flex items-center gap-4">
+        <h2 className="text-2xl">
           {patient.firstName} {patient.lastName}
         </h2>
         <Link
           to={`/patients/${id}/history`}
-          style={{
-            padding: '4px 12px',
-            borderRadius: 4,
-            border: '1px solid #2563eb',
-            color: '#2563eb',
-            textDecoration: 'none',
-            fontSize: 14,
-          }}
+          className="rounded-md border border-teal-700 px-3 py-1 text-sm font-medium text-teal-700 transition-colors hover:bg-teal-50"
         >
           View History
         </Link>
       </div>
-      <dl style={{ display: 'grid', gridTemplateColumns: '160px 1fr', gap: '8px 16px' }}>
-        <dt style={{ fontWeight: 500 }}>Date of Birth</dt>
-        <dd>{new Date(patient.dateOfBirth).toLocaleDateString()}</dd>
-        <dt style={{ fontWeight: 500 }}>Gender</dt><dd>{patient.gender ?? '—'}</dd>
-        <dt style={{ fontWeight: 500 }}>Email</dt><dd>{patient.email ?? '—'}</dd>
-        <dt style={{ fontWeight: 500 }}>Phone</dt><dd>{patient.phone ?? '—'}</dd>
-        <dt style={{ fontWeight: 500 }}>Address</dt>
-        <dd>{[patient.address, patient.city, patient.state, patient.zip].filter(Boolean).join(', ') || '—'}</dd>
-        <dt style={{ fontWeight: 500 }}>Insurance ID</dt><dd>{patient.insuranceId ?? '—'}</dd>
+      <dl className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm grid grid-cols-[160px_1fr] gap-x-4 gap-y-2">
+        <dt className="font-medium text-slate-600">Date of Birth</dt>
+        <dd className="text-slate-700">{new Date(patient.dateOfBirth).toLocaleDateString()}</dd>
+        <dt className="font-medium text-slate-600">Gender</dt><dd className="text-slate-700">{patient.gender ?? '—'}</dd>
+        <dt className="font-medium text-slate-600">Email</dt><dd className="text-slate-700">{patient.email ?? '—'}</dd>
+        <dt className="font-medium text-slate-600">Phone</dt><dd className="text-slate-700">{patient.phone ?? '—'}</dd>
+        <dt className="font-medium text-slate-600">Address</dt>
+        <dd className="text-slate-700">{[patient.address, patient.city, patient.state, patient.zip].filter(Boolean).join(', ') || '—'}</dd>
+        <dt className="font-medium text-slate-600">Insurance ID</dt><dd className="text-slate-700">{patient.insuranceId ?? '—'}</dd>
       </dl>
       <HospiceSummaryCard patientId={parseInt(id!, 10)} />
     </div>

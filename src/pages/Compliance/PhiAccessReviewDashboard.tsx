@@ -18,28 +18,34 @@ import { PERMISSIONS } from '@/permissions/permissions';
 
 const NO_PERMISSION = 'You do not have permission to perform this action';
 
+const ROW_ACTION_BTN =
+  'rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed';
+
 type Tab = 'anomalies' | 'patient' | 'user' | 'retention';
 
-const FLAG_COLORS: Record<PhiAnomalyFlag, { bg: string; fg: string }> = {
-  BulkRead: { bg: '#fee2e2', fg: '#991b1b' },
-  OffHours: { bg: '#fef3c7', fg: '#92400e' },
-  CrossOrg: { bg: '#ede9fe', fg: '#5b21b6' },
-  Modify: { bg: '#dbeafe', fg: '#1e40af' },
+// Tone classes for metric values. Callers pass a semantic tone key.
+type MetricTone = 'navy' | 'red' | 'green' | 'amber' | 'blue' | 'slate';
+const METRIC_TONE: Record<MetricTone, string> = {
+  navy: 'text-navy-900',
+  red: 'text-red-700',
+  green: 'text-success',
+  amber: 'text-amber-800',
+  blue: 'text-blue-800',
+  slate: 'text-slate-500',
 };
 
-function metricCard(label: string, value: string, color: string) {
+const FLAG_COLORS: Record<PhiAnomalyFlag, string> = {
+  BulkRead: 'bg-red-100 text-red-800',
+  OffHours: 'bg-amber-100 text-amber-800',
+  CrossOrg: 'bg-violet-100 text-violet-800',
+  Modify: 'bg-blue-100 text-blue-800',
+};
+
+function metricCard(label: string, value: string, tone: MetricTone) {
   return (
-    <div
-      style={{
-        border: '1px solid #e2e8f0',
-        borderRadius: 8,
-        padding: 16,
-        background: '#fff',
-        minWidth: 170,
-      }}
-    >
-      <div style={{ color: '#64748b', fontSize: 13 }}>{label}</div>
-      <div style={{ fontSize: 22, fontWeight: 700, color, marginTop: 6 }}>
+    <div className="card-hover min-w-[170px] flex-1 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</div>
+      <div className={`mt-1.5 text-2xl font-bold ${METRIC_TONE[tone]}`}>
         {value}
       </div>
     </div>
@@ -51,15 +57,7 @@ function flagBadge(f: PhiAnomalyFlag) {
   return (
     <span
       key={f}
-      style={{
-        background: c.bg,
-        color: c.fg,
-        padding: '2px 6px',
-        borderRadius: 4,
-        fontSize: 11,
-        fontWeight: 600,
-        marginRight: 4,
-      }}
+      className={`mr-1 inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${c}`}
     >
       {f}
     </span>
@@ -68,48 +66,50 @@ function flagBadge(f: PhiAnomalyFlag) {
 
 function eventsTable(events: PhiAccessEvent[]) {
   if (events.length === 0) {
-    return <p style={{ color: '#64748b' }}>No events.</p>;
+    return <p className="text-slate-500">No events.</p>;
   }
   return (
-    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-      <thead>
-        <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-          <th style={{ padding: '6px 10px' }}>When</th>
-          <th style={{ padding: '6px 10px' }}>User</th>
-          <th style={{ padding: '6px 10px' }}>Action</th>
-          <th style={{ padding: '6px 10px' }}>Resource</th>
-          <th style={{ padding: '6px 10px' }}>Patient</th>
-          <th style={{ padding: '6px 10px' }}>IP</th>
-          <th style={{ padding: '6px 10px' }}>Flags</th>
-        </tr>
-      </thead>
-      <tbody>
-        {events.map((e) => (
-          <tr key={e.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-            <td style={{ padding: '6px 10px', fontSize: 12 }}>
-              {e.createdAt.slice(0, 19).replace('T', ' ')}
-            </td>
-            <td style={{ padding: '6px 10px' }}>
-              {e.userEmail ?? `#${e.userId ?? '—'}`}
-            </td>
-            <td style={{ padding: '6px 10px' }}>{e.eventType}</td>
-            <td style={{ padding: '6px 10px', color: '#64748b' }}>
-              {e.resourceType ?? '—'}
-              {e.resourceId !== null && `#${e.resourceId}`}
-            </td>
-            <td style={{ padding: '6px 10px' }}>
-              {e.patientId === null ? '—' : `#${e.patientId}`}
-            </td>
-            <td style={{ padding: '6px 10px', color: '#64748b', fontSize: 12 }}>
-              {e.ipAddress ?? '—'}
-            </td>
-            <td style={{ padding: '6px 10px' }}>
-              {e.anomalyFlags.length === 0 ? '—' : e.anomalyFlags.map(flagBadge)}
-            </td>
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <table className="w-full border-collapse text-sm">
+        <thead>
+          <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+            <th className="px-4 py-3">When</th>
+            <th className="px-4 py-3">User</th>
+            <th className="px-4 py-3">Action</th>
+            <th className="px-4 py-3">Resource</th>
+            <th className="px-4 py-3">Patient</th>
+            <th className="px-4 py-3">IP</th>
+            <th className="px-4 py-3">Flags</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {events.map((e) => (
+            <tr key={e.id} className="border-t border-slate-100 hover:bg-slate-50">
+              <td className="px-4 py-3 text-xs text-slate-700">
+                {e.createdAt.slice(0, 19).replace('T', ' ')}
+              </td>
+              <td className="px-4 py-3 text-slate-700">
+                {e.userEmail ?? `#${e.userId ?? '—'}`}
+              </td>
+              <td className="px-4 py-3 text-slate-700">{e.eventType}</td>
+              <td className="px-4 py-3 text-slate-500">
+                {e.resourceType ?? '—'}
+                {e.resourceId !== null && `#${e.resourceId}`}
+              </td>
+              <td className="px-4 py-3 text-slate-700">
+                {e.patientId === null ? '—' : `#${e.patientId}`}
+              </td>
+              <td className="px-4 py-3 text-xs text-slate-500">
+                {e.ipAddress ?? '—'}
+              </td>
+              <td className="px-4 py-3 text-slate-700">
+                {e.anomalyFlags.length === 0 ? '—' : e.anomalyFlags.map(flagBadge)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
@@ -231,31 +231,29 @@ export function PhiAccessReviewDashboard() {
   }
 
   return (
-    <div style={{ padding: 24, maxWidth: 1200, display: 'grid', gap: 16 }}>
-      <header>
-        <h2 style={{ fontSize: 22, fontWeight: 700 }}>PHI Access Review</h2>
-        <p style={{ color: '#64748b', marginTop: 4 }}>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <header className="space-y-2">
+        <h2 className="text-2xl">PHI Access Review</h2>
+        <div className="section-line" />
+        <p className="max-w-3xl text-slate-500">
           HIPAA §164.308(a)(1)(ii)(D) — regularly review records of information
           system activity. Compliance officers attest to their review here, which
           creates a durable audit artifact.
         </p>
       </header>
 
-      <nav style={{ display: 'flex', gap: 8, borderBottom: '1px solid #e2e8f0' }}>
+      <nav className="flex gap-2 border-b border-slate-200">
         {(['anomalies', 'patient', 'user', 'retention'] as Tab[]).map((t) => (
           <button
             key={t}
             role="tab"
             type="button"
             onClick={() => setTab(t)}
-            style={{
-              padding: '8px 14px',
-              border: 'none',
-              borderBottom: tab === t ? '2px solid #0ea5e9' : '2px solid transparent',
-              background: 'none',
-              fontWeight: tab === t ? 600 : 400,
-              cursor: 'pointer',
-            }}
+            className={`border-b-2 bg-transparent px-3.5 py-2 transition-colors ${
+              tab === t
+                ? 'border-teal-600 font-semibold text-navy-900'
+                : 'border-transparent text-slate-600 hover:text-navy-900'
+            }`}
           >
             {t === 'anomalies' && 'Anomalies'}
             {t === 'patient' && 'By Patient'}
@@ -267,7 +265,7 @@ export function PhiAccessReviewDashboard() {
 
       {tab !== 'retention' && (
         <form
-          style={{ display: 'flex', gap: 12, alignItems: 'end', flexWrap: 'wrap' }}
+          className="flex flex-wrap items-end gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
           onSubmit={(e) => {
             e.preventDefault();
             if (tab === 'anomalies') void loadAnomalies();
@@ -275,20 +273,22 @@ export function PhiAccessReviewDashboard() {
             else if (tab === 'user' && userId) void loadUser(Number(userId));
           }}
         >
-          <label style={{ display: 'grid', gap: 4 }}>
-            <span>From (UTC)</span>
+          <label className="grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">From (UTC)</span>
             <input
               type="datetime-local"
+              className="form-input"
               value={range.from.slice(0, 16)}
               onChange={(e) =>
                 setRange({ ...range, from: new Date(e.target.value).toISOString() })
               }
             />
           </label>
-          <label style={{ display: 'grid', gap: 4 }}>
-            <span>To (UTC)</span>
+          <label className="grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">To (UTC)</span>
             <input
               type="datetime-local"
+              className="form-input"
               value={range.to.slice(0, 16)}
               onChange={(e) =>
                 setRange({ ...range, to: new Date(e.target.value).toISOString() })
@@ -296,48 +296,50 @@ export function PhiAccessReviewDashboard() {
             />
           </label>
           {tab === 'patient' && (
-            <label style={{ display: 'grid', gap: 4 }}>
-              <span>Patient ID</span>
+            <label className="grid gap-1.5">
+              <span className="text-sm font-medium text-slate-600">Patient ID</span>
               <input
                 type="number"
                 value={patientId}
                 onChange={(e) => setPatientId(e.target.value)}
                 required
-                style={{ width: 100 }}
+                className="form-input w-24"
               />
             </label>
           )}
           {tab === 'user' && (
-            <label style={{ display: 'grid', gap: 4 }}>
-              <span>User ID</span>
+            <label className="grid gap-1.5">
+              <span className="text-sm font-medium text-slate-600">User ID</span>
               <input
                 type="number"
                 value={userId}
                 onChange={(e) => setUserId(e.target.value)}
                 required
-                style={{ width: 100 }}
+                className="form-input w-24"
               />
             </label>
           )}
-          <button type="submit">Apply</button>
+          <button type="submit" className="btn-primary">Apply</button>
         </form>
       )}
 
-      {isLoading && <div role="status">Loading…</div>}
-      {error && <div role="alert" style={{ color: '#b91c1c' }}>{error}</div>}
-      {actionMsg && <div style={{ color: '#15803d' }}>{actionMsg}</div>}
+      {isLoading && <div role="status" className="text-slate-500">Loading…</div>}
+      {error && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">{error}</div>}
+      {actionMsg && (
+        <div className="rounded-lg border-l-4 border-success bg-green-50 px-4 py-3 font-semibold text-green-800">{actionMsg}</div>
+      )}
 
       {tab === 'anomalies' && anomalies && !isLoading && (
         <>
-          <section style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          <section className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
             {metricCard(
               'Total Anomalies',
               anomalies.totalAnomalies.toString(),
-              anomalies.totalAnomalies > 0 ? '#b91c1c' : '#15803d',
+              anomalies.totalAnomalies > 0 ? 'red' : 'green',
             )}
-            {metricCard('Bulk Read', anomalies.bulkReadCount.toString(), '#991b1b')}
-            {metricCard('Off Hours', anomalies.offHoursCount.toString(), '#92400e')}
-            {metricCard('Cross-Org', anomalies.crossOrgCount.toString(), '#5b21b6')}
+            {metricCard('Bulk Read', anomalies.bulkReadCount.toString(), 'red')}
+            {metricCard('Off Hours', anomalies.offHoursCount.toString(), 'amber')}
+            {metricCard('Cross-Org', anomalies.crossOrgCount.toString(), 'blue')}
           </section>
           {eventsTable(anomalies.events)}
         </>
@@ -345,15 +347,15 @@ export function PhiAccessReviewDashboard() {
 
       {tab === 'patient' && patientReport && !isLoading && (
         <>
-          <section style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            {metricCard('Patient', `#${patientReport.patientId}`, '#0f172a')}
-            {metricCard('Total Events', patientReport.totalEvents.toString(), '#0f172a')}
-            {metricCard('Distinct Users', patientReport.distinctUserCount.toString(), '#0f172a')}
-            {metricCard('Modifications', patientReport.modificationCount.toString(), '#1e40af')}
+          <section className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+            {metricCard('Patient', `#${patientReport.patientId}`, 'navy')}
+            {metricCard('Total Events', patientReport.totalEvents.toString(), 'navy')}
+            {metricCard('Distinct Users', patientReport.distinctUserCount.toString(), 'navy')}
+            {metricCard('Modifications', patientReport.modificationCount.toString(), 'blue')}
             {metricCard(
               'Anomalies',
               patientReport.anomalyCount.toString(),
-              patientReport.anomalyCount > 0 ? '#b91c1c' : '#15803d',
+              patientReport.anomalyCount > 0 ? 'red' : 'green',
             )}
           </section>
           <ReviewBanner
@@ -368,7 +370,7 @@ export function PhiAccessReviewDashboard() {
               }
               disabled={!canReview}
               title={!canReview ? NO_PERMISSION : undefined}
-              style={{ cursor: !canReview ? 'not-allowed' : 'pointer' }}
+              className={ROW_ACTION_BTN}
             >
               Attest Review
             </button>
@@ -379,19 +381,19 @@ export function PhiAccessReviewDashboard() {
 
       {tab === 'user' && userReport && !isLoading && (
         <>
-          <section style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          <section className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
             {metricCard(
               'User',
               userReport.userEmail ?? `#${userReport.userId}`,
-              '#0f172a',
+              'navy',
             )}
-            {metricCard('Total Events', userReport.totalEvents.toString(), '#0f172a')}
-            {metricCard('Distinct Patients', userReport.distinctPatientCount.toString(), '#0f172a')}
-            {metricCard('Off Hours', userReport.offHoursCount.toString(), '#92400e')}
+            {metricCard('Total Events', userReport.totalEvents.toString(), 'navy')}
+            {metricCard('Distinct Patients', userReport.distinctPatientCount.toString(), 'navy')}
+            {metricCard('Off Hours', userReport.offHoursCount.toString(), 'amber')}
             {metricCard(
               'Anomalies',
               userReport.anomalyCount.toString(),
-              userReport.anomalyCount > 0 ? '#b91c1c' : '#15803d',
+              userReport.anomalyCount > 0 ? 'red' : 'green',
             )}
           </section>
           <ReviewBanner
@@ -406,7 +408,7 @@ export function PhiAccessReviewDashboard() {
               }
               disabled={!canReview}
               title={!canReview ? NO_PERMISSION : undefined}
-              style={{ cursor: !canReview ? 'not-allowed' : 'pointer' }}
+              className={ROW_ACTION_BTN}
             >
               Attest Review
             </button>
@@ -417,25 +419,18 @@ export function PhiAccessReviewDashboard() {
 
       {tab === 'retention' && retention && !isLoading && (
         <>
-          <section style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            {metricCard('Total Events', retention.totalEvents.toString(), '#0f172a')}
-            {metricCard('< 1 year', retention.under1YearCount.toString(), '#0f172a')}
-            {metricCard('1–3 years', retention.between1And3YearsCount.toString(), '#0f172a')}
-            {metricCard('3–6 years', retention.between3And6YearsCount.toString(), '#0f172a')}
+          <section className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+            {metricCard('Total Events', retention.totalEvents.toString(), 'navy')}
+            {metricCard('< 1 year', retention.under1YearCount.toString(), 'navy')}
+            {metricCard('1–3 years', retention.between1And3YearsCount.toString(), 'navy')}
+            {metricCard('3–6 years', retention.between3And6YearsCount.toString(), 'navy')}
             {metricCard(
               `> ${retention.minimumRequiredYears} years`,
               retention.over6YearsCount.toString(),
-              retention.over6YearsCount > 0 ? '#15803d' : '#64748b',
+              retention.over6YearsCount > 0 ? 'green' : 'slate',
             )}
           </section>
-          <section
-            style={{
-              padding: 12,
-              borderRadius: 6,
-              background: '#f8fafc',
-              color: '#475569',
-            }}
-          >
+          <section className="rounded-lg border border-accent-200 bg-accent-50 px-4 py-3 text-slate-600">
             HIPAA §164.530(j) requires PHI access records to be retained for at least{' '}
             <strong>{retention.minimumRequiredYears} years</strong>.{' '}
             {retention.oldestEventAtUtc
@@ -456,22 +451,17 @@ interface ReviewBannerProps {
 function ReviewBanner({ lastReviewedAtUtc, lastReviewResult }: ReviewBannerProps) {
   if (!lastReviewedAtUtc) {
     return (
-      <section
-        style={{
-          padding: 10,
-          borderRadius: 6,
-          background: '#fef3c7',
-          color: '#92400e',
-        }}
-      >
+      <section className="rounded-lg border-l-4 border-warning bg-amber-50 px-4 py-3 font-semibold text-amber-800">
         Never reviewed. Compliance attestation required.
       </section>
     );
   }
-  const bg = lastReviewResult === 'ok' ? '#f0fdf4' : '#fef2f2';
-  const fg = lastReviewResult === 'ok' ? '#166534' : '#991b1b';
+  const tone =
+    lastReviewResult === 'ok'
+      ? 'border-success bg-green-50 text-green-800'
+      : 'border-error bg-red-50 text-red-800';
   return (
-    <section style={{ padding: 10, borderRadius: 6, background: bg, color: fg }}>
+    <section className={`rounded-lg border-l-4 px-4 py-3 font-semibold ${tone}`}>
       Last reviewed {lastReviewedAtUtc.slice(0, 10)} —{' '}
       <strong>{lastReviewResult}</strong>
     </section>

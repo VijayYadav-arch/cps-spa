@@ -109,23 +109,21 @@ export function CommercialApiKeysPage() {
     }
   };
 
-  if (loading) return <div style={{ padding: '1rem' }}>Loading…</div>;
+  if (loading)
+    return (
+      <div role="status" className="text-slate-500">
+        Loading…
+      </div>
+    );
 
   return (
-    <div style={{ padding: '1rem', maxWidth: 1200, margin: '0 auto' }}>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: 24,
-        }}
-      >
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 data-testid="page-title" style={{ fontSize: 24, fontWeight: 600 }}>
+          <h1 data-testid="page-title" className="text-2xl">
             API Keys
           </h1>
-          <p style={{ color: '#64748b', fontSize: 14, marginTop: 4 }}>
+          <p className="mt-1 text-sm text-slate-500">
             Manage API keys for programmatic access.
           </p>
         </div>
@@ -137,15 +135,7 @@ export function CommercialApiKeysPage() {
           }}
           disabled={!canManageKeys}
           title={!canManageKeys ? NO_PERMISSION : undefined}
-          style={{
-            padding: '10px 16px',
-            background: '#0d9488',
-            color: 'white',
-            border: 'none',
-            borderRadius: 8,
-            fontWeight: 500,
-            cursor: canManageKeys ? 'pointer' : 'not-allowed',
-          }}
+          className="btn-primary disabled:cursor-not-allowed disabled:opacity-60"
         >
           Create API Key
         </button>
@@ -153,15 +143,8 @@ export function CommercialApiKeysPage() {
 
       {error && (
         <div
-          style={{
-            padding: 12,
-            background: '#fef2f2',
-            border: '1px solid #fecaca',
-            borderRadius: 8,
-            color: '#b91c1c',
-            marginBottom: 16,
-          }}
           role="alert"
+          className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800"
         >
           {error}
         </div>
@@ -170,30 +153,17 @@ export function CommercialApiKeysPage() {
       {createdKey && (
         <div
           data-testid="created-key-banner"
-          style={{
-            padding: 16,
-            background: '#fffbeb',
-            border: '1px solid #fde68a',
-            borderRadius: 8,
-            marginBottom: 16,
-          }}
+          className="rounded-lg border border-accent-200 bg-accent-50 px-4 py-3"
         >
-          <p style={{ fontWeight: 600, color: '#92400e', marginBottom: 4 }}>
+          <p className="font-semibold text-amber-800">
             API Key Created: {createdKey.name}
           </p>
-          <p style={{ fontSize: 12, color: '#92400e', marginBottom: 8 }}>
+          <p className="mb-2 text-xs text-amber-800">
             Copy this key now. It will not be shown again.
           </p>
           <code
             data-testid="created-key-value"
-            style={{
-              display: 'block',
-              padding: 8,
-              background: 'white',
-              border: '1px solid #fde68a',
-              borderRadius: 4,
-              fontFamily: 'monospace',
-            }}
+            className="block rounded border border-accent-200 bg-white p-2 font-mono"
           >
             {createdKey.fullKey}
           </code>
@@ -203,92 +173,56 @@ export function CommercialApiKeysPage() {
       {showCreate && (
         <form
           onSubmit={handleCreate}
-          style={{
-            background: 'white',
-            padding: 16,
-            borderRadius: 8,
-            border: '1px solid #f1f5f9',
-            marginBottom: 16,
-          }}
+          className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
         >
-          <h2 style={{ fontWeight: 600, marginBottom: 12 }}>Create New API Key</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
-            <div>
-              <label style={{ fontSize: 12, fontWeight: 500 }}>Name</label>
+          <h2 className="mb-3 text-lg font-semibold">Create New API Key</h2>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <label className="grid gap-1.5">
+              <span className="text-sm font-medium text-slate-600">Name</span>
               <input
                 type="text"
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 required
-                style={{
-                  width: '100%',
-                  padding: 8,
-                  border: '1px solid #cbd5e1',
-                  borderRadius: 6,
-                  marginTop: 4,
-                }}
+                className="form-input"
               />
-            </div>
-            <div>
-              <label style={{ fontSize: 12, fontWeight: 500 }}>Scope</label>
+            </label>
+            <label className="grid gap-1.5">
+              <span className="text-sm font-medium text-slate-600">Scope</span>
               <select
                 value={newScope}
                 onChange={(e) => setNewScope(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: 8,
-                  border: '1px solid #cbd5e1',
-                  borderRadius: 6,
-                  marginTop: 4,
-                }}
+                className="form-input"
               >
                 <option value="read">Read Only</option>
                 <option value="write">Read + Write</option>
                 <option value="admin">Admin</option>
               </select>
-            </div>
-            <div>
-              <label style={{ fontSize: 12, fontWeight: 500 }}>Expires (optional)</label>
+            </label>
+            <label className="grid gap-1.5">
+              <span className="text-sm font-medium text-slate-600">
+                Expires (optional)
+              </span>
               <input
                 type="date"
                 value={newExpiresAt}
                 onChange={(e) => setNewExpiresAt(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: 8,
-                  border: '1px solid #cbd5e1',
-                  borderRadius: 6,
-                  marginTop: 4,
-                }}
+                className="form-input"
               />
-            </div>
+            </label>
           </div>
-          <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
+          <div className="mt-4 flex gap-2">
             <button
               type="submit"
               disabled={creating || !newName.trim()}
-              style={{
-                padding: '8px 16px',
-                background: '#0d9488',
-                color: 'white',
-                border: 'none',
-                borderRadius: 6,
-                cursor: 'pointer',
-              }}
+              className="btn-primary disabled:cursor-not-allowed disabled:opacity-60"
             >
               {creating ? 'Creating…' : 'Create Key'}
             </button>
             <button
               type="button"
               onClick={() => setShowCreate(false)}
-              style={{
-                padding: '8px 16px',
-                background: 'transparent',
-                color: '#475569',
-                border: '1px solid #cbd5e1',
-                borderRadius: 6,
-                cursor: 'pointer',
-              }}
+              className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
             >
               Cancel
             </button>
@@ -298,28 +232,23 @@ export function CommercialApiKeysPage() {
 
       <div
         data-testid="api-keys-list"
-        style={{
-          background: 'white',
-          borderRadius: 12,
-          border: '1px solid #f1f5f9',
-          overflow: 'hidden',
-        }}
+        className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
       >
         {keys.length === 0 ? (
-          <div style={{ padding: 48, textAlign: 'center', color: '#94a3b8' }}>
+          <div className="p-12 text-center text-slate-400">
             No API keys yet. Create your first key above.
           </div>
         ) : (
-          <table style={{ width: '100%', fontSize: 14, borderCollapse: 'collapse' }}>
+          <table className="w-full border-collapse text-sm">
             <thead>
-              <tr style={{ background: '#f8fafc', textAlign: 'left' }}>
-                <th style={{ padding: 12 }}>Name</th>
-                <th style={{ padding: 12 }}>Prefix</th>
-                <th style={{ padding: 12 }}>Scope</th>
-                <th style={{ padding: 12 }}>Last Used</th>
-                <th style={{ padding: 12 }}>Created</th>
-                <th style={{ padding: 12 }}>Status</th>
-                <th style={{ padding: 12 }}>Actions</th>
+              <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                <th className="px-4 py-3">Name</th>
+                <th className="px-4 py-3">Prefix</th>
+                <th className="px-4 py-3">Scope</th>
+                <th className="px-4 py-3">Last Used</th>
+                <th className="px-4 py-3">Created</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -327,43 +256,41 @@ export function CommercialApiKeysPage() {
                 <tr
                   key={key.id}
                   data-testid="api-key-row"
-                  style={{ borderTop: '1px solid #f1f5f9' }}
+                  className="border-t border-slate-100 hover:bg-slate-50"
                 >
-                  <td data-testid="api-key-name" style={{ padding: 12, fontWeight: 500 }}>
+                  <td
+                    data-testid="api-key-name"
+                    className="px-4 py-3 font-medium text-slate-700"
+                  >
                     {key.name}
                   </td>
                   <td
                     data-testid="api-key-prefix"
-                    style={{ padding: 12, fontFamily: 'monospace', fontSize: 12 }}
+                    className="px-4 py-3 font-mono text-xs text-slate-700"
                   >
                     {key.prefix}…
                   </td>
-                  <td style={{ padding: 12 }}>{key.scope}</td>
-                  <td style={{ padding: 12, fontSize: 12, color: '#64748b' }}>
+                  <td className="px-4 py-3 text-slate-700">{key.scope}</td>
+                  <td className="px-4 py-3 text-xs text-slate-500">
                     {formatDate(key.lastUsedAt)}
                   </td>
                   <td
                     data-testid="api-key-created"
-                    style={{ padding: 12, fontSize: 12, color: '#64748b' }}
+                    className="px-4 py-3 text-xs text-slate-500"
                   >
                     {formatDate(key.createdAt)}
                   </td>
-                  <td style={{ padding: 12 }}>{key.isActive ? 'Active' : 'Revoked'}</td>
-                  <td style={{ padding: 12 }}>
+                  <td className="px-4 py-3 text-slate-700">
+                    {key.isActive ? 'Active' : 'Revoked'}
+                  </td>
+                  <td className="px-4 py-3">
                     {key.isActive && (
                       <button
                         data-testid="action-revoke-key"
                         onClick={() => handleRevoke(key.id)}
                         disabled={!canManageKeys}
                         title={!canManageKeys ? NO_PERMISSION : undefined}
-                        style={{
-                          background: 'transparent',
-                          color: '#dc2626',
-                          border: 'none',
-                          cursor: canManageKeys ? 'pointer' : 'not-allowed',
-                          fontWeight: 500,
-                          fontSize: 12,
-                        }}
+                        className="rounded-md border border-red-200 px-2.5 py-1 text-xs font-medium text-red-700 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         Revoke
                       </button>

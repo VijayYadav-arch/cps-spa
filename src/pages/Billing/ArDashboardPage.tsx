@@ -20,19 +20,11 @@ const VALID_OUTCOMES = [
   'written-off',
 ];
 
-function metricCard(label: string, value: string, color: string) {
+function metricCard(label: string, value: string, tone: string) {
   return (
-    <div
-      style={{
-        border: '1px solid #e2e8f0',
-        borderRadius: 8,
-        padding: 16,
-        background: '#fff',
-        minWidth: 160,
-      }}
-    >
-      <div style={{ color: '#64748b', fontSize: 13 }}>{label}</div>
-      <div style={{ fontSize: 22, fontWeight: 700, color, marginTop: 6 }}>
+    <div className="card-hover rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</div>
+      <div className={`mt-1.5 text-2xl font-bold ${tone}`}>
         {value}
       </div>
     </div>
@@ -116,184 +108,185 @@ export function ArDashboardPage() {
   }
 
   return (
-    <div style={{ padding: 24, maxWidth: 1200, display: 'grid', gap: 24 }}>
-      <header style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <header className="flex items-start justify-between">
         <div>
-          <h2 style={{ fontSize: 22, fontWeight: 700 }}>AR Follow-Up Dashboard</h2>
-          <p style={{ color: '#64748b', marginTop: 4 }}>
+          <h2 className="text-2xl">AR Follow-Up Dashboard</h2>
+          <div className="section-line mt-2" />
+          <p className="mt-2 max-w-3xl text-slate-500">
             Claims flagged for follow-up. The action queue shows what's due
             today or overdue; the by-payer view shows where your AR balance is
             stuck.
           </p>
         </div>
-        <button type="button" onClick={() => navigate('/billing/ar/ticklers')}>
+        <button
+          type="button"
+          onClick={() => navigate('/billing/ar/ticklers')}
+          className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+        >
           Open tickler queue →
         </button>
       </header>
 
-      {error && <div role="alert" style={{ color: '#b91c1c' }}>{error}</div>}
-      {actionMsg && <div style={{ color: '#15803d' }}>{actionMsg}</div>}
-      {isLoading && <div role="status">Loading…</div>}
+      {error && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">{error}</div>}
+      {actionMsg && <div className="rounded-lg border-l-4 border-success bg-green-50 px-4 py-3 font-semibold text-green-800">{actionMsg}</div>}
+      {isLoading && <div role="status" className="text-slate-500">Loading…</div>}
 
       {summary && !isLoading && (
         <>
-          <section style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            {metricCard('Follow-Up Claims', summary.totalFollowUpClaims.toString(), '#0f172a')}
-            {metricCard('Total AR', formatMoney(summary.totalAmount), '#0f172a')}
+          <section className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+            {metricCard('Follow-Up Claims', summary.totalFollowUpClaims.toString(), 'text-navy-900')}
+            {metricCard('Total AR', formatMoney(summary.totalAmount), 'text-navy-900')}
             {metricCard(
               '> 90-Day AR',
               formatMoney(summary.amountOver90Days),
-              summary.amountOver90Days > 0 ? '#b91c1c' : '#15803d',
+              summary.amountOver90Days > 0 ? 'text-error' : 'text-success',
             )}
             {metricCard(
               'Actions Due Today',
               summary.actionsDueToday.toString(),
-              summary.actionsDueToday > 0 ? '#b45309' : '#15803d',
+              summary.actionsDueToday > 0 ? 'text-accent-600' : 'text-success',
             )}
             {metricCard(
               'Actions Overdue',
               summary.actionsOverdue.toString(),
-              summary.actionsOverdue > 0 ? '#b91c1c' : '#15803d',
+              summary.actionsOverdue > 0 ? 'text-error' : 'text-success',
             )}
           </section>
 
-          <section style={{ display: 'grid', gap: 12 }}>
-            <h3 style={{ fontSize: 18, fontWeight: 600 }}>
+          <section className="grid gap-3">
+            <h3 className="text-lg font-semibold">
               Action Queue ({summary.actionQueue.length})
             </h3>
             {summary.actionQueue.length === 0 ? (
-              <p style={{ color: '#64748b' }}>
+              <p className="text-slate-500">
                 No follow-ups due today. Great job staying on top of AR.
               </p>
             ) : (
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-                    <th style={{ padding: '6px 10px' }}>Claim</th>
-                    <th style={{ padding: '6px 10px' }}>Patient</th>
-                    <th style={{ padding: '6px 10px' }}>Payer</th>
-                    <th style={{ padding: '6px 10px', textAlign: 'right' }}>$</th>
-                    <th style={{ padding: '6px 10px', textAlign: 'right' }}>Aged</th>
-                    <th style={{ padding: '6px 10px' }}>Due</th>
-                    <th style={{ padding: '6px 10px' }}>Last Contact</th>
-                    <th style={{ padding: '6px 10px' }}></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {summary.actionQueue.map((c) => (
-                    <tr key={c.claimId} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                      <td style={{ padding: '6px 10px', fontFamily: 'monospace', fontSize: 13 }}>
-                        {c.claimNumber}
-                      </td>
-                      <td style={{ padding: '6px 10px' }}>{c.patientName}</td>
-                      <td style={{ padding: '6px 10px' }}>{c.payer}</td>
-                      <td style={{ padding: '6px 10px', textAlign: 'right' }}>
-                        {formatMoney(c.amount)}
-                      </td>
-                      <td style={{ padding: '6px 10px', textAlign: 'right' }}>
-                        {c.daysAged}d
-                      </td>
-                      <td
-                        style={{
-                          padding: '6px 10px',
-                          color: c.daysUntilFollowUp < 0
-                            ? '#b91c1c'
-                            : c.daysUntilFollowUp === 0
-                              ? '#b45309'
-                              : '#0f172a',
-                          fontWeight: 600,
-                        }}
-                      >
-                        {c.daysUntilFollowUp < 0
-                          ? `${Math.abs(c.daysUntilFollowUp)}d overdue`
-                          : c.daysUntilFollowUp === 0
-                            ? 'Today'
-                            : `${c.daysUntilFollowUp}d`}
-                      </td>
-                      <td style={{ padding: '6px 10px', color: '#64748b' }}>
-                        {c.lastContactedAt?.slice(0, 10) ?? '—'}
-                      </td>
-                      <td style={{ padding: '6px 10px' }}>
-                        <button
-                          type="button"
-                          onClick={() => void handleLogCall(c)}
-                          disabled={!canFollowUp}
-                          title={!canFollowUp ? NO_PERMISSION : undefined}
-                          style={{ fontSize: 12, cursor: !canFollowUp ? 'not-allowed' : 'pointer' }}
-                        >
-                          Log Call
-                        </button>
-                      </td>
+              <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                <table className="w-full border-collapse text-sm">
+                  <thead>
+                    <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                      <th className="px-4 py-3">Claim</th>
+                      <th className="px-4 py-3">Patient</th>
+                      <th className="px-4 py-3">Payer</th>
+                      <th className="px-4 py-3 text-right">$</th>
+                      <th className="px-4 py-3 text-right">Aged</th>
+                      <th className="px-4 py-3">Due</th>
+                      <th className="px-4 py-3">Last Contact</th>
+                      <th className="px-4 py-3"></th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {summary.actionQueue.map((c) => (
+                      <tr key={c.claimId} className="border-t border-slate-100 hover:bg-slate-50">
+                        <td className="px-4 py-3 font-mono text-xs text-slate-700">
+                          {c.claimNumber}
+                        </td>
+                        <td className="px-4 py-3 text-slate-700">{c.patientName}</td>
+                        <td className="px-4 py-3 text-slate-700">{c.payer}</td>
+                        <td className="px-4 py-3 text-right text-slate-700">
+                          {formatMoney(c.amount)}
+                        </td>
+                        <td className="px-4 py-3 text-right text-slate-700">
+                          {c.daysAged}d
+                        </td>
+                        <td
+                          className={`px-4 py-3 font-semibold ${
+                            c.daysUntilFollowUp < 0
+                              ? 'text-error'
+                              : c.daysUntilFollowUp === 0
+                                ? 'text-accent-600'
+                                : 'text-navy-900'
+                          }`}
+                        >
+                          {c.daysUntilFollowUp < 0
+                            ? `${Math.abs(c.daysUntilFollowUp)}d overdue`
+                            : c.daysUntilFollowUp === 0
+                              ? 'Today'
+                              : `${c.daysUntilFollowUp}d`}
+                        </td>
+                        <td className="px-4 py-3 text-slate-500">
+                          {c.lastContactedAt?.slice(0, 10) ?? '—'}
+                        </td>
+                        <td className="px-4 py-3">
+                          <button
+                            type="button"
+                            onClick={() => void handleLogCall(c)}
+                            disabled={!canFollowUp}
+                            title={!canFollowUp ? NO_PERMISSION : undefined}
+                            className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            Log Call
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </section>
 
-          <section style={{ display: 'grid', gap: 12 }}>
-            <h3 style={{ fontSize: 18, fontWeight: 600 }}>
+          <section className="grid gap-3">
+            <h3 className="text-lg font-semibold">
               AR by Payer
             </h3>
             {summary.byPayer.length === 0 ? (
-              <p style={{ color: '#64748b' }}>No payer activity yet.</p>
+              <p className="text-slate-500">No payer activity yet.</p>
             ) : (
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-                    <th style={{ padding: '6px 10px' }}>Payer</th>
-                    <th style={{ padding: '6px 10px', textAlign: 'right' }}>Claims</th>
-                    <th style={{ padding: '6px 10px', textAlign: 'right' }}>Total $</th>
-                    <th style={{ padding: '6px 10px', textAlign: 'right' }}>0-30</th>
-                    <th style={{ padding: '6px 10px', textAlign: 'right' }}>31-60</th>
-                    <th style={{ padding: '6px 10px', textAlign: 'right' }}>61-90</th>
-                    <th style={{ padding: '6px 10px', textAlign: 'right' }}>&gt; 90</th>
-                    <th style={{ padding: '6px 10px', textAlign: 'right' }}>&gt; 90 $</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {summary.byPayer.map((p) => (
-                    <tr key={p.payer} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                      <td style={{ padding: '6px 10px', fontWeight: 600 }}>{p.payer}</td>
-                      <td style={{ padding: '6px 10px', textAlign: 'right' }}>
-                        {p.claimCount}
-                      </td>
-                      <td style={{ padding: '6px 10px', textAlign: 'right' }}>
-                        {formatMoney(p.totalAmount)}
-                      </td>
-                      <td style={{ padding: '6px 10px', textAlign: 'right' }}>
-                        {p.bucket0To30Count}
-                      </td>
-                      <td style={{ padding: '6px 10px', textAlign: 'right' }}>
-                        {p.bucket31To60Count}
-                      </td>
-                      <td style={{ padding: '6px 10px', textAlign: 'right' }}>
-                        {p.bucket61To90Count}
-                      </td>
-                      <td
-                        style={{
-                          padding: '6px 10px',
-                          textAlign: 'right',
-                          color: p.over90Count > 0 ? '#b91c1c' : '#0f172a',
-                          fontWeight: p.over90Count > 0 ? 600 : 400,
-                        }}
-                      >
-                        {p.over90Count}
-                      </td>
-                      <td
-                        style={{
-                          padding: '6px 10px',
-                          textAlign: 'right',
-                          color: p.over90Amount > 0 ? '#b91c1c' : '#0f172a',
-                          fontWeight: p.over90Amount > 0 ? 600 : 400,
-                        }}
-                      >
-                        {formatMoney(p.over90Amount)}
-                      </td>
+              <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                <table className="w-full border-collapse text-sm">
+                  <thead>
+                    <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                      <th className="px-4 py-3">Payer</th>
+                      <th className="px-4 py-3 text-right">Claims</th>
+                      <th className="px-4 py-3 text-right">Total $</th>
+                      <th className="px-4 py-3 text-right">0-30</th>
+                      <th className="px-4 py-3 text-right">31-60</th>
+                      <th className="px-4 py-3 text-right">61-90</th>
+                      <th className="px-4 py-3 text-right">&gt; 90</th>
+                      <th className="px-4 py-3 text-right">&gt; 90 $</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {summary.byPayer.map((p) => (
+                      <tr key={p.payer} className="border-t border-slate-100 hover:bg-slate-50">
+                        <td className="px-4 py-3 font-semibold text-slate-700">{p.payer}</td>
+                        <td className="px-4 py-3 text-right text-slate-700">
+                          {p.claimCount}
+                        </td>
+                        <td className="px-4 py-3 text-right text-slate-700">
+                          {formatMoney(p.totalAmount)}
+                        </td>
+                        <td className="px-4 py-3 text-right text-slate-700">
+                          {p.bucket0To30Count}
+                        </td>
+                        <td className="px-4 py-3 text-right text-slate-700">
+                          {p.bucket31To60Count}
+                        </td>
+                        <td className="px-4 py-3 text-right text-slate-700">
+                          {p.bucket61To90Count}
+                        </td>
+                        <td
+                          className={`px-4 py-3 text-right ${
+                            p.over90Count > 0 ? 'font-semibold text-error' : 'text-navy-900'
+                          }`}
+                        >
+                          {p.over90Count}
+                        </td>
+                        <td
+                          className={`px-4 py-3 text-right ${
+                            p.over90Amount > 0 ? 'font-semibold text-error' : 'text-navy-900'
+                          }`}
+                        >
+                          {formatMoney(p.over90Amount)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </section>
         </>

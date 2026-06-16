@@ -31,55 +31,43 @@ export function FamilyDocuments() {
 
   if (error) {
     return (
-      <p data-testid="family-error" role="alert" style={{ color: '#dc2626', padding: 16 }}>
+      <p
+        data-testid="family-error"
+        role="alert"
+        className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800"
+      >
         {error}
       </p>
     );
   }
   if (docs === null) {
     return (
-      <p data-testid="family-loading" style={{ color: '#94a3b8', padding: 16 }}>
+      <p data-testid="family-loading" role="status" className="p-4 text-slate-500">
         Loading…
       </p>
     );
   }
 
   return (
-    <section style={{ padding: 16 }}>
-      <h1
-        data-testid="page-title"
-        style={{ fontSize: 24, fontWeight: 600, color: '#1e293b', marginBottom: 24 }}
-      >
+    <section className="grid max-w-[1200px] gap-6 p-6">
+      <h1 data-testid="page-title" className="text-2xl">
         Documents
       </h1>
-      <div
-        style={{
-          background: '#fff',
-          border: '1px solid #e2e8f0',
-          borderRadius: 12,
-          overflow: 'hidden',
-        }}
-      >
-        <table style={{ width: '100%', fontSize: 14, borderCollapse: 'collapse' }}>
-          <thead style={{ background: '#f8fafc' }}>
-            <tr>
-              <th style={{ padding: '12px 16px', textAlign: 'left', color: '#475569', fontWeight: 500 }}>
-                Name
-              </th>
-              <th style={{ padding: '12px 16px', textAlign: 'left', color: '#475569', fontWeight: 500 }}>
-                Category
-              </th>
-              <th style={{ padding: '12px 16px', textAlign: 'left', color: '#475569', fontWeight: 500 }}>
-                Date
-              </th>
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+              <th className="px-4 py-3">Name</th>
+              <th className="px-4 py-3">Category</th>
+              <th className="px-4 py-3">Date</th>
             </tr>
           </thead>
           <tbody data-testid="documents-rows">
             {docs.map((d) => (
-              <tr key={d.id} style={{ borderTop: '1px solid #f1f5f9' }}>
-                <td style={{ padding: '12px 16px' }}>{d.fileName}</td>
-                <td style={{ padding: '12px 16px', textTransform: 'capitalize' }}>{d.category}</td>
-                <td style={{ padding: '12px 16px' }}>
+              <tr key={d.id} className="border-t border-slate-100 hover:bg-slate-50">
+                <td className="px-4 py-3 text-slate-700">{d.fileName}</td>
+                <td className="px-4 py-3 capitalize text-slate-700">{d.category}</td>
+                <td className="px-4 py-3 text-slate-700">
                   {new Date(d.createdAt).toLocaleDateString()}
                 </td>
               </tr>
@@ -88,7 +76,7 @@ export function FamilyDocuments() {
               <tr>
                 <td
                   colSpan={3}
-                  style={{ padding: '24px 16px', textAlign: 'center', color: '#94a3b8' }}
+                  className="px-4 py-6 text-center text-slate-500"
                   data-testid="documents-empty"
                 >
                   No documents

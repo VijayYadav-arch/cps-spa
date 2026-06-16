@@ -35,33 +35,38 @@ export function DocumentsList() {
     }
   };
 
-  if (isLoading) return <div role="status">Loading documents…</div>;
-  if (error) return <div role="alert">{error}</div>;
+  if (isLoading)
+    return (
+      <div role="status" className="text-slate-500">
+        Loading documents…
+      </div>
+    );
+  if (error)
+    return (
+      <div
+        role="alert"
+        className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800"
+      >
+        {error}
+      </div>
+    );
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <h2 style={{ fontSize: 20, fontWeight: 700 }}>Documents</h2>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl">Documents</h2>
         <div>
           <input
             ref={fileInputRef}
             type="file"
             id="upload-file"
-            style={{ display: 'none' }}
+            className="hidden"
             onChange={(e) => { void handleUpload(e); }}
             aria-label="Upload document"
           />
           <label
             htmlFor="upload-file"
-            style={{
-              padding: '8px 16px',
-              background: '#2563eb',
-              color: '#fff',
-              borderRadius: 4,
-              cursor: isUploading ? 'not-allowed' : 'pointer',
-              fontWeight: 500,
-              opacity: isUploading ? 0.7 : 1,
-            }}
+            className={`btn-primary ${isUploading ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
           >
             {isUploading ? 'Uploading…' : 'Upload Document'}
           </label>
@@ -69,36 +74,41 @@ export function DocumentsList() {
       </div>
 
       {uploadError && (
-        <div role="alert" style={{ marginBottom: 12, padding: 10, background: '#fee2e2', color: '#991b1b', borderRadius: 4 }}>
+        <div
+          role="alert"
+          className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800"
+        >
           {uploadError}
         </div>
       )}
 
       {documents.length === 0 ? (
-        <p style={{ color: '#64748b' }}>No documents uploaded yet.</p>
+        <p className="text-slate-500">No documents uploaded yet.</p>
       ) : (
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-              <th style={{ padding: '8px 12px' }}>File Name</th>
-              <th style={{ padding: '8px 12px' }}>Category</th>
-              <th style={{ padding: '8px 12px' }}>Size</th>
-              <th style={{ padding: '8px 12px' }}>Uploaded</th>
-            </tr>
-          </thead>
-          <tbody>
-            {documents.map((d) => (
-              <tr key={d.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                <td style={{ padding: '8px 12px' }}>{d.fileName}</td>
-                <td style={{ padding: '8px 12px' }}>{d.category}</td>
-                <td style={{ padding: '8px 12px' }}>{(d.fileSize / 1024).toFixed(1)} KB</td>
-                <td style={{ padding: '8px 12px' }}>
-                  {(() => { const dt = new Date(d.createdAt); return isNaN(dt.getTime()) ? d.createdAt : dt.toLocaleDateString(); })()}
-                </td>
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                <th className="px-4 py-3">File Name</th>
+                <th className="px-4 py-3">Category</th>
+                <th className="px-4 py-3">Size</th>
+                <th className="px-4 py-3">Uploaded</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {documents.map((d) => (
+                <tr key={d.id} className="border-t border-slate-100 hover:bg-slate-50">
+                  <td className="px-4 py-3 text-slate-700">{d.fileName}</td>
+                  <td className="px-4 py-3 text-slate-700">{d.category}</td>
+                  <td className="px-4 py-3 text-slate-700">{(d.fileSize / 1024).toFixed(1)} KB</td>
+                  <td className="px-4 py-3 text-slate-700">
+                    {(() => { const dt = new Date(d.createdAt); return isNaN(dt.getTime()) ? d.createdAt : dt.toLocaleDateString(); })()}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

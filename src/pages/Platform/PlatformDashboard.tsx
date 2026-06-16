@@ -22,24 +22,24 @@ export function PlatformDashboard() {
     return () => { cancelled = true; };
   }, []);
 
-  if (isLoading) return <div role="status">Loading platform dashboard…</div>;
-  if (error) return <div role="alert">{error}</div>;
+  if (isLoading) return <div role="status" className="text-slate-500">Loading platform dashboard…</div>;
+  if (error) return <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">{error}</div>;
 
   return (
-    <div>
-      <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 24 }}>Platform Dashboard</h2>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <h2 className="text-2xl">Platform Dashboard</h2>
 
-      <section style={{ marginBottom: 32 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-          <h3 style={{ fontWeight: 600 }}>API Keys ({apiKeys.filter((k) => k.isActive).length} active)</h3>
-          <Link to="/platform/api-keys" style={{ color: '#2563eb', fontSize: 14 }}>Manage</Link>
+      <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="mb-3 flex justify-between">
+          <h3 className="text-lg font-semibold">API Keys ({apiKeys.filter((k) => k.isActive).length} active)</h3>
+          <Link to="/platform/api-keys" className="font-medium text-teal-700 hover:underline">Manage</Link>
         </div>
-        {apiKeys.length === 0 ? <p style={{ color: '#64748b' }}>No API keys.</p> : (
-          <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+        {apiKeys.length === 0 ? <p className="text-slate-500">No API keys.</p> : (
+          <ul className="m-0 list-none p-0">
             {apiKeys.map((k) => (
-              <li key={k.id} style={{ padding: '8px 0', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between' }}>
-                <span>{k.prefix}… <strong>{k.name}</strong></span>
-                <span style={{ fontSize: 12, color: k.isActive ? '#166534' : '#991b1b' }}>
+              <li key={k.id} className="flex justify-between border-b border-slate-100 py-2">
+                <span className="text-slate-700">{k.prefix}… <strong>{k.name}</strong></span>
+                <span className={`text-xs font-semibold ${k.isActive ? 'text-green-800' : 'text-red-800'}`}>
                   {k.isActive ? 'Active' : 'Revoked'}
                 </span>
               </li>
@@ -48,16 +48,16 @@ export function PlatformDashboard() {
         )}
       </section>
 
-      <section>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-          <h3 style={{ fontWeight: 600 }}>Webhooks ({webhooks.filter((w) => w.isActive).length} active)</h3>
-          <Link to="/platform/webhooks" style={{ color: '#2563eb', fontSize: 14 }}>Manage</Link>
+      <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="mb-3 flex justify-between">
+          <h3 className="text-lg font-semibold">Webhooks ({webhooks.filter((w) => w.isActive).length} active)</h3>
+          <Link to="/platform/webhooks" className="font-medium text-teal-700 hover:underline">Manage</Link>
         </div>
-        {webhooks.length === 0 ? <p style={{ color: '#64748b' }}>No webhooks configured.</p> : (
-          <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+        {webhooks.length === 0 ? <p className="text-slate-500">No webhooks configured.</p> : (
+          <ul className="m-0 list-none p-0">
             {webhooks.map((w) => (
-              <li key={w.id} style={{ padding: '8px 0', borderBottom: '1px solid #f1f5f9' }}>
-                <span style={{ fontFamily: 'monospace', fontSize: 13 }}>{w.url}</span>
+              <li key={w.id} className="border-b border-slate-100 py-2">
+                <span className="font-mono text-sm text-slate-700">{w.url}</span>
               </li>
             ))}
           </ul>

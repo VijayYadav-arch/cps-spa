@@ -254,14 +254,14 @@ export default function CMS1500Form({ claim }: { claim: CmsClaimPayload }) {
       <style dangerouslySetInnerHTML={{ __html: cmsStyles }} />
 
       {/* Print toolbar */}
-      <div className="no-print" style={{ display: "flex", gap: 8, padding: 16, background: "#f8fafc", borderBottom: "1px solid #e2e8f0", fontFamily: "system-ui, sans-serif", fontSize: 14 }}>
-        <button onClick={() => window.print()} style={{ padding: "8px 20px", background: "#0d9488", color: "white", border: "none", borderRadius: 6, cursor: "pointer", fontWeight: 600 }}>
+      <div className="no-print flex items-center gap-2 border-b border-slate-200 bg-slate-50 p-4 text-sm">
+        <button onClick={() => window.print()} className="btn-primary">
           Print / Save as PDF
         </button>
-        <button onClick={() => window.close()} style={{ padding: "8px 20px", background: "white", border: "1px solid #cbd5e1", borderRadius: 6, cursor: "pointer" }}>
+        <button onClick={() => window.close()} className="rounded-md border border-slate-300 bg-white px-4 py-2 font-medium text-slate-700 transition-colors hover:bg-slate-50">
           Close
         </button>
-        <span style={{ marginLeft: "auto", color: "#64748b", alignSelf: "center" }}>
+        <span className="ml-auto self-center text-slate-500">
           {claim.claimNumber} &mdash; {claim.status.toUpperCase()}
         </span>
       </div>

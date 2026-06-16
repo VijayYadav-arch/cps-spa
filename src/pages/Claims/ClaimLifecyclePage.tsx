@@ -16,10 +16,10 @@ const EVENT_COLOR: Record<ClaimLifecycleEvent['eventType'], string> = {
 
 function badge(text: string, bg: string, color = '#fff') {
   return (
-    <span style={{
-      display: 'inline-block', padding: '2px 8px', borderRadius: 4,
-      background: bg, color, fontSize: 12, fontWeight: 600,
-    }}>
+    <span
+      className="inline-block rounded px-2 py-0.5 text-xs font-semibold"
+      style={{ background: bg, color }}
+    >
       {text}
     </span>
   );
@@ -57,11 +57,19 @@ export function ClaimLifecyclePage() {
     return () => { cancelled = true; };
   }, [id]);
 
-  if (isLoading) return <div style={{ padding: 24 }}>Loading…</div>;
+  if (isLoading) return <div role="status" className="p-6 text-slate-500">Loading…</div>;
   if (error) return (
-    <div style={{ padding: 24 }}>
-      <div role="alert" style={{ color: '#b91c1c' }}>{error}</div>
-      <button type="button" onClick={() => navigate('/claims')}>Back to claims</button>
+    <div className="grid gap-4 p-6">
+      <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">{error}</div>
+      <div>
+        <button
+          type="button"
+          onClick={() => navigate('/claims')}
+          className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+        >
+          Back to claims
+        </button>
+      </div>
     </div>
   );
   if (!lifecycle) return null;
@@ -69,182 +77,187 @@ export function ClaimLifecyclePage() {
   const { header, submissions, eraPostings, serviceLines, events } = lifecycle;
 
   return (
-    <div style={{ padding: 24 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-        <button type="button" onClick={() => navigate(`/claims/${header.id}`)}>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => navigate(`/claims/${header.id}`)}
+          className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+        >
           ← Back to claim
         </button>
-        <h1 style={{ margin: 0 }}>Claim {header.claimNumber} lifecycle</h1>
+        <h2 className="text-2xl">Claim {header.claimNumber} lifecycle</h2>
       </div>
 
       {/* Header card */}
-      <div style={{
-        display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-        gap: 12, border: '1px solid #e2e8f0', borderRadius: 8, padding: 16,
-        marginBottom: 24, background: '#f8fafc',
-      }}>
+      <div className="grid grid-cols-2 gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-3 lg:grid-cols-6">
         <div>
-          <div style={{ color: '#64748b', fontSize: 12 }}>Status</div>
-          <div style={{ marginTop: 4 }}>{statusBadge(header.status)}</div>
+          <div className="text-xs font-medium uppercase tracking-wide text-slate-500">Status</div>
+          <div className="mt-1">{statusBadge(header.status)}</div>
         </div>
         <div>
-          <div style={{ color: '#64748b', fontSize: 12 }}>Patient</div>
-          <div style={{ fontWeight: 600 }}>{header.patientName}</div>
+          <div className="text-xs font-medium uppercase tracking-wide text-slate-500">Patient</div>
+          <div className="mt-1 font-semibold text-slate-700">{header.patientName}</div>
         </div>
         <div>
-          <div style={{ color: '#64748b', fontSize: 12 }}>Payer</div>
-          <div style={{ fontWeight: 600 }}>{header.payer}</div>
+          <div className="text-xs font-medium uppercase tracking-wide text-slate-500">Payer</div>
+          <div className="mt-1 font-semibold text-slate-700">{header.payer}</div>
         </div>
         <div>
-          <div style={{ color: '#64748b', fontSize: 12 }}>Service date</div>
-          <div>{new Date(header.serviceDate).toLocaleDateString()}</div>
+          <div className="text-xs font-medium uppercase tracking-wide text-slate-500">Service date</div>
+          <div className="mt-1 text-slate-700">{new Date(header.serviceDate).toLocaleDateString()}</div>
         </div>
         <div>
-          <div style={{ color: '#64748b', fontSize: 12 }}>Charged</div>
-          <div style={{ fontWeight: 600 }}>${header.amount.toFixed(2)}</div>
+          <div className="text-xs font-medium uppercase tracking-wide text-slate-500">Charged</div>
+          <div className="mt-1 font-semibold text-slate-700">${header.amount.toFixed(2)}</div>
         </div>
         <div>
-          <div style={{ color: '#64748b', fontSize: 12 }}>Paid</div>
-          <div style={{ fontWeight: 600, color: '#15803d' }}>
+          <div className="text-xs font-medium uppercase tracking-wide text-slate-500">Paid</div>
+          <div className="mt-1 font-semibold text-success">
             {header.paidAmount != null ? `$${header.paidAmount.toFixed(2)}` : '—'}
           </div>
         </div>
       </div>
 
       {/* Timeline */}
-      <h2>Timeline</h2>
+      <h3 className="text-lg font-semibold">Timeline</h3>
       {events.length === 0 ? (
-        <div style={{ color: '#64748b' }}>No events yet.</div>
+        <div className="text-slate-500">No events yet.</div>
       ) : (
-        <ol style={{ listStyle: 'none', padding: 0, marginBottom: 24 }}>
+        <ol className="list-none p-0">
           {events.map((e, i) => (
-            <li key={`${e.eventType}-${e.atUtc}-${i}`} style={{
-              display: 'grid', gridTemplateColumns: '170px auto 1fr',
-              gap: 12, alignItems: 'baseline', padding: '6px 0',
-              borderBottom: '1px solid #f1f5f9',
-            }}>
-              <div style={{ color: '#64748b', fontSize: 13 }}>
+            <li
+              key={`${e.eventType}-${e.atUtc}-${i}`}
+              className="grid grid-cols-[170px_auto_1fr] items-baseline gap-3 border-b border-slate-100 py-1.5"
+            >
+              <div className="text-sm text-slate-500">
                 {new Date(e.atUtc).toLocaleString()}
               </div>
               <div>{badge(e.eventType, EVENT_COLOR[e.eventType])}</div>
-              <div>{e.description}</div>
+              <div className="text-slate-700">{e.description}</div>
             </li>
           ))}
         </ol>
       )}
 
       {/* Submissions */}
-      <h2>Submissions ({submissions.length})</h2>
+      <h3 className="text-lg font-semibold">Submissions ({submissions.length})</h3>
       {submissions.length === 0 ? (
-        <div style={{ color: '#64748b', marginBottom: 24 }}>No submissions yet.</div>
+        <div className="text-slate-500">No submissions yet.</div>
       ) : (
-        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 24 }}>
-          <thead>
-            <tr style={{ textAlign: 'left', borderBottom: '1px solid #e2e8f0' }}>
-              <th style={{ padding: 8 }}>Clearinghouse</th>
-              <th style={{ padding: 8 }}>Status</th>
-              <th style={{ padding: 8 }}>Tracking</th>
-              <th style={{ padding: 8 }}>Submitted</th>
-              <th style={{ padding: 8 }}>Ack</th>
-              <th style={{ padding: 8 }}>EDI</th>
-              <th style={{ padding: 8 }}>Order</th>
-            </tr>
-          </thead>
-          <tbody>
-            {submissions.map((s) => (
-              <tr key={s.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                <td style={{ padding: 8 }}>{s.clearinghouse}</td>
-                <td style={{ padding: 8 }}>{statusBadge(s.status)}</td>
-                <td style={{ padding: 8, fontFamily: 'monospace', fontSize: 12 }}>
-                  {s.clearinghouseTrackingId ?? s.trackingId ?? '—'}
-                </td>
-                <td style={{ padding: 8, fontSize: 13 }}>
-                  {s.submittedAt ? new Date(s.submittedAt).toLocaleString() : '—'}
-                </td>
-                <td style={{ padding: 8, fontSize: 13 }}>{s.ackStatus ?? '—'}</td>
-                <td style={{ padding: 8, fontSize: 13 }}>
-                  {s.hasEdi837 && <span title="837 generated">837</span>}
-                  {s.hasEdi837 && s.hasEdi835 && ' · '}
-                  {s.hasEdi835 && <span title="835 received">835</span>}
-                </td>
-                <td style={{ padding: 8 }}>{s.payerOrder}</td>
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                <th className="px-4 py-3">Clearinghouse</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Tracking</th>
+                <th className="px-4 py-3">Submitted</th>
+                <th className="px-4 py-3">Ack</th>
+                <th className="px-4 py-3">EDI</th>
+                <th className="px-4 py-3">Order</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {submissions.map((s) => (
+                <tr key={s.id} className="border-t border-slate-100 hover:bg-slate-50">
+                  <td className="px-4 py-3 text-slate-700">{s.clearinghouse}</td>
+                  <td className="px-4 py-3">{statusBadge(s.status)}</td>
+                  <td className="px-4 py-3 font-mono text-xs text-slate-700">
+                    {s.clearinghouseTrackingId ?? s.trackingId ?? '—'}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-slate-700">
+                    {s.submittedAt ? new Date(s.submittedAt).toLocaleString() : '—'}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-slate-700">{s.ackStatus ?? '—'}</td>
+                  <td className="px-4 py-3 text-sm text-slate-700">
+                    {s.hasEdi837 && <span title="837 generated">837</span>}
+                    {s.hasEdi837 && s.hasEdi835 && ' · '}
+                    {s.hasEdi835 && <span title="835 received">835</span>}
+                  </td>
+                  <td className="px-4 py-3 text-slate-700">{s.payerOrder}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {/* ERA Postings */}
-      <h2>ERA postings ({eraPostings.length})</h2>
+      <h3 className="text-lg font-semibold">ERA postings ({eraPostings.length})</h3>
       {eraPostings.length === 0 ? (
-        <div style={{ color: '#64748b', marginBottom: 24 }}>No ERA postings yet.</div>
+        <div className="text-slate-500">No ERA postings yet.</div>
       ) : (
-        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 24 }}>
-          <thead>
-            <tr style={{ textAlign: 'left', borderBottom: '1px solid #e2e8f0' }}>
-              <th style={{ padding: 8 }}>Posted</th>
-              <th style={{ padding: 8 }}>Payer</th>
-              <th style={{ padding: 8 }}>Check</th>
-              <th style={{ padding: 8 }}>Amount</th>
-              <th style={{ padding: 8 }}>Matched</th>
-            </tr>
-          </thead>
-          <tbody>
-            {eraPostings.map((e) => (
-              <tr key={e.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                <td style={{ padding: 8 }}>{new Date(e.postedAt).toLocaleString()}</td>
-                <td style={{ padding: 8 }}>{e.payerName}</td>
-                <td style={{ padding: 8, fontFamily: 'monospace', fontSize: 12 }}>
-                  {e.checkNumber ?? '—'}
-                </td>
-                <td style={{ padding: 8, fontWeight: 600, color: '#15803d' }}>
-                  ${e.paymentAmount.toFixed(2)}
-                </td>
-                <td style={{ padding: 8 }}>
-                  {e.matchedClaims}/{e.totalClaims}
-                  {e.unmatchedClaims > 0 && (
-                    <span style={{ color: '#b45309', marginLeft: 6 }}>
-                      ({e.unmatchedClaims} unmatched)
-                    </span>
-                  )}
-                </td>
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                <th className="px-4 py-3">Posted</th>
+                <th className="px-4 py-3">Payer</th>
+                <th className="px-4 py-3">Check</th>
+                <th className="px-4 py-3">Amount</th>
+                <th className="px-4 py-3">Matched</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {eraPostings.map((e) => (
+                <tr key={e.id} className="border-t border-slate-100 hover:bg-slate-50">
+                  <td className="px-4 py-3 text-slate-700">{new Date(e.postedAt).toLocaleString()}</td>
+                  <td className="px-4 py-3 text-slate-700">{e.payerName}</td>
+                  <td className="px-4 py-3 font-mono text-xs text-slate-700">
+                    {e.checkNumber ?? '—'}
+                  </td>
+                  <td className="px-4 py-3 font-semibold text-success">
+                    ${e.paymentAmount.toFixed(2)}
+                  </td>
+                  <td className="px-4 py-3 text-slate-700">
+                    {e.matchedClaims}/{e.totalClaims}
+                    {e.unmatchedClaims > 0 && (
+                      <span className="ml-1.5 text-accent-600">
+                        ({e.unmatchedClaims} unmatched)
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {/* Service lines */}
-      <h2>Service lines ({serviceLines.length})</h2>
+      <h3 className="text-lg font-semibold">Service lines ({serviceLines.length})</h3>
       {serviceLines.length === 0 ? (
-        <div style={{ color: '#64748b' }}>No service lines.</div>
+        <div className="text-slate-500">No service lines.</div>
       ) : (
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ textAlign: 'left', borderBottom: '1px solid #e2e8f0' }}>
-              <th style={{ padding: 8 }}>#</th>
-              <th style={{ padding: 8 }}>CPT</th>
-              <th style={{ padding: 8 }}>Service date</th>
-              <th style={{ padding: 8, textAlign: 'right' }}>Charges</th>
-            </tr>
-          </thead>
-          <tbody>
-            {serviceLines.map((l) => (
-              <tr key={l.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                <td style={{ padding: 8 }}>{l.lineNumber}</td>
-                <td style={{ padding: 8, fontFamily: 'monospace' }}>
-                  {l.procedureCode}{l.modifier1 ? `-${l.modifier1}` : ''}
-                </td>
-                <td style={{ padding: 8 }}>
-                  {new Date(l.serviceDateFrom).toLocaleDateString()}
-                </td>
-                <td style={{ padding: 8, textAlign: 'right' }}>
-                  ${Number(l.charges).toFixed(2)}
-                </td>
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                <th className="px-4 py-3">#</th>
+                <th className="px-4 py-3">CPT</th>
+                <th className="px-4 py-3">Service date</th>
+                <th className="px-4 py-3 text-right">Charges</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {serviceLines.map((l) => (
+                <tr key={l.id} className="border-t border-slate-100 hover:bg-slate-50">
+                  <td className="px-4 py-3 text-slate-700">{l.lineNumber}</td>
+                  <td className="px-4 py-3 font-mono text-slate-700">
+                    {l.procedureCode}{l.modifier1 ? `-${l.modifier1}` : ''}
+                  </td>
+                  <td className="px-4 py-3 text-slate-700">
+                    {new Date(l.serviceDateFrom).toLocaleDateString()}
+                  </td>
+                  <td className="px-4 py-3 text-right text-slate-700">
+                    ${Number(l.charges).toFixed(2)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

@@ -112,100 +112,97 @@ export function ApiKeysPage() {
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
-    <div style={{ padding: 24 }}>
-      <header style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
-        <div>
-          <h1 style={{ margin: 0 }}>API keys</h1>
-          <p style={{ color: '#64748b', maxWidth: 720 }}>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <header className="flex items-start justify-between">
+        <div className="space-y-2">
+          <h1 className="text-2xl">API keys</h1>
+          <div className="section-line" />
+          <p className="max-w-3xl text-slate-500">
             Self-service credential management for partner integrations.
             The full key is shown ONCE on creation — store it immediately;
             the server only retains a hash.
           </p>
-          <Link to="/platform" style={{ fontSize: 13 }}>← Platform dashboard</Link>
+          <Link to="/platform" className="font-medium text-teal-700 hover:underline">← Platform dashboard</Link>
         </div>
         <button
           type="button"
           onClick={() => setShowForm((s) => !s)}
           disabled={!canManageKeys}
           title={!canManageKeys ? NO_PERMISSION : undefined}
+          className="btn-primary disabled:cursor-not-allowed disabled:opacity-60"
         >
           {showForm ? 'Cancel' : '+ New API key'}
         </button>
       </header>
 
       {error && (
-        <div role="alert" style={{ color: '#b91c1c', marginBottom: 12 }}>{error}</div>
+        <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">{error}</div>
       )}
 
       {createdSecret && (
-        <div style={{
-          padding: 16, marginBottom: 16, borderRadius: 8,
-          background: '#f0fdf4', border: '1px solid #bbf7d0',
-        }}>
-          <div style={{ fontWeight: 600, color: '#166534', marginBottom: 8 }}>
+        <div className="rounded-lg border-l-4 border-success bg-green-50 px-4 py-3">
+          <div className="mb-2 font-semibold text-green-800">
             API key "{createdSecret.name}" created
           </div>
-          <div style={{ color: '#475569', fontSize: 13, marginBottom: 8 }}>
+          <div className="mb-2 text-sm text-slate-600">
             Copy and store this key now — it will not be shown again.
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <code style={{
-              padding: '8px 12px', background: '#fff',
-              border: '1px solid #cbd5e1', borderRadius: 4,
-              fontFamily: 'monospace', fontSize: 13,
-              flex: 1, wordBreak: 'break-all',
-            }}>
+          <div className="flex items-center gap-2">
+            <code className="flex-1 break-all rounded-md border border-slate-300 bg-white px-3 py-2 font-mono text-sm">
               {createdSecret.fullKey}
             </code>
-            <button type="button" onClick={() => { void copySecret(); }}>Copy</button>
+            <button
+              type="button"
+              onClick={() => { void copySecret(); }}
+              className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+            >
+              Copy
+            </button>
             <button
               type="button"
               onClick={() => { setCreatedSecret(null); setCopyMsg(null); }}
-              style={{ color: '#64748b' }}
+              className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
             >
               Dismiss
             </button>
           </div>
           {copyMsg && (
-            <div style={{ marginTop: 8, color: '#166534', fontSize: 13 }}>{copyMsg}</div>
+            <div className="mt-2 text-sm text-green-800">{copyMsg}</div>
           )}
         </div>
       )}
 
       {showForm && (
-        <div style={{
-          border: '1px solid #cbd5e1', borderRadius: 8, padding: 16,
-          marginBottom: 16, background: '#f8fafc',
-        }}>
-          <label style={{ display: 'block', marginBottom: 8 }}>
-            Name
+        <div className="grid gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <label className="grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">Name</span>
             <input
               type="text"
               value={form.name}
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
               placeholder="e.g. Partner X — production"
-              style={{ width: '100%' }}
+              className="form-input"
             />
           </label>
-          <label style={{ display: 'block', marginBottom: 8 }}>
-            Scope
+          <label className="grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">Scope</span>
             <select
               value={form.scope}
               onChange={(e) => setForm((f) => ({ ...f, scope: e.target.value }))}
-              style={{ width: '100%' }}
+              className="form-input"
             >
               {SCOPE_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>{o.label}</option>
               ))}
             </select>
           </label>
-          <label style={{ display: 'block', marginBottom: 8 }}>
-            Expires at (optional)
+          <label className="grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">Expires at (optional)</span>
             <input
               type="date"
               value={form.expiresAt ?? ''}
               onChange={(e) => setForm((f) => ({ ...f, expiresAt: e.target.value || null }))}
-              style={{ width: '100%' }}
+              className="form-input"
             />
           </label>
           <button
@@ -214,86 +211,93 @@ export function ApiKeysPage() {
             title={!canManageKeys ? NO_PERMISSION : undefined}
             aria-busy={creating}
             onClick={() => { void handleCreate(); }}
+            className="btn-primary justify-self-start disabled:cursor-not-allowed disabled:opacity-60"
           >
             {creating ? 'Creating…' : 'Create'}
           </button>
         </div>
       )}
 
-      {isLoading && <div>Loading…</div>}
+      {isLoading && <div role="status" className="text-slate-500">Loading…</div>}
       {!isLoading && rows.length === 0 && !error && (
-        <div style={{ color: '#64748b' }}>No API keys yet.</div>
+        <div className="text-slate-500">No API keys yet.</div>
       )}
 
       {rows.length > 0 && (
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ textAlign: 'left', borderBottom: '2px solid #e2e8f0' }}>
-              <th style={{ padding: 8 }}>Prefix</th>
-              <th style={{ padding: 8 }}>Name</th>
-              <th style={{ padding: 8 }}>Scope</th>
-              <th style={{ padding: 8 }}>Status</th>
-              <th style={{ padding: 8 }}>Last used</th>
-              <th style={{ padding: 8 }}>Expires</th>
-              <th style={{ padding: 8 }}>Created</th>
-              <th style={{ padding: 8 }}></th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((k) => (
-              <tr key={k.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                <td style={{ padding: 8, fontFamily: 'monospace', fontSize: 13 }}>
-                  {k.prefix}…
-                </td>
-                <td style={{ padding: 8 }}>{k.name}</td>
-                <td style={{ padding: 8 }}>{k.scope}</td>
-                <td style={{ padding: 8 }}>
-                  <span style={{
-                    padding: '2px 8px', borderRadius: 4, fontSize: 12, fontWeight: 600,
-                    background: k.isActive ? '#dcfce7' : '#fee2e2',
-                    color: k.isActive ? '#166534' : '#991b1b',
-                  }}>
-                    {k.isActive ? 'active' : 'revoked'}
-                  </span>
-                </td>
-                <td style={{ padding: 8, color: '#64748b', fontSize: 13 }}>
-                  {fmtDate(k.lastUsedAt)}
-                </td>
-                <td style={{ padding: 8, color: '#64748b', fontSize: 13 }}>
-                  {k.expiresAt ? new Date(k.expiresAt).toLocaleDateString() : '—'}
-                </td>
-                <td style={{ padding: 8, color: '#64748b', fontSize: 13 }}>
-                  {new Date(k.createdAt).toLocaleDateString()}
-                </td>
-                <td style={{ padding: 8 }}>
-                  {k.isActive && (
-                    <button
-                      type="button"
-                      onClick={() => { void handleRevoke(k); }}
-                      disabled={!canManageKeys}
-                      title={!canManageKeys ? NO_PERMISSION : undefined}
-                      style={{ color: '#b91c1c', fontSize: 12 }}
-                    >
-                      Revoke
-                    </button>
-                  )}
-                </td>
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                <th className="px-4 py-3">Prefix</th>
+                <th className="px-4 py-3">Name</th>
+                <th className="px-4 py-3">Scope</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Last used</th>
+                <th className="px-4 py-3">Expires</th>
+                <th className="px-4 py-3">Created</th>
+                <th className="px-4 py-3"></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {rows.map((k) => (
+                <tr key={k.id} className="border-t border-slate-100 hover:bg-slate-50">
+                  <td className="px-4 py-3 font-mono text-sm text-slate-700">
+                    {k.prefix}…
+                  </td>
+                  <td className="px-4 py-3 text-slate-700">{k.name}</td>
+                  <td className="px-4 py-3 text-slate-700">{k.scope}</td>
+                  <td className="px-4 py-3">
+                    <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${
+                      k.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    }`}>
+                      {k.isActive ? 'active' : 'revoked'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-sm text-slate-500">
+                    {fmtDate(k.lastUsedAt)}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-slate-500">
+                    {k.expiresAt ? new Date(k.expiresAt).toLocaleDateString() : '—'}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-slate-500">
+                    {new Date(k.createdAt).toLocaleDateString()}
+                  </td>
+                  <td className="px-4 py-3">
+                    {k.isActive && (
+                      <button
+                        type="button"
+                        onClick={() => { void handleRevoke(k); }}
+                        disabled={!canManageKeys}
+                        title={!canManageKeys ? NO_PERMISSION : undefined}
+                        className="rounded-md border border-red-200 px-2.5 py-1 text-xs font-medium text-red-700 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        Revoke
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {rows.length > 0 && (
-        <div style={{ display: 'flex', gap: 12, marginTop: 12, alignItems: 'center' }}>
-          <button type="button" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            disabled={page <= 1}
+            onClick={() => setPage((p) => p - 1)}
+            className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+          >
             Prev
           </button>
-          <span>Page {page} of {totalPages} · {total} keys</span>
+          <span className="text-sm text-slate-600">Page {page} of {totalPages} · {total} keys</span>
           <button
             type="button"
             disabled={page >= totalPages}
             onClick={() => setPage((p) => p + 1)}
+            className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
           >
             Next
           </button>

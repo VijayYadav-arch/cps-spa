@@ -15,12 +15,12 @@ import { PERMISSIONS } from '@/permissions/permissions';
 
 const NO_PERMISSION = 'You do not have permission to perform this action';
 
-const STATUS_COLORS: Record<PriorAuthStatus, { bg: string; fg: string }> = {
-  pending: { bg: '#fef3c7', fg: '#92400e' },
-  approved: { bg: '#dcfce7', fg: '#166534' },
-  denied: { bg: '#fee2e2', fg: '#991b1b' },
-  expired: { bg: '#f1f5f9', fg: '#475569' },
-  cancelled: { bg: '#f1f5f9', fg: '#475569' },
+const STATUS_BADGE: Record<PriorAuthStatus, string> = {
+  pending: 'bg-amber-100 text-amber-800',
+  approved: 'bg-green-100 text-green-800',
+  denied: 'bg-red-100 text-red-800',
+  expired: 'bg-slate-100 text-slate-600',
+  cancelled: 'bg-slate-100 text-slate-600',
 };
 
 const COMMON_PAYERS = [
@@ -41,13 +41,9 @@ const SERVICE_TYPES = [
 ];
 
 function statusBadge(s: PriorAuthStatus) {
-  const c = STATUS_COLORS[s];
   return (
     <span
-      style={{
-        background: c.bg, color: c.fg,
-        padding: '2px 8px', borderRadius: 6, fontSize: 12, fontWeight: 600,
-      }}
+      className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${STATUS_BADGE[s]}`}
     >
       {s}
     </span>
@@ -186,16 +182,17 @@ export function PriorAuthPage() {
   }
 
   return (
-    <div style={{ padding: 24, maxWidth: 1200, display: 'grid', gap: 24 }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-        <div>
-          <h2 style={{ fontSize: 22, fontWeight: 700 }}>Prior Authorization (X12 278)</h2>
-          <p style={{ color: '#64748b', marginTop: 4 }}>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <header className="flex items-baseline justify-between">
+        <div className="space-y-2">
+          <h2 className="text-2xl">Prior Authorization (X12 278)</h2>
+          <div className="section-line" />
+          <p className="max-w-3xl text-slate-500">
             Submit and track payer authorizations. Approved auths are flagged
             when within 30 days of expiration.
           </p>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div className="flex gap-2">
           <button
             type="button"
             onClick={async () => {
@@ -210,31 +207,31 @@ export function PriorAuthPage() {
             disabled={refreshing || !canManage}
             aria-busy={refreshing}
             title={!canManage ? NO_PERMISSION : undefined}
+            className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {refreshing ? 'Refreshing…' : 'Refresh pending'}
           </button>
-          <button type="button" onClick={() => setShowForm((s) => !s)}>
+          <button
+            type="button"
+            onClick={() => setShowForm((s) => !s)}
+            className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+          >
             {showForm ? 'Cancel' : '+ New Inquiry'}
           </button>
         </div>
       </header>
 
-      {error && <div role="alert" style={{ color: '#b91c1c' }}>{error}</div>}
-      {actionMsg && <div style={{ color: '#15803d' }}>{actionMsg}</div>}
+      {error && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">{error}</div>}
+      {actionMsg && <div className="rounded-lg border-l-4 border-success bg-green-50 px-4 py-3 font-semibold text-green-800">{actionMsg}</div>}
 
       {expiring.length > 0 && (
-        <section
-          style={{
-            background: '#fef3c7', border: '1px solid #f59e0b',
-            borderRadius: 8, padding: 12,
-          }}
-        >
-          <strong style={{ color: '#92400e' }}>
+        <section className="rounded-lg border-l-4 border-warning bg-amber-50 px-4 py-3">
+          <strong className="text-amber-800">
             {expiring.length} authorization{expiring.length === 1 ? '' : 's'} expiring within 30 days
           </strong>
-          <ul style={{ marginTop: 6, paddingLeft: 18 }}>
+          <ul className="mt-1.5 list-disc pl-5">
             {expiring.slice(0, 5).map((e) => (
-              <li key={e.id} style={{ color: '#92400e' }}>
+              <li key={e.id} className="text-amber-800">
                 Auth #{e.authNumber} ({e.payerName}, member {e.memberId}) — expires{' '}
                 {e.authExpirationDate}
               </li>
@@ -246,113 +243,109 @@ export function PriorAuthPage() {
       {showForm && (
         <form
           onSubmit={handleSubmit}
-          style={{
-            border: '1px solid #cbd5e1', borderRadius: 8, padding: 16,
-            background: '#f8fafc', display: 'grid', gap: 12,
-            gridTemplateColumns: '1fr 1fr',
-          }}
+          className="grid grid-cols-2 gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
         >
-          <h3 style={{ gridColumn: '1 / -1', fontSize: 16, fontWeight: 600 }}>
+          <h3 className="col-span-full text-lg font-semibold">
             New Prior Auth Inquiry
           </h3>
-          <label>
-            <div>Patient ID *</div>
+          <label className="grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">Patient ID *</span>
             <input
               type="number" required
               value={form.patientId || ''}
               onChange={(e) => setForm({ ...form, patientId: Number(e.target.value) })}
-              style={{ width: '100%' }}
+              className="form-input"
             />
           </label>
-          <label>
-            <div>Service Type *</div>
+          <label className="grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">Service Type *</span>
             <select
               value={form.serviceTypeCode}
               onChange={(e) => setForm({ ...form, serviceTypeCode: e.target.value })}
-              style={{ width: '100%' }}
+              className="form-input"
             >
               {SERVICE_TYPES.map((s) => (
                 <option key={s.code} value={s.code}>{s.label}</option>
               ))}
             </select>
           </label>
-          <label>
-            <div>Payer *</div>
+          <label className="grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">Payer *</span>
             <select
               value={form.payerId}
               onChange={(e) => setForm({ ...form, payerId: e.target.value })}
-              style={{ width: '100%' }}
+              className="form-input"
             >
               {COMMON_PAYERS.map((p) => (
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}
             </select>
           </label>
-          <label>
-            <div>Member ID *</div>
+          <label className="grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">Member ID *</span>
             <input required value={form.memberId}
               onChange={(e) => setForm({ ...form, memberId: e.target.value })}
-              style={{ width: '100%' }} />
+              className="form-input" />
           </label>
-          <label>
-            <div>Member First Name *</div>
+          <label className="grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">Member First Name *</span>
             <input required value={form.memberFirstName}
               onChange={(e) => setForm({ ...form, memberFirstName: e.target.value })}
-              style={{ width: '100%' }} />
+              className="form-input" />
           </label>
-          <label>
-            <div>Member Last Name *</div>
+          <label className="grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">Member Last Name *</span>
             <input required value={form.memberLastName}
               onChange={(e) => setForm({ ...form, memberLastName: e.target.value })}
-              style={{ width: '100%' }} />
+              className="form-input" />
           </label>
-          <label>
-            <div>Member DOB *</div>
+          <label className="grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">Member DOB *</span>
             <input type="date" required value={form.memberDob}
               onChange={(e) => setForm({ ...form, memberDob: e.target.value })}
-              style={{ width: '100%' }} />
+              className="form-input" />
           </label>
-          <label>
-            <div>Provider NPI *</div>
+          <label className="grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">Provider NPI *</span>
             <input required value={form.providerNpi}
               onChange={(e) => setForm({ ...form, providerNpi: e.target.value })}
-              style={{ width: '100%' }} />
+              className="form-input" />
           </label>
-          <label style={{ gridColumn: '1 / -1' }}>
-            <div>Provider Organization *</div>
+          <label className="col-span-full grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">Provider Organization *</span>
             <input required value={form.providerOrganizationName}
               onChange={(e) => setForm({ ...form, providerOrganizationName: e.target.value })}
-              style={{ width: '100%' }} />
+              className="form-input" />
           </label>
-          <label>
-            <div>From Date *</div>
+          <label className="grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">From Date *</span>
             <input type="date" required value={form.fromDate}
               onChange={(e) => setForm({ ...form, fromDate: e.target.value })}
-              style={{ width: '100%' }} />
+              className="form-input" />
           </label>
-          <label>
-            <div>To Date *</div>
+          <label className="grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">To Date *</span>
             <input type="date" required value={form.toDate}
               onChange={(e) => setForm({ ...form, toDate: e.target.value })}
-              style={{ width: '100%' }} />
+              className="form-input" />
           </label>
-          <label>
-            <div>Requested Units</div>
+          <label className="grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">Requested Units</span>
             <input type="number" min={1} value={form.requestedUnits ?? ''}
               onChange={(e) => setForm({ ...form, requestedUnits: e.target.value ? Number(e.target.value) : null })}
-              style={{ width: '100%' }} />
+              className="form-input" />
           </label>
-          <label>
-            <div>Diagnosis Codes (comma-separated)</div>
+          <label className="grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">Diagnosis Codes (comma-separated)</span>
             <input value={diagnosesInput} onChange={(e) => setDiagnosesInput(e.target.value)}
-              placeholder="C50.911, Z80.3" style={{ width: '100%' }} />
+              placeholder="C50.911, Z80.3" className="form-input" />
           </label>
-          <div style={{ gridColumn: '1 / -1' }}>
+          <div className="col-span-full">
             <button
               type="submit"
               disabled={submitting || !canManage}
               title={!canManage ? NO_PERMISSION : undefined}
-              style={{ cursor: (submitting || !canManage) ? 'not-allowed' : 'pointer' }}
+              className="btn-primary disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {submitting ? 'Submitting…' : 'Submit Prior Auth'}
             </button>
@@ -360,100 +353,102 @@ export function PriorAuthPage() {
         </form>
       )}
 
-      <section style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        <strong>Filter:</strong>
+      <section className="flex flex-wrap items-center gap-2">
+        <strong className="text-slate-700">Filter:</strong>
         {(['all', 'pending', 'approved', 'denied', 'expired'] as const).map((s) => (
           <button
             key={s}
             type="button"
             onClick={() => setStatusFilter(s)}
-            style={{
-              fontWeight: statusFilter === s ? 700 : 400,
-              background: statusFilter === s ? '#0ea5e9' : '#f1f5f9',
-              color: statusFilter === s ? '#fff' : '#0f172a',
-              border: 'none', padding: '4px 12px', borderRadius: 4,
-              cursor: 'pointer',
-            }}
+            className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+              statusFilter === s
+                ? 'bg-teal-600 font-semibold text-white'
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            }`}
           >
             {s}
           </button>
         ))}
-        <span style={{ marginLeft: 'auto', color: '#64748b' }}>
+        <span className="ml-auto text-slate-500">
           {counts.pending} pending · {counts.approved} approved · {counts.denied} denied
         </span>
       </section>
 
-      {isLoading && <div role="status">Loading…</div>}
+      {isLoading && <div role="status" className="text-slate-500">Loading…</div>}
       {!isLoading && items.length === 0 && (
-        <p style={{ color: '#64748b' }}>No prior authorizations match this filter.</p>
+        <p className="text-slate-500">No prior authorizations match this filter.</p>
       )}
       {!isLoading && items.length > 0 && (
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-              <th style={{ padding: '6px 10px' }}>Patient</th>
-              <th style={{ padding: '6px 10px' }}>Payer</th>
-              <th style={{ padding: '6px 10px' }}>Member</th>
-              <th style={{ padding: '6px 10px' }}>Service</th>
-              <th style={{ padding: '6px 10px' }}>Dates</th>
-              <th style={{ padding: '6px 10px' }}>Status</th>
-              <th style={{ padding: '6px 10px' }}>Auth #</th>
-              <th style={{ padding: '6px 10px' }}></th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((a) => (
-              <tr key={a.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                <td style={{ padding: '6px 10px' }}>
-                  #{a.patientId} · {a.memberLastName}, {a.memberFirstName}
-                </td>
-                <td style={{ padding: '6px 10px' }}>{a.payerName}</td>
-                <td style={{ padding: '6px 10px', fontSize: 12, fontFamily: 'monospace' }}>
-                  {a.memberId}
-                </td>
-                <td style={{ padding: '6px 10px' }}>{a.serviceTypeCode}</td>
-                <td style={{ padding: '6px 10px', fontSize: 12, color: '#64748b' }}>
-                  {a.fromDate} → {a.toDate}
-                </td>
-                <td style={{ padding: '6px 10px' }}>{statusBadge(a.status)}</td>
-                <td style={{ padding: '6px 10px', fontSize: 12, fontFamily: 'monospace' }}>
-                  {a.authNumber ?? '—'}
-                </td>
-                <td style={{ padding: '6px 10px', display: 'flex', gap: 4 }}>
-                  <button
-                    type="button"
-                    onClick={() => navigate(`/billing/prior-auth/${a.id}`)}
-                    style={{ fontSize: 12 }}
-                  >
-                    View
-                  </button>
-                  {a.status === 'pending' && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => void handleApprove(a)}
-                        disabled={!canManage}
-                        title={!canManage ? NO_PERMISSION : undefined}
-                        style={{ fontSize: 12, cursor: !canManage ? 'not-allowed' : 'pointer' }}
-                      >
-                        Approve
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => void handleDeny(a)}
-                        disabled={!canManage}
-                        title={!canManage ? NO_PERMISSION : undefined}
-                        style={{ fontSize: 12, color: '#b91c1c', cursor: !canManage ? 'not-allowed' : 'pointer' }}
-                      >
-                        Deny
-                      </button>
-                    </>
-                  )}
-                </td>
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                <th className="px-4 py-3">Patient</th>
+                <th className="px-4 py-3">Payer</th>
+                <th className="px-4 py-3">Member</th>
+                <th className="px-4 py-3">Service</th>
+                <th className="px-4 py-3">Dates</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Auth #</th>
+                <th className="px-4 py-3"></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {items.map((a) => (
+                <tr key={a.id} className="border-t border-slate-100 hover:bg-slate-50">
+                  <td className="px-4 py-3 text-slate-700">
+                    #{a.patientId} · {a.memberLastName}, {a.memberFirstName}
+                  </td>
+                  <td className="px-4 py-3 text-slate-700">{a.payerName}</td>
+                  <td className="px-4 py-3 font-mono text-xs text-slate-700">
+                    {a.memberId}
+                  </td>
+                  <td className="px-4 py-3 text-slate-700">{a.serviceTypeCode}</td>
+                  <td className="px-4 py-3 text-xs text-slate-500">
+                    {a.fromDate} → {a.toDate}
+                  </td>
+                  <td className="px-4 py-3">{statusBadge(a.status)}</td>
+                  <td className="px-4 py-3 font-mono text-xs text-slate-700">
+                    {a.authNumber ?? '—'}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/billing/prior-auth/${a.id}`)}
+                        className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                      >
+                        View
+                      </button>
+                      {a.status === 'pending' && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => void handleApprove(a)}
+                            disabled={!canManage}
+                            title={!canManage ? NO_PERMISSION : undefined}
+                            className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed"
+                          >
+                            Approve
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void handleDeny(a)}
+                            disabled={!canManage}
+                            title={!canManage ? NO_PERMISSION : undefined}
+                            className="rounded-md border border-red-200 px-2.5 py-1 text-xs font-medium text-red-700 transition-colors hover:bg-red-50 disabled:opacity-60 disabled:cursor-not-allowed"
+                          >
+                            Deny
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

@@ -19,19 +19,11 @@ function defaultRange(): { from: string; to: string } {
   };
 }
 
-function metricCard(label: string, value: string, color: string) {
+function metricCard(label: string, value: string) {
   return (
-    <div
-      style={{
-        border: '1px solid #e2e8f0',
-        borderRadius: 8,
-        padding: 16,
-        background: '#fff',
-        minWidth: 160,
-      }}
-    >
-      <div style={{ color: '#64748b', fontSize: 13 }}>{label}</div>
-      <div style={{ fontSize: 22, fontWeight: 700, color, marginTop: 6 }}>
+    <div className="card-hover min-w-[160px] flex-1 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</div>
+      <div className="mt-1.5 text-2xl font-bold text-navy-900">
         {value}
       </div>
     </div>
@@ -97,12 +89,13 @@ export function SurveyorBundlePage() {
   }
 
   return (
-    <div style={{ padding: 24, maxWidth: 1100, display: 'grid', gap: 24 }}>
-      <header>
-        <h2 style={{ fontSize: 22, fontWeight: 700 }}>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <header className="space-y-2">
+        <h2 className="text-2xl">
           CMS Surveyor Evidence Bundle
         </h2>
-        <p style={{ color: '#64748b', marginTop: 4 }}>
+        <div className="section-line" />
+        <p className="max-w-3xl text-slate-500">
           Generates a per-patient ZIP archive of survey-ready evidence — cert
           chain, face-to-face encounters, IDG meeting list, care plan reviews,
           and volunteer hours — bundled with a manifest the surveyor can scan
@@ -112,116 +105,110 @@ export function SurveyorBundlePage() {
 
       <form
         onSubmit={handlePreview}
-        style={{ display: 'flex', gap: 12, alignItems: 'end', flexWrap: 'wrap' }}
+        className="flex flex-wrap items-end gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
       >
-        <label style={{ display: 'grid', gap: 4 }}>
-          <span>Patient ID</span>
+        <label className="grid gap-1.5">
+          <span className="text-sm font-medium text-slate-600">Patient ID</span>
           <input
             type="number"
             value={patientId}
             onChange={(e) => setPatientId(e.target.value)}
             required
             min={1}
-            style={{ width: 140 }}
+            className="form-input w-36"
           />
         </label>
-        <label style={{ display: 'grid', gap: 4 }}>
-          <span>From</span>
+        <label className="grid gap-1.5">
+          <span className="text-sm font-medium text-slate-600">From</span>
           <input
             type="date"
+            className="form-input"
             value={range.from}
             onChange={(e) => setRange({ ...range, from: e.target.value })}
             required
           />
         </label>
-        <label style={{ display: 'grid', gap: 4 }}>
-          <span>To</span>
+        <label className="grid gap-1.5">
+          <span className="text-sm font-medium text-slate-600">To</span>
           <input
             type="date"
+            className="form-input"
             value={range.to}
             onChange={(e) => setRange({ ...range, to: e.target.value })}
             required
           />
         </label>
-        <button type="submit" disabled={isLoading}>
+        <button type="submit" disabled={isLoading} className="btn-primary">
           {isLoading ? 'Loading…' : 'Preview'}
         </button>
       </form>
 
-      {error && <div role="alert" style={{ color: '#b91c1c' }}>{error}</div>}
+      {error && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">{error}</div>}
       {downloadedFile && (
-        <div style={{ color: '#15803d' }}>
+        <div className="rounded-lg border-l-4 border-success bg-green-50 px-4 py-3 font-semibold text-green-800">
           Downloaded <strong>{downloadedFile}</strong>.
         </div>
       )}
 
       {manifest && (
         <>
-          <section
-            style={{
-              padding: 12,
-              borderRadius: 6,
-              background: '#f8fafc',
-              border: '1px solid #e2e8f0',
-            }}
-          >
-            <strong>{manifest.patientName}</strong>{' '}
-            <span style={{ color: '#64748b' }}>(Patient #{manifest.patientId})</span>
-            <div style={{ color: '#64748b', fontSize: 13, marginTop: 4 }}>
+          <section className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+            <strong className="text-slate-800">{manifest.patientName}</strong>{' '}
+            <span className="text-slate-500">(Patient #{manifest.patientId})</span>
+            <div className="mt-1 text-[13px] text-slate-500">
               Medicare ID: {manifest.medicareId ?? '—'}
               {' · '}Admitted: {manifest.admittedAt ?? '—'}
               {' · '}DOD: {manifest.dateOfDeath ?? '—'}
             </div>
-            <div style={{ color: '#64748b', fontSize: 13, marginTop: 4 }}>
+            <div className="mt-1 text-[13px] text-slate-500">
               Window {manifest.windowFrom} → {manifest.windowTo} · generated{' '}
               {manifest.generatedAtUtc.slice(0, 19).replace('T', ' ')}
             </div>
           </section>
 
-          <section style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            {metricCard('Elections', manifest.electionCount.toString(), '#0f172a')}
-            {metricCard('Certifications', manifest.certificationCount.toString(), '#0f172a')}
-            {metricCard('Face-to-Face', manifest.faceToFaceCount.toString(), '#0f172a')}
-            {metricCard('Care Plan Reviews', manifest.carePlanReviewCount.toString(), '#0f172a')}
-            {metricCard('IDG Meetings', manifest.idgMeetingCount.toString(), '#0f172a')}
+          <section className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+            {metricCard('Elections', manifest.electionCount.toString())}
+            {metricCard('Certifications', manifest.certificationCount.toString())}
+            {metricCard('Face-to-Face', manifest.faceToFaceCount.toString())}
+            {metricCard('Care Plan Reviews', manifest.carePlanReviewCount.toString())}
+            {metricCard('IDG Meetings', manifest.idgMeetingCount.toString())}
             {metricCard(
               'Volunteer Hours',
               manifest.volunteerHoursTotal.toString(),
-              '#0f172a',
             )}
           </section>
 
-          <section style={{ display: 'grid', gap: 12 }}>
-            <h3 style={{ fontSize: 16, fontWeight: 600 }}>Bundle contents</h3>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-                  <th style={{ padding: '6px 10px' }}>File</th>
-                  <th style={{ padding: '6px 10px' }}>Type</th>
-                  <th style={{ padding: '6px 10px' }}>Rows</th>
-                </tr>
-              </thead>
-              <tbody>
-                {manifest.files.map((f) => (
-                  <tr
-                    key={f.fileName}
-                    style={{ borderBottom: '1px solid #f1f5f9' }}
-                  >
-                    <td
-                      style={{ padding: '6px 10px', fontFamily: 'monospace', fontSize: 13 }}
-                    >
-                      {f.fileName}
-                    </td>
-                    <td style={{ padding: '6px 10px', color: '#64748b', fontSize: 13 }}>
-                      {f.contentType}
-                    </td>
-                    <td style={{ padding: '6px 10px' }}>
-                      {f.rowCount === 0 ? '—' : f.rowCount}
-                    </td>
+          <section className="grid gap-3">
+            <h3 className="text-lg font-semibold">Bundle contents</h3>
+            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+              <table className="w-full border-collapse text-sm">
+                <thead>
+                  <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                    <th className="px-4 py-3">File</th>
+                    <th className="px-4 py-3">Type</th>
+                    <th className="px-4 py-3">Rows</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {manifest.files.map((f) => (
+                    <tr
+                      key={f.fileName}
+                      className="border-t border-slate-100 hover:bg-slate-50"
+                    >
+                      <td className="px-4 py-3 font-mono text-[13px] text-slate-700">
+                        {f.fileName}
+                      </td>
+                      <td className="px-4 py-3 text-[13px] text-slate-500">
+                        {f.contentType}
+                      </td>
+                      <td className="px-4 py-3 text-slate-700">
+                        {f.rowCount === 0 ? '—' : f.rowCount}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </section>
 
           <div>
@@ -230,16 +217,7 @@ export function SurveyorBundlePage() {
               onClick={() => void handleDownload()}
               disabled={isDownloading || !canExport}
               title={!canExport ? NO_PERMISSION : undefined}
-              style={{
-                fontSize: 14,
-                fontWeight: 600,
-                padding: '10px 16px',
-                background: '#0ea5e9',
-                color: '#fff',
-                border: 'none',
-                borderRadius: 6,
-                cursor: (isDownloading || !canExport) ? 'not-allowed' : 'pointer',
-              }}
+              className="btn-primary disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {isDownloading ? 'Generating ZIP…' : 'Download Bundle (.zip)'}
             </button>

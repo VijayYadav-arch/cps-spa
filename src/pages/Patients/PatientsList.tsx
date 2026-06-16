@@ -25,42 +25,56 @@ export function PatientsList() {
     return () => { cancelled = true; };
   }, [page]);
 
-  if (isLoading) return <div role="status">Loading patients…</div>;
-  if (error) return <div role="alert">{error}</div>;
+  if (isLoading) return <div role="status" className="text-slate-500">Loading patients…</div>;
+  if (error) return <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">{error}</div>;
 
   return (
-    <div>
-      <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 16 }}>Patients</h2>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <h2 className="text-2xl">Patients</h2>
       {patients.length === 0 ? (
-        <p>No patients found.</p>
+        <p className="text-slate-500">No patients found.</p>
       ) : (
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-              <th style={{ padding: '8px 12px' }}>ID</th>
-              <th style={{ padding: '8px 12px' }}>Name</th>
-              <th style={{ padding: '8px 12px' }}>Date of Birth</th>
-              <th style={{ padding: '8px 12px' }}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {patients.map((p) => (
-              <tr key={p.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                <td style={{ padding: '8px 12px' }}>{p.id}</td>
-                <td style={{ padding: '8px 12px' }}>{p.firstName} {p.lastName}</td>
-                <td style={{ padding: '8px 12px' }}>{new Date(p.dateOfBirth).toLocaleDateString()}</td>
-                <td style={{ padding: '8px 12px' }}>
-                  <Link to={`/patients/${p.id}`} style={{ color: '#2563eb' }}>View</Link>
-                </td>
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                <th className="px-4 py-3">ID</th>
+                <th className="px-4 py-3">Name</th>
+                <th className="px-4 py-3">Date of Birth</th>
+                <th className="px-4 py-3">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {patients.map((p) => (
+                <tr key={p.id} className="border-t border-slate-100 hover:bg-slate-50">
+                  <td className="px-4 py-3 text-slate-700">{p.id}</td>
+                  <td className="px-4 py-3 text-slate-700">{p.firstName} {p.lastName}</td>
+                  <td className="px-4 py-3 text-slate-700">{new Date(p.dateOfBirth).toLocaleDateString()}</td>
+                  <td className="px-4 py-3 text-slate-700">
+                    <Link to={`/patients/${p.id}`} className="font-medium text-teal-700 hover:underline">View</Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
-      <div style={{ display: 'flex', gap: 8, marginTop: 16, alignItems: 'center' }}>
-        <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>Previous</button>
-        <span>Page {page} of {totalPages}</span>
-        <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>Next</button>
+      <div className="flex items-center gap-3">
+        <button
+          onClick={() => setPage((p) => Math.max(1, p - 1))}
+          disabled={page === 1}
+          className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          Previous
+        </button>
+        <span className="text-sm text-slate-600">Page {page} of {totalPages}</span>
+        <button
+          onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+          disabled={page >= totalPages}
+          className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          Next
+        </button>
       </div>
     </div>
   );

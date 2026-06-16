@@ -62,42 +62,35 @@ export function CommercialDocumentsPage() {
 
   if (error)
     return (
-      <div style={{ padding: '1rem', color: 'red' }} role="alert">
+      <div
+        role="alert"
+        className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800"
+      >
         Failed to load documents.
       </div>
     );
-  if (loading) return <div style={{ padding: '1rem' }}>Loading…</div>;
+  if (loading)
+    return (
+      <div role="status" className="text-slate-500">
+        Loading…
+      </div>
+    );
 
   return (
-    <div style={{ padding: '1rem', maxWidth: 1200, margin: '0 auto' }}>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: 24,
-        }}
-      >
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 data-testid="page-title" style={{ fontSize: 24, fontWeight: 600 }}>
+          <h1 data-testid="page-title" className="text-2xl">
             Documents
           </h1>
-          <p style={{ color: '#64748b', fontSize: 14, marginTop: 4 }}>
+          <p className="mt-1 text-sm text-slate-500">
             Securely shared files between you and CPS
           </p>
         </div>
         <button
           disabled
           data-testid="action-upload-document"
-          style={{
-            padding: '10px 16px',
-            background: '#94a3b8',
-            color: 'white',
-            border: 'none',
-            borderRadius: 8,
-            cursor: 'not-allowed',
-            opacity: 0.5,
-          }}
+          className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
           title="Upload coming soon"
         >
           Upload Document
@@ -106,24 +99,10 @@ export function CommercialDocumentsPage() {
 
       <div
         data-testid="documents-list"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-          gap: 16,
-        }}
+        className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(280px,1fr))]"
       >
         {documents.length === 0 ? (
-          <div
-            style={{
-              gridColumn: '1 / -1',
-              padding: 48,
-              textAlign: 'center',
-              color: '#94a3b8',
-              background: 'white',
-              borderRadius: 12,
-              border: '1px solid #f1f5f9',
-            }}
-          >
+          <div className="col-span-full rounded-xl border border-slate-200 bg-white p-12 text-center text-slate-400 shadow-sm">
             No documents yet.
           </div>
         ) : (
@@ -131,77 +110,38 @@ export function CommercialDocumentsPage() {
             <div
               key={doc.id}
               data-testid="document-row"
-              style={{
-                background: 'white',
-                padding: 16,
-                borderRadius: 12,
-                border: '1px solid #f1f5f9',
-                display: 'flex',
-                flexDirection: 'column',
-              }}
+              className="flex flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
             >
-              <div style={{ marginBottom: 12 }}>
+              <div className="mb-3">
                 <h3
                   data-testid="document-name"
-                  style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}
+                  className="mb-1 text-sm font-semibold text-slate-700"
                   title={doc.fileName}
                 >
                   {doc.fileName}
                 </h3>
-                <span
-                  style={{
-                    display: 'inline-block',
-                    padding: '2px 8px',
-                    fontSize: 11,
-                    background: '#f1f5f9',
-                    color: '#475569',
-                    borderRadius: 4,
-                  }}
-                >
+                <span className="inline-block rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
                   {CATEGORY_LABELS[doc.category] ?? doc.category}
                 </span>
               </div>
-              <div
-                style={{
-                  fontSize: 12,
-                  color: '#94a3b8',
-                  marginBottom: 8,
-                  display: 'flex',
-                  gap: 12,
-                }}
-              >
+              <div className="mb-2 flex gap-3 text-xs text-slate-400">
                 <span>{formatFileSize(doc.fileSize)}</span>
                 <span data-testid="document-uploaded">{formatDate(doc.createdAt)}</span>
               </div>
               {doc.notes && (
-                <p style={{ fontSize: 12, color: '#64748b', marginBottom: 8 }}>
-                  {doc.notes}
-                </p>
+                <p className="mb-2 text-xs text-slate-500">{doc.notes}</p>
               )}
-              <div
-                style={{
-                  marginTop: 'auto',
-                  paddingTop: 12,
-                  borderTop: '1px solid #f1f5f9',
-                }}
-              >
+              <div className="mt-auto border-t border-slate-100 pt-3">
                 {doc.filePath ? (
                   <a
                     href={doc.filePath}
                     download
-                    style={{
-                      color: '#0d9488',
-                      fontSize: 12,
-                      fontWeight: 500,
-                      textDecoration: 'none',
-                    }}
+                    className="text-xs font-medium text-teal-700 hover:underline"
                   >
                     Download
                   </a>
                 ) : (
-                  <span style={{ fontSize: 12, color: '#94a3b8', fontStyle: 'italic' }}>
-                    Not available
-                  </span>
+                  <span className="text-xs italic text-slate-400">Not available</span>
                 )}
               </div>
             </div>

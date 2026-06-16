@@ -19,12 +19,12 @@ const RESOURCE_OPTIONS = [
 
 function statusColor(status: FhirFeedRow['status']): string {
   switch (status) {
-    case 'created': return '#15803d';
-    case 'updated': return '#0369a1';
-    case 'validation-error': return '#b45309';
-    case 'not-found': return '#b91c1c';
-    case 'error': return '#991b1b';
-    default: return '#475569';
+    case 'created': return 'text-green-700';
+    case 'updated': return 'text-sky-700';
+    case 'validation-error': return 'text-accent-700';
+    case 'not-found': return 'text-red-700';
+    case 'error': return 'text-red-800';
+    default: return 'text-slate-600';
   }
 }
 
@@ -57,33 +57,38 @@ export function FhirFeedPage() {
   }, [status, resourceType]);
 
   return (
-    <div style={{ padding: 24 }}>
-      <h1 style={{ marginTop: 0 }}>FHIR ingestion feed</h1>
-      <p style={{ color: '#64748b', maxWidth: 720 }}>
-        Audit trail of every FHIR resource a partner pushed into your tenant
-        via /api/v1/fhir/*. The most recent 100 rows. Failures show the first
-        validation diagnostic so partner integrators can self-diagnose.
-      </p>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <header className="space-y-2">
+        <h1 className="text-2xl">FHIR ingestion feed</h1>
+        <div className="section-line" />
+        <p className="max-w-3xl text-slate-500">
+          Audit trail of every FHIR resource a partner pushed into your tenant
+          via /api/v1/fhir/*. The most recent 100 rows. Failures show the first
+          validation diagnostic so partner integrators can self-diagnose.
+        </p>
+      </header>
 
-      <div style={{ display: 'flex', gap: 12, margin: '16px 0', alignItems: 'center' }}>
-        <label>
-          Status:&nbsp;
+      <div className="flex flex-wrap items-center gap-4">
+        <label className="grid gap-1.5">
+          <span className="text-sm font-medium text-slate-600">Status</span>
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value)}
             aria-label="Filter by status"
+            className="form-input w-48"
           >
             {STATUS_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>{o.label}</option>
             ))}
           </select>
         </label>
-        <label>
-          Resource:&nbsp;
+        <label className="grid gap-1.5">
+          <span className="text-sm font-medium text-slate-600">Resource</span>
           <select
             value={resourceType}
             onChange={(e) => setResourceType(e.target.value)}
             aria-label="Filter by resource type"
+            className="form-input w-48"
           >
             {RESOURCE_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>{o.label}</option>
@@ -93,46 +98,55 @@ export function FhirFeedPage() {
       </div>
 
       {error && (
-        <div role="alert" style={{ color: '#b91c1c', marginBottom: 12 }}>
+        <div
+          role="alert"
+          className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800"
+        >
           {error}
         </div>
       )}
-      {isLoading && <div>Loading…</div>}
+      {isLoading && (
+        <div role="status" className="text-slate-500">
+          Loading…
+        </div>
+      )}
       {!isLoading && rows.length === 0 && !error && (
-        <div style={{ color: '#64748b' }}>No FHIR ingestion activity recorded.</div>
+        <div className="text-slate-500">No FHIR ingestion activity recorded.</div>
       )}
 
       {rows.length > 0 && (
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ textAlign: 'left', borderBottom: '1px solid #e2e8f0' }}>
-              <th style={{ padding: 8 }}>Received</th>
-              <th style={{ padding: 8 }}>Resource</th>
-              <th style={{ padding: 8 }}>Status</th>
-              <th style={{ padding: 8 }}>Id</th>
-              <th style={{ padding: 8 }}>Bundle entry</th>
-              <th style={{ padding: 8 }}>Diagnostics</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                <td style={{ padding: 8, whiteSpace: 'nowrap' }}>
-                  {new Date(r.receivedAtUtc).toLocaleString()}
-                </td>
-                <td style={{ padding: 8 }}>{r.resourceType}</td>
-                <td style={{ padding: 8, color: statusColor(r.status), fontWeight: 600 }}>
-                  {r.status}
-                </td>
-                <td style={{ padding: 8 }}>{r.resourceId ?? '—'}</td>
-                <td style={{ padding: 8 }}>{r.bundleEntryIndex ?? '—'}</td>
-                <td style={{ padding: 8, color: '#475569', fontSize: 13 }}>
-                  {r.diagnostics ?? ''}
-                </td>
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                <th className="px-4 py-3">Received</th>
+                <th className="px-4 py-3">Resource</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Id</th>
+                <th className="px-4 py-3">Bundle entry</th>
+                <th className="px-4 py-3">Diagnostics</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.id} className="border-t border-slate-100 hover:bg-slate-50">
+                  <td className="whitespace-nowrap px-4 py-3 text-slate-700">
+                    {new Date(r.receivedAtUtc).toLocaleString()}
+                  </td>
+                  <td className="px-4 py-3 text-slate-700">{r.resourceType}</td>
+                  <td className={`px-4 py-3 font-semibold ${statusColor(r.status)}`}>
+                    {r.status}
+                  </td>
+                  <td className="px-4 py-3 text-slate-700">{r.resourceId ?? '—'}</td>
+                  <td className="px-4 py-3 text-slate-700">{r.bundleEntryIndex ?? '—'}</td>
+                  <td className="px-4 py-3 text-[13px] text-slate-600">
+                    {r.diagnostics ?? ''}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

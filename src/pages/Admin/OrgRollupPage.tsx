@@ -4,19 +4,11 @@ import {
   type OrgRollupSummary,
 } from '@/api/admin';
 
-function metricCard(label: string, value: string, color: string) {
+function metricCard(label: string, value: string, toneClass: string) {
   return (
-    <div
-      style={{
-        border: '1px solid #e2e8f0',
-        borderRadius: 8,
-        padding: 16,
-        background: '#fff',
-        minWidth: 170,
-      }}
-    >
-      <div style={{ color: '#64748b', fontSize: 13 }}>{label}</div>
-      <div style={{ fontSize: 22, fontWeight: 700, color, marginTop: 6 }}>
+    <div className="card-hover min-w-[170px] flex-1 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</div>
+      <div className={`mt-1.5 text-2xl font-bold ${toneClass}`}>
         {value}
       </div>
     </div>
@@ -51,17 +43,18 @@ export function OrgRollupPage() {
     return () => { cancelled = true; };
   }, []);
 
-  if (isLoading) return <div role="status">Loading…</div>;
-  if (error) return <div role="alert">{error}</div>;
+  if (isLoading) return <div role="status" className="text-slate-500">Loading…</div>;
+  if (error) return <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">{error}</div>;
   if (!rollup) return null;
 
   return (
-    <div style={{ padding: 24, maxWidth: 1200, display: 'grid', gap: 24 }}>
-      <header>
-        <h2 style={{ fontSize: 22, fontWeight: 700 }}>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <header className="space-y-2">
+        <h2 className="text-2xl">
           Parent-Org Rollup — {rollup.parentName}
         </h2>
-        <p style={{ color: '#64748b', marginTop: 4 }}>
+        <div className="section-line" />
+        <p className="max-w-3xl text-slate-500">
           Aggregated metrics across {rollup.childOrgCount} child{' '}
           {rollup.childOrgCount === 1 ? 'CCN' : 'CCNs'}. Each child remains a
           fully tenant-isolated organization; this dashboard reads only the
@@ -70,93 +63,87 @@ export function OrgRollupPage() {
       </header>
 
       {rollup.childOrgCount === 0 ? (
-        <section
-          style={{
-            padding: 12,
-            borderRadius: 6,
-            background: '#fef3c7',
-            color: '#92400e',
-          }}
-        >
+        <section className="rounded-lg border-l-4 border-warning bg-amber-50 px-4 py-3 font-semibold text-amber-800">
           No child organizations linked to this parent. Set{' '}
           <code>ParentOrganizationId</code> on the child org records to enable
           rollup.
         </section>
       ) : (
         <>
-          <section style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            {metricCard('Patients', rollup.totalPatientCount.toString(), '#0f172a')}
+          <section className="flex flex-wrap gap-4">
+            {metricCard('Patients', rollup.totalPatientCount.toString(), 'text-navy-900')}
             {metricCard(
               'Active Elections',
               rollup.totalActiveElectionCount.toString(),
-              '#0f172a',
+              'text-navy-900',
             )}
             {metricCard(
               'Open Claims',
               rollup.totalOpenClaimCount.toString(),
-              '#0f172a',
+              'text-navy-900',
             )}
             {metricCard(
               'Open Claim Total',
               formatMoney(rollup.totalClaimAmountSubmitted),
-              '#1e40af',
+              'text-teal-700',
             )}
             {metricCard(
               'Open Breaches',
               rollup.totalOpenBreachCount.toString(),
-              rollup.totalOpenBreachCount > 0 ? '#b91c1c' : '#15803d',
+              rollup.totalOpenBreachCount > 0 ? 'text-error' : 'text-success',
             )}
           </section>
 
-          <section style={{ display: 'grid', gap: 12 }}>
-            <h3 style={{ fontSize: 18, fontWeight: 600 }}>
+          <section className="grid gap-3">
+            <h3 className="text-lg font-semibold">
               Child Organizations ({rollup.children.length})
             </h3>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-                  <th style={{ padding: '6px 10px' }}>Name</th>
-                  <th style={{ padding: '6px 10px' }}>Slug</th>
-                  <th style={{ padding: '6px 10px', textAlign: 'right' }}>Patients</th>
-                  <th style={{ padding: '6px 10px', textAlign: 'right' }}>Active Elections</th>
-                  <th style={{ padding: '6px 10px', textAlign: 'right' }}>Open Claims</th>
-                  <th style={{ padding: '6px 10px', textAlign: 'right' }}>Open Claim $</th>
-                  <th style={{ padding: '6px 10px', textAlign: 'right' }}>Open Breaches</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rollup.children.map((c) => (
-                  <tr key={c.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                    <td style={{ padding: '6px 10px', fontWeight: 600 }}>{c.name}</td>
-                    <td style={{ padding: '6px 10px', color: '#64748b', fontFamily: 'monospace', fontSize: 12 }}>
-                      {c.slug}
-                    </td>
-                    <td style={{ padding: '6px 10px', textAlign: 'right' }}>
-                      {c.patientCount}
-                    </td>
-                    <td style={{ padding: '6px 10px', textAlign: 'right' }}>
-                      {c.activeElectionCount}
-                    </td>
-                    <td style={{ padding: '6px 10px', textAlign: 'right' }}>
-                      {c.openClaimCount}
-                    </td>
-                    <td style={{ padding: '6px 10px', textAlign: 'right' }}>
-                      {formatMoney(c.claimAmountSubmitted)}
-                    </td>
-                    <td
-                      style={{
-                        padding: '6px 10px',
-                        textAlign: 'right',
-                        color: c.openBreachCount > 0 ? '#b91c1c' : '#0f172a',
-                        fontWeight: c.openBreachCount > 0 ? 600 : 400,
-                      }}
-                    >
-                      {c.openBreachCount}
-                    </td>
+            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+              <table className="w-full border-collapse text-sm">
+                <thead>
+                  <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                    <th className="px-4 py-3">Name</th>
+                    <th className="px-4 py-3">Slug</th>
+                    <th className="px-4 py-3 text-right">Patients</th>
+                    <th className="px-4 py-3 text-right">Active Elections</th>
+                    <th className="px-4 py-3 text-right">Open Claims</th>
+                    <th className="px-4 py-3 text-right">Open Claim $</th>
+                    <th className="px-4 py-3 text-right">Open Breaches</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {rollup.children.map((c) => (
+                    <tr key={c.id} className="border-t border-slate-100 hover:bg-slate-50">
+                      <td className="px-4 py-3 font-semibold text-slate-700">{c.name}</td>
+                      <td className="px-4 py-3 font-mono text-xs text-slate-500">
+                        {c.slug}
+                      </td>
+                      <td className="px-4 py-3 text-right text-slate-700">
+                        {c.patientCount}
+                      </td>
+                      <td className="px-4 py-3 text-right text-slate-700">
+                        {c.activeElectionCount}
+                      </td>
+                      <td className="px-4 py-3 text-right text-slate-700">
+                        {c.openClaimCount}
+                      </td>
+                      <td className="px-4 py-3 text-right text-slate-700">
+                        {formatMoney(c.claimAmountSubmitted)}
+                      </td>
+                      <td
+                        className={`px-4 py-3 text-right ${
+                          c.openBreachCount > 0
+                            ? 'font-semibold text-error'
+                            : 'text-navy-900'
+                        }`}
+                      >
+                        {c.openBreachCount}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </section>
         </>
       )}

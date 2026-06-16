@@ -116,73 +116,79 @@ export function ClaimDetail() {
     }
   };
 
-  if (isLoading) return <div role="status">Loading claim…</div>;
-  if (error) return <div role="alert">{error}</div>;
+  if (isLoading) return <div role="status" className="p-6 text-slate-500">Loading claim…</div>;
+  if (error) return <div role="alert" className="m-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">{error}</div>;
   if (!claim) return null;
 
   return (
-    <div>
-      <button onClick={() => navigate('/claims')} style={{ marginBottom: 16 }}>← Back to Claims</button>
-      <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 16 }}>Claim #{claim.id}</h2>
-      <dl style={{ display: 'grid', gridTemplateColumns: '160px 1fr', gap: '8px 16px', marginBottom: 24 }}>
-        <dt style={{ fontWeight: 500 }}>Patient</dt><dd>{claim.patientName}</dd>
-        <dt style={{ fontWeight: 500 }}>Status</dt><dd>{claim.status}</dd>
-        <dt style={{ fontWeight: 500 }}>Amount</dt><dd>${claim.amount.toFixed(2)}</dd>
-        {claim.paidAmount != null && (<><dt style={{ fontWeight: 500 }}>Paid Amount</dt><dd>${claim.paidAmount.toFixed(2)}</dd></>)}
-        {claim.denialReason && (<><dt style={{ fontWeight: 500 }}>Denial Reason</dt><dd>{claim.denialReason}</dd></>)}
-        <dt style={{ fontWeight: 500 }}>Submitted</dt>
-        <dd>{claim.submittedDate ? new Date(claim.submittedDate).toLocaleDateString() : 'Not yet submitted'}</dd>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <div>
+        <button
+          onClick={() => navigate('/claims')}
+          className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+        >
+          ← Back to Claims
+        </button>
+      </div>
+      <h2 className="text-2xl">Claim #{claim.id}</h2>
+      <dl className="grid grid-cols-[160px_1fr] gap-x-4 gap-y-2">
+        <dt className="font-medium text-slate-600">Patient</dt><dd className="text-slate-700">{claim.patientName}</dd>
+        <dt className="font-medium text-slate-600">Status</dt><dd className="text-slate-700">{claim.status}</dd>
+        <dt className="font-medium text-slate-600">Amount</dt><dd className="text-slate-700">${claim.amount.toFixed(2)}</dd>
+        {claim.paidAmount != null && (<><dt className="font-medium text-slate-600">Paid Amount</dt><dd className="text-slate-700">${claim.paidAmount.toFixed(2)}</dd></>)}
+        {claim.denialReason && (<><dt className="font-medium text-slate-600">Denial Reason</dt><dd className="text-slate-700">{claim.denialReason}</dd></>)}
+        <dt className="font-medium text-slate-600">Submitted</dt>
+        <dd className="text-slate-700">{claim.submittedDate ? new Date(claim.submittedDate).toLocaleDateString() : 'Not yet submitted'}</dd>
       </dl>
       {claim.serviceLines.length > 0 && (
-        <div style={{ marginBottom: 24 }}>
-          <h3 style={{ fontWeight: 600, marginBottom: 8 }}>Service Lines</h3>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-                <th style={{ padding: '6px 10px' }}>Procedure</th>
-                <th style={{ padding: '6px 10px' }}>Diagnosis</th>
-                <th style={{ padding: '6px 10px' }}>Units</th>
-                <th style={{ padding: '6px 10px' }}>Charge</th>
-              </tr>
-            </thead>
-            <tbody>
-              {claim.serviceLines.map((sl) => (
-                <tr key={sl.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td style={{ padding: '6px 10px' }}>{sl.procedureCode}</td>
-                  <td style={{ padding: '6px 10px' }}>{sl.diagnosisCode ?? '—'}</td>
-                  <td style={{ padding: '6px 10px' }}>{sl.units}</td>
-                  <td style={{ padding: '6px 10px' }}>${sl.chargeAmount.toFixed(2)}</td>
+        <div className="grid gap-3">
+          <h3 className="text-lg font-semibold">Service Lines</h3>
+          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                  <th className="px-4 py-3">Procedure</th>
+                  <th className="px-4 py-3">Diagnosis</th>
+                  <th className="px-4 py-3">Units</th>
+                  <th className="px-4 py-3">Charge</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {claim.serviceLines.map((sl) => (
+                  <tr key={sl.id} className="border-t border-slate-100 hover:bg-slate-50">
+                    <td className="px-4 py-3 text-slate-700">{sl.procedureCode}</td>
+                    <td className="px-4 py-3 text-slate-700">{sl.diagnosisCode ?? '—'}</td>
+                    <td className="px-4 py-3 text-slate-700">{sl.units}</td>
+                    <td className="px-4 py-3 text-slate-700">${sl.chargeAmount.toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
       {scrub && (
         <div
-          style={{
-            border: '1px solid ' + (scrub.passed ? '#bbf7d0' : '#fecaca'),
-            background: scrub.passed ? '#f0fdf4' : '#fef2f2',
-            borderRadius: 8, padding: 16, marginTop: 16,
-          }}
+          className={`rounded-lg border px-4 py-3 ${
+            scrub.passed
+              ? 'border-green-200 bg-green-50'
+              : 'border-red-200 bg-red-50'
+          }`}
         >
-          <div style={{ fontWeight: 600, color: scrub.passed ? '#166534' : '#991b1b' }}>
+          <div className={`font-semibold ${scrub.passed ? 'text-green-800' : 'text-red-800'}`}>
             {scrub.passed
               ? `Validation passed${scrub.findings.length > 0 ? ` (${scrub.findings.length} warning${scrub.findings.length === 1 ? '' : 's'})` : ''}`
               : `Validation failed · ${scrub.findings.filter((f) => f.severity === 'error').length} error${scrub.findings.filter((f) => f.severity === 'error').length === 1 ? '' : 's'}`}
           </div>
           {scrub.findings.length > 0 && (
-            <ul style={{ marginTop: 8, marginBottom: 0, paddingLeft: 20 }}>
+            <ul className="mt-2 list-disc pl-5">
               {scrub.findings.map((f, i) => (
-                <li key={`${f.rule}-${f.field}-${i}`} style={{ fontSize: 13, marginBottom: 4 }}>
-                  <span style={{
-                    color: f.severity === 'error' ? '#b91c1c' : '#b45309',
-                    fontWeight: 600, marginRight: 6,
-                  }}>
+                <li key={`${f.rule}-${f.field}-${i}`} className="mb-1 text-sm">
+                  <span className={`mr-1.5 font-semibold ${f.severity === 'error' ? 'text-red-700' : 'text-accent-600'}`}>
                     {f.severity}
                   </span>
-                  <code style={{ fontSize: 12, color: '#64748b' }}>{f.rule}</code>
-                  <span style={{ marginLeft: 8 }}>{f.message}</span>
+                  <code className="text-xs text-slate-500">{f.rule}</code>
+                  <span className="ml-2 text-slate-700">{f.message}</span>
                 </li>
               ))}
             </ul>
@@ -192,57 +198,54 @@ export function ClaimDetail() {
       {prediction && (
         <div
           aria-label={`AI denial risk prediction for claim ${claim.id}`}
+          className="rounded-lg border p-4"
           style={{
-            border: '1px solid ' + riskBorder(prediction.riskLevel),
+            borderColor: riskBorder(prediction.riskLevel),
             background: riskBackground(prediction.riskLevel),
             borderLeft: `4px solid ${riskBadge(prediction.riskLevel)}`,
-            borderRadius: 8, padding: 16, marginTop: 16,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+          <div className="mb-2 flex items-center gap-2.5">
             <span
-              style={{
-                background: riskBadge(prediction.riskLevel),
-                color: '#fff', fontWeight: 700, fontSize: 12, padding: '2px 10px',
-                borderRadius: 999, textTransform: 'uppercase',
-              }}
+              className="inline-block rounded-full px-2.5 py-0.5 text-xs font-bold uppercase text-white"
+              style={{ background: riskBadge(prediction.riskLevel) }}
             >
               {prediction.riskLevel} risk
             </span>
             {prediction.likelyDenialCode && (
-              <code style={{ fontSize: 13, color: '#475569' }}>
+              <code className="text-sm text-slate-600">
                 Likely denial: {prediction.likelyDenialCode}
               </code>
             )}
           </div>
-          <div style={{ fontSize: 14, color: '#1f2937', marginBottom: 8 }}>
+          <div className="mb-2 text-sm text-slate-800">
             {prediction.rationale || '(no rationale provided)'}
           </div>
           {prediction.suggestedFixes.length > 0 && (
             <div>
-              <div style={{ fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 4 }}>
+              <div className="mb-1 text-xs font-semibold text-slate-600">
                 Suggested fixes
               </div>
-              <ul style={{ marginTop: 0, marginBottom: 0, paddingLeft: 20 }}>
+              <ul className="list-disc pl-5">
                 {prediction.suggestedFixes.map((fix, i) => (
-                  <li key={i} style={{ fontSize: 13, marginBottom: 2 }}>{fix}</li>
+                  <li key={i} className="text-sm text-slate-700">{fix}</li>
                 ))}
               </ul>
             </div>
           )}
-          <div style={{ marginTop: 10, fontSize: 11, color: '#94a3b8' }}>
+          <div className="mt-2.5 text-[11px] text-slate-400">
             AI advisory — review independently before submission.
           </div>
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: 10, marginTop: 16, flexWrap: 'wrap' }}>
+      <div className="flex flex-wrap gap-2.5">
         <button
           onClick={() => { void handleValidate(); }}
           disabled={isScrubbing || !canScrub}
           aria-busy={isScrubbing}
           title={!canScrub ? NO_PERMISSION : undefined}
-          style={{ padding: '10px 24px', background: '#7c3aed', color: '#fff', border: 'none', borderRadius: 4, fontWeight: 600, cursor: (isScrubbing || !canScrub) ? 'not-allowed' : 'pointer' }}
+          className="btn-primary disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {isScrubbing ? 'Validating…' : 'Validate'}
         </button>
@@ -250,7 +253,7 @@ export function ClaimDetail() {
           onClick={() => { void handlePredictDenial(); }}
           disabled={isPredicting}
           aria-busy={isPredicting}
-          style={{ padding: '10px 24px', background: '#0d9488', color: '#fff', border: 'none', borderRadius: 4, fontWeight: 600, cursor: isPredicting ? 'not-allowed' : 'pointer' }}
+          className="btn-primary disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {isPredicting
             ? 'Predicting…'
@@ -264,7 +267,7 @@ export function ClaimDetail() {
             disabled={isSubmitting || !canSubmit}
             aria-busy={isSubmitting}
             title={!canSubmit ? NO_PERMISSION : undefined}
-            style={{ padding: '10px 24px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 4, fontWeight: 600, cursor: (isSubmitting || !canSubmit) ? 'not-allowed' : 'pointer' }}
+            className="btn-primary disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {isSubmitting ? 'Submitting…' : 'Submit Claim'}
           </button>
@@ -274,13 +277,13 @@ export function ClaimDetail() {
           disabled={isPrinting || !canPrint}
           aria-busy={isPrinting}
           title={!canPrint ? NO_PERMISSION : undefined}
-          style={{ padding: '10px 24px', background: '#0ea5e9', color: '#fff', border: 'none', borderRadius: 4, fontWeight: 600, cursor: (isPrinting || !canPrint) ? 'not-allowed' : 'pointer' }}
+          className="btn-primary disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {isPrinting ? 'Generating…' : 'Print Claim Form'}
         </button>
         <button
           onClick={() => navigate(`/claims/${claim.id}/lifecycle`)}
-          style={{ padding: '10px 24px', background: '#475569', color: '#fff', border: 'none', borderRadius: 4, fontWeight: 600, cursor: 'pointer' }}
+          className="btn-outline-dark"
         >
           View Lifecycle
         </button>

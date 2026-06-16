@@ -34,53 +34,49 @@ export function FamilyMedications() {
 
   if (error) {
     return (
-      <p data-testid="family-error" role="alert" style={{ color: '#dc2626', padding: 16 }}>
+      <p
+        data-testid="family-error"
+        role="alert"
+        className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800"
+      >
         {error}
       </p>
     );
   }
   if (meds === null) {
     return (
-      <p data-testid="family-loading" style={{ color: '#94a3b8', padding: 16 }}>
+      <p data-testid="family-loading" role="status" className="p-4 text-slate-500">
         {t('common.loading')}
       </p>
     );
   }
 
   return (
-    <section style={{ padding: 16 }}>
-      <h1
-        data-testid="page-title"
-        style={{ fontSize: 24, fontWeight: 600, color: '#1e293b', marginBottom: 24 }}
-      >
+    <section className="grid max-w-[1200px] gap-6 p-6">
+      <h1 data-testid="page-title" className="text-2xl">
         {t('family.medications.title')}
       </h1>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }} data-testid="medications-list">
+      <div className="flex flex-col gap-3" data-testid="medications-list">
         {meds.map((m) => (
           <div
             key={m.id}
             data-testid="medication-item"
-            style={{
-              background: '#fff',
-              border: '1px solid #e2e8f0',
-              borderRadius: 12,
-              padding: '16px 20px',
-            }}
+            className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
           >
-            <p style={{ fontWeight: 500, color: '#1e293b', margin: 0 }}>
+            <p className="m-0 font-medium text-navy-900">
               {m.name}
               {m.genericName ? ` (${m.genericName})` : ''}
             </p>
-            <p style={{ fontSize: 14, color: '#64748b', margin: '2px 0 0' }}>
+            <p className="mt-0.5 text-sm text-slate-500">
               {m.dosage} — {m.route} — {m.frequency}
             </p>
             {m.purpose && (
-              <p style={{ fontSize: 12, color: '#94a3b8', margin: '4px 0 0' }}>{m.purpose}</p>
+              <p className="mt-1 text-xs text-slate-400">{m.purpose}</p>
             )}
           </div>
         ))}
         {meds.length === 0 && (
-          <p data-testid="medications-empty" style={{ color: '#94a3b8' }}>
+          <p data-testid="medications-empty" className="text-slate-500">
             {t('family.medications.empty')}
           </p>
         )}

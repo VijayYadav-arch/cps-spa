@@ -137,12 +137,12 @@ export function CommercialSettingsBrandingPage() {
   };
 
   return (
-    <div style={{ padding: '1rem', maxWidth: 1000, margin: '0 auto' }}>
-      <div style={{ marginBottom: 24 }}>
-        <h1 data-testid="page-title" style={{ fontSize: 24, fontWeight: 600 }}>
+    <div className="grid max-w-[1000px] gap-6 p-6">
+      <div>
+        <h1 data-testid="page-title" className="text-2xl">
           White-Label Branding
         </h1>
-        <p style={{ color: '#64748b', fontSize: 14, marginTop: 4 }}>
+        <p className="mt-1 text-sm text-slate-500">
           Customize your portal appearance for your organization.
         </p>
       </div>
@@ -150,205 +150,135 @@ export function CommercialSettingsBrandingPage() {
       {message && (
         <div
           role="alert"
-          style={{
-            marginBottom: 16,
-            padding: 12,
-            background: message.type === 'success' ? '#f0fdf4' : '#fef2f2',
-            border: `1px solid ${message.type === 'success' ? '#bbf7d0' : '#fecaca'}`,
-            color: message.type === 'success' ? '#166534' : '#b91c1c',
-            borderRadius: 8,
-          }}
+          className={`rounded-lg border-l-4 px-4 py-3 font-semibold ${
+            message.type === 'success'
+              ? 'border-success bg-green-50 text-green-800'
+              : 'border-error bg-red-50 text-red-800'
+          }`}
         >
           {message.text}
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <section
-            style={{
-              background: 'white',
-              padding: 16,
-              borderRadius: 12,
-              border: '1px solid #e2e8f0',
-            }}
-          >
-            <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12 }}>Logo</h2>
-            <div style={{ marginBottom: 12 }}>
-              <label style={{ fontSize: 12, fontWeight: 500 }}>Logo URL</label>
+      <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
+        <div className="flex flex-col gap-4">
+          <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <h2 className="mb-3 text-lg font-semibold">Logo</h2>
+            <label className="mb-3 grid gap-1.5">
+              <span className="text-sm font-medium text-slate-600">Logo URL</span>
               <input
                 data-testid="input-logo-url"
                 type="url"
                 value={form.logoUrl}
                 onChange={(e) => setForm({ ...form, logoUrl: e.target.value })}
                 placeholder="https://example.com/logo.svg"
-                style={{
-                  width: '100%',
-                  padding: 8,
-                  border: '1px solid #cbd5e1',
-                  borderRadius: 6,
-                  marginTop: 4,
-                }}
+                className="form-input"
               />
-            </div>
-            <div>
-              <label style={{ fontSize: 12, fontWeight: 500 }}>Favicon URL</label>
+            </label>
+            <label className="grid gap-1.5">
+              <span className="text-sm font-medium text-slate-600">Favicon URL</span>
               <input
                 data-testid="input-favicon-url"
                 type="url"
                 value={form.faviconUrl}
                 onChange={(e) => setForm({ ...form, faviconUrl: e.target.value })}
-                style={{
-                  width: '100%',
-                  padding: 8,
-                  border: '1px solid #cbd5e1',
-                  borderRadius: 6,
-                  marginTop: 4,
-                }}
+                className="form-input"
               />
-            </div>
+            </label>
           </section>
 
-          <section
-            style={{
-              background: 'white',
-              padding: 16,
-              borderRadius: 12,
-              border: '1px solid #e2e8f0',
-            }}
-          >
-            <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12 }}>Brand Colors</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
-              <div>
-                <label style={{ fontSize: 12, fontWeight: 500 }}>Primary</label>
+          <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <h2 className="mb-3 text-lg font-semibold">Brand Colors</h2>
+            <div className="grid grid-cols-3 gap-4">
+              <label className="grid gap-1.5">
+                <span className="text-sm font-medium text-slate-600">Primary</span>
                 <input
                   data-testid="input-primary-color"
                   type="color"
                   value={form.primaryColor}
                   onChange={(e) => setForm({ ...form, primaryColor: e.target.value })}
-                  style={{ width: '100%', height: 40, marginTop: 4 }}
+                  className="h-10 w-full"
                 />
-              </div>
-              <div>
-                <label style={{ fontSize: 12, fontWeight: 500 }}>Secondary</label>
+              </label>
+              <label className="grid gap-1.5">
+                <span className="text-sm font-medium text-slate-600">Secondary</span>
                 <input
                   data-testid="input-secondary-color"
                   type="color"
                   value={form.secondaryColor}
                   onChange={(e) => setForm({ ...form, secondaryColor: e.target.value })}
-                  style={{ width: '100%', height: 40, marginTop: 4 }}
+                  className="h-10 w-full"
                 />
-              </div>
-              <div>
-                <label style={{ fontSize: 12, fontWeight: 500 }}>Accent</label>
+              </label>
+              <label className="grid gap-1.5">
+                <span className="text-sm font-medium text-slate-600">Accent</span>
                 <input
                   data-testid="input-accent-color"
                   type="color"
                   value={form.accentColor}
                   onChange={(e) => setForm({ ...form, accentColor: e.target.value })}
-                  style={{ width: '100%', height: 40, marginTop: 4 }}
+                  className="h-10 w-full"
                 />
-              </div>
+              </label>
             </div>
           </section>
 
-          <section
-            style={{
-              background: 'white',
-              padding: 16,
-              borderRadius: 12,
-              border: '1px solid #e2e8f0',
-            }}
-          >
-            <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12 }}>Typography</h2>
-            <label style={{ fontSize: 12, fontWeight: 500 }}>Font Family</label>
-            <select
-              data-testid="input-font-family"
-              value={form.fontFamily}
-              onChange={(e) => setForm({ ...form, fontFamily: e.target.value })}
-              style={{
-                width: '100%',
-                padding: 8,
-                border: '1px solid #cbd5e1',
-                borderRadius: 6,
-                marginTop: 4,
-              }}
-            >
-              {FONT_OPTIONS.map((f) => (
-                <option key={f} value={f}>
-                  {f}
-                </option>
-              ))}
-            </select>
+          <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <h2 className="mb-3 text-lg font-semibold">Typography</h2>
+            <label className="grid gap-1.5">
+              <span className="text-sm font-medium text-slate-600">Font Family</span>
+              <select
+                data-testid="input-font-family"
+                value={form.fontFamily}
+                onChange={(e) => setForm({ ...form, fontFamily: e.target.value })}
+                className="form-input"
+              >
+                {FONT_OPTIONS.map((f) => (
+                  <option key={f} value={f}>
+                    {f}
+                  </option>
+                ))}
+              </select>
+            </label>
           </section>
 
-          <section
-            style={{
-              background: 'white',
-              padding: 16,
-              borderRadius: 12,
-              border: '1px solid #e2e8f0',
-            }}
-          >
-            <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12 }}>Custom Domain</h2>
-            <label style={{ fontSize: 12, fontWeight: 500 }}>Domain</label>
-            <input
-              data-testid="input-custom-domain"
-              type="text"
-              value={form.customDomain}
-              onChange={(e) => setForm({ ...form, customDomain: e.target.value })}
-              placeholder="portal.yourdomain.com"
-              style={{
-                width: '100%',
-                padding: 8,
-                border: '1px solid #cbd5e1',
-                borderRadius: 6,
-                marginTop: 4,
-              }}
-            />
+          <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <h2 className="mb-3 text-lg font-semibold">Custom Domain</h2>
+            <label className="grid gap-1.5">
+              <span className="text-sm font-medium text-slate-600">Domain</span>
+              <input
+                data-testid="input-custom-domain"
+                type="text"
+                value={form.customDomain}
+                onChange={(e) => setForm({ ...form, customDomain: e.target.value })}
+                placeholder="portal.yourdomain.com"
+                className="form-input"
+              />
+            </label>
           </section>
 
-          <section
-            style={{
-              background: 'white',
-              padding: 16,
-              borderRadius: 12,
-              border: '1px solid #e2e8f0',
-            }}
-          >
-            <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12 }}>Custom Text</h2>
-            <div style={{ marginBottom: 12 }}>
-              <label style={{ fontSize: 12, fontWeight: 500 }}>Login Page Message</label>
+          <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <h2 className="mb-3 text-lg font-semibold">Custom Text</h2>
+            <label className="mb-3 grid gap-1.5">
+              <span className="text-sm font-medium text-slate-600">Login Page Message</span>
               <textarea
                 data-testid="input-login-message"
                 value={form.loginMessage}
                 onChange={(e) => setForm({ ...form, loginMessage: e.target.value })}
                 rows={3}
-                style={{
-                  width: '100%',
-                  padding: 8,
-                  border: '1px solid #cbd5e1',
-                  borderRadius: 6,
-                  marginTop: 4,
-                }}
+                className="form-input"
               />
-            </div>
-            <div>
-              <label style={{ fontSize: 12, fontWeight: 500 }}>Support Email</label>
+            </label>
+            <label className="grid gap-1.5">
+              <span className="text-sm font-medium text-slate-600">Support Email</span>
               <input
                 data-testid="input-support-email"
                 type="email"
                 value={form.footerText}
                 onChange={(e) => setForm({ ...form, footerText: e.target.value })}
-                style={{
-                  width: '100%',
-                  padding: 8,
-                  border: '1px solid #cbd5e1',
-                  borderRadius: 6,
-                  marginTop: 4,
-                }}
+                className="form-input"
               />
-            </div>
+            </label>
           </section>
 
           <button
@@ -356,16 +286,7 @@ export function CommercialSettingsBrandingPage() {
             onClick={handleSave}
             disabled={saving || !canSave}
             title={!canSave ? NO_PERMISSION : undefined}
-            style={{
-              padding: '10px 24px',
-              background: '#0d9488',
-              color: 'white',
-              border: 'none',
-              borderRadius: 8,
-              fontWeight: 500,
-              cursor: (saving || !canSave) ? 'not-allowed' : 'pointer',
-              alignSelf: 'flex-start',
-            }}
+            className="btn-primary self-start disabled:cursor-not-allowed disabled:opacity-60"
           >
             {saving ? 'Saving…' : 'Save Branding'}
           </button>
@@ -374,46 +295,27 @@ export function CommercialSettingsBrandingPage() {
         <div>
           <div
             data-testid="preview-banner"
-            style={{
-              background: 'white',
-              padding: 16,
-              borderRadius: 12,
-              border: '1px solid #e2e8f0',
-              position: 'sticky',
-              top: 16,
-            }}
+            className="sticky top-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
           >
-            <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12 }}>Preview</h2>
+            <h2 className="mb-3 text-lg font-semibold">Preview</h2>
             <div
-              style={{
-                borderRadius: 8,
-                border: '1px solid #e2e8f0',
-                overflow: 'hidden',
-                fontFamily: form.fontFamily,
-              }}
+              className="overflow-hidden rounded-lg border border-slate-200"
+              style={{ fontFamily: form.fontFamily }}
             >
-              <div style={{ padding: 12, background: form.secondaryColor, color: 'white' }}>
+              <div className="p-3 text-white" style={{ background: form.secondaryColor }}>
                 {form.logoUrl ? 'Custom Logo' : 'Your Organization'}
               </div>
-              <div style={{ padding: 12, background: '#f8fafc' }}>
+              <div className="bg-slate-50 p-3">
                 <div
-                  style={{
-                    height: 4,
-                    borderRadius: 2,
-                    background: form.primaryColor,
-                    marginBottom: 8,
-                  }}
+                  className="mb-2 h-1 rounded-sm"
+                  style={{ background: form.primaryColor }}
                 />
                 <div
-                  style={{
-                    height: 4,
-                    width: '40%',
-                    borderRadius: 2,
-                    background: form.accentColor,
-                  }}
+                  className="h-1 w-2/5 rounded-sm"
+                  style={{ background: form.accentColor }}
                 />
               </div>
-              <div style={{ padding: 8, background: '#f1f5f9', fontSize: 11, color: '#94a3b8' }}>
+              <div className="bg-slate-100 p-2 text-xs text-slate-400">
                 {form.footerText || 'Footer text'}
               </div>
             </div>

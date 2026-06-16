@@ -78,11 +78,19 @@ export function CommercialClaimsPage() {
 
   if (error)
     return (
-      <div style={{ padding: '1rem', color: 'red' }} role="alert">
+      <div
+        role="alert"
+        className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800"
+      >
         Failed to load claims.
       </div>
     );
-  if (loading) return <div style={{ padding: '1rem' }}>Loading…</div>;
+  if (loading)
+    return (
+      <div role="status" className="text-slate-500">
+        Loading…
+      </div>
+    );
 
   const totalBilled = allClaims.reduce((sum, c) => sum + c.amount, 0);
   const totalPaid = allClaims
@@ -93,79 +101,64 @@ export function CommercialClaimsPage() {
     .reduce((sum, c) => sum + c.amount, 0);
 
   return (
-    <div style={{ padding: '1rem', maxWidth: 1200, margin: '0 auto' }}>
-      <div style={{ marginBottom: 24 }}>
-        <h1 data-testid="page-title" style={{ fontSize: 24, fontWeight: 600 }}>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <div>
+        <h1 data-testid="page-title" className="text-2xl">
           Claims
         </h1>
-        <p style={{ color: '#64748b', fontSize: 14, marginTop: 4 }}>
+        <p className="mt-1 text-sm text-slate-500">
           Track and manage all your billing claims
         </p>
       </div>
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
-          gap: 12,
-          marginBottom: 16,
-        }}
-      >
-        <div
-          style={{
-            background: 'white',
-            padding: 16,
-            borderRadius: 8,
-            border: '1px solid #f1f5f9',
-          }}
-        >
-          <p style={{ fontSize: 12, color: '#64748b' }}>Total Claims</p>
-          <p data-testid="stat-total-claims" style={{ fontSize: 20, fontWeight: 700 }}>
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div className="card-hover rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            Total Claims
+          </p>
+          <p
+            data-testid="stat-total-claims"
+            className="mt-1.5 text-2xl font-bold text-navy-900"
+          >
             {allClaims.length}
           </p>
         </div>
-        <div
-          style={{
-            background: 'white',
-            padding: 16,
-            borderRadius: 8,
-            border: '1px solid #f1f5f9',
-          }}
-        >
-          <p style={{ fontSize: 12, color: '#64748b' }}>Total Billed</p>
-          <p data-testid="stat-total-billed" style={{ fontSize: 20, fontWeight: 700 }}>
+        <div className="card-hover rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            Total Billed
+          </p>
+          <p
+            data-testid="stat-total-billed"
+            className="mt-1.5 text-2xl font-bold text-navy-900"
+          >
             {currency(totalBilled)}
           </p>
         </div>
-        <div
-          style={{
-            background: 'white',
-            padding: 16,
-            borderRadius: 8,
-            border: '1px solid #f1f5f9',
-          }}
-        >
-          <p style={{ fontSize: 12, color: '#64748b' }}>Total Paid</p>
-          <p data-testid="stat-total-paid" style={{ fontSize: 20, fontWeight: 700 }}>
+        <div className="card-hover rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            Total Paid
+          </p>
+          <p
+            data-testid="stat-total-paid"
+            className="mt-1.5 text-2xl font-bold text-teal-700"
+          >
             {currency(totalPaid)}
           </p>
         </div>
-        <div
-          style={{
-            background: 'white',
-            padding: 16,
-            borderRadius: 8,
-            border: '1px solid #f1f5f9',
-          }}
-        >
-          <p style={{ fontSize: 12, color: '#64748b' }}>Total Pending</p>
-          <p data-testid="stat-total-pending" style={{ fontSize: 20, fontWeight: 700 }}>
+        <div className="card-hover rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            Total Pending
+          </p>
+          <p
+            data-testid="stat-total-pending"
+            className="mt-1.5 text-2xl font-bold text-accent-600"
+          >
             {currency(totalPending)}
           </p>
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+      <div className="flex flex-wrap gap-2">
         {FILTERS.map((f) => {
           const isActive = status === f.value;
           const to = f.value === 'all' ? '/portal/claims' : `/portal/claims?status=${f.value}`;
@@ -174,16 +167,11 @@ export function CommercialClaimsPage() {
               key={f.value}
               to={to}
               data-testid={`filter-${f.value}`}
-              style={{
-                padding: '6px 14px',
-                borderRadius: 999,
-                fontSize: 14,
-                fontWeight: 500,
-                textDecoration: 'none',
-                background: isActive ? '#0f172a' : 'white',
-                color: isActive ? 'white' : '#475569',
-                border: isActive ? 'none' : '1px solid #e2e8f0',
-              }}
+              className={`rounded-full px-3.5 py-1.5 text-sm font-medium no-underline ${
+                isActive
+                  ? 'bg-navy-900 text-white'
+                  : 'border border-slate-200 bg-white text-slate-600'
+              }`}
             >
               {f.label}
             </Link>
@@ -193,27 +181,20 @@ export function CommercialClaimsPage() {
 
       <div
         data-testid="claims-list"
-        style={{
-          background: 'white',
-          borderRadius: 12,
-          border: '1px solid #f1f5f9',
-          overflow: 'hidden',
-        }}
+        className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
       >
         {claims.length === 0 ? (
-          <div style={{ padding: 48, textAlign: 'center', color: '#94a3b8' }}>
-            No claims found.
-          </div>
+          <div className="p-12 text-center text-slate-400">No claims found.</div>
         ) : (
-          <table style={{ width: '100%', fontSize: 14, borderCollapse: 'collapse' }}>
+          <table className="w-full border-collapse text-sm">
             <thead>
-              <tr style={{ background: '#f8fafc', textAlign: 'left' }}>
-                <th style={{ padding: 12 }}>Claim #</th>
-                <th style={{ padding: 12 }}>Patient</th>
-                <th style={{ padding: 12 }}>Service Date</th>
-                <th style={{ padding: 12 }}>Payer</th>
-                <th style={{ padding: 12, textAlign: 'right' }}>Amount</th>
-                <th style={{ padding: 12 }}>Status</th>
+              <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                <th className="px-4 py-3">Claim #</th>
+                <th className="px-4 py-3">Patient</th>
+                <th className="px-4 py-3">Service Date</th>
+                <th className="px-4 py-3">Payer</th>
+                <th className="px-4 py-3 text-right">Amount</th>
+                <th className="px-4 py-3">Status</th>
               </tr>
             </thead>
             <tbody>
@@ -221,26 +202,28 @@ export function CommercialClaimsPage() {
                 <tr
                   key={claim.id}
                   data-testid="claim-row"
-                  style={{ borderTop: '1px solid #f1f5f9' }}
+                  className="border-t border-slate-100 hover:bg-slate-50"
                 >
                   <td
                     data-testid="claim-id"
-                    style={{ padding: 12, fontFamily: 'monospace', fontSize: 12 }}
+                    className="px-4 py-3 font-mono text-xs text-slate-700"
                   >
                     {claim.claimNumber}
                   </td>
-                  <td style={{ padding: 12, fontWeight: 500 }}>{claim.patientName}</td>
-                  <td style={{ padding: 12, color: '#64748b' }}>
+                  <td className="px-4 py-3 font-medium text-slate-700">
+                    {claim.patientName}
+                  </td>
+                  <td className="px-4 py-3 text-slate-500">
                     {formatDate(claim.serviceDate)}
                   </td>
-                  <td style={{ padding: 12, color: '#64748b' }}>{claim.payer}</td>
+                  <td className="px-4 py-3 text-slate-500">{claim.payer}</td>
                   <td
                     data-testid="claim-amount"
-                    style={{ padding: 12, textAlign: 'right', fontWeight: 500 }}
+                    className="px-4 py-3 text-right font-medium text-slate-700"
                   >
                     {currency(claim.amount)}
                   </td>
-                  <td data-testid="claim-status" style={{ padding: 12 }}>
+                  <td data-testid="claim-status" className="px-4 py-3 text-slate-700">
                     {claim.status}
                   </td>
                 </tr>

@@ -57,11 +57,19 @@ export function CommercialReportsPage() {
 
   if (error)
     return (
-      <div style={{ padding: '1rem', color: 'red' }} role="alert">
+      <div
+        role="alert"
+        className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800"
+      >
         Failed to load reports.
       </div>
     );
-  if (loading) return <div style={{ padding: '1rem' }}>Loading…</div>;
+  if (loading)
+    return (
+      <div role="status" className="text-slate-500">
+        Loading…
+      </div>
+    );
 
   const grouped: Record<string, Report[]> = {};
   for (const r of reports) {
@@ -82,115 +90,49 @@ export function CommercialReportsPage() {
   }
 
   return (
-    <div style={{ padding: '1rem', maxWidth: 1200, margin: '0 auto' }}>
-      <div style={{ marginBottom: 24 }}>
-        <h1 data-testid="page-title" style={{ fontSize: 24, fontWeight: 600 }}>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <div>
+        <h1 data-testid="page-title" className="text-2xl">
           Monthly Reports &amp; Analytics
         </h1>
-        <p style={{ color: '#64748b', fontSize: 14, marginTop: 4 }}>
+        <p className="mt-1 text-sm text-slate-500">
           Review your billing performance reports and analytics
         </p>
       </div>
 
       {reports.length === 0 ? (
-        <div
-          style={{
-            padding: 48,
-            textAlign: 'center',
-            color: '#94a3b8',
-            background: 'white',
-            borderRadius: 12,
-            border: '1px solid #f1f5f9',
-          }}
-        >
+        <div className="rounded-xl border border-slate-200 bg-white p-12 text-center text-slate-400 shadow-sm">
           No reports available yet.
         </div>
       ) : (
         sections.map((section) => (
-          <div key={section.type} style={{ marginBottom: 32 }}>
-            <h2
-              style={{
-                fontSize: 18,
-                fontWeight: 600,
-                marginBottom: 12,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-              }}
-            >
+          <div key={section.type} className="grid gap-3">
+            <h2 className="flex items-center gap-2 text-lg font-semibold">
               {section.label} Reports
-              <span style={{ fontSize: 12, color: '#94a3b8' }}>({section.reports.length})</span>
+              <span className="text-xs text-slate-400">({section.reports.length})</span>
             </h2>
 
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-                gap: 16,
-              }}
-            >
+            <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(280px,1fr))]">
               {section.reports.map((report) => (
                 <div
                   key={report.id}
                   data-testid="report-row"
-                  style={{
-                    background: 'white',
-                    padding: 16,
-                    borderRadius: 12,
-                    border: '1px solid #f1f5f9',
-                    display: 'flex',
-                    flexDirection: 'column',
-                  }}
+                  className="flex flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
                 >
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      marginBottom: 8,
-                    }}
-                  >
-                    <h3
-                      data-testid="report-name"
-                      style={{ fontSize: 14, fontWeight: 600 }}
-                    >
+                  <div className="mb-2 flex justify-between">
+                    <h3 data-testid="report-name" className="text-sm font-semibold text-slate-700">
                       {report.title}
                     </h3>
-                    <span
-                      style={{
-                        padding: '2px 8px',
-                        fontSize: 11,
-                        background: '#ecfeff',
-                        color: '#0d9488',
-                        borderRadius: 4,
-                      }}
-                    >
+                    <span className="inline-block rounded-full bg-teal-100 px-2 py-0.5 text-xs font-semibold text-teal-700">
                       {TYPE_LABEL[report.type] ?? report.type}
                     </span>
                   </div>
-                  <p style={{ fontSize: 12, color: '#64748b' }}>Period: {report.period}</p>
+                  <p className="text-xs text-slate-500">Period: {report.period}</p>
                   {report.summary && (
-                    <p
-                      style={{
-                        fontSize: 12,
-                        color: '#94a3b8',
-                        marginTop: 4,
-                        marginBottom: 4,
-                      }}
-                    >
-                      {report.summary}
-                    </p>
+                    <p className="my-1 text-xs text-slate-400">{report.summary}</p>
                   )}
-                  <div
-                    style={{
-                      marginTop: 'auto',
-                      paddingTop: 12,
-                      borderTop: '1px solid #f1f5f9',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <span style={{ fontSize: 12, color: '#94a3b8' }}>
+                  <div className="mt-auto flex items-center justify-between border-t border-slate-100 pt-3">
+                    <span className="text-xs text-slate-400">
                       {formatDate(report.createdAt)}
                     </span>
                     {report.url ? (
@@ -199,21 +141,12 @@ export function CommercialReportsPage() {
                         href={report.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        style={{
-                          color: '#0d9488',
-                          fontSize: 12,
-                          fontWeight: 500,
-                          textDecoration: 'none',
-                        }}
+                        className="text-xs font-medium text-teal-700 hover:underline"
                       >
                         Download
                       </a>
                     ) : (
-                      <span
-                        style={{ fontSize: 12, color: '#94a3b8', fontStyle: 'italic' }}
-                      >
-                        Not available
-                      </span>
+                      <span className="text-xs italic text-slate-400">Not available</span>
                     )}
                   </div>
                 </div>

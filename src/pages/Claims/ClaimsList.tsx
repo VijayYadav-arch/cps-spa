@@ -93,19 +93,20 @@ export function ClaimsList() {
     }
   };
 
-  if (isLoading) return <div role="status">Loading claims…</div>;
-  if (error && claims.length === 0) return <div role="alert">{error}</div>;
+  if (isLoading) return <div role="status" className="p-6 text-slate-500">Loading claims…</div>;
+  if (error && claims.length === 0) return <div role="alert" className="m-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">{error}</div>;
 
   const tooMany = selected.size > BATCH_LIMIT;
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <h2 style={{ fontSize: 20, fontWeight: 700 }}>Claims</h2>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl">Claims</h2>
         <select
           value={statusFilter}
           onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
           aria-label="Filter by status"
+          className="form-input w-auto"
         >
           <option value="">All statuses</option>
           <option value="draft">Draft</option>
@@ -118,22 +119,19 @@ export function ClaimsList() {
 
       {/* Batch toolbar — visible only when something is selected */}
       {selected.size > 0 && (
-        <div style={{
-          display: 'flex', gap: 12, alignItems: 'center',
-          padding: 12, marginBottom: 12,
-          background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 6,
-        }}>
-          <span style={{ fontWeight: 600 }}>{selected.size} selected</span>
+        <div className="flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 p-3">
+          <span className="font-semibold text-slate-700">{selected.size} selected</span>
           {tooMany && (
-            <span style={{ color: '#b45309', fontSize: 13 }}>
+            <span className="text-sm text-accent-600">
               Max {BATCH_LIMIT} per batch
             </span>
           )}
-          <div style={{ flex: 1 }} />
+          <div className="flex-1" />
           <button
             type="button"
             onClick={() => setPendingAction('submit')}
             disabled={tooMany}
+            className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             Submit {selected.size}
           </button>
@@ -141,80 +139,100 @@ export function ClaimsList() {
             type="button"
             onClick={() => setPendingAction('void')}
             disabled={tooMany}
-            style={{ color: '#b91c1c' }}
+            className="rounded-md border border-red-200 px-2.5 py-1 text-xs font-medium text-red-700 transition-colors hover:bg-red-50 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             Void {selected.size}
           </button>
-          <button type="button" onClick={() => setSelected(new Set())}>
+          <button
+            type="button"
+            onClick={() => setSelected(new Set())}
+            className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+          >
             Clear
           </button>
         </div>
       )}
 
       {batchSummary && (
-        <div style={{ color: '#15803d', marginBottom: 12 }}>{batchSummary}</div>
+        <div className="rounded-lg border-l-4 border-success bg-green-50 px-4 py-3 font-semibold text-green-800">{batchSummary}</div>
       )}
       {error && (
-        <div role="alert" style={{ color: '#b91c1c', marginBottom: 12 }}>{error}</div>
+        <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">{error}</div>
       )}
 
       {claims.length === 0 ? (
-        <p>No claims found.</p>
+        <p className="text-slate-500">No claims found.</p>
       ) : (
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-              <th style={{ padding: '8px 12px', width: 36 }}>
-                <input
-                  type="checkbox"
-                  aria-label="Select all rows"
-                  checked={selected.size > 0 && selected.size === claims.length}
-                  onChange={toggleAll}
-                />
-              </th>
-              <th style={{ padding: '8px 12px' }}>ID</th>
-              <th style={{ padding: '8px 12px' }}>Patient</th>
-              <th style={{ padding: '8px 12px' }}>Status</th>
-              <th style={{ padding: '8px 12px' }}>Amount</th>
-              <th style={{ padding: '8px 12px' }}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {claims.map((c) => (
-              <tr key={c.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                <td style={{ padding: '8px 12px' }}>
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                <th className="w-9 px-4 py-3">
                   <input
                     type="checkbox"
-                    aria-label={`Select claim ${c.id}`}
-                    checked={selected.has(c.id)}
-                    onChange={() => toggleRow(c.id)}
+                    aria-label="Select all rows"
+                    checked={selected.size > 0 && selected.size === claims.length}
+                    onChange={toggleAll}
                   />
-                </td>
-                <td style={{ padding: '8px 12px' }}>{c.id}</td>
-                <td style={{ padding: '8px 12px' }}>{c.patientName}</td>
-                <td style={{ padding: '8px 12px' }}>
-                  <span style={{
-                    padding: '2px 8px', borderRadius: 12, fontSize: 12,
-                    background: c.status === 'paid' ? '#dcfce7' : c.status === 'denied' ? '#fee2e2' : '#f1f5f9',
-                    color: c.status === 'paid' ? '#166534' : c.status === 'denied' ? '#991b1b' : '#475569',
-                  }}>
-                    {c.status}
-                  </span>
-                </td>
-                <td style={{ padding: '8px 12px' }}>${c.amount.toFixed(2)}</td>
-                <td style={{ padding: '8px 12px' }}>
-                  <Link to={`/claims/${c.id}`} style={{ color: '#2563eb' }}>View</Link>
-                </td>
+                </th>
+                <th className="px-4 py-3">ID</th>
+                <th className="px-4 py-3">Patient</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Amount</th>
+                <th className="px-4 py-3">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {claims.map((c) => (
+                <tr key={c.id} className="border-t border-slate-100 hover:bg-slate-50">
+                  <td className="px-4 py-3">
+                    <input
+                      type="checkbox"
+                      aria-label={`Select claim ${c.id}`}
+                      checked={selected.has(c.id)}
+                      onChange={() => toggleRow(c.id)}
+                    />
+                  </td>
+                  <td className="px-4 py-3 text-slate-700">{c.id}</td>
+                  <td className="px-4 py-3 text-slate-700">{c.patientName}</td>
+                  <td className="px-4 py-3">
+                    <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${
+                      c.status === 'paid'
+                        ? 'bg-green-100 text-green-800'
+                        : c.status === 'denied'
+                        ? 'bg-red-100 text-red-800'
+                        : 'bg-slate-100 text-slate-600'
+                    }`}>
+                      {c.status}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-slate-700">${c.amount.toFixed(2)}</td>
+                  <td className="px-4 py-3">
+                    <Link to={`/claims/${c.id}`} className="font-medium text-teal-700 hover:underline">View</Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
-      <div style={{ display: 'flex', gap: 8, marginTop: 16, alignItems: 'center' }}>
-        <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>Previous</button>
-        <span>Page {page} of {totalPages}</span>
-        <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>Next</button>
+      <div className="flex items-center gap-4">
+        <button
+          onClick={() => setPage((p) => Math.max(1, p - 1))}
+          disabled={page === 1}
+          className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          Previous
+        </button>
+        <span className="text-sm text-slate-500">Page {page} of {totalPages}</span>
+        <button
+          onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+          disabled={page >= totalPages}
+          className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          Next
+        </button>
       </div>
 
       {pendingAction && (
@@ -222,24 +240,24 @@ export function ClaimsList() {
           role="dialog"
           aria-modal="true"
           aria-label={`Confirm batch ${pendingAction}`}
-          style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(15,23,42,0.5)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            zIndex: 100,
-          }}
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-navy-900/50"
         >
-          <div style={{ background: '#fff', padding: 24, borderRadius: 8, minWidth: 400 }}>
-            <h3 style={{ marginTop: 0 }}>
+          <div className="min-w-[400px] rounded-xl bg-white p-6 shadow-sm">
+            <h3 className="text-lg font-semibold">
               Confirm {pendingAction === 'submit' ? 'batch submit' : 'batch void'}
             </h3>
-            <p>
+            <p className="mt-2 text-slate-700">
               {pendingAction === 'submit'
                 ? `Submit ${selected.size} claim${selected.size === 1 ? '' : 's'} to the clearinghouse?`
                 : `Void ${selected.size} claim${selected.size === 1 ? '' : 's'}? This is a soft-delete and can be reversed by an admin, but they will disappear from active queues immediately.`}
             </p>
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button type="button" onClick={() => setPendingAction(null)} disabled={submittingBatch}>
+            <div className="mt-4 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setPendingAction(null)}
+                disabled={submittingBatch}
+                className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
                 Cancel
               </button>
               <button
@@ -248,7 +266,11 @@ export function ClaimsList() {
                 disabled={submittingBatch || !canBatch}
                 aria-busy={submittingBatch}
                 title={!canBatch ? NO_PERMISSION : undefined}
-                style={pendingAction === 'void' ? { background: '#dc2626', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: 4 } : undefined}
+                className={
+                  pendingAction === 'void'
+                    ? 'rounded-md border border-red-200 px-2.5 py-1 text-xs font-medium text-red-700 transition-colors hover:bg-red-50 disabled:opacity-60 disabled:cursor-not-allowed'
+                    : 'rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed'
+                }
               >
                 {submittingBatch ? 'Working…' : pendingAction === 'submit' ? 'Submit' : 'Void'}
               </button>
