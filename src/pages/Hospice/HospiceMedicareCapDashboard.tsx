@@ -15,13 +15,16 @@ function currency(n: number): string {
 }
 
 function defaultCapYear(): number {
-  // CMS cap year ends Sep 30. If today is on/after Oct 1 we're in the NEXT cap year;
-  // operators typically want to see the most recent CLOSED year by default.
+  // CMS cap year ends Sep 30 and is named by the year it ends. Default to the cap
+  // year currently accruing — that is the one operators watch for live liability and
+  // the one CMS has published per-beneficiary rates for. (The most-recent CLOSED year
+  // is often a year for which we have no reference-rate file loaded yet.)
   const now = new Date();
   const y = now.getUTCFullYear();
-  // If today is before Oct 1 of current year, the most recent closed cap year ended Sep 30 of last year.
+  // Before Oct 1 we are still in the cap year ending Sep 30 of THIS year; on/after Oct 1
+  // we have rolled into the cap year ending Sep 30 of NEXT year.
   const isBeforeOct1 = now.getUTCMonth() < 9; // 0-indexed: 9 = October
-  return isBeforeOct1 ? y - 1 : y;
+  return isBeforeOct1 ? y : y + 1;
 }
 
 function metricCard(label: string, value: string, color: string) {
