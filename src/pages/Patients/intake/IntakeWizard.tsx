@@ -24,6 +24,7 @@ export function IntakeWizard() {
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   // Button-level permission gates:
   //  - Next persists a draft (POST/PATCH /patients/intake-drafts) → patients:intake.
@@ -33,9 +34,13 @@ export function IntakeWizard() {
   const canComplete = usePermission([PERMISSIONS.PATIENTS_CREATE, PERMISSIONS.PATIENTS_INTAKE]);
 
   useEffect(() => {
-    intakeApi.getMyOpenDraft().then((d) => {
-      if (d) setPendingDraft(d);
-    });
+    // Best-effort: a failed draft lookup must not block starting a fresh intake.
+    intakeApi
+      .getMyOpenDraft()
+      .then((d) => {
+        if (d) setPendingDraft(d);
+      })
+      .catch(() => undefined);
   }, []);
 
   const totalSteps = form.admissionType === 'hospice' ? 5 : 4;
@@ -82,26 +87,44 @@ export function IntakeWizard() {
     return created.id;
   }
 
+  function extractError(err: unknown, fallback: string): string {
+    return (
+      (err as { response?: { data?: { error?: string; detail?: string } } })?.response?.data
+        ?.error
+      ?? (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
+      ?? fallback
+    );
+  }
+
   async function advanceStep() {
     const e = validateStep(step);
     setErrors(e);
     if (Object.keys(e).length > 0) return;
+    setActionError(null);
     setSaving(true);
     try {
       const id = await ensureDraft();
       await intakeApi.updateDraft(id, step + 1, form);
       setStep(step + 1);
+    } catch (err) {
+      setActionError(extractError(err, 'Could not save your progress. Please try again.'));
     } finally {
       setSaving(false);
     }
   }
 
   async function submitFinal() {
+    setActionError(null);
     setSubmitting(true);
     try {
       const result = await intakeApi.submitFinal(form);
-      if (draftId) await intakeApi.deleteDraft(draftId);
+      if (draftId) {
+        // Draft cleanup is best-effort — the patient is already created.
+        await intakeApi.deleteDraft(draftId).catch(() => undefined);
+      }
       navigate(`/patients/${result.id}`);
+    } catch (err) {
+      setActionError(extractError(err, 'Could not complete intake. Please review and try again.'));
     } finally {
       setSubmitting(false);
     }
@@ -138,6 +161,15 @@ export function IntakeWizard() {
       {step === 4 && <Step4Admission form={form} errors={errors} onChange={update} />}
       {step === 5 && form.admissionType === 'hospice' && (
         <Step5Certification form={form} errors={errors} onChange={update} />
+      )}
+
+      {actionError && (
+        <div
+          role="alert"
+          className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800"
+        >
+          {actionError}
+        </div>
       )}
 
       <nav className="fixed bottom-0 inset-x-0 bg-white border-t p-4 flex gap-2 lg:static lg:bg-transparent lg:border-0 lg:p-0 lg:mt-8">
