@@ -44,57 +44,88 @@ export function DevLoginForm() {
     }
   };
 
+  const inputClass =
+    'w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 ' +
+    'focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500';
+  const labelClass = 'text-sm font-medium text-slate-700';
+  const errorClass = 'text-xs text-red-600';
+
   return (
-    <form onSubmit={onSubmit} className="dev-login-form" aria-label="Dev login form">
-      <h2>Dev Identity Picker</h2>
-      <p className="dev-warning">Dev mode: B2C is not active in this environment.</p>
+    <form
+      onSubmit={onSubmit}
+      aria-label="Dev login form"
+      className="mx-auto mt-8 flex w-full max-w-sm flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-8 text-left shadow-sm"
+    >
+      <div className="text-center">
+        <h2 className="text-lg font-semibold text-slate-900">Dev Identity Picker</h2>
+        <p className="mt-1 text-sm text-amber-600">
+          Dev mode: B2C is not active in this environment.
+        </p>
+      </div>
 
-      <label htmlFor="dev-userid">User ID</label>
-      <input
-        id="dev-userid"
-        type="text"
-        inputMode="numeric"
-        value={userId}
-        onChange={(e) => setUserId(e.target.value)}
-      />
-      {error?.field === 'userId' && (
-        <span className="field-error" role="alert">User ID must be a positive integer</span>
-      )}
+      <div className="flex flex-col gap-1">
+        <label htmlFor="dev-userid" className={labelClass}>User ID</label>
+        <input
+          id="dev-userid"
+          type="text"
+          inputMode="numeric"
+          value={userId}
+          onChange={(e) => setUserId(e.target.value)}
+          className={inputClass}
+        />
+        {error?.field === 'userId' && (
+          <span className={errorClass} role="alert">User ID must be a positive integer</span>
+        )}
+      </div>
 
-      <label htmlFor="dev-orgid">Organization ID</label>
-      <input
-        id="dev-orgid"
-        type="text"
-        inputMode="numeric"
-        value={orgId}
-        onChange={(e) => setOrgId(e.target.value)}
-      />
-      {error?.field === 'organizationId' && (
-        <span className="field-error" role="alert">Organization ID must be a positive integer</span>
-      )}
+      <div className="flex flex-col gap-1">
+        <label htmlFor="dev-orgid" className={labelClass}>Organization ID</label>
+        <input
+          id="dev-orgid"
+          type="text"
+          inputMode="numeric"
+          value={orgId}
+          onChange={(e) => setOrgId(e.target.value)}
+          className={inputClass}
+        />
+        {error?.field === 'organizationId' && (
+          <span className={errorClass} role="alert">Organization ID must be a positive integer</span>
+        )}
+      </div>
 
-      <label htmlFor="dev-roles">Roles (comma-separated)</label>
-      <input
-        id="dev-roles"
-        type="text"
-        value={roles}
-        onChange={(e) => setRoles(e.target.value)}
-        placeholder="system_admin, billing_admin"
-      />
-      {error?.field === 'roles' && (
-        <span className="field-error" role="alert">At least one role is required</span>
-      )}
+      <div className="flex flex-col gap-1">
+        <label htmlFor="dev-roles" className={labelClass}>Roles (comma-separated)</label>
+        <input
+          id="dev-roles"
+          type="text"
+          value={roles}
+          onChange={(e) => setRoles(e.target.value)}
+          placeholder="system_admin, billing_admin"
+          className={inputClass}
+        />
+        {error?.field === 'roles' && (
+          <span className={errorClass} role="alert">At least one role is required</span>
+        )}
+      </div>
 
-      <label htmlFor="dev-perms">Permissions (comma-separated)</label>
-      <input
-        id="dev-perms"
-        type="text"
-        value={perms}
-        onChange={(e) => setPerms(e.target.value)}
-        placeholder="platform:dashboard, claims:view"
-      />
+      <div className="flex flex-col gap-1">
+        <label htmlFor="dev-perms" className={labelClass}>Permissions (comma-separated)</label>
+        <input
+          id="dev-perms"
+          type="text"
+          value={perms}
+          onChange={(e) => setPerms(e.target.value)}
+          placeholder="patients:view, claims:view, hospice:manage"
+          className={inputClass}
+        />
+      </div>
 
-      <button type="submit">Sign in as dev</button>
+      <button
+        type="submit"
+        className="mt-2 w-full rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-teal-700"
+      >
+        Sign in as dev
+      </button>
     </form>
   );
 }

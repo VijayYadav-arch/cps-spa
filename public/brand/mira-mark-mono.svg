@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Mira mark">
+  <title>Mira mark</title>
+  <!-- Monochrome variant: cream tile, single-color teal astroid.
+       For editorial / print / mask contexts. -->
+  <rect x="0" y="0" width="512" height="512" rx="96" ry="96" fill="#faf7f2"/>
+  <path d="M 256 102 Q 256 256 410 256 Q 256 256 256 410 Q 256 256 102 256 Q 256 256 256 102 Z" fill="#0f766e"/>
+</svg>

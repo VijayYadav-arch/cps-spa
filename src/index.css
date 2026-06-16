@@ -1,111 +1,217 @@
-:root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+@import "tailwindcss";
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+/* ============================================================================
+   Mira design system — ported from cps-marketing/src/styles/global.css so the
+   product UI shares the marketing brand: navy/teal palette, amber accent,
+   DM Serif Display headings + Plus Jakarta Sans body, and the shared component
+   classes (buttons, cards, form-input, section-line).
+   ========================================================================== */
+@theme {
+  --color-navy-50: #f0f3f9;
+  --color-navy-100: #dae1f0;
+  --color-navy-200: #b8c6e2;
+  --color-navy-300: #8da3cf;
+  --color-navy-400: #6580b8;
+  --color-navy-500: #4563a0;
+  --color-navy-600: #354d85;
+  --color-navy-700: #2b3f6c;
+  --color-navy-800: #1e2d4f;
+  --color-navy-900: #0B1D3A;
+  --color-navy-950: #060f20;
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  --color-teal-300: #5eead4;
+  --color-teal-400: #2dd4bf;
+  --color-teal-500: #14b8a6;
+  --color-teal-600: #0d9488;
+  --color-teal-700: #0f766e;
 
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+  --color-cream: #FAFAF5;
+  --color-cream-dark: #f0f0e8;
+
+  --color-mira-50:  #f0fdfa;
+  --color-mira-100: #ccfbf1;
+  --color-mira-200: #99f6e4;
+  --color-mira-300: #5eead4;
+  --color-mira-400: #2dd4bf;
+  --color-mira-500: #14b8a6;
+  --color-mira-600: #0d9488;
+  --color-mira-700: #0f766e;
+  --color-mira-800: #115e59;
+  --color-mira-900: #134e4a;
+
+  --color-accent-50:  #fffbeb;
+  --color-accent-100: #fef3c7;
+  --color-accent-200: #fde68a;
+  --color-accent-300: #fcd34d;
+  --color-accent-400: #fbbf24;
+  --color-accent-500: #f59e0b;
+  --color-accent-600: #d97706;
+  --color-accent-700: #b45309;
+
+  --color-slate-50:  #f8fafc;
+  --color-slate-100: #f1f5f9;
+  --color-slate-200: #e2e8f0;
+  --color-slate-300: #cbd5e1;
+  --color-slate-400: #94a3b8;
+  --color-slate-500: #64748b;
+  --color-slate-600: #475569;
+  --color-slate-700: #334155;
+  --color-slate-800: #1e293b;
+  --color-slate-900: #0f172a;
+
+  --color-success: #16a34a;
+  --color-warning: #f59e0b;
+  --color-error:   #dc2626;
+  --color-info:    #3b82f6;
+
+  --gradient-ai:   linear-gradient(135deg, #0d9488 0%, #f59e0b 100%);
+  --gradient-hero: linear-gradient(135deg, #0f172a 0%, #134e4a 100%);
+
+  --font-serif: "DM Serif Display", Georgia, serif;
+  --font-sans: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
-}
-
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
+/* ---- Base ---- */
+html {
+  scroll-behavior: smooth;
+  color-scheme: light;
 }
 
 body {
   margin: 0;
+  font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+  color: var(--color-slate-700);
+  background: var(--color-cream);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+#root {
+  min-height: 100svh;
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
+h1, h2, h3 {
+  font-family: "DM Serif Display", Georgia, serif;
+  font-weight: 400;
+  color: var(--color-navy-900);
 }
 
-code,
-.counter {
-  font-family: var(--mono);
+::selection {
+  background: var(--color-teal-600);
+  color: white;
+}
+
+a {
+  color: var(--color-teal-700);
+}
+
+/* ---- Buttons ---- */
+.btn-primary {
+  background: linear-gradient(135deg, var(--color-teal-600), var(--color-teal-700));
+  color: white;
+  padding: 12px 28px;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
   display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
+  align-items: center;
+  gap: 8px;
+  border: none;
+  cursor: pointer;
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(13, 148, 136, 0.3);
+  filter: brightness(1.08);
+}
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  filter: none;
+  box-shadow: none;
 }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+.btn-outline-dark {
+  border: 2px solid var(--color-navy-900);
+  color: var(--color-navy-900);
+  background: transparent;
+  padding: 10px 26px;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
 }
+.btn-outline-dark:hover {
+  background: var(--color-navy-900);
+  color: white;
+}
+
+/* ---- Cards ---- */
+.card-hover {
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(11, 29, 58, 0.1), 0 8px 16px rgba(11, 29, 58, 0.06);
+}
+
+/* ---- Icon Box ---- */
+.icon-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(13, 148, 136, 0.12), rgba(13, 148, 136, 0.05));
+  color: var(--color-teal-600);
+  flex-shrink: 0;
+}
+
+/* ---- Section line ---- */
+.section-line {
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--color-teal-600), var(--color-teal-500));
+  border-radius: 999px;
+}
+
+/* ---- Form input ---- */
+.form-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--color-slate-300);
+  border-radius: 10px;
+  font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+  font-size: 14px;
+  color: var(--color-slate-800);
+  background: white;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  outline: none;
+}
+.form-input:focus {
+  border-color: var(--color-teal-600);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.12);
+}
+.form-input::placeholder { color: var(--color-slate-400); }
+
+/* ---- Hero gradient (navy brand surface, e.g. login / banners) ---- */
+.hero-gradient {
+  background-color: #0B1D3A;
+  background-image: linear-gradient(135deg, #0B1D3A 0%, #122a4f 40%, #0f3d5c 70%, #0d5c5c 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+/* ---- Pulse CTA ---- */
+@keyframes pulse-soft {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(13, 148, 136, 0.4); }
+  50% { box-shadow: 0 0 0 12px rgba(13, 148, 136, 0); }
+}
+.pulse-cta { animation: pulse-soft 3s infinite; }

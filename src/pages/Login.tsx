@@ -9,20 +9,28 @@ export function Login() {
   const devMode = useDevAuth();
 
   return (
-    <div className="login-page">
-      <header>
-        <h1>CPS</h1>
-        <p>Care Practice Suite</p>
+    <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-cream px-4 py-10">
+      <header className="flex flex-col items-center text-center">
+        <img src="/brand/mira-wordmark.svg" alt="Mira" className="h-14 w-auto" />
+        <p className="mt-2 text-sm font-medium tracking-wide text-slate-500">
+          Care Practice Platform
+        </p>
       </header>
 
       {reason === 'expired' && (
-        <div role="alert" className="login-banner login-banner--info">
+        <div
+          role="alert"
+          className="w-full max-w-sm rounded-lg border border-info/30 bg-info/10 px-4 py-3 text-sm text-info"
+        >
           Your session ended. Please sign in again.
         </div>
       )}
 
       {reason === 'invalid_token' && (
-        <div role="alert" className="login-banner login-banner--warning">
+        <div
+          role="alert"
+          className="w-full max-w-sm rounded-lg border border-accent-300 bg-accent-50 px-4 py-3 text-sm text-accent-700"
+        >
           Sign-in could not be completed. Contact your administrator if this persists.
         </div>
       )}

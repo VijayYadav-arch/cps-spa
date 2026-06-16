@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 80" role="img" aria-label="Mira">
+  <title>Mira</title>
+  <style>
+    .wm {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-weight: 700;
+      font-size: 72px;
+      letter-spacing: -3.5px;
+      fill: #0d9488;
+    }
+  </style>
+  <!-- "m" + dotless "ı" (U+0131) + "ra" — text unchanged from v1 -->
+  <text x="6" y="60" class="wm">m&#x131;ra</text>
+  <!-- Sentinel Astroid i-dot — final design (Option D: floating sentinel)
+       Center (77, 13) — raised 7u from original (was y=20) for breathing room above the i stem.
+       Half-diagonal 9u. Concave Bézier sides produce the "edges curved inside" character. -->
+  <path d="M 77 4 Q 77 13 86 13 Q 77 13 77 22 Q 77 13 68 13 Q 77 13 77 4 Z" fill="#f59e0b"/>
+</svg>
