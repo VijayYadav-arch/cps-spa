@@ -5,6 +5,8 @@ import { InboxBadge } from '@/components/InboxBadge';
 import { NotificationToasts } from '@/components/NotificationToasts';
 import { LanguagePicker } from '@/i18n/LanguagePicker';
 import { MiraWordmark } from '@/components/MiraWordmark';
+import { useUserRoles } from '@/permissions/useUserRoles';
+import { PERMISSIONS, type Permission } from '@/permissions';
 
 const COLLAPSE_KEY = 'mira_nav_collapsed';
 const OPEN_GROUPS_KEY = 'mira_nav_open_groups';
@@ -46,6 +48,8 @@ interface NavLeaf {
   to: string;
   label: string;
   exact?: boolean;
+  /** Permission(s) required to see this entry. Omit for always-visible items. */
+  perm?: Permission | Permission[];
 }
 
 interface NavGroup {
@@ -59,41 +63,41 @@ type NavEntry = NavLeaf | NavGroup;
 const navItems: NavEntry[] = [
   { kind: 'leaf', to: '/', label: 'Dashboard', exact: true },
   { kind: 'leaf', to: '/inbox', label: 'Inbox' },
-  { kind: 'leaf', to: '/claims', label: 'Claims' },
+  { kind: 'leaf', to: '/claims', label: 'Claims', perm: PERMISSIONS.CLAIMS_VIEW },
   {
     kind: 'group',
     label: 'Patients',
     items: [
-      { kind: 'leaf', to: '/patients', label: 'All Patients', exact: true },
-      { kind: 'leaf', to: '/patients/intake', label: 'New Patient' },
+      { kind: 'leaf', to: '/patients', label: 'All Patients', exact: true, perm: PERMISSIONS.PATIENTS_VIEW },
+      { kind: 'leaf', to: '/patients/intake', label: 'New Patient', perm: PERMISSIONS.PATIENTS_INTAKE },
     ],
   },
-  { kind: 'leaf', to: '/analytics', label: 'Analytics' },
+  { kind: 'leaf', to: '/analytics', label: 'Analytics', perm: PERMISSIONS.REPORTS_VIEW },
   {
     kind: 'group',
     label: 'Billing',
     items: [
-      { kind: 'leaf', to: '/billing', label: 'Dashboard' },
-      { kind: 'leaf', to: '/billing/denials/queue', label: 'Denial Queue' },
-      { kind: 'leaf', to: '/billing/ar', label: 'AR Follow-Up' },
-      { kind: 'leaf', to: '/billing/secondary', label: 'Secondary Claims' },
-      { kind: 'leaf', to: '/billing/statements', label: 'Patient Statements' },
-      { kind: 'leaf', to: '/billing/eligibility', label: 'Eligibility' },
-      { kind: 'leaf', to: '/billing/prior-auth', label: 'Prior Auth' },
-      { kind: 'leaf', to: '/billing/charges', label: 'Charge Entry' },
+      { kind: 'leaf', to: '/billing', label: 'Dashboard', perm: PERMISSIONS.BILLING_QUEUE },
+      { kind: 'leaf', to: '/billing/denials/queue', label: 'Denial Queue', perm: PERMISSIONS.BILLING_QUEUE },
+      { kind: 'leaf', to: '/billing/ar', label: 'AR Follow-Up', perm: PERMISSIONS.BILLING_QUEUE },
+      { kind: 'leaf', to: '/billing/secondary', label: 'Secondary Claims', perm: PERMISSIONS.BILLING_QUEUE },
+      { kind: 'leaf', to: '/billing/statements', label: 'Patient Statements', perm: PERMISSIONS.BILLING_QUEUE },
+      { kind: 'leaf', to: '/billing/eligibility', label: 'Eligibility', perm: PERMISSIONS.BILLING_QUEUE },
+      { kind: 'leaf', to: '/billing/prior-auth', label: 'Prior Auth', perm: PERMISSIONS.BILLING_QUEUE },
+      { kind: 'leaf', to: '/billing/charges', label: 'Charge Entry', perm: PERMISSIONS.BILLING_QUEUE },
     ],
   },
-  { kind: 'leaf', to: '/clinical', label: 'Clinical' },
+  { kind: 'leaf', to: '/clinical', label: 'Clinical', perm: PERMISSIONS.CLINICAL_VISIT_NOTES },
   {
     kind: 'group',
     label: 'Hospice',
     items: [
-      { kind: 'leaf', to: '/hospice/work-queue', label: 'Work Queue' },
-      { kind: 'leaf', to: '/hospice/bereavement', label: 'Bereavement' },
-      { kind: 'leaf', to: '/hospice/volunteers', label: 'Volunteers' },
-      { kind: 'leaf', to: '/hospice/hqrp', label: 'HQRP Timeliness' },
-      { kind: 'leaf', to: '/hospice/medicare-cap', label: 'Medicare Cap' },
-      { kind: 'leaf', to: '/hospice/cahps', label: 'CAHPS Survey' },
+      { kind: 'leaf', to: '/hospice/work-queue', label: 'Work Queue', perm: PERMISSIONS.CLINICAL_QUALITY },
+      { kind: 'leaf', to: '/hospice/bereavement', label: 'Bereavement', perm: PERMISSIONS.CLINICAL_QUALITY },
+      { kind: 'leaf', to: '/hospice/volunteers', label: 'Volunteers', perm: PERMISSIONS.CLINICAL_QUALITY },
+      { kind: 'leaf', to: '/hospice/hqrp', label: 'HQRP Timeliness', perm: PERMISSIONS.CLINICAL_QUALITY },
+      { kind: 'leaf', to: '/hospice/medicare-cap', label: 'Medicare Cap', perm: PERMISSIONS.CLINICAL_QUALITY },
+      { kind: 'leaf', to: '/hospice/cahps', label: 'CAHPS Survey', perm: PERMISSIONS.CLINICAL_QUALITY },
     ],
   },
   {
@@ -101,7 +105,7 @@ const navItems: NavEntry[] = [
     label: 'Time',
     items: [
       { kind: 'leaf', to: '/me/time', label: 'My Time' },
-      { kind: 'leaf', to: '/time', label: 'Team (admin)' },
+      { kind: 'leaf', to: '/time', label: 'Team (admin)', perm: PERMISSIONS.ADMIN_DASHBOARD },
     ],
   },
   { kind: 'leaf', to: '/documents', label: 'Documents' },
@@ -109,34 +113,34 @@ const navItems: NavEntry[] = [
     kind: 'group',
     label: 'Organization',
     items: [
-      { kind: 'leaf', to: '/admin/organizations', label: 'Organizations' },
-      { kind: 'leaf', to: '/admin/branches', label: 'Branches' },
-      { kind: 'leaf', to: '/org/rollup', label: 'Parent-Org Rollup' },
+      { kind: 'leaf', to: '/admin/organizations', label: 'Organizations', perm: PERMISSIONS.ADMIN_MANAGE_ORGS },
+      { kind: 'leaf', to: '/admin/branches', label: 'Branches', perm: PERMISSIONS.ADMIN_MANAGE_BRANCHES },
+      { kind: 'leaf', to: '/org/rollup', label: 'Parent-Org Rollup', perm: PERMISSIONS.ORG_ROLLUP_VIEW },
     ],
   },
   {
     kind: 'group',
     label: 'Quality',
     items: [
-      { kind: 'leaf', to: '/quality/qapi', label: 'Dashboard' },
-      { kind: 'leaf', to: '/quality/qapi/pips', label: 'PIPs' },
-      { kind: 'leaf', to: '/quality/qapi/adverse-events', label: 'Adverse Events' },
-      { kind: 'leaf', to: '/quality/qapi/reviews', label: 'Reviews' },
-      { kind: 'leaf', to: '/quality/qapi/plan', label: 'Plan' },
-      { kind: 'leaf', to: '/quality/qapi/audit-triggers', label: 'Audit Triggers' },
+      { kind: 'leaf', to: '/quality/qapi', label: 'Dashboard', perm: PERMISSIONS.CLINICAL_QUALITY },
+      { kind: 'leaf', to: '/quality/qapi/pips', label: 'PIPs', perm: PERMISSIONS.CLINICAL_QUALITY },
+      { kind: 'leaf', to: '/quality/qapi/adverse-events', label: 'Adverse Events', perm: PERMISSIONS.CLINICAL_QUALITY },
+      { kind: 'leaf', to: '/quality/qapi/reviews', label: 'Reviews', perm: PERMISSIONS.CLINICAL_QUALITY },
+      { kind: 'leaf', to: '/quality/qapi/plan', label: 'Plan', perm: PERMISSIONS.CLINICAL_QUALITY },
+      { kind: 'leaf', to: '/quality/qapi/audit-triggers', label: 'Audit Triggers', perm: PERMISSIONS.CLINICAL_QUALITY },
     ],
   },
   {
     kind: 'group',
     label: 'Compliance',
     items: [
-      { kind: 'leaf', to: '/compliance/phi-access', label: 'PHI Access Review' },
-      { kind: 'leaf', to: '/compliance/surveyor-bundle', label: 'Surveyor Bundle' },
-      { kind: 'leaf', to: '/compliance/breaches', label: 'Breach Workflow' },
+      { kind: 'leaf', to: '/compliance/phi-access', label: 'PHI Access Review', perm: PERMISSIONS.COMPLIANCE_PHI_REVIEW },
+      { kind: 'leaf', to: '/compliance/surveyor-bundle', label: 'Surveyor Bundle', perm: PERMISSIONS.COMPLIANCE_SURVEYOR_EXPORT },
+      { kind: 'leaf', to: '/compliance/breaches', label: 'Breach Workflow', perm: PERMISSIONS.COMPLIANCE_BREACHES },
     ],
   },
-  { kind: 'leaf', to: '/platform', label: 'Platform' },
-  { kind: 'leaf', to: '/admin', label: 'Admin' },
+  { kind: 'leaf', to: '/platform', label: 'Platform', perm: PERMISSIONS.PLATFORM_ADMIN },
+  { kind: 'leaf', to: '/admin', label: 'Admin', perm: PERMISSIONS.ADMIN_DASHBOARD },
 ];
 
 function leafStyle({ isActive }: { isActive: boolean }, indented = false): React.CSSProperties {
@@ -158,6 +162,25 @@ export function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
   const mainRef = useRef<HTMLElement>(null);
+  const { data: roleData } = useUserRoles();
+
+  // Permission-aware nav: hide entries the user can't access. While /me is
+  // still loading (no permissions array yet) we show everything to avoid a
+  // flash — the route guards remain the real enforcement.
+  const can = (perm?: Permission | Permission[]): boolean => {
+    if (!perm) return true;
+    const granted = roleData?.permissions;
+    if (!granted) return true;
+    const required = Array.isArray(perm) ? perm : [perm];
+    return required.every((p) => granted.includes(p));
+  };
+  const visibleNav: NavEntry[] = navItems
+    .map((entry): NavEntry | null => {
+      if (entry.kind === 'leaf') return can(entry.perm) ? entry : null;
+      const items = entry.items.filter((i) => can(i.perm));
+      return items.length > 0 ? { ...entry, items } : null;
+    })
+    .filter((e): e is NavEntry => e !== null);
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     try {
       return localStorage.getItem(COLLAPSE_KEY) === '1';
@@ -287,7 +310,7 @@ export function Layout() {
         </div>
 
         <ul style={{ listStyle: 'none', padding: '16px 0', margin: 0, flex: 1, overflowY: 'auto' }}>
-          {navItems.map((entry) =>
+          {visibleNav.map((entry) =>
             entry.kind === 'leaf' ? (
               <li key={entry.to}>
                 <NavLink
