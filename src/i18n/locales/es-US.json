@@ -58,7 +58,7 @@
       "loadFailed": "No se pudieron cargar las visitas. Actualice o comuníquese con su equipo de cuidado."
     },
     "chat": {
-      "title": "Pregúntele a Mira",
+      "title": "Pregúntele a Mira™",
       "disclaimerTitle": "Este es un asistente con inteligencia artificial.",
       "disclaimerBody": "Las respuestas se generan a partir de los datos de su ser querido. El asistente no brinda consejos médicos. Siempre verifique la información importante con su equipo de cuidado.",
       "empty": "Haga una pregunta para comenzar — por ejemplo, «¿Qué medicamentos está tomando mi mamá actualmente?»",
@@ -91,7 +91,7 @@
       "feedbackFailed": "No se pudo guardar el comentario. Intente de nuevo.",
       "followUpsLabel": "También podría preguntar:",
       "exportButton": "Descargar conversación",
-      "exportHeader": "Mira Chat Familiar — exportación de la conversación",
+      "exportHeader": "Mira™ Chat Familiar — exportación de la conversación",
       "exportPatient": "ID del paciente: {{id}}",
       "exportTimestamp": "Exportado",
       "exportDisclaimer": "Esta conversación fue generada por un asistente con IA basado en los datos del paciente listados. Verifique cualquier detalle con su equipo de cuidado antes de actuar.",

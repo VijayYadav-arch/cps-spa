@@ -431,7 +431,7 @@ describe('FamilyChat (streaming)', () => {
       reader.onerror = () => reject(reader.error);
       reader.readAsText(blobs[0]);
     });
-    expect(text).toContain('Mira Family Chat');
+    expect(text).toContain('Mira™ Family Chat');
     expect(text).toContain('[Q1] meds?');
     expect(text).toContain('[A1] You are taking Acetaminophen.');
     expect(text).toContain('I used:');
