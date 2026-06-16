@@ -27,19 +27,31 @@ function defaultCapYear(): number {
   return isBeforeOct1 ? y : y + 1;
 }
 
-function metricCard(label: string, value: string, color: string) {
+type MetricTone = 'navy' | 'teal' | 'amber' | 'red' | 'green';
+
+const METRIC_TONE: Record<MetricTone, string> = {
+  navy: 'text-navy-900',
+  teal: 'text-teal-700',
+  amber: 'text-accent-600',
+  red: 'text-error',
+  green: 'text-success',
+};
+
+function MetricCard({
+  label,
+  value,
+  tone = 'navy',
+}: {
+  label: string;
+  value: string;
+  tone?: MetricTone;
+}) {
   return (
-    <div
-      style={{
-        border: '1px solid #e2e8f0',
-        borderRadius: 8,
-        padding: 16,
-        background: '#fff',
-        minWidth: 200,
-      }}
-    >
-      <div style={{ color: '#64748b', fontSize: 13 }}>{label}</div>
-      <div style={{ fontSize: 24, fontWeight: 700, color, marginTop: 6 }}>
+    <div className="card-hover rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
+        {label}
+      </div>
+      <div className={`mt-1.5 text-2xl font-bold ${METRIC_TONE[tone]}`}>
         {value}
       </div>
     </div>
@@ -86,12 +98,11 @@ export function HospiceMedicareCapDashboard() {
   );
 
   return (
-    <div style={{ padding: 24, maxWidth: 1200, display: 'grid', gap: 24 }}>
-      <header>
-        <h2 style={{ fontSize: 22, fontWeight: 700 }}>
-          Medicare Hospice Cap Reconciliation
-        </h2>
-        <p style={{ color: '#64748b', marginTop: 4 }}>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <header className="space-y-2">
+        <h2 className="text-2xl">Medicare Hospice Cap Reconciliation</h2>
+        <div className="section-line" />
+        <p className="max-w-3xl text-slate-500">
           42 CFR 418.309 — per-beneficiary cap on Medicare hospice payments per
           cap year. Amounts above the cap must be returned to CMS at year-end.
         </p>
@@ -99,64 +110,72 @@ export function HospiceMedicareCapDashboard() {
 
       <form
         onSubmit={handleApply}
-        style={{ display: 'flex', gap: 12, alignItems: 'end' }}
+        className="flex flex-wrap items-end gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
       >
-        <label style={{ display: 'grid', gap: 4 }}>
-          <span>Cap year (FY ending Sep 30)</span>
+        <label className="grid gap-1.5">
+          <span className="text-sm font-medium text-slate-600">
+            Cap year (FY ending Sep 30)
+          </span>
           <input
             type="number"
+            className="form-input w-36"
             value={capYear}
             onChange={(e) => setCapYear(Number(e.target.value))}
             min={2020}
             max={2099}
           />
         </label>
-        <button type="submit">Apply</button>
+        <button type="submit" className="btn-primary">
+          Apply
+        </button>
       </form>
 
-      {isLoading && <div role="status">Loading…</div>}
-      {error && <div role="alert">{error}</div>}
+      {isLoading && (
+        <div role="status" className="text-slate-500">
+          Loading…
+        </div>
+      )}
+      {error && (
+        <div
+          role="alert"
+          className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-slate-600"
+        >
+          {error}
+        </div>
+      )}
 
       {report && !isLoading && (
         <>
-          <section style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            {metricCard(
-              'Cap Year',
-              `FY${report.capYear}`,
-              '#0f172a',
-            )}
-            {metricCard(
-              'Per-Beneficiary Cap',
-              currency(report.capAmountPerBeneficiary),
-              '#0e7490',
-            )}
-            {metricCard(
-              'Beneficiaries',
-              String(report.beneficiaryCount),
-              '#0f172a',
-            )}
-            {metricCard(
-              'Total Paid in Window',
-              currency(report.totalPaidInCapYear),
-              '#0f172a',
-            )}
-            {metricCard(
-              'Total Excess Liability',
-              currency(report.totalExcessLiability),
-              report.totalExcessLiability > 0 ? '#b91c1c' : '#15803d',
-            )}
+          <section className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+            <MetricCard label="Cap Year" value={`FY${report.capYear}`} tone="navy" />
+            <MetricCard
+              label="Per-Beneficiary Cap"
+              value={currency(report.capAmountPerBeneficiary)}
+              tone="teal"
+            />
+            <MetricCard
+              label="Beneficiaries"
+              value={String(report.beneficiaryCount)}
+              tone="navy"
+            />
+            <MetricCard
+              label="Total Paid in Window"
+              value={currency(report.totalPaidInCapYear)}
+              tone="navy"
+            />
+            <MetricCard
+              label="Total Excess Liability"
+              value={currency(report.totalExcessLiability)}
+              tone={report.totalExcessLiability > 0 ? 'red' : 'green'}
+            />
           </section>
 
           <section
-            style={{
-              padding: 12,
-              borderRadius: 6,
-              background:
-                report.totalExcessLiability > 0 ? '#fef2f2' : '#f0fdf4',
-              color:
-                report.totalExcessLiability > 0 ? '#991b1b' : '#166534',
-              fontWeight: 600,
-            }}
+            className={`rounded-lg border-l-4 px-4 py-3 font-semibold ${
+              report.totalExcessLiability > 0
+                ? 'border-error bg-red-50 text-red-800'
+                : 'border-success bg-green-50 text-green-800'
+            }`}
           >
             {report.totalExcessLiability > 0
               ? `Estimated cap liability of ${currency(report.totalExcessLiability)} across ${overCapBeneficiaries.length} beneficiar${overCapBeneficiaries.length === 1 ? 'y' : 'ies'}. Review beneficiary-level detail below.`
@@ -164,80 +183,81 @@ export function HospiceMedicareCapDashboard() {
           </section>
 
           {report.caveats.length > 0 && (
-            <section
-              style={{
-                background: '#fef9c3',
-                border: '1px solid #fde68a',
-                borderRadius: 6,
-                padding: 12,
-              }}
-            >
-              <strong>Methodology caveats</strong>
-              <ul style={{ marginTop: 8, paddingLeft: 20 }}>
+            <section className="rounded-lg border border-accent-200 bg-accent-50 px-4 py-3">
+              <strong className="text-slate-800">Methodology caveats</strong>
+              <ul className="mt-2 list-disc space-y-1.5 pl-5 text-sm text-slate-700">
                 {report.caveats.map((c, i) => (
-                  <li key={i} style={{ marginBottom: 6 }}>
-                    {c}
-                  </li>
+                  <li key={i}>{c}</li>
                 ))}
               </ul>
             </section>
           )}
 
-          <section style={{ display: 'grid', gap: 12 }}>
-            <h3 style={{ fontSize: 18, fontWeight: 600 }}>
-              Beneficiary Detail
-            </h3>
+          <section className="grid gap-3">
+            <h3 className="text-lg font-semibold">Beneficiary Detail</h3>
             {report.beneficiaries.length === 0 ? (
-              <p style={{ color: '#64748b' }}>
+              <p className="text-slate-500">
                 No beneficiaries with elections overlapping this cap year.
               </p>
             ) : (
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-                    <th style={{ padding: '6px 10px' }}>Patient</th>
-                    <th style={{ padding: '6px 10px' }}>Days In Cap Year</th>
-                    <th style={{ padding: '6px 10px' }}>Paid in Cap Year</th>
-                    <th style={{ padding: '6px 10px' }}>Cap Allowance</th>
-                    <th style={{ padding: '6px 10px' }}>Excess Liability</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {report.beneficiaries.map((b) => (
-                    <tr
-                      key={b.patientId}
-                      style={{
-                        borderBottom: '1px solid #f1f5f9',
-                        background: b.excessLiability > 0 ? '#fef2f2' : 'transparent',
-                      }}
-                    >
-                      <td style={{ padding: '6px 10px' }}>
-                        {b.patientName ? (
-                          <Link to={`/patients/${b.patientId}`}>
-                            {b.patientName}
-                          </Link>
-                        ) : (
-                          <span style={{ color: '#64748b' }}>
-                            Patient #{b.patientId}
-                          </span>
-                        )}
-                      </td>
-                      <td style={{ padding: '6px 10px' }}>{b.electionDaysInCapYear}</td>
-                      <td style={{ padding: '6px 10px' }}>{currency(b.paidInCapYear)}</td>
-                      <td style={{ padding: '6px 10px' }}>{currency(b.capAllowance)}</td>
-                      <td
-                        style={{
-                          padding: '6px 10px',
-                          color: b.excessLiability > 0 ? '#b91c1c' : '#64748b',
-                          fontWeight: b.excessLiability > 0 ? 600 : 400,
-                        }}
-                      >
-                        {currency(b.excessLiability)}
-                      </td>
+              <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                <table className="w-full border-collapse text-sm">
+                  <thead>
+                    <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                      <th className="px-4 py-3">Patient</th>
+                      <th className="px-4 py-3">Days In Cap Year</th>
+                      <th className="px-4 py-3">Paid in Cap Year</th>
+                      <th className="px-4 py-3">Cap Allowance</th>
+                      <th className="px-4 py-3">Excess Liability</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {report.beneficiaries.map((b) => (
+                      <tr
+                        key={b.patientId}
+                        className={`border-t border-slate-100 ${
+                          b.excessLiability > 0
+                            ? 'bg-red-50'
+                            : 'hover:bg-slate-50'
+                        }`}
+                      >
+                        <td className="px-4 py-3">
+                          {b.patientName ? (
+                            <Link
+                              to={`/patients/${b.patientId}`}
+                              className="font-medium text-teal-700 hover:underline"
+                            >
+                              {b.patientName}
+                            </Link>
+                          ) : (
+                            <span className="text-slate-500">
+                              Patient #{b.patientId}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-slate-700">
+                          {b.electionDaysInCapYear}
+                        </td>
+                        <td className="px-4 py-3 text-slate-700">
+                          {currency(b.paidInCapYear)}
+                        </td>
+                        <td className="px-4 py-3 text-slate-700">
+                          {currency(b.capAllowance)}
+                        </td>
+                        <td
+                          className={`px-4 py-3 ${
+                            b.excessLiability > 0
+                              ? 'font-semibold text-error'
+                              : 'text-slate-500'
+                          }`}
+                        >
+                          {currency(b.excessLiability)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </section>
         </>
