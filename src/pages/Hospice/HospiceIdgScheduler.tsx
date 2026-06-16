@@ -71,75 +71,85 @@ export function HospiceIdgScheduler() {
     }
   }
 
-  if (loading) return <div role="status">Loading IDG meetings…</div>;
+  if (loading) return <div role="status" className="text-slate-500">Loading IDG meetings…</div>;
 
   return (
-    <div style={{ padding: 24, maxWidth: 900 }}>
-      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 16 }}>
-        IDG Meetings
-      </h2>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <header className="space-y-2">
+        <h2 className="text-2xl">
+          IDG Meetings
+        </h2>
+        <div className="section-line" />
+      </header>
 
       {error && (
-        <div role="alert" style={{ color: '#b91c1c', marginBottom: 12 }}>
+        <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">
           {error}
         </div>
       )}
 
-      <section style={{ marginBottom: 24 }}>
-        <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>
+      <section className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <h3 className="text-lg font-semibold">
           Schedule new meeting
         </h3>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
-          <label>
-            Date / Time
+        <div className="flex flex-wrap items-end gap-4">
+          <label className="grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">Date / Time</span>
             <input
               type="datetime-local"
+              className="form-input"
               value={meetingDate}
               onChange={(e) => setMeetingDate(e.target.value)}
-              style={{ display: 'block', marginTop: 4 }}
             />
           </label>
           <button
+            className="btn-primary"
             onClick={handleSchedule}
             disabled={submitting || !canManage}
             title={!canManage ? NO_PERMISSION : undefined}
-            style={{ cursor: (submitting || !canManage) ? 'not-allowed' : 'pointer' }}
           >
             {submitting ? 'Scheduling…' : 'Schedule'}
           </button>
         </div>
-        <p style={{ color: '#64748b', fontSize: 12, marginTop: 4 }}>
+        <p className="text-xs text-slate-500">
           Default attendees: physician + RN + social worker + chaplain (CMS-compliant 4 roles).
         </p>
       </section>
 
-      <section>
-        <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>Upcoming</h3>
+      <section className="grid gap-3">
+        <h3 className="text-lg font-semibold">Upcoming</h3>
         {meetings.length === 0 ? (
-          <p style={{ color: '#64748b' }}>No upcoming meetings.</p>
+          <p className="text-slate-500">No upcoming meetings.</p>
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-                <th style={{ padding: '8px 12px' }}>Date</th>
-                <th style={{ padding: '8px 12px' }}>Status</th>
-                <th style={{ padding: '8px 12px' }}>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {meetings.map((m) => (
-                <tr key={m.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td style={{ padding: '8px 12px' }}>
-                    {new Date(m.meetingDate).toLocaleString()}
-                  </td>
-                  <td style={{ padding: '8px 12px' }}>{m.status}</td>
-                  <td style={{ padding: '8px 12px' }}>
-                    <Link to={`/hospice/idg-meetings/${m.id}`}>Open</Link>
-                  </td>
+          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                  <th className="px-4 py-3">Date</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3">Action</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {meetings.map((m) => (
+                  <tr key={m.id} className="border-t border-slate-100 hover:bg-slate-50">
+                    <td className="px-4 py-3 text-slate-700">
+                      {new Date(m.meetingDate).toLocaleString()}
+                    </td>
+                    <td className="px-4 py-3 text-slate-700">{m.status}</td>
+                    <td className="px-4 py-3">
+                      <Link
+                        to={`/hospice/idg-meetings/${m.id}`}
+                        className="font-medium text-teal-700 hover:underline"
+                      >
+                        Open
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
     </div>

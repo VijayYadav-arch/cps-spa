@@ -18,21 +18,13 @@ function defaultRange(): { from: string; to: string } {
   };
 }
 
-function metricCard(label: string, value: string, color: string) {
+function metricCard(label: string, value: string, tone: string) {
   return (
-    <div
-      style={{
-        border: '1px solid #e2e8f0',
-        borderRadius: 8,
-        padding: 16,
-        background: '#fff',
-        minWidth: 160,
-      }}
-    >
-      <div style={{ color: '#64748b', fontSize: 13 }}>{label}</div>
-      <div style={{ fontSize: 28, fontWeight: 700, color, marginTop: 6 }}>
-        {value}
+    <div className="card-hover rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
+        {label}
       </div>
+      <div className={`mt-1.5 text-2xl font-bold ${tone}`}>{value}</div>
     </div>
   );
 }
@@ -70,12 +62,11 @@ export function HospiceHqrpDashboard() {
   }
 
   return (
-    <div style={{ padding: 24, maxWidth: 1100, display: 'grid', gap: 24 }}>
-      <header>
-        <h2 style={{ fontSize: 22, fontWeight: 700 }}>
-          HQRP Timeliness Dashboard
-        </h2>
-        <p style={{ color: '#64748b', marginTop: 4 }}>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <header className="space-y-2">
+        <h2 className="text-2xl">HQRP Timeliness Dashboard</h2>
+        <div className="section-line" />
+        <p className="max-w-3xl text-slate-500">
           CMS Hospice Quality Reporting Program — HOPE submissions within 30 days
           of trigger event. Threshold is 90% on-time; falling below results in a
           4-percentage-point reduction to the annual payment update.
@@ -84,82 +75,97 @@ export function HospiceHqrpDashboard() {
 
       <form
         onSubmit={handleApply}
-        style={{ display: 'flex', gap: 12, alignItems: 'end' }}
+        className="flex flex-wrap items-end gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
       >
-        <label style={{ display: 'grid', gap: 4 }}>
-          <span>From</span>
+        <label className="grid gap-1.5">
+          <span className="text-sm font-medium text-slate-600">From</span>
           <input
             type="date"
+            className="form-input w-44"
             value={range.from}
             onChange={(e) => setRange({ ...range, from: e.target.value })}
             required
           />
         </label>
-        <label style={{ display: 'grid', gap: 4 }}>
-          <span>To</span>
+        <label className="grid gap-1.5">
+          <span className="text-sm font-medium text-slate-600">To</span>
           <input
             type="date"
+            className="form-input w-44"
             value={range.to}
             onChange={(e) => setRange({ ...range, to: e.target.value })}
             required
           />
         </label>
-        <button type="submit">Apply</button>
+        <button type="submit" className="btn-primary">
+          Apply
+        </button>
       </form>
 
-      {isLoading && <div role="status">Loading…</div>}
-      {error && <div role="alert">{error}</div>}
+      {isLoading && (
+        <div role="status" className="text-slate-500">
+          Loading…
+        </div>
+      )}
+      {error && (
+        <div
+          role="alert"
+          className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800"
+        >
+          {error}
+        </div>
+      )}
 
       {report && !isLoading && (
         <>
           <section
-            style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}
+            className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5"
             aria-label="HQRP summary metrics"
           >
             {metricCard(
               'Timeliness',
               `${report.summary.timelinessPercentage.toFixed(2)}%`,
-              report.summary.meetsThreshold ? '#15803d' : '#b91c1c',
+              report.summary.meetsThreshold ? 'text-success' : 'text-error',
             )}
             {metricCard(
               'Threshold',
               `${report.summary.thresholdPercentage}%`,
-              '#0e7490',
+              'text-teal-700',
             )}
             {metricCard(
               'Total Assessments',
               String(report.summary.totalAssessments),
-              '#0f172a',
+              'text-navy-900',
             )}
             {metricCard(
               'On-Time',
               String(report.summary.onTimeCount),
-              '#15803d',
+              'text-success',
             )}
-            {metricCard('Late', String(report.summary.lateCount), '#b45309')}
+            {metricCard(
+              'Late',
+              String(report.summary.lateCount),
+              'text-accent-600',
+            )}
             {metricCard(
               'Not Submitted',
               String(report.summary.notYetSubmittedCount),
-              '#b91c1c',
+              'text-error',
             )}
             {metricCard(
               'Rejected',
               String(report.summary.rejectedCount),
-              '#b91c1c',
+              'text-error',
             )}
           </section>
 
           <section>
             <p
-              style={{
-                padding: 12,
-                borderRadius: 6,
-                background: report.summary.meetsThreshold
-                  ? '#f0fdf4'
-                  : '#fef2f2',
-                color: report.summary.meetsThreshold ? '#166534' : '#991b1b',
-                fontWeight: 600,
-              }}
+              className={`rounded-lg border-l-4 px-4 py-3 font-semibold ${
+                report.summary.meetsThreshold
+                  ? 'border-success bg-green-50 text-green-800'
+                  : 'border-error bg-red-50 text-red-800'
+              }`}
             >
               {report.summary.totalAssessments === 0
                 ? 'No HOPE assessments in this reporting period.'
@@ -169,67 +175,82 @@ export function HospiceHqrpDashboard() {
             </p>
           </section>
 
-          <section style={{ display: 'grid', gap: 12 }}>
-            <h3 style={{ fontSize: 18, fontWeight: 600 }}>
+          <section className="grid gap-3">
+            <h3 className="text-lg font-semibold">
               Late / Pending Assessments
             </h3>
             {report.lateOrPending.length === 0 ? (
-              <p style={{ color: '#64748b' }}>None — every assessment in this period is on time.</p>
+              <p className="text-slate-500">
+                None — every assessment in this period is on time.
+              </p>
             ) : (
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr
-                    style={{
-                      borderBottom: '2px solid #e2e8f0',
-                      textAlign: 'left',
-                    }}
-                  >
-                    <th style={{ padding: '6px 10px' }}>Patient</th>
-                    <th style={{ padding: '6px 10px' }}>Submission Type</th>
-                    <th style={{ padding: '6px 10px' }}>Target Date</th>
-                    <th style={{ padding: '6px 10px' }}>Deadline</th>
-                    <th style={{ padding: '6px 10px' }}>Status</th>
-                    <th style={{ padding: '6px 10px' }}>Days Late</th>
-                    <th style={{ padding: '6px 10px' }}>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {report.lateOrPending.map((row) => (
-                    <tr
-                      key={row.id}
-                      style={{ borderBottom: '1px solid #f1f5f9' }}
-                    >
-                      <td style={{ padding: '6px 10px' }}>
-                        {row.patientName ? (
-                          <Link to={`/patients/${row.patientId}`}>
-                            {row.patientName}
-                          </Link>
-                        ) : (
-                          <span style={{ color: '#64748b' }}>
-                            Patient #{row.patientId}
-                          </span>
-                        )}
-                      </td>
-                      <td style={{ padding: '6px 10px' }}>{row.submissionType}</td>
-                      <td style={{ padding: '6px 10px' }}>{row.targetDate}</td>
-                      <td style={{ padding: '6px 10px' }}>{row.deadlineDate}</td>
-                      <td style={{ padding: '6px 10px' }}>{row.status}</td>
-                      <td
-                        style={{
-                          padding: '6px 10px',
-                          color: row.daysLate > 0 ? '#b91c1c' : '#64748b',
-                          fontWeight: row.daysLate > 0 ? 600 : 400,
-                        }}
-                      >
-                        {row.daysLate}
-                      </td>
-                      <td style={{ padding: '6px 10px' }}>
-                        <Link to={`/hospice/hope/overdue`}>HOPE Queue</Link>
-                      </td>
+              <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                <table className="w-full border-collapse text-sm">
+                  <thead>
+                    <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                      <th className="px-4 py-3">Patient</th>
+                      <th className="px-4 py-3">Submission Type</th>
+                      <th className="px-4 py-3">Target Date</th>
+                      <th className="px-4 py-3">Deadline</th>
+                      <th className="px-4 py-3">Status</th>
+                      <th className="px-4 py-3">Days Late</th>
+                      <th className="px-4 py-3">Action</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {report.lateOrPending.map((row) => (
+                      <tr
+                        key={row.id}
+                        className="border-t border-slate-100 hover:bg-slate-50"
+                      >
+                        <td className="px-4 py-3">
+                          {row.patientName ? (
+                            <Link
+                              to={`/patients/${row.patientId}`}
+                              className="font-medium text-teal-700 hover:underline"
+                            >
+                              {row.patientName}
+                            </Link>
+                          ) : (
+                            <span className="text-slate-500">
+                              Patient #{row.patientId}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-slate-700">
+                          {row.submissionType}
+                        </td>
+                        <td className="px-4 py-3 text-slate-700">
+                          {row.targetDate}
+                        </td>
+                        <td className="px-4 py-3 text-slate-700">
+                          {row.deadlineDate}
+                        </td>
+                        <td className="px-4 py-3 text-slate-700">
+                          {row.status}
+                        </td>
+                        <td
+                          className={`px-4 py-3 ${
+                            row.daysLate > 0
+                              ? 'font-semibold text-error'
+                              : 'text-slate-500'
+                          }`}
+                        >
+                          {row.daysLate}
+                        </td>
+                        <td className="px-4 py-3">
+                          <Link
+                            to={`/hospice/hope/overdue`}
+                            className="font-medium text-teal-700 hover:underline"
+                          >
+                            HOPE Queue
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </section>
         </>

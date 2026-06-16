@@ -14,47 +14,66 @@ export function HospiceHopeOverdue() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div role="status">Loading overdue HOPE…</div>;
-  if (error) return <div role="alert">{error}</div>;
+  if (loading)
+    return (
+      <div role="status" className="text-slate-500">
+        Loading overdue HOPE…
+      </div>
+    );
+  if (error)
+    return (
+      <div
+        role="alert"
+        className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800"
+      >
+        {error}
+      </div>
+    );
 
   return (
-    <div style={{ padding: 24, maxWidth: 900 }}>
-      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 16 }}>
-        Overdue HOPE Assessments
-      </h2>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <header className="space-y-2">
+        <h2 className="text-2xl">Overdue HOPE Assessments</h2>
+        <div className="section-line" />
+      </header>
       {items.length === 0 ? (
-        <p style={{ color: '#64748b' }}>No HOPE assessments overdue.</p>
+        <p className="text-slate-500">No HOPE assessments overdue.</p>
       ) : (
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-              <th style={{ padding: '8px 12px' }}>Submission Type</th>
-              <th style={{ padding: '8px 12px' }}>Target Date</th>
-              <th style={{ padding: '8px 12px' }}>Deadline</th>
-              <th style={{ padding: '8px 12px' }}>Days Overdue</th>
-              <th style={{ padding: '8px 12px' }}>Status</th>
-              <th style={{ padding: '8px 12px' }}>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((a) => (
-              <tr key={a.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                <td style={{ padding: '8px 12px' }}>{a.submissionType}</td>
-                <td style={{ padding: '8px 12px' }}>{a.targetDate}</td>
-                <td style={{ padding: '8px 12px' }}>{a.deadlineDate}</td>
-                <td style={{ padding: '8px 12px', color: '#b91c1c' }}>
-                  {Math.max(0, -a.daysUntilDeadline)}
-                </td>
-                <td style={{ padding: '8px 12px' }}>{a.status}</td>
-                <td style={{ padding: '8px 12px' }}>
-                  <Link to={`/patients/${a.hospiceElectionId}/hospice/${a.hospiceElectionId}/hope/${a.id}`}>
-                    Open
-                  </Link>
-                </td>
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                <th className="px-4 py-3">Submission Type</th>
+                <th className="px-4 py-3">Target Date</th>
+                <th className="px-4 py-3">Deadline</th>
+                <th className="px-4 py-3">Days Overdue</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Action</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {items.map((a) => (
+                <tr key={a.id} className="border-t border-slate-100 bg-red-50">
+                  <td className="px-4 py-3 text-slate-700">{a.submissionType}</td>
+                  <td className="px-4 py-3 text-slate-700">{a.targetDate}</td>
+                  <td className="px-4 py-3 text-slate-700">{a.deadlineDate}</td>
+                  <td className="px-4 py-3 font-semibold text-error">
+                    {Math.max(0, -a.daysUntilDeadline)}
+                  </td>
+                  <td className="px-4 py-3 text-slate-700">{a.status}</td>
+                  <td className="px-4 py-3 text-slate-700">
+                    <Link
+                      to={`/patients/${a.hospiceElectionId}/hospice/${a.hospiceElectionId}/hope/${a.id}`}
+                      className="font-medium text-teal-700 hover:underline"
+                    >
+                      Open
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

@@ -148,48 +148,68 @@ export function HospiceBereavementProgramDetail() {
     }
   }
 
-  if (isLoading) return <div role="status">Loading bereavement program…</div>;
-  if (error) return <div role="alert">{error}</div>;
-  if (!program) return <div>Program not found.</div>;
+  if (isLoading)
+    return (
+      <div role="status" className="text-slate-500">
+        Loading bereavement program…
+      </div>
+    );
+  if (error)
+    return (
+      <div
+        role="alert"
+        className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800"
+      >
+        {error}
+      </div>
+    );
+  if (!program) return <div className="text-slate-500">Program not found.</div>;
 
   const readOnly = program.status === 'Closed';
 
   return (
-    <div style={{ padding: 24, maxWidth: 1000, display: 'grid', gap: 24 }}>
-      <header style={{ display: 'grid', gap: 4 }}>
-        <h2 style={{ fontSize: 22, fontWeight: 700 }}>
-          Bereavement Program #{program.id}
-        </h2>
-        <p style={{ color: '#64748b' }}>
+    <div className="grid max-w-[1000px] gap-6 p-6">
+      <header className="space-y-2">
+        <h2 className="text-2xl">Bereavement Program #{program.id}</h2>
+        <div className="section-line" />
+        <p className="max-w-3xl text-slate-500">
           Patient #{program.patientId} · Status: <strong>{program.status}</strong> · DoD{' '}
           {program.dateOfDeath} · Ends {program.programEndDate} (
           {program.daysUntilProgramEnd} days)
         </p>
       </header>
 
-      {actionError && <div role="alert" style={{ color: '#b91c1c' }}>{actionError}</div>}
+      {actionError && (
+        <div
+          role="alert"
+          className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800"
+        >
+          {actionError}
+        </div>
+      )}
 
       {!readOnly && (
-        <section style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+        <section className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <button
             onClick={handleComplete}
             disabled={!canManage}
             title={!canManage ? NO_PERMISSION : undefined}
-            style={{ cursor: !canManage ? 'not-allowed' : 'pointer' }}
+            className="btn-primary"
           >
             Complete Program
           </button>
-          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          <div className="flex items-center gap-2">
             <input
               placeholder="Closure reason"
               value={closeReason}
               onChange={(e) => setCloseReason(e.target.value)}
+              className="form-input"
             />
             <button
               onClick={handleClose}
               disabled={!canManage}
               title={!canManage ? NO_PERMISSION : undefined}
-              style={{ cursor: !canManage ? 'not-allowed' : 'pointer' }}
+              className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
             >
               Close Program
             </button>
@@ -197,24 +217,17 @@ export function HospiceBereavementProgramDetail() {
         </section>
       )}
 
-      <section style={{ display: 'grid', gap: 8 }}>
-        <h3 style={{ fontSize: 18, fontWeight: 600 }}>Risk History</h3>
-        <pre
-          style={{
-            background: '#f8fafc',
-            padding: 12,
-            borderRadius: 6,
-            overflowX: 'auto',
-            fontSize: 12,
-          }}
-        >
+      <section className="grid gap-3">
+        <h3 className="text-lg font-semibold">Risk History</h3>
+        <pre className="overflow-x-auto rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
           {program.riskHistory || '[]'}
         </pre>
         {!readOnly && (
-          <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+          <div className="flex flex-wrap items-center gap-2">
             <select
               value={riskLevel}
               onChange={(e) => setRiskLevel(e.target.value as BereavementRiskLevel)}
+              className="form-input w-auto"
             >
               {RISK_LEVELS.map((r) => (
                 <option key={r} value={r}>
@@ -226,13 +239,13 @@ export function HospiceBereavementProgramDetail() {
               placeholder="Notes"
               value={riskNotes}
               onChange={(e) => setRiskNotes(e.target.value)}
-              style={{ minWidth: 280 }}
+              className="form-input min-w-[280px]"
             />
             <button
               onClick={handleAddRisk}
               disabled={!canManage}
               title={!canManage ? NO_PERMISSION : undefined}
-              style={{ cursor: !canManage ? 'not-allowed' : 'pointer' }}
+              className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
             >
               Add Risk Assessment
             </button>
@@ -240,68 +253,79 @@ export function HospiceBereavementProgramDetail() {
         )}
       </section>
 
-      <section style={{ display: 'grid', gap: 12 }}>
-        <h3 style={{ fontSize: 18, fontWeight: 600 }}>Contacts</h3>
+      <section className="grid gap-3">
+        <h3 className="text-lg font-semibold">Contacts</h3>
         {contacts.length === 0 ? (
-          <p style={{ color: '#64748b' }}>No contacts.</p>
+          <p className="text-slate-500">No contacts.</p>
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-                <th style={{ padding: '6px 10px' }}>Name</th>
-                <th style={{ padding: '6px 10px' }}>Relationship</th>
-                <th style={{ padding: '6px 10px' }}>Preference</th>
-                <th style={{ padding: '6px 10px' }}>Primary</th>
-                <th style={{ padding: '6px 10px' }}>Opted Out</th>
-                <th style={{ padding: '6px 10px' }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {contacts.map((c) => (
-                <tr key={c.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td style={{ padding: '6px 10px' }}>
-                    {c.firstName} {c.lastName}
-                  </td>
-                  <td style={{ padding: '6px 10px' }}>{c.relationship}</td>
-                  <td style={{ padding: '6px 10px' }}>{c.contactPreference}</td>
-                  <td style={{ padding: '6px 10px' }}>{c.isPrimaryContact ? 'Yes' : ''}</td>
-                  <td style={{ padding: '6px 10px' }}>{c.optedOut ? 'Yes' : ''}</td>
-                  <td style={{ padding: '6px 10px', display: 'flex', gap: 6 }}>
-                    {!readOnly && !c.isPrimaryContact && (
-                      <button
-                        onClick={() => handleSetPrimary(c.id)}
-                        disabled={!canManage}
-                        title={!canManage ? NO_PERMISSION : undefined}
-                        style={{ cursor: !canManage ? 'not-allowed' : 'pointer' }}
-                      >
-                        Set Primary
-                      </button>
-                    )}
-                    {!readOnly && !c.optedOut && (
-                      <button
-                        onClick={() => handleOptOut(c.id)}
-                        disabled={!canManage}
-                        title={!canManage ? NO_PERMISSION : undefined}
-                        style={{ cursor: !canManage ? 'not-allowed' : 'pointer' }}
-                      >
-                        Opt Out
-                      </button>
-                    )}
-                    {!readOnly && (
-                      <button
-                        onClick={() => handleDeleteContact(c.id)}
-                        disabled={!canManage}
-                        title={!canManage ? NO_PERMISSION : undefined}
-                        style={{ cursor: !canManage ? 'not-allowed' : 'pointer' }}
-                      >
-                        Delete
-                      </button>
-                    )}
-                  </td>
+          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                  <th className="px-4 py-3">Name</th>
+                  <th className="px-4 py-3">Relationship</th>
+                  <th className="px-4 py-3">Preference</th>
+                  <th className="px-4 py-3">Primary</th>
+                  <th className="px-4 py-3">Opted Out</th>
+                  <th className="px-4 py-3">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {contacts.map((c) => (
+                  <tr
+                    key={c.id}
+                    className="border-t border-slate-100 hover:bg-slate-50"
+                  >
+                    <td className="px-4 py-3 text-slate-700">
+                      {c.firstName} {c.lastName}
+                    </td>
+                    <td className="px-4 py-3 text-slate-700">{c.relationship}</td>
+                    <td className="px-4 py-3 text-slate-700">{c.contactPreference}</td>
+                    <td className="px-4 py-3 text-slate-700">
+                      {c.isPrimaryContact ? 'Yes' : ''}
+                    </td>
+                    <td className="px-4 py-3 text-slate-700">
+                      {c.optedOut ? 'Yes' : ''}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-2">
+                        {!readOnly && !c.isPrimaryContact && (
+                          <button
+                            onClick={() => handleSetPrimary(c.id)}
+                            disabled={!canManage}
+                            title={!canManage ? NO_PERMISSION : undefined}
+                            className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            Set Primary
+                          </button>
+                        )}
+                        {!readOnly && !c.optedOut && (
+                          <button
+                            onClick={() => handleOptOut(c.id)}
+                            disabled={!canManage}
+                            title={!canManage ? NO_PERMISSION : undefined}
+                            className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            Opt Out
+                          </button>
+                        )}
+                        {!readOnly && (
+                          <button
+                            onClick={() => handleDeleteContact(c.id)}
+                            disabled={!canManage}
+                            title={!canManage ? NO_PERMISSION : undefined}
+                            className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
         {!readOnly && (
           <BereavementContactForm
@@ -311,35 +335,42 @@ export function HospiceBereavementProgramDetail() {
         )}
       </section>
 
-      <section style={{ display: 'grid', gap: 12 }}>
-        <h3 style={{ fontSize: 18, fontWeight: 600 }}>Encounters</h3>
+      <section className="grid gap-3">
+        <h3 className="text-lg font-semibold">Encounters</h3>
         {encounters.length === 0 ? (
-          <p style={{ color: '#64748b' }}>No encounters recorded.</p>
+          <p className="text-slate-500">No encounters recorded.</p>
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-                <th style={{ padding: '6px 10px' }}>Date</th>
-                <th style={{ padding: '6px 10px' }}>Type</th>
-                <th style={{ padding: '6px 10px' }}>Duration (min)</th>
-                <th style={{ padding: '6px 10px' }}>Follow-up</th>
-                <th style={{ padding: '6px 10px' }}>Notes</th>
-              </tr>
-            </thead>
-            <tbody>
-              {encounters.map((e) => (
-                <tr key={e.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td style={{ padding: '6px 10px' }}>{e.encounterDate}</td>
-                  <td style={{ padding: '6px 10px' }}>{e.encounterType}</td>
-                  <td style={{ padding: '6px 10px' }}>{e.durationMinutes ?? '—'}</td>
-                  <td style={{ padding: '6px 10px' }}>
-                    {e.followUpRequired ? (e.followUpByDate ?? 'Yes') : ''}
-                  </td>
-                  <td style={{ padding: '6px 10px' }}>{e.notes}</td>
+          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                  <th className="px-4 py-3">Date</th>
+                  <th className="px-4 py-3">Type</th>
+                  <th className="px-4 py-3">Duration (min)</th>
+                  <th className="px-4 py-3">Follow-up</th>
+                  <th className="px-4 py-3">Notes</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {encounters.map((e) => (
+                  <tr
+                    key={e.id}
+                    className="border-t border-slate-100 hover:bg-slate-50"
+                  >
+                    <td className="px-4 py-3 text-slate-700">{e.encounterDate}</td>
+                    <td className="px-4 py-3 text-slate-700">{e.encounterType}</td>
+                    <td className="px-4 py-3 text-slate-700">
+                      {e.durationMinutes ?? '—'}
+                    </td>
+                    <td className="px-4 py-3 text-slate-700">
+                      {e.followUpRequired ? (e.followUpByDate ?? 'Yes') : ''}
+                    </td>
+                    <td className="px-4 py-3 text-slate-700">{e.notes}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
         {program.status === 'Active' && (
           <BereavementEncounterForm

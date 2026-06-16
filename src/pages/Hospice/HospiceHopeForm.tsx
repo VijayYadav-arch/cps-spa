@@ -118,38 +118,43 @@ export function HospiceHopeForm() {
   }
 
   return (
-    <div style={{ padding: 24, maxWidth: 720 }}>
-      <button
-        onClick={() => navigate(`/patients/${patientId}/hospice/${electionId}`)}
-        style={{ marginBottom: 16 }}
-      >
-        ← Back to Election
-      </button>
-      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 16 }}>
-        HOPE Assessment {assessment ? `#${assessment.id}` : '(new)'}
-      </h2>
+    <div className="grid max-w-3xl gap-6 p-6">
+      <div>
+        <button
+          className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+          onClick={() => navigate(`/patients/${patientId}/hospice/${electionId}`)}
+        >
+          ← Back to Election
+        </button>
+      </div>
+      <header className="space-y-2">
+        <h2 className="text-2xl">
+          HOPE Assessment {assessment ? `#${assessment.id}` : '(new)'}
+        </h2>
+        <div className="section-line" />
+      </header>
 
       {error && (
-        <div role="alert" style={{ color: '#b91c1c', marginBottom: 12 }}>
+        <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">
           {error}
         </div>
       )}
 
       {assessment && (
-        <p style={{ color: '#64748b', marginBottom: 16 }}>
-          Status: <strong>{assessment.status}</strong> • Deadline:{' '}
+        <p className="text-slate-500">
+          Status: <strong className="text-slate-800">{assessment.status}</strong> • Deadline:{' '}
           {assessment.deadlineDate} ({assessment.daysUntilDeadline} days)
         </p>
       )}
 
       {!assessment ? (
-        <div style={{ display: 'grid', gap: 12 }}>
-          <label>
-            Submission Type
+        <div className="grid gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <label className="grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">Submission Type</span>
             <select
+              className="form-input"
               value={submissionType}
               onChange={(e) => setSubmissionType(e.target.value as HopeSubmissionType)}
-              style={{ display: 'block', marginTop: 4 }}
             >
               {SUBMISSION_TYPES.map((t) => (
                 <option key={t} value={t}>
@@ -158,61 +163,63 @@ export function HospiceHopeForm() {
               ))}
             </select>
           </label>
-          <label>
-            Target Date
+          <label className="grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">Target Date</span>
             <input
               type="date"
+              className="form-input"
               value={targetDate}
               onChange={(e) => setTargetDate(e.target.value)}
-              style={{ display: 'block', marginTop: 4 }}
             />
           </label>
-          <label>
-            Initial Payload (JSON)
+          <label className="grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">Initial Payload (JSON)</span>
             <textarea
+              className="form-input font-mono"
               value={payload}
               onChange={(e) => setPayload(e.target.value)}
               rows={8}
-              style={{ display: 'block', marginTop: 4, width: '100%', fontFamily: 'monospace' }}
             />
           </label>
-          <button
-            onClick={handleStart}
-            disabled={working || !canAssess}
-            title={!canAssess ? NO_PERMISSION : undefined}
-            style={{ cursor: (working || !canAssess) ? 'not-allowed' : 'pointer' }}
-          >
-            {working ? 'Starting…' : 'Start HOPE Assessment'}
-          </button>
+          <div>
+            <button
+              className="btn-primary"
+              onClick={handleStart}
+              disabled={working || !canAssess}
+              title={!canAssess ? NO_PERMISSION : undefined}
+            >
+              {working ? 'Starting…' : 'Start HOPE Assessment'}
+            </button>
+          </div>
         </div>
       ) : (
-        <div style={{ display: 'grid', gap: 12 }}>
-          <label>
-            Payload (JSON)
+        <div className="grid gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <label className="grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">Payload (JSON)</span>
             <textarea
+              className="form-input font-mono"
               value={payload}
               onChange={(e) => setPayload(e.target.value)}
               rows={12}
               disabled={assessment.status !== 'Draft'}
-              style={{ display: 'block', marginTop: 4, width: '100%', fontFamily: 'monospace' }}
             />
           </label>
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div className="flex gap-2">
             {assessment.status === 'Draft' && (
               <>
                 <button
+                  className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
                   onClick={handleSavePayload}
                   disabled={working || !canAssess}
                   title={!canAssess ? NO_PERMISSION : undefined}
-                  style={{ cursor: (working || !canAssess) ? 'not-allowed' : 'pointer' }}
                 >
                   Save Payload
                 </button>
                 <button
+                  className="btn-primary"
                   onClick={handleSign}
                   disabled={working || !canAssess}
                   title={!canAssess ? NO_PERMISSION : undefined}
-                  style={{ cursor: (working || !canAssess) ? 'not-allowed' : 'pointer' }}
                 >
                   Sign
                 </button>
@@ -220,10 +227,10 @@ export function HospiceHopeForm() {
             )}
             {assessment.status === 'Signed' && (
               <button
+                className="btn-primary"
                 onClick={handleSubmit}
                 disabled={working || !canAssess}
                 title={!canAssess ? NO_PERMISSION : undefined}
-                style={{ cursor: (working || !canAssess) ? 'not-allowed' : 'pointer' }}
               >
                 Submit to CMS
               </button>

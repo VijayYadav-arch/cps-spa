@@ -76,9 +76,18 @@ export function HospiceAttendanceGrid() {
     [days],
   );
 
-  if (isLoading) return <div role="status">Loading attendance…</div>;
-  if (error) return <div role="alert">{error}</div>;
-  if (!election || !period) return <div>No active benefit period.</div>;
+  if (isLoading) return <div role="status" className="text-slate-500">Loading attendance…</div>;
+  if (error)
+    return (
+      <div
+        role="alert"
+        className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800"
+      >
+        {error}
+      </div>
+    );
+  if (!election || !period)
+    return <div className="text-slate-500">No active benefit period.</div>;
 
   async function handleRecord(req: Parameters<typeof recordAttendance>[1]) {
     await recordAttendance(election!.id, req);
@@ -87,55 +96,44 @@ export function HospiceAttendanceGrid() {
   }
 
   return (
-    <div style={{ padding: 24, maxWidth: 900 }}>
-      <button
-        onClick={() => navigate(`/patients/${patientId}/hospice/${election.id}`)}
-        style={{ marginBottom: 16 }}
-      >
-        ← Back to Election
-      </button>
-      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 4 }}>
-        Hospice Attendance — Period {period.periodNumber}
-      </h2>
-      <p style={{ color: '#64748b', marginBottom: 24 }}>
-        {period.startDate} – {period.endDate}
-      </p>
+    <div className="grid max-w-[900px] gap-6 p-6">
+      <div>
+        <button
+          onClick={() => navigate(`/patients/${patientId}/hospice/${election.id}`)}
+          className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+        >
+          ← Back to Election
+        </button>
+      </div>
+      <header className="space-y-2">
+        <h2 className="text-2xl">
+          Hospice Attendance — Period {period.periodNumber}
+        </h2>
+        <div className="section-line" />
+        <p className="max-w-3xl text-slate-500">
+          {period.startDate} – {period.endDate}
+        </p>
+      </header>
 
       {dateRange.length === 0 ? (
-        <p>No attendance recorded for this period.</p>
+        <p className="text-slate-500">No attendance recorded for this period.</p>
       ) : (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(7, 1fr)',
-            gap: 4,
-            marginBottom: 24,
-          }}
-        >
+        <div className="grid grid-cols-7 gap-1">
           {dateRange.map((date) => {
             const day = daysByDate[date];
             return (
               <button
                 key={date}
                 onClick={() => setActiveDate(date)}
-                style={{
-                  textAlign: 'left',
-                  padding: 8,
-                  background: day ? '#f8fafc' : '#fff',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: 4,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 4,
-                  minHeight: 64,
-                }}
+                className={`flex min-h-16 cursor-pointer flex-col gap-1 rounded-md border border-slate-200 p-2 text-left transition-colors hover:bg-slate-50 ${
+                  day ? 'bg-slate-50' : 'bg-white'
+                }`}
               >
-                <span style={{ fontSize: 11, color: '#64748b' }}>{date.slice(5)}</span>
+                <span className="text-[11px] text-slate-500">{date.slice(5)}</span>
                 {day ? (
                   <HospiceLevelOfCareBadge loc={day.levelOfCare} />
                 ) : (
-                  <span style={{ fontSize: 11, color: '#94a3b8' }}>—</span>
+                  <span className="text-[11px] text-slate-400">—</span>
                 )}
               </button>
             );
@@ -147,23 +145,9 @@ export function HospiceAttendanceGrid() {
         <div
           role="dialog"
           aria-label="Attendance Day Form"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.4)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
+          className="fixed inset-0 flex items-center justify-center bg-black/40"
         >
-          <div
-            style={{
-              background: '#fff',
-              padding: 24,
-              borderRadius: 8,
-              minWidth: 420,
-            }}
-          >
+          <div className="min-w-[420px] rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
             <HospiceAttendanceDayForm
               serviceDate={activeDate}
               initial={daysByDate[activeDate]}

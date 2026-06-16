@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import {
   getElection,
@@ -13,22 +13,15 @@ import { PERMISSIONS } from '@/permissions/permissions';
 
 const NO_PERMISSION = 'You do not have permission to perform this action';
 
-function badgeStyle(color: string): CSSProperties {
-  return {
-    display: 'inline-block',
-    padding: '2px 8px',
-    borderRadius: 4,
-    background: color,
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: 600,
-  };
-}
+const BADGE_BASE =
+  'inline-block rounded-full px-2 py-0.5 text-xs font-semibold';
 
 function recertBadge(days: number) {
-  if (days <= 7) return { color: '#b91c1c', label: 'Urgent' };
-  if (days <= 15) return { color: '#d97706', label: 'Soon' };
-  return { color: '#15803d', label: 'On Track' };
+  if (days <= 7)
+    return { tint: 'bg-red-100 text-red-800', label: 'Urgent' };
+  if (days <= 15)
+    return { tint: 'bg-amber-100 text-amber-800', label: 'Soon' };
+  return { tint: 'bg-green-100 text-green-800', label: 'On Track' };
 }
 
 export function HospiceElectionDetail() {
@@ -81,8 +74,21 @@ export function HospiceElectionDetail() {
     }
   }
 
-  if (isLoading) return <div role="status">Loading election…</div>;
-  if (error) return <div role="alert">{error}</div>;
+  if (isLoading)
+    return (
+      <div role="status" className="text-slate-500">
+        Loading election…
+      </div>
+    );
+  if (error)
+    return (
+      <div
+        role="alert"
+        className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800"
+      >
+        {error}
+      </div>
+    );
   if (!election) return null;
 
   const recert = election.currentPeriod
@@ -90,50 +96,50 @@ export function HospiceElectionDetail() {
     : null;
 
   return (
-    <div style={{ padding: 24, maxWidth: 800 }}>
-      <button
-        onClick={() => navigate(`/patients/${patientId}`)}
-        style={{ marginBottom: 16 }}
-      >
-        ← Back to Patient
-      </button>
-      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 4 }}>
-        Hospice Election #{election.id}
-      </h2>
-      <p style={{ color: '#64748b', marginBottom: 24 }}>
-        Elected {election.electionDate} • {election.electionType} • Status:{' '}
-        <strong>{election.status}</strong>
-      </p>
+    <div className="grid max-w-3xl gap-6 p-6">
+      <header className="space-y-2">
+        <div>
+          <button
+            onClick={() => navigate(`/patients/${patientId}`)}
+            className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+          >
+            ← Back to Patient
+          </button>
+        </div>
+        <h2 className="text-2xl">Hospice Election #{election.id}</h2>
+        <div className="section-line" />
+        <p className="max-w-3xl text-slate-500">
+          Elected {election.electionDate} • {election.electionType} • Status:{' '}
+          <strong>{election.status}</strong>
+        </p>
+      </header>
 
       {election.currentPeriod && (
-        <section
-          style={{
-            border: '1px solid #e2e8f0',
-            borderRadius: 8,
-            padding: 16,
-            marginBottom: 16,
-          }}
-        >
-          <h3>Benefit Period {election.currentPeriod.periodNumber}</h3>
-          <dl
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '160px 1fr',
-              gap: '8px 16px',
-            }}
-          >
-            <dt>Start</dt>
-            <dd>{election.currentPeriod.startDate}</dd>
-            <dt>End</dt>
-            <dd>{election.currentPeriod.endDate}</dd>
-            <dt>Status</dt>
-            <dd>{election.currentPeriod.status}</dd>
-            <dt>Recert Due</dt>
-            <dd>
+        <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <h3 className="text-lg font-semibold">
+            Benefit Period {election.currentPeriod.periodNumber}
+          </h3>
+          <dl className="mt-3 grid grid-cols-[160px_1fr] gap-x-4 gap-y-2">
+            <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              Start
+            </dt>
+            <dd className="text-slate-800">{election.currentPeriod.startDate}</dd>
+            <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              End
+            </dt>
+            <dd className="text-slate-800">{election.currentPeriod.endDate}</dd>
+            <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              Status
+            </dt>
+            <dd className="text-slate-800">{election.currentPeriod.status}</dd>
+            <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              Recert Due
+            </dt>
+            <dd className="text-slate-800">
               {election.currentPeriod.recertDueDate} (
               {election.currentPeriod.daysUntilRecertDue} days)
               {recert && (
-                <span style={{ ...badgeStyle(recert.color), marginLeft: 8 }}>
+                <span className={`ml-2 ${BADGE_BASE} ${recert.tint}`}>
                   {recert.label}
                 </span>
               )}
@@ -143,60 +149,67 @@ export function HospiceElectionDetail() {
       )}
 
       {election.noe && (
-        <section
-          style={{
-            border: '1px solid #e2e8f0',
-            borderRadius: 8,
-            padding: 16,
-            marginBottom: 16,
-          }}
-        >
-          <h3>Notice of Election</h3>
-          <dl
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '160px 1fr',
-              gap: '8px 16px',
-            }}
-          >
-            <dt>Status</dt>
+        <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <h3 className="text-lg font-semibold">Notice of Election</h3>
+          <dl className="mt-3 grid grid-cols-[160px_1fr] gap-x-4 gap-y-2">
+            <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              Status
+            </dt>
             <dd>
               <span
-                style={badgeStyle(
+                className={`${BADGE_BASE} ${
                   election.noe.status === 'Submitted' ||
-                    election.noe.status === 'ManualOverride'
-                    ? '#15803d'
+                  election.noe.status === 'ManualOverride'
+                    ? 'bg-green-100 text-green-800'
                     : election.noe.status === 'Late'
-                      ? '#b91c1c'
-                      : '#d97706',
-                )}
+                      ? 'bg-red-100 text-red-800'
+                      : 'bg-amber-100 text-amber-800'
+                }`}
               >
                 {election.noe.status}
               </span>
             </dd>
-            <dt>Deadline</dt>
-            <dd>
+            <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              Deadline
+            </dt>
+            <dd className="text-slate-800">
               {election.noe.deadlineDate} ({election.noe.daysUntilDeadline} days)
             </dd>
-            <dt>Payer</dt>
-            <dd>{election.noe.payerCode}</dd>
+            <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              Payer
+            </dt>
+            <dd className="text-slate-800">{election.noe.payerCode}</dd>
             {election.noe.documentUrl && (
               <>
-                <dt>Document</dt>
+                <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                  Document
+                </dt>
                 <dd>
-                  <a href={election.noe.documentUrl}>View PDF</a>
+                  <a
+                    href={election.noe.documentUrl}
+                    className="font-medium text-teal-700 hover:underline"
+                  >
+                    View PDF
+                  </a>
                 </dd>
               </>
             )}
             {election.noe.clearinghouseConfirmation && (
               <>
-                <dt>Confirmation</dt>
-                <dd>{election.noe.clearinghouseConfirmation}</dd>
+                <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                  Confirmation
+                </dt>
+                <dd className="text-slate-800">
+                  {election.noe.clearinghouseConfirmation}
+                </dd>
               </>
             )}
           </dl>
           {election.noe.status === 'Pending' && (
-            <button onClick={() => setShowNoeModal(true)} style={{ marginTop: 8 }}>
+            <button
+              onClick={() => setShowNoeModal(true)}
+              className="btn-primary mt-3"
+            >
               Submit NOE
             </button>
           )}
@@ -204,18 +217,12 @@ export function HospiceElectionDetail() {
       )}
 
       {election.status === 'Active' && (
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={() =>
               navigate(`/patients/${patientId}/hospice/${election.id}/attendance`)
             }
-            style={{
-              background: '#eff6ff',
-              color: '#1d4ed8',
-              border: '1px solid #bfdbfe',
-              padding: '8px 16px',
-              borderRadius: 4,
-            }}
+            className="rounded-md border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100"
           >
             Record Attendance
           </button>
@@ -223,13 +230,7 @@ export function HospiceElectionDetail() {
             onClick={() =>
               navigate(`/patients/${patientId}/hospice/${election.id}/per-diem-claim`)
             }
-            style={{
-              background: '#ecfdf5',
-              color: '#047857',
-              border: '1px solid #a7f3d0',
-              padding: '8px 16px',
-              borderRadius: 4,
-            }}
+            className="rounded-md border border-green-200 bg-green-50 px-4 py-2 text-sm font-medium text-green-700 transition-colors hover:bg-green-100"
           >
             Generate Per-Diem Claim
           </button>
@@ -237,13 +238,7 @@ export function HospiceElectionDetail() {
             onClick={() =>
               navigate(`/patients/${patientId}/hospice/${election.id}/hope`)
             }
-            style={{
-              background: '#fdf4ff',
-              color: '#a21caf',
-              border: '1px solid #f5d0fe',
-              padding: '8px 16px',
-              borderRadius: 4,
-            }}
+            className="rounded-md border border-fuchsia-200 bg-fuchsia-50 px-4 py-2 text-sm font-medium text-fuchsia-700 transition-colors hover:bg-fuchsia-100"
           >
             Start HOPE Assessment
           </button>
@@ -251,13 +246,7 @@ export function HospiceElectionDetail() {
             onClick={() =>
               navigate(`/patients/${patientId}/hospice/${election.id}/idg`)
             }
-            style={{
-              background: '#fffbeb',
-              color: '#92400e',
-              border: '1px solid #fde68a',
-              padding: '8px 16px',
-              borderRadius: 4,
-            }}
+            className="rounded-md border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-800 transition-colors hover:bg-amber-100"
           >
             Schedule IDG Meeting
           </button>
@@ -265,25 +254,13 @@ export function HospiceElectionDetail() {
             onClick={() =>
               navigate(`/patients/${patientId}/hospice/${election.id}/revoke`)
             }
-            style={{
-              background: '#fef2f2',
-              color: '#b91c1c',
-              border: '1px solid #fecaca',
-              padding: '8px 16px',
-              borderRadius: 4,
-            }}
+            className="rounded-md border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-100"
           >
             Revoke Election
           </button>
           <button
             onClick={() => navigate('/hospice/bereavement')}
-            style={{
-              background: '#f5f3ff',
-              color: '#6d28d9',
-              border: '1px solid #ddd6fe',
-              padding: '8px 16px',
-              borderRadius: 4,
-            }}
+            className="rounded-md border border-violet-200 bg-violet-50 px-4 py-2 text-sm font-medium text-violet-700 transition-colors hover:bg-violet-100"
           >
             Bereavement Programs
           </button>
@@ -291,13 +268,7 @@ export function HospiceElectionDetail() {
             onClick={() =>
               navigate(`/hospice/elections/${election.id}/addendum`)
             }
-            style={{
-              background: '#ecfeff',
-              color: '#0e7490',
-              border: '1px solid #a5f3fc',
-              padding: '8px 16px',
-              borderRadius: 4,
-            }}
+            className="rounded-md border border-teal-200 bg-teal-50 px-4 py-2 text-sm font-medium text-teal-700 transition-colors hover:bg-teal-100"
           >
             Election Addendum
           </button>
@@ -306,13 +277,7 @@ export function HospiceElectionDetail() {
               onClick={() =>
                 navigate(`/hospice/elections/${election.id}/discharge/new`)
               }
-              style={{
-                background: '#fff7ed',
-                color: '#c2410c',
-                border: '1px solid #fed7aa',
-                padding: '8px 16px',
-                borderRadius: 4,
-              }}
+              className="rounded-md border border-orange-200 bg-orange-50 px-4 py-2 text-sm font-medium text-orange-700 transition-colors hover:bg-orange-100"
             >
               Discharge Patient
             </button>
@@ -321,26 +286,21 @@ export function HospiceElectionDetail() {
       )}
 
       {election.status === 'Discharged' && (
-        <section
-          style={{
-            border: '1px solid #fde68a',
-            borderRadius: 8,
-            padding: 16,
-            marginBottom: 16,
-            background: '#fffbeb',
-          }}
-        >
-          <h3 style={{ marginTop: 0 }}>Discharged</h3>
-          <p style={{ color: '#64748b', marginBottom: 8 }}>
+        <section className="rounded-lg border-l-4 border-warning bg-amber-50 px-4 py-3">
+          <h3 className="text-lg font-semibold text-amber-800">Discharged</h3>
+          <p className="mt-1 text-slate-600">
             This election has been discharged.
           </p>
-          <Link to={`/hospice/discharges?electionId=${election.id}`}>
+          <Link
+            to={`/hospice/discharges?electionId=${election.id}`}
+            className="font-medium text-teal-700 hover:underline"
+          >
             View discharge details →
           </Link>
         </section>
       )}
 
-      <div style={{ marginTop: 24 }}>
+      <div>
         <HospiceNotrCard electionId={election.id} />
       </div>
 
@@ -348,69 +308,53 @@ export function HospiceElectionDetail() {
         <div
           role="dialog"
           aria-label="Submit NOE"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.4)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
+          className="fixed inset-0 flex items-center justify-center bg-black/40"
         >
-          <div
-            style={{
-              background: '#fff',
-              padding: 24,
-              borderRadius: 8,
-              minWidth: 400,
-            }}
-          >
-            <h3>Submit NOE</h3>
-            <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+          <div className="min-w-[400px] rounded-xl border border-slate-200 bg-white p-6 shadow-lg">
+            <h3 className="text-lg font-semibold">Submit NOE</h3>
+            <div className="mt-4 flex gap-2">
               <button
                 onClick={() => setNoeMode('Clearinghouse')}
-                style={{
-                  background: noeMode === 'Clearinghouse' ? '#2563eb' : '#fff',
-                  color: noeMode === 'Clearinghouse' ? '#fff' : '#000',
-                }}
+                className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                  noeMode === 'Clearinghouse'
+                    ? 'bg-teal-600 text-white'
+                    : 'border border-slate-300 text-slate-700 hover:bg-slate-50'
+                }`}
               >
                 Clearinghouse
               </button>
               <button
                 onClick={() => setNoeMode('Manual')}
-                style={{
-                  background: noeMode === 'Manual' ? '#2563eb' : '#fff',
-                  color: noeMode === 'Manual' ? '#fff' : '#000',
-                }}
+                className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                  noeMode === 'Manual'
+                    ? 'bg-teal-600 text-white'
+                    : 'border border-slate-300 text-slate-700 hover:bg-slate-50'
+                }`}
               >
                 Manual
               </button>
             </div>
             {noeMode === 'Manual' && (
-              <label style={{ display: 'block', marginTop: 12 }}>
-                Document URL
+              <label className="mt-3 grid gap-1.5">
+                <span className="text-sm font-medium text-slate-600">
+                  Document URL
+                </span>
                 <input
                   type="url"
                   value={noeUrl}
                   onChange={(e) => setNoeUrl(e.target.value)}
-                  style={{ display: 'block', marginTop: 4, width: '100%' }}
+                  className="form-input"
                 />
               </label>
             )}
-            <div
-              style={{
-                marginTop: 16,
-                display: 'flex',
-                gap: 8,
-                justifyContent: 'flex-end',
-              }}
-            >
+            <div className="mt-4 flex justify-end gap-2">
               <button
                 onClick={() => {
                   setShowNoeModal(false);
                   setNoeMode(null);
                 }}
                 disabled={submitting}
+                className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
               >
                 Cancel
               </button>
@@ -420,6 +364,7 @@ export function HospiceElectionDetail() {
                   submitting || !canManage || !noeMode || (noeMode === 'Manual' && !noeUrl)
                 }
                 title={!canManage ? NO_PERMISSION : undefined}
+                className="btn-primary"
               >
                 {submitting ? 'Submitting…' : 'Confirm Submission'}
               </button>

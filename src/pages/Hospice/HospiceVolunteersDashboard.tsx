@@ -19,21 +19,13 @@ function defaultRange(): { from: string; to: string } {
   return { from: from.toISOString().slice(0, 10), to };
 }
 
-function metricCard(label: string, value: string, color: string) {
+function metricCard(label: string, value: string, tone: string) {
   return (
-    <div
-      style={{
-        border: '1px solid #e2e8f0',
-        borderRadius: 8,
-        padding: 16,
-        background: '#fff',
-        minWidth: 180,
-      }}
-    >
-      <div style={{ color: '#64748b', fontSize: 13 }}>{label}</div>
-      <div style={{ fontSize: 22, fontWeight: 700, color, marginTop: 6 }}>
-        {value}
+    <div className="card-hover rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
+        {label}
       </div>
+      <div className={`mt-1.5 text-2xl font-bold ${tone}`}>{value}</div>
     </div>
   );
 }
@@ -164,10 +156,11 @@ export function HospiceVolunteersDashboard() {
   }
 
   return (
-    <div style={{ padding: 24, maxWidth: 1200, display: 'grid', gap: 24 }}>
-      <header>
-        <h2 style={{ fontSize: 22, fontWeight: 700 }}>Hospice Volunteers</h2>
-        <p style={{ color: '#64748b', marginTop: 4 }}>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <header className="space-y-2">
+        <h2 className="text-2xl">Hospice Volunteers</h2>
+        <div className="section-line" />
+        <p className="max-w-3xl text-slate-500">
           42 CFR 418.78 — volunteers must provide ≥ 5% of paid patient-care hours.
           Fundraising and board service are excluded.
         </p>
@@ -175,32 +168,39 @@ export function HospiceVolunteersDashboard() {
 
       <form
         onSubmit={handleApplyRange}
-        style={{ display: 'flex', gap: 12, alignItems: 'end', flexWrap: 'wrap' }}
+        className="flex flex-wrap items-end gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
       >
-        <label style={{ display: 'grid', gap: 4 }}>
-          <span>Reporting from</span>
+        <label className="grid gap-1.5">
+          <span className="text-sm font-medium text-slate-600">
+            Reporting from
+          </span>
           <input
             type="date"
+            className="form-input w-44"
             value={range.from}
             onChange={(e) => setRange({ ...range, from: e.target.value })}
             required
           />
         </label>
-        <label style={{ display: 'grid', gap: 4 }}>
-          <span>Reporting to</span>
+        <label className="grid gap-1.5">
+          <span className="text-sm font-medium text-slate-600">
+            Reporting to
+          </span>
           <input
             type="date"
+            className="form-input w-44"
             value={range.to}
             onChange={(e) => setRange({ ...range, to: e.target.value })}
             required
           />
         </label>
-        <label style={{ display: 'grid', gap: 4 }}>
-          <span>
+        <label className="grid gap-1.5">
+          <span className="text-sm font-medium text-slate-600">
             Paid patient-care hours (leave blank to auto-compute from time logs)
           </span>
           <input
             type="number"
+            className="form-input w-full sm:w-64"
             value={paidHours}
             onChange={(e) => setPaidHours(e.target.value)}
             placeholder="auto-compute"
@@ -208,60 +208,74 @@ export function HospiceVolunteersDashboard() {
             step="0.25"
           />
         </label>
-        <button type="submit">Apply</button>
+        <button type="submit" className="btn-primary">
+          Apply
+        </button>
       </form>
 
-      {isLoading && <div role="status">Loading…</div>}
-      {error && <div role="alert">{error}</div>}
+      {isLoading && (
+        <div role="status" className="text-slate-500">
+          Loading…
+        </div>
+      )}
+      {error && (
+        <div
+          role="alert"
+          className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800"
+        >
+          {error}
+        </div>
+      )}
       {actionError && (
-        <div role="alert" style={{ color: '#b91c1c' }}>
+        <div
+          role="alert"
+          className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800"
+        >
           {actionError}
         </div>
       )}
 
       {compliance && !isLoading && (
         <>
-          <section style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          <section className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
             {metricCard(
               'Compliance',
               `${compliance.compliancePercentage.toFixed(2)}%`,
-              compliance.meetsThreshold ? '#15803d' : '#b91c1c',
+              compliance.meetsThreshold ? 'text-success' : 'text-error',
             )}
             {metricCard(
               'Threshold',
               `${compliance.thresholdPercentage}%`,
-              '#0e7490',
+              'text-teal-700',
             )}
             {metricCard(
               'Qualifying Hours',
               compliance.totalQualifyingVolunteerHours.toString(),
-              '#0f172a',
+              'text-navy-900',
             )}
             {metricCard(
               'Excluded Hours',
               compliance.excludedVolunteerHours.toString(),
-              '#64748b',
+              'text-slate-500',
             )}
             {metricCard(
               'Paid Hours (Denom.)',
               compliance.paidPatientCareHours.toString(),
-              '#0f172a',
+              'text-navy-900',
             )}
             {metricCard(
               'Volunteers',
               compliance.volunteerCount.toString(),
-              '#0f172a',
+              'text-navy-900',
             )}
           </section>
 
           <section
-            style={{
-              padding: 12,
-              borderRadius: 6,
-              background: compliance.meetsThreshold ? '#f0fdf4' : '#fef2f2',
-              color: compliance.meetsThreshold ? '#166534' : '#991b1b',
-              fontWeight: 600,
-            }}
+            className={`rounded-lg border-l-4 px-4 py-3 font-semibold ${
+              compliance.meetsThreshold
+                ? 'border-success bg-green-50 text-green-800'
+                : 'border-error bg-red-50 text-red-800'
+            }`}
           >
             {compliance.paidPatientCareHours === 0
               ? 'Enter paid patient-care hours from payroll to compute compliance.'
@@ -271,19 +285,10 @@ export function HospiceVolunteersDashboard() {
           </section>
 
           {compliance.caveats.length > 0 && (
-            <section
-              style={{
-                background: '#fef9c3',
-                border: '1px solid #fde68a',
-                borderRadius: 6,
-                padding: 12,
-              }}
-            >
-              <ul style={{ paddingLeft: 20, margin: 0 }}>
+            <section className="rounded-lg border border-accent-200 bg-accent-50 px-4 py-3">
+              <ul className="list-disc space-y-1.5 pl-5 text-sm text-slate-700">
                 {compliance.caveats.map((c, i) => (
-                  <li key={i} style={{ marginBottom: 6 }}>
-                    {c}
-                  </li>
+                  <li key={i}>{c}</li>
                 ))}
               </ul>
             </section>
@@ -291,46 +296,50 @@ export function HospiceVolunteersDashboard() {
         </>
       )}
 
-      <section style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-        <div>
-          <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>
-            Add Volunteer
-          </h3>
-          <form onSubmit={handleAddVolunteer} style={{ display: 'grid', gap: 8 }}>
+      <section className="grid gap-6 md:grid-cols-2">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <h3 className="mb-2 text-lg font-semibold">Add Volunteer</h3>
+          <form onSubmit={handleAddVolunteer} className="grid gap-3">
             <input
+              className="form-input"
               placeholder="First name"
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
               required
             />
             <input
+              className="form-input"
               placeholder="Last name"
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
               required
             />
-            <label style={{ display: 'grid', gap: 4 }}>
-              <span style={{ fontSize: 12, color: '#64748b' }}>
+            <label className="grid gap-1.5">
+              <span className="text-sm font-medium text-slate-600">
                 Orientation completed (optional)
               </span>
               <input
                 type="date"
+                className="form-input"
                 value={orientationDate}
                 onChange={(e) => setOrientationDate(e.target.value)}
               />
             </label>
-            <button type="submit" disabled={isAddingVolunteer}>
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={isAddingVolunteer}
+            >
               {isAddingVolunteer ? 'Adding…' : 'Add Volunteer'}
             </button>
           </form>
         </div>
 
-        <div>
-          <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>
-            Log Hours
-          </h3>
-          <form onSubmit={handleLogHours} style={{ display: 'grid', gap: 8 }}>
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <h3 className="mb-2 text-lg font-semibold">Log Hours</h3>
+          <form onSubmit={handleLogHours} className="grid gap-3">
             <select
+              className="form-input"
               value={logVolunteerId}
               onChange={(e) => setLogVolunteerId(e.target.value)}
               required
@@ -344,15 +353,17 @@ export function HospiceVolunteersDashboard() {
                   </option>
                 ))}
             </select>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            <div className="grid grid-cols-2 gap-3">
               <input
                 type="date"
+                className="form-input"
                 value={logDate}
                 onChange={(e) => setLogDate(e.target.value)}
                 required
               />
               <input
                 type="number"
+                className="form-input"
                 value={logHours}
                 onChange={(e) => setLogHoursValue(e.target.value)}
                 min={0.25}
@@ -362,6 +373,7 @@ export function HospiceVolunteersDashboard() {
               />
             </div>
             <select
+              className="form-input"
               value={logActivity}
               onChange={(e) => setLogActivity(e.target.value as VolunteerActivityType)}
             >
@@ -370,95 +382,109 @@ export function HospiceVolunteersDashboard() {
               <option value="Excluded">Excluded (Fundraising / Board)</option>
             </select>
             <input
+              className="form-input"
               placeholder="Description (optional)"
               value={logDescription}
               onChange={(e) => setLogDescription(e.target.value)}
             />
-            <button type="submit" disabled={isLoggingHours}>
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={isLoggingHours}
+            >
               {isLoggingHours ? 'Saving…' : 'Log Hours'}
             </button>
           </form>
         </div>
       </section>
 
-      <section style={{ display: 'grid', gap: 12 }}>
-        <h3 style={{ fontSize: 18, fontWeight: 600 }}>
+      <section className="grid gap-3">
+        <h3 className="text-lg font-semibold">
           Volunteer Roster ({volunteers.length})
         </h3>
         {volunteers.length === 0 ? (
-          <p style={{ color: '#64748b' }}>No volunteers yet.</p>
+          <p className="text-slate-500">No volunteers yet.</p>
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-                <th style={{ padding: '6px 10px' }}>Name</th>
-                <th style={{ padding: '6px 10px' }}>Active</th>
-                <th style={{ padding: '6px 10px' }}>Orientation</th>
-                <th style={{ padding: '6px 10px' }}>Contact</th>
-              </tr>
-            </thead>
-            <tbody>
-              {volunteers.map((v) => (
-                <tr key={v.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td style={{ padding: '6px 10px' }}>
-                    {v.firstName} {v.lastName}
-                  </td>
-                  <td style={{ padding: '6px 10px' }}>
-                    {v.isActive ? 'Yes' : 'No'}
-                  </td>
-                  <td style={{ padding: '6px 10px' }}>
-                    {v.orientationCompletedDate ?? '—'}
-                  </td>
-                  <td style={{ padding: '6px 10px', color: '#64748b' }}>
-                    {v.email ?? v.phone ?? '—'}
-                  </td>
+          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                  <th className="px-4 py-3">Name</th>
+                  <th className="px-4 py-3">Active</th>
+                  <th className="px-4 py-3">Orientation</th>
+                  <th className="px-4 py-3">Contact</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {volunteers.map((v) => (
+                  <tr
+                    key={v.id}
+                    className="border-t border-slate-100 hover:bg-slate-50"
+                  >
+                    <td className="px-4 py-3 text-slate-700">
+                      {v.firstName} {v.lastName}
+                    </td>
+                    <td className="px-4 py-3 text-slate-700">
+                      {v.isActive ? 'Yes' : 'No'}
+                    </td>
+                    <td className="px-4 py-3 text-slate-700">
+                      {v.orientationCompletedDate ?? '—'}
+                    </td>
+                    <td className="px-4 py-3 text-slate-500">
+                      {v.email ?? v.phone ?? '—'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
 
-      <section style={{ display: 'grid', gap: 12 }}>
-        <h3 style={{ fontSize: 18, fontWeight: 600 }}>
+      <section className="grid gap-3">
+        <h3 className="text-lg font-semibold">
           Recent Hours ({hoursLogs.length})
         </h3>
         {hoursLogs.length === 0 ? (
-          <p style={{ color: '#64748b' }}>
-            No hours logged in this window.
-          </p>
+          <p className="text-slate-500">No hours logged in this window.</p>
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-                <th style={{ padding: '6px 10px' }}>Date</th>
-                <th style={{ padding: '6px 10px' }}>Volunteer</th>
-                <th style={{ padding: '6px 10px' }}>Hours</th>
-                <th style={{ padding: '6px 10px' }}>Activity</th>
-                <th style={{ padding: '6px 10px' }}>Description</th>
-              </tr>
-            </thead>
-            <tbody>
-              {hoursLogs.map((l) => (
-                <tr key={l.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td style={{ padding: '6px 10px' }}>{l.serviceDate}</td>
-                  <td style={{ padding: '6px 10px' }}>{l.volunteerName}</td>
-                  <td style={{ padding: '6px 10px' }}>{l.hours}</td>
-                  <td
-                    style={{
-                      padding: '6px 10px',
-                      color: l.activityType === 'Excluded' ? '#64748b' : '#0f172a',
-                    }}
-                  >
-                    {l.activityType}
-                  </td>
-                  <td style={{ padding: '6px 10px', color: '#64748b' }}>
-                    {l.description ?? '—'}
-                  </td>
+          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                  <th className="px-4 py-3">Date</th>
+                  <th className="px-4 py-3">Volunteer</th>
+                  <th className="px-4 py-3">Hours</th>
+                  <th className="px-4 py-3">Activity</th>
+                  <th className="px-4 py-3">Description</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {hoursLogs.map((l) => (
+                  <tr
+                    key={l.id}
+                    className="border-t border-slate-100 hover:bg-slate-50"
+                  >
+                    <td className="px-4 py-3 text-slate-700">{l.serviceDate}</td>
+                    <td className="px-4 py-3 text-slate-700">{l.volunteerName}</td>
+                    <td className="px-4 py-3 text-slate-700">{l.hours}</td>
+                    <td
+                      className={`px-4 py-3 ${
+                        l.activityType === 'Excluded'
+                          ? 'text-slate-500'
+                          : 'text-navy-900'
+                      }`}
+                    >
+                      {l.activityType}
+                    </td>
+                    <td className="px-4 py-3 text-slate-500">
+                      {l.description ?? '—'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
     </div>
