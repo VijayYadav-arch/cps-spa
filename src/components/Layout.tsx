@@ -7,6 +7,22 @@ import { LanguagePicker } from '@/i18n/LanguagePicker';
 import { MiraWordmark } from '@/components/MiraWordmark';
 
 const COLLAPSE_KEY = 'mira_nav_collapsed';
+const OPEN_GROUPS_KEY = 'mira_nav_open_groups';
+
+/** A leaf is "active" for the current path on exact match or as a path prefix. */
+function isLeafActive(pathname: string, to: string): boolean {
+  return pathname === to || pathname.startsWith(`${to}/`);
+}
+
+/** Label of the group whose items contain the active route, or null. */
+function activeGroupLabel(pathname: string): string | null {
+  for (const entry of navItems) {
+    if (entry.kind === 'group' && entry.items.some((i) => isLeafActive(pathname, i.to))) {
+      return entry.label;
+    }
+  }
+  return null;
+}
 
 const toggleBtnStyle: React.CSSProperties = {
   background: 'rgba(255,255,255,0.08)',
@@ -135,6 +151,17 @@ export function Layout() {
       return false;
     }
   });
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
+    try {
+      const stored = localStorage.getItem(OPEN_GROUPS_KEY);
+      if (stored) return JSON.parse(stored) as Record<string, boolean>;
+    } catch {
+      /* ignore */
+    }
+    // Default: only the group containing the current route starts open.
+    const active = activeGroupLabel(window.location.pathname);
+    return active ? { [active]: true } : {};
+  });
 
   // Reset the content scroll to the top whenever the route changes, so clicking
   // a nav item near the bottom of the (independently scrolling) sidebar never
@@ -142,6 +169,26 @@ export function Layout() {
   useEffect(() => {
     mainRef.current?.scrollTo({ top: 0, left: 0 });
   }, [location.pathname]);
+
+  // Auto-open the group that owns the active route (without collapsing others
+  // the user has opened), so navigating into a group always reveals it.
+  useEffect(() => {
+    const active = activeGroupLabel(location.pathname);
+    if (!active) return;
+    setOpenGroups((prev) => (prev[active] ? prev : { ...prev, [active]: true }));
+  }, [location.pathname]);
+
+  const toggleGroup = (label: string) => {
+    setOpenGroups((prev) => {
+      const next = { ...prev, [label]: !prev[label] };
+      try {
+        localStorage.setItem(OPEN_GROUPS_KEY, JSON.stringify(next));
+      } catch {
+        /* ignore persistence failures */
+      }
+      return next;
+    });
+  };
 
   const toggleCollapsed = () => {
     setCollapsed((c) => {
@@ -241,32 +288,61 @@ export function Layout() {
                 </NavLink>
               </li>
             ) : (
-              <li key={entry.label}>
-                <div
-                  style={{
-                    padding: '10px 20px 4px',
-                    color: '#cbd5e1',
-                    fontSize: 11,
-                    fontWeight: 700,
-                    letterSpacing: '0.06em',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  {entry.label}
-                </div>
-                <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                  {entry.items.map((sub) => (
-                    <li key={sub.to}>
-                      <NavLink
-                        to={sub.to}
-                        style={(s) => leafStyle(s, true)}
+              (() => {
+                const isOpen = !!openGroups[entry.label];
+                const hasActiveChild = entry.items.some((i) =>
+                  isLeafActive(location.pathname, i.to),
+                );
+                return (
+                  <li key={entry.label}>
+                    <button
+                      type="button"
+                      onClick={() => toggleGroup(entry.label)}
+                      aria-expanded={isOpen}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        width: '100%',
+                        padding: '10px 20px 4px',
+                        background: 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: hasActiveChild && !isOpen ? '#5eead4' : '#cbd5e1',
+                        fontSize: 11,
+                        fontWeight: 700,
+                        letterSpacing: '0.06em',
+                        textTransform: 'uppercase',
+                        fontFamily: 'inherit',
+                      }}
+                    >
+                      <span>{entry.label}</span>
+                      <span
+                        aria-hidden="true"
+                        style={{
+                          fontSize: 9,
+                          transition: 'transform 0.15s ease',
+                          transform: isOpen ? 'rotate(90deg)' : 'none',
+                          opacity: 0.7,
+                        }}
                       >
-                        {sub.label}
-                      </NavLink>
-                    </li>
-                  ))}
-                </ul>
-              </li>
+                        ▶
+                      </span>
+                    </button>
+                    {isOpen && (
+                      <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                        {entry.items.map((sub) => (
+                          <li key={sub.to}>
+                            <NavLink to={sub.to} style={(s) => leafStyle(s, true)}>
+                              {sub.label}
+                            </NavLink>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </li>
+                );
+              })()
             ),
           )}
         </ul>
