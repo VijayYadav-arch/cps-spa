@@ -27,14 +27,18 @@ export function FamilyDashboard() {
 
   if (error) {
     return (
-      <p data-testid="family-error" role="alert" style={{ color: '#dc2626', padding: 16 }}>
+      <p
+        data-testid="family-error"
+        role="alert"
+        className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800"
+      >
         {error}
       </p>
     );
   }
   if (!summary) {
     return (
-      <p data-testid="family-loading" style={{ color: '#94a3b8', padding: 16 }}>
+      <p data-testid="family-loading" role="status" className="p-4 text-slate-500">
         {t('common.loading')}
       </p>
     );
@@ -42,33 +46,22 @@ export function FamilyDashboard() {
   const dateLocale = i18n.resolvedLanguage ?? 'en-US';
 
   return (
-    <section style={{ padding: 16 }}>
-      <h1
-        data-testid="page-title"
-        style={{ fontSize: 24, fontWeight: 600, color: '#1e293b', marginBottom: 16 }}
-      >
+    <section className="grid max-w-[1200px] gap-6 p-6">
+      <h1 data-testid="page-title" className="text-2xl">
         {summary.firstName} {summary.lastName}
       </h1>
-      <div
-        style={{
-          background: '#fff',
-          border: '1px solid #e2e8f0',
-          borderRadius: 12,
-          padding: 24,
-          maxWidth: 480,
-        }}
-      >
+      <div className="max-w-[480px] rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         {summary.dateOfBirth && (
-          <p style={{ fontSize: 14, color: '#475569', marginBottom: 8 }}>
-            <span style={{ fontWeight: 500 }}>{t('family.dashboard.dobLabel')}</span>{' '}
+          <p className="mb-2 text-sm text-slate-600">
+            <span className="font-medium text-slate-700">{t('family.dashboard.dobLabel')}</span>{' '}
             <span data-testid="patient-dob">
               {new Date(summary.dateOfBirth).toLocaleDateString(dateLocale)}
             </span>
           </p>
         )}
         {summary.primaryDiagnosis && (
-          <p style={{ fontSize: 14, color: '#475569' }}>
-            <span style={{ fontWeight: 500 }}>{t('family.dashboard.primaryDiagnosisLabel')}</span>{' '}
+          <p className="text-sm text-slate-600">
+            <span className="font-medium text-slate-700">{t('family.dashboard.primaryDiagnosisLabel')}</span>{' '}
             <span data-testid="patient-diagnosis">{summary.primaryDiagnosis}</span>
           </p>
         )}

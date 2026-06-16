@@ -20,18 +20,18 @@ const TYPE_FILTERS = [
 ];
 
 const TYPE_BADGE_COLOR: Record<string, string> = {
-  encounter: '#0e7490',
-  visit: '#7c3aed',
-  medication: '#15803d',
-  admission: '#b45309',
-  'hospice-election': '#1d4ed8',
-  'hospice-noe': '#1d4ed8',
-  'hospice-hope': '#1d4ed8',
-  'hospice-cert': '#1d4ed8',
-  'hospice-ftf': '#1d4ed8',
-  'hospice-addendum': '#1d4ed8',
-  'hospice-notr': '#b91c1c',
-  bereavement: '#6d28d9',
+  encounter: 'bg-teal-100 text-teal-700',
+  visit: 'bg-purple-100 text-purple-800',
+  medication: 'bg-green-100 text-green-800',
+  admission: 'bg-amber-100 text-amber-800',
+  'hospice-election': 'bg-blue-100 text-blue-800',
+  'hospice-noe': 'bg-blue-100 text-blue-800',
+  'hospice-hope': 'bg-blue-100 text-blue-800',
+  'hospice-cert': 'bg-blue-100 text-blue-800',
+  'hospice-ftf': 'bg-blue-100 text-blue-800',
+  'hospice-addendum': 'bg-blue-100 text-blue-800',
+  'hospice-notr': 'bg-red-100 text-red-800',
+  bereavement: 'bg-purple-100 text-purple-800',
 };
 
 function formatDate(iso: string) {
@@ -70,85 +70,83 @@ export function PatientHistory() {
   }, [id, typeFilter, page]);
 
   return (
-    <div>
-      <button onClick={() => navigate(`/patients/${id}`)} style={{ marginBottom: 16 }}>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <button
+        onClick={() => navigate(`/patients/${id}`)}
+        className="justify-self-start rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+      >
         ← Back to Patient
       </button>
-      <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 16 }}>Patient History</h2>
+      <h2 className="text-2xl">Patient History</h2>
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+      <div className="flex flex-wrap gap-2">
         {TYPE_FILTERS.map((t) => (
           <button
             key={t.value}
             onClick={() => { setTypeFilter(t.value); setPage(1); }}
-            style={{
-              padding: '4px 12px',
-              borderRadius: 4,
-              border: '1px solid #cbd5e1',
-              background: typeFilter === t.value ? '#2563eb' : '#fff',
-              color: typeFilter === t.value ? '#fff' : '#1e293b',
-              cursor: 'pointer',
-            }}
+            className={`rounded-md border px-3 py-1 text-sm font-medium transition-colors ${
+              typeFilter === t.value
+                ? 'border-navy-900 bg-navy-900 text-white'
+                : 'border-slate-300 text-slate-700 hover:bg-slate-50'
+            }`}
           >
             {t.label}
           </button>
         ))}
       </div>
 
-      {isLoading && <div role="status">Loading history…</div>}
-      {error && <div role="alert">{error}</div>}
+      {isLoading && <div role="status" className="text-slate-500">Loading history…</div>}
+      {error && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">{error}</div>}
 
       {!isLoading && !error && events.length === 0 && (
-        <p>No history events found.</p>
+        <p className="text-slate-500">No history events found.</p>
       )}
 
       {!isLoading && !error && events.length > 0 && (
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-              <th style={{ padding: '8px 12px' }}>Date</th>
-              <th style={{ padding: '8px 12px' }}>Type</th>
-              <th style={{ padding: '8px 12px' }}>Summary</th>
-            </tr>
-          </thead>
-          <tbody>
-            {events.map((e) => (
-              <tr key={`${e.type}-${e.id}`} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                <td style={{ padding: '8px 12px', whiteSpace: 'nowrap' }}>{formatDate(e.date)}</td>
-                <td style={{ padding: '8px 12px' }}>
-                  <span
-                    style={{
-                      display: 'inline-block',
-                      padding: '2px 8px',
-                      borderRadius: 4,
-                      background: TYPE_BADGE_COLOR[e.type] ?? '#64748b',
-                      color: '#fff',
-                      fontSize: 12,
-                      fontWeight: 600,
-                    }}
-                  >
-                    {e.type}
-                  </span>
-                </td>
-                <td style={{ padding: '8px 12px' }}>{e.summary}</td>
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                <th className="px-4 py-3">Date</th>
+                <th className="px-4 py-3">Type</th>
+                <th className="px-4 py-3">Summary</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {events.map((e) => (
+                <tr key={`${e.type}-${e.id}`} className="border-t border-slate-100 hover:bg-slate-50">
+                  <td className="whitespace-nowrap px-4 py-3 text-slate-700">{formatDate(e.date)}</td>
+                  <td className="px-4 py-3">
+                    <span
+                      className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${
+                        TYPE_BADGE_COLOR[e.type] ?? 'bg-slate-100 text-slate-600'
+                      }`}
+                    >
+                      {e.type}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-slate-700">{e.summary}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {pagination && pagination.totalPages > 1 && (
-        <div style={{ display: 'flex', gap: 8, marginTop: 16, alignItems: 'center' }}>
+        <div className="flex items-center gap-3">
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
+            className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
           >
             Previous
           </button>
-          <span>Page {page} of {pagination.totalPages}</span>
+          <span className="text-sm text-slate-600">Page {page} of {pagination.totalPages}</span>
           <button
             onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
             disabled={page >= pagination.totalPages}
+            className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
           >
             Next
           </button>

@@ -14,32 +14,26 @@ export function Dashboard() {
   const { auth } = useAuth();
 
   return (
-    <div>
-      <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>
-        Welcome back{auth.user ? `, ${auth.user.roles[0] ?? ''}` : ''}
-      </h2>
-      <p style={{ color: '#64748b', marginBottom: 32 }}>
-        Organization ID: {auth.user?.organizationId ?? 'N/A'}
-      </p>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <header className="space-y-2">
+        <h2 className="text-2xl">
+          Welcome back{auth.user ? `, ${auth.user.roles[0] ?? ''}` : ''}
+        </h2>
+        <div className="section-line" />
+        <p className="max-w-3xl text-slate-500">
+          Organization ID: {auth.user?.organizationId ?? 'N/A'}
+        </p>
+      </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {quickLinks.map(({ to, label, description }) => (
           <Link
             key={to}
             to={to}
-            style={{
-              display: 'block',
-              padding: 20,
-              border: '1px solid #e2e8f0',
-              borderRadius: 8,
-              textDecoration: 'none',
-              color: 'inherit',
-              background: '#fff',
-              transition: 'box-shadow 0.15s',
-            }}
+            className="card-hover block rounded-xl border border-slate-200 bg-white p-5 text-inherit no-underline shadow-sm"
           >
-            <h3 style={{ fontWeight: 600, marginBottom: 6 }}>{label}</h3>
-            <p style={{ fontSize: 14, color: '#64748b', margin: 0 }}>{description}</p>
+            <h3 className="mb-1.5 text-lg font-semibold">{label}</h3>
+            <p className="m-0 text-sm text-slate-500">{description}</p>
           </Link>
         ))}
       </div>

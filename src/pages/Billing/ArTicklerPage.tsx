@@ -12,10 +12,10 @@ import { PERMISSIONS } from '@/permissions/permissions';
 const NO_PERMISSION = 'You do not have permission to perform this action';
 
 const STATUS_TABS: { value: TicklerStatus; label: string; tone: string }[] = [
-  { value: 'overdue', label: 'Overdue', tone: '#b91c1c' },
-  { value: 'today', label: 'Today', tone: '#b45309' },
-  { value: 'upcoming', label: 'Upcoming (7d)', tone: '#0369a1' },
-  { value: 'all', label: 'All', tone: '#475569' },
+  { value: 'overdue', label: 'Overdue', tone: 'bg-red-700' },
+  { value: 'today', label: 'Today', tone: 'bg-accent-700' },
+  { value: 'upcoming', label: 'Upcoming (7d)', tone: 'bg-sky-700' },
+  { value: 'all', label: 'All', tone: 'bg-slate-600' },
 ];
 
 const OUTCOMES = [
@@ -103,120 +103,125 @@ export function ArTicklerPage() {
   };
 
   return (
-    <div style={{ padding: 24 }}>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 8 }}>
-        <button type="button" onClick={() => navigate('/billing/ar')}>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <div className="flex items-baseline gap-3">
+        <button
+          type="button"
+          onClick={() => navigate('/billing/ar')}
+          className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+        >
           ← AR Dashboard
         </button>
-        <h1 style={{ margin: 0 }}>Tickler queue</h1>
+        <h1 className="text-2xl">Tickler queue</h1>
       </div>
-      <p style={{ color: '#64748b', maxWidth: 720 }}>
+      <p className="max-w-3xl text-slate-500">
         Claims whose next follow-up date is past due, today, or in the next
         seven days. Select multiple rows and "Bulk log call" to apply the
         same outcome to all of them in one shot.
       </p>
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+      <div className="flex flex-wrap items-center gap-2">
         {STATUS_TABS.map((t) => (
           <button
             key={t.value}
             type="button"
             onClick={() => setTab(t.value)}
-            style={{
-              padding: '6px 12px', border: '1px solid #cbd5e1',
-              background: tab === t.value ? t.tone : '#fff',
-              color: tab === t.value ? '#fff' : '#0f172a',
-              borderRadius: 6, cursor: 'pointer',
-              fontWeight: tab === t.value ? 600 : 400,
-            }}
+            className={`rounded-md border px-3 py-1.5 text-sm transition-colors ${
+              tab === t.value
+                ? `${t.tone} border-transparent font-semibold text-white`
+                : 'border-slate-300 bg-white text-navy-900 hover:bg-slate-50'
+            }`}
           >
             {t.label}
           </button>
         ))}
-        <div style={{ flex: 1 }} />
+        <div className="flex-1" />
         <button
           type="button"
           onClick={() => setBulkOpen(true)}
           disabled={selected.size === 0 || !canFollowUp}
           title={!canFollowUp ? NO_PERMISSION : undefined}
+          className="btn-primary disabled:cursor-not-allowed disabled:opacity-60"
         >
           Bulk log call ({selected.size})
         </button>
       </div>
 
       {error && (
-        <div role="alert" style={{ color: '#b91c1c', marginBottom: 12 }}>{error}</div>
+        <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">{error}</div>
       )}
       {bulkResult && (
-        <div style={{ color: '#15803d', marginBottom: 12 }}>{bulkResult}</div>
+        <div className="rounded-lg border-l-4 border-success bg-green-50 px-4 py-3 font-semibold text-green-800">{bulkResult}</div>
       )}
 
-      {isLoading && <div>Loading…</div>}
+      {isLoading && <div role="status" className="text-slate-500">Loading…</div>}
       {!isLoading && rows.length === 0 && !error && (
-        <div style={{ color: '#64748b' }}>No claims match this view.</div>
+        <div className="text-slate-500">No claims match this view.</div>
       )}
 
       {rows.length > 0 && (
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-              <th style={{ padding: 8 }}>
-                <input
-                  type="checkbox"
-                  aria-label="Select all rows"
-                  checked={selected.size > 0 && selected.size === rows.length}
-                  onChange={toggleAll}
-                />
-              </th>
-              <th style={{ padding: 8 }}>Claim</th>
-              <th style={{ padding: 8 }}>Patient</th>
-              <th style={{ padding: 8 }}>Payer</th>
-              <th style={{ padding: 8, textAlign: 'right' }}>$</th>
-              <th style={{ padding: 8 }}>Aged</th>
-              <th style={{ padding: 8 }}>Due</th>
-              <th style={{ padding: 8 }}>Last contact</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => {
-              const dueColor =
-                r.daysUntilFollowUp < 0 ? '#b91c1c'
-                  : r.daysUntilFollowUp === 0 ? '#b45309'
-                  : '#0f172a';
-              const dueText =
-                r.daysUntilFollowUp < 0 ? `${Math.abs(r.daysUntilFollowUp)}d overdue`
-                  : r.daysUntilFollowUp === 0 ? 'Today'
-                  : `in ${r.daysUntilFollowUp}d`;
-              return (
-                <tr key={r.claimId} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td style={{ padding: 8 }}>
-                    <input
-                      type="checkbox"
-                      aria-label={`Select claim ${r.claimNumber}`}
-                      checked={selected.has(r.claimId)}
-                      onChange={() => toggleRow(r.claimId)}
-                    />
-                  </td>
-                  <td style={{ padding: 8, fontFamily: 'monospace', fontSize: 13 }}>
-                    {r.claimNumber}
-                  </td>
-                  <td style={{ padding: 8 }}>{r.patientName}</td>
-                  <td style={{ padding: 8 }}>{r.payer}</td>
-                  <td style={{ padding: 8, textAlign: 'right' }}>
-                    {formatMoney(r.amount)}
-                  </td>
-                  <td style={{ padding: 8 }}>{r.daysAged}d</td>
-                  <td style={{ padding: 8, color: dueColor, fontWeight: 600 }}>
-                    {dueText}
-                  </td>
-                  <td style={{ padding: 8, color: '#64748b' }}>
-                    {r.lastContactedAt?.slice(0, 10) ?? '—'}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                <th className="px-4 py-3">
+                  <input
+                    type="checkbox"
+                    aria-label="Select all rows"
+                    checked={selected.size > 0 && selected.size === rows.length}
+                    onChange={toggleAll}
+                  />
+                </th>
+                <th className="px-4 py-3">Claim</th>
+                <th className="px-4 py-3">Patient</th>
+                <th className="px-4 py-3">Payer</th>
+                <th className="px-4 py-3 text-right">$</th>
+                <th className="px-4 py-3">Aged</th>
+                <th className="px-4 py-3">Due</th>
+                <th className="px-4 py-3">Last contact</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => {
+                const dueColor =
+                  r.daysUntilFollowUp < 0 ? 'text-error'
+                    : r.daysUntilFollowUp === 0 ? 'text-accent-600'
+                    : 'text-navy-900';
+                const dueText =
+                  r.daysUntilFollowUp < 0 ? `${Math.abs(r.daysUntilFollowUp)}d overdue`
+                    : r.daysUntilFollowUp === 0 ? 'Today'
+                    : `in ${r.daysUntilFollowUp}d`;
+                return (
+                  <tr key={r.claimId} className="border-t border-slate-100 hover:bg-slate-50">
+                    <td className="px-4 py-3">
+                      <input
+                        type="checkbox"
+                        aria-label={`Select claim ${r.claimNumber}`}
+                        checked={selected.has(r.claimId)}
+                        onChange={() => toggleRow(r.claimId)}
+                      />
+                    </td>
+                    <td className="px-4 py-3 font-mono text-xs text-slate-700">
+                      {r.claimNumber}
+                    </td>
+                    <td className="px-4 py-3 text-slate-700">{r.patientName}</td>
+                    <td className="px-4 py-3 text-slate-700">{r.payer}</td>
+                    <td className="px-4 py-3 text-right text-slate-700">
+                      {formatMoney(r.amount)}
+                    </td>
+                    <td className="px-4 py-3 text-slate-700">{r.daysAged}d</td>
+                    <td className={`px-4 py-3 font-semibold ${dueColor}`}>
+                      {dueText}
+                    </td>
+                    <td className="px-4 py-3 text-slate-500">
+                      {r.lastContactedAt?.slice(0, 10) ?? '—'}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {bulkOpen && (
@@ -224,63 +229,65 @@ export function ArTicklerPage() {
           role="dialog"
           aria-modal="true"
           aria-label="Bulk log call"
-          style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(15,23,42,0.5)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            zIndex: 100,
-          }}
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-navy-900/50"
         >
-          <div style={{ background: '#fff', padding: 24, borderRadius: 8, minWidth: 420 }}>
-            <h2 style={{ marginTop: 0 }}>Bulk log call ({selected.size})</h2>
-            <p style={{ color: '#64748b', fontSize: 13 }}>
+          <div className="min-w-[420px] rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="text-lg font-semibold">Bulk log call ({selected.size})</h2>
+            <p className="text-sm text-slate-500">
               Same outcome + note will be applied to all {selected.size} selected
               claims.
             </p>
-            <label style={{ display: 'block', marginBottom: 8 }}>
-              Contact name
+            <label className="mt-3 grid gap-1.5">
+              <span className="text-sm font-medium text-slate-600">Contact name</span>
               <input
                 type="text"
                 value={form.contactName}
                 onChange={(e) => setForm((f) => ({ ...f, contactName: e.target.value }))}
-                style={{ width: '100%' }}
+                className="form-input"
               />
             </label>
-            <label style={{ display: 'block', marginBottom: 8 }}>
-              Outcome
+            <label className="mt-3 grid gap-1.5">
+              <span className="text-sm font-medium text-slate-600">Outcome</span>
               <select
                 value={form.outcome}
                 onChange={(e) => setForm((f) => ({ ...f, outcome: e.target.value }))}
-                style={{ width: '100%' }}
+                className="form-input"
               >
                 {OUTCOMES.map((o) => <option key={o} value={o}>{o}</option>)}
               </select>
             </label>
-            <label style={{ display: 'block', marginBottom: 8 }}>
-              Note
+            <label className="mt-3 grid gap-1.5">
+              <span className="text-sm font-medium text-slate-600">Note</span>
               <textarea
                 value={form.note}
                 onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
                 rows={3}
-                style={{ width: '100%' }}
+                className="form-input"
               />
             </label>
-            <label style={{ display: 'block', marginBottom: 8 }}>
-              Next follow-up date
+            <label className="mt-3 grid gap-1.5">
+              <span className="text-sm font-medium text-slate-600">Next follow-up date</span>
               <input
                 type="date"
                 value={form.nextFollowUpDate}
                 onChange={(e) => setForm((f) => ({ ...f, nextFollowUpDate: e.target.value }))}
-                style={{ width: '100%' }}
+                className="form-input"
               />
             </label>
-            <div style={{ display: 'flex', gap: 8, marginTop: 12, justifyContent: 'flex-end' }}>
-              <button type="button" onClick={() => setBulkOpen(false)}>Cancel</button>
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setBulkOpen(false)}
+                className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+              >
+                Cancel
+              </button>
               <button
                 type="button"
                 onClick={() => { void submitBulk(); }}
                 disabled={!canFollowUp}
                 title={!canFollowUp ? NO_PERMISSION : undefined}
+                className="btn-primary disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Apply to {selected.size}
               </button>

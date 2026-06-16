@@ -144,89 +144,94 @@ export function AiOptInPage() {
   }
 
   return (
-    <div style={{ padding: 24, maxWidth: 960, margin: '0 auto' }}>
-      <h1 data-testid="page-title" style={{ fontSize: 24, fontWeight: 600, marginBottom: 4 }}>
-        AI opt-in
-      </h1>
-      <p style={{ color: '#64748b', fontSize: 14, marginBottom: 20 }}>
-        Per-organization consent gate for AI features. Until an org has an
-        enabled row, no PHI from that org flows through any AI provider.
-      </p>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <header className="space-y-2">
+        <h1 data-testid="page-title" className="text-2xl">
+          AI opt-in
+        </h1>
+        <div className="section-line" />
+        <p className="max-w-3xl text-slate-500">
+          Per-organization consent gate for AI features. Until an org has an
+          enabled row, no PHI from that org flows through any AI provider.
+        </p>
+      </header>
 
-      {loading && <div>Loading…</div>}
+      {loading && <div role="status" className="text-slate-500">Loading…</div>}
       {error && (
-        <div role="alert" style={{ color: '#b91c1c', padding: 12, background: '#fef2f2', borderRadius: 8 }}>
+        <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">
           {error}
         </div>
       )}
 
       {!loading && !error && (
-        <table data-testid="opt-in-table" style={{ width: '100%', borderCollapse: 'collapse', background: 'white', borderRadius: 8, overflow: 'hidden' }}>
-          <thead style={{ background: '#f8fafc' }}>
-            <tr>
-              <th style={th}>Organization</th>
-              <th style={th}>Status</th>
-              <th style={th}>Last change</th>
-              <th style={th}>Notes</th>
-              <th style={{ ...th, textAlign: 'right' }}>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {orgs.length === 0 && (
-              <tr>
-                <td colSpan={5} style={{ ...td, color: '#94a3b8' }} data-testid="empty-state">
-                  No organizations found.
-                </td>
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <table data-testid="opt-in-table" className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                <th className="px-4 py-3">Organization</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Last change</th>
+                <th className="px-4 py-3">Notes</th>
+                <th className="px-4 py-3 text-right">Action</th>
               </tr>
-            )}
-            {orgs.map((org) => {
-              const row = rowsByOrgId.get(org.id);
-              const status = statusOf(org.id);
-              return (
-                <tr key={org.id} data-testid={`opt-in-row-${org.id}`}>
-                  <td style={td}>
-                    <div style={{ fontWeight: 500 }}>{org.name}</div>
-                    <div style={{ fontSize: 11, color: '#94a3b8' }}>#{org.id}</div>
-                  </td>
-                  <td style={td}>
-                    <StatusPill status={status} />
-                  </td>
-                  <td style={{ ...td, fontSize: 12, color: '#475569' }}>
-                    {row?.enabled
-                      ? `Enabled ${formatDate(row.enabledAtUtc)}`
-                      : row && row.disabledAtUtc
-                        ? `Disabled ${formatDate(row.disabledAtUtc)}`
-                        : '—'}
-                  </td>
-                  <td style={{ ...td, fontSize: 12, color: '#475569', maxWidth: 240 }}>
-                    {row?.notes ?? <span style={{ color: '#cbd5e1' }}>—</span>}
-                  </td>
-                  <td style={{ ...td, textAlign: 'right' }}>
-                    {status === 'enabled' ? (
-                      <button
-                        type="button"
-                        data-testid={`disable-${org.id}`}
-                        onClick={() => openEditor(org, 'disabled')}
-                        style={dangerBtn}
-                      >
-                        Disable
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        data-testid={`enable-${org.id}`}
-                        onClick={() => openEditor(org, 'enabled')}
-                        style={primaryBtn}
-                      >
-                        Enable
-                      </button>
-                    )}
+            </thead>
+            <tbody>
+              {orgs.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-4 py-3 text-slate-400" data-testid="empty-state">
+                    No organizations found.
                   </td>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
+              )}
+              {orgs.map((org) => {
+                const row = rowsByOrgId.get(org.id);
+                const status = statusOf(org.id);
+                return (
+                  <tr key={org.id} data-testid={`opt-in-row-${org.id}`} className="border-t border-slate-100 hover:bg-slate-50">
+                    <td className="px-4 py-3">
+                      <div className="font-medium text-slate-700">{org.name}</div>
+                      <div className="text-xs text-slate-400">#{org.id}</div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <StatusPill status={status} />
+                    </td>
+                    <td className="px-4 py-3 text-xs text-slate-600">
+                      {row?.enabled
+                        ? `Enabled ${formatDate(row.enabledAtUtc)}`
+                        : row && row.disabledAtUtc
+                          ? `Disabled ${formatDate(row.disabledAtUtc)}`
+                          : '—'}
+                    </td>
+                    <td className="max-w-[240px] px-4 py-3 text-xs text-slate-600">
+                      {row?.notes ?? <span className="text-slate-300">—</span>}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      {status === 'enabled' ? (
+                        <button
+                          type="button"
+                          data-testid={`disable-${org.id}`}
+                          onClick={() => openEditor(org, 'disabled')}
+                          className="rounded-md border border-red-200 px-2.5 py-1 text-xs font-medium text-red-700 transition-colors hover:bg-red-50"
+                        >
+                          Disable
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          data-testid={`enable-${org.id}`}
+                          onClick={() => openEditor(org, 'enabled')}
+                          className="btn-primary"
+                        >
+                          Enable
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {editor && (
@@ -235,37 +240,21 @@ export function AiOptInPage() {
           aria-modal="true"
           data-testid="editor-modal"
           onClick={() => !editor.submitting && setEditor(null)}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(15, 23, 42, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 16,
-            zIndex: 50,
-          }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            style={{
-              background: 'white',
-              borderRadius: 12,
-              padding: 20,
-              maxWidth: 480,
-              width: '100%',
-              boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
-            }}
+            className="w-full max-w-[480px] rounded-xl border border-slate-200 bg-white p-5 shadow-xl"
           >
-            <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 4 }}>
+            <h2 className="mb-1 text-lg font-semibold">
               {editor.targetState === 'enabled' ? 'Enable AI for' : 'Disable AI for'} {editor.org.name}
             </h2>
-            <p style={{ fontSize: 13, color: '#64748b', marginBottom: 12 }}>
+            <p className="mb-3 text-sm text-slate-500">
               {editor.targetState === 'enabled'
                 ? 'This org will be allowed to send PHI to the configured AI provider. Add a BAA ticket # or change-ticket id in the notes for the audit trail.'
                 : 'This org will be blocked from all AI features. In-flight requests fail closed with HTTP 503 ai_not_available.'}
             </p>
-            <label style={{ fontSize: 12, fontWeight: 500, color: '#475569', display: 'block', marginBottom: 4 }}>
+            <label className="mb-1 block text-sm font-medium text-slate-600">
               Notes (optional)
             </label>
             <textarea
@@ -275,29 +264,20 @@ export function AiOptInPage() {
               rows={3}
               maxLength={500}
               placeholder="e.g. BAA-ticket #4123 signed 2026-06-08"
-              style={{
-                width: '100%',
-                padding: '8px 10px',
-                border: '1px solid #cbd5e1',
-                borderRadius: 8,
-                fontSize: 14,
-                fontFamily: 'inherit',
-                resize: 'vertical',
-                marginBottom: 12,
-              }}
+              className="form-input mb-3 resize-y"
             />
             {editor.error && (
-              <div role="alert" data-testid="editor-error" style={{ color: '#b91c1c', fontSize: 13, marginBottom: 12 }}>
+              <div role="alert" data-testid="editor-error" className="mb-3 text-sm text-red-700">
                 {editor.error}
               </div>
             )}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+            <div className="flex justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setEditor(null)}
                 disabled={editor.submitting}
                 data-testid="editor-cancel"
-                style={secondaryBtn}
+                className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Cancel
               </button>
@@ -307,10 +287,11 @@ export function AiOptInPage() {
                 disabled={editor.submitting || !canManage}
                 data-testid="editor-confirm"
                 title={!canManage ? NO_PERMISSION : undefined}
-                style={{
-                  ...(editor.targetState === 'enabled' ? primaryBtn : dangerBtn),
-                  cursor: (editor.submitting || !canManage) ? 'not-allowed' : 'pointer',
-                }}
+                className={
+                  editor.targetState === 'enabled'
+                    ? 'btn-primary disabled:cursor-not-allowed disabled:opacity-60'
+                    : 'rounded-md border border-red-200 px-2.5 py-1 text-xs font-medium text-red-700 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60'
+                }
               >
                 {editor.submitting
                   ? 'Saving…'
@@ -327,25 +308,17 @@ export function AiOptInPage() {
 }
 
 function StatusPill({ status }: { status: Status }) {
-  const styles: Record<Status, { bg: string; fg: string; label: string }> = {
-    enabled: { bg: '#dcfce7', fg: '#166534', label: 'Enabled' },
-    disabled: { bg: '#fee2e2', fg: '#991b1b', label: 'Revoked' },
-    'no-row': { bg: '#f1f5f9', fg: '#475569', label: 'Not opted in' },
+  const styles: Record<Status, { cls: string; label: string }> = {
+    enabled: { cls: 'bg-green-100 text-green-800', label: 'Enabled' },
+    disabled: { cls: 'bg-red-100 text-red-800', label: 'Revoked' },
+    'no-row': { cls: 'bg-slate-100 text-slate-600', label: 'Not opted in' },
   };
   const s = styles[status];
   return (
     <span
       data-testid="status-pill"
       data-status={status}
-      style={{
-        display: 'inline-block',
-        background: s.bg,
-        color: s.fg,
-        padding: '2px 8px',
-        borderRadius: 999,
-        fontSize: 12,
-        fontWeight: 500,
-      }}
+      className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${s.cls}`}
     >
       {s.label}
     </span>
@@ -359,50 +332,3 @@ function formatDate(iso: string): string {
     day: 'numeric',
   });
 }
-
-const th: React.CSSProperties = {
-  textAlign: 'left',
-  padding: '10px 12px',
-  borderBottom: '1px solid #e2e8f0',
-  fontSize: 12,
-  fontWeight: 600,
-  color: '#475569',
-};
-
-const td: React.CSSProperties = {
-  padding: '10px 12px',
-  borderBottom: '1px solid #f1f5f9',
-  fontSize: 14,
-};
-
-const primaryBtn: React.CSSProperties = {
-  padding: '6px 12px',
-  background: '#0d9488',
-  color: 'white',
-  border: 'none',
-  borderRadius: 6,
-  cursor: 'pointer',
-  fontWeight: 500,
-  fontSize: 13,
-};
-
-const dangerBtn: React.CSSProperties = {
-  padding: '6px 12px',
-  background: '#dc2626',
-  color: 'white',
-  border: 'none',
-  borderRadius: 6,
-  cursor: 'pointer',
-  fontWeight: 500,
-  fontSize: 13,
-};
-
-const secondaryBtn: React.CSSProperties = {
-  padding: '6px 12px',
-  background: 'white',
-  color: '#475569',
-  border: '1px solid #cbd5e1',
-  borderRadius: 6,
-  cursor: 'pointer',
-  fontSize: 13,
-};

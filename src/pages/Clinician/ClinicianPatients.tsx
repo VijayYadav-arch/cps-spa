@@ -41,11 +41,19 @@ export function ClinicianPatients() {
 
   if (error)
     return (
-      <div style={{ padding: '1rem', color: 'red' }} role="alert">
+      <div
+        className="m-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800"
+        role="alert"
+      >
         Failed to load patients.
       </div>
     );
-  if (loading) return <div style={{ padding: '1rem' }}>Loading…</div>;
+  if (loading)
+    return (
+      <div role="status" className="p-4 text-slate-500">
+        Loading…
+      </div>
+    );
 
   const filtered = query.trim()
     ? patients.filter(
@@ -56,54 +64,31 @@ export function ClinicianPatients() {
     : patients;
 
   return (
-    <div style={{ padding: '1rem', maxWidth: 640, margin: '0 auto' }}>
-      <div
-        style={{
-          marginTop: 16,
-          marginBottom: 16,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        <h1 data-testid="page-title" style={{ fontSize: 20, fontWeight: 600 }}>
+    <div className="mx-auto max-w-[640px] p-4">
+      <div className="mb-4 flex items-center justify-between">
+        <h1 data-testid="page-title" className="text-xl">
           My Patients
         </h1>
-        <span data-testid="patient-count" style={{ fontSize: 14, color: '#64748b' }}>
+        <span data-testid="patient-count" className="text-sm text-slate-500">
           {patients.length} total
         </span>
       </div>
 
-      <div style={{ marginBottom: 16 }}>
+      <div className="mb-4">
         <input
           type="search"
           placeholder="Search patients..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           data-testid="patient-search"
-          style={{
-            width: '100%',
-            padding: '12px 16px',
-            borderRadius: 12,
-            border: '1px solid #e2e8f0',
-            fontSize: 14,
-          }}
+          className="form-input"
         />
       </div>
 
       <div data-testid="patients-list">
         {filtered.length === 0 ? (
-          <div
-            style={{
-              background: 'white',
-              borderRadius: 12,
-              padding: 32,
-              textAlign: 'center',
-              color: '#64748b',
-              border: '1px solid #f1f5f9',
-            }}
-          >
-            <p style={{ fontSize: 14 }}>
+          <div className="rounded-xl border border-slate-200 bg-white p-8 text-center text-slate-500 shadow-sm">
+            <p className="text-sm">
               {query ? 'No patients match your search.' : 'No patients assigned yet.'}
             </p>
           </div>
@@ -113,42 +98,25 @@ export function ClinicianPatients() {
               key={patient.id}
               to={`/clinician/patients/${patient.id}`}
               data-testid="patient-row"
-              style={{
-                display: 'block',
-                background: 'white',
-                borderRadius: 12,
-                padding: 16,
-                border: '1px solid #f1f5f9',
-                textDecoration: 'none',
-                color: 'inherit',
-                marginBottom: 8,
-                minHeight: 56,
-              }}
+              className="mb-2 block min-h-[56px] rounded-xl border border-slate-200 bg-white p-4 text-inherit no-underline shadow-sm transition-colors hover:bg-slate-50"
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ minWidth: 0, flex: 1 }}>
+              <div className="flex items-center justify-between">
+                <div className="min-w-0 flex-1">
                   <p
                     data-testid="patient-name"
-                    style={{ fontSize: 14, fontWeight: 500 }}
+                    className="text-sm font-medium text-slate-700"
                   >
                     {patient.lastName}, {patient.firstName}
                   </p>
                   {patient.primaryDiagnosisDesc && (
                     <p
                       data-testid="patient-diagnosis"
-                      style={{
-                        fontSize: 12,
-                        color: '#64748b',
-                        marginTop: 2,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
+                      className="mt-0.5 overflow-hidden text-ellipsis whitespace-nowrap text-xs text-slate-500"
                     >
                       {patient.primaryDiagnosis} - {patient.primaryDiagnosisDesc}
                     </p>
                   )}
-                  <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>
+                  <p className="mt-0.5 text-xs text-slate-400">
                     Last updated:{' '}
                     {new Date(patient.updatedAt).toLocaleDateString('en-US', {
                       month: 'short',
@@ -156,7 +124,7 @@ export function ClinicianPatients() {
                     })}
                   </p>
                 </div>
-                <span style={{ color: '#94a3b8', marginLeft: 8 }}>›</span>
+                <span className="ml-2 text-slate-400">›</span>
               </div>
             </Link>
           ))

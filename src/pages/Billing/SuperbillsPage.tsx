@@ -180,90 +180,92 @@ export function SuperbillsPage() {
   };
 
   return (
-    <div style={{ padding: 24 }}>
-      <header style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
-        <div>
-          <h1 style={{ margin: 0 }}>Superbills</h1>
-          <p style={{ color: '#64748b', maxWidth: 720 }}>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <header className="flex items-start justify-between">
+        <div className="space-y-2">
+          <h2 className="text-2xl">Superbills</h2>
+          <div className="section-line" />
+          <p className="max-w-3xl text-slate-500">
             Encounter slips capturing diagnosis + procedure codes for a
             single patient visit. Draft → finalize → PDF.
           </p>
         </div>
-        <button type="button" onClick={() => setShowForm((s) => !s)}>
+        <button
+          type="button"
+          onClick={() => setShowForm((s) => !s)}
+          className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+        >
           {showForm ? 'Cancel' : '+ New superbill'}
         </button>
       </header>
 
       {error && (
-        <div role="alert" style={{ color: '#b91c1c', marginBottom: 12 }}>{error}</div>
+        <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">{error}</div>
       )}
       {actionMsg && (
-        <div style={{ color: '#15803d', marginBottom: 12 }}>{actionMsg}</div>
+        <div className="rounded-lg border-l-4 border-success bg-green-50 px-4 py-3 font-semibold text-green-800">{actionMsg}</div>
       )}
 
       {showForm && (
-        <div style={{
-          border: '1px solid #cbd5e1', borderRadius: 8, padding: 16,
-          marginBottom: 16, background: '#f8fafc',
-        }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
-            <label>
-              <div style={{ fontSize: 12, color: '#475569' }}>Patient ID *</div>
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="grid grid-cols-3 gap-4">
+            <label className="grid gap-1.5">
+              <span className="text-sm font-medium text-slate-600">Patient ID *</span>
               <input
                 type="number"
                 value={form.patientId}
                 onChange={(e) => setForm((f) => ({ ...f, patientId: e.target.value }))}
-                style={{ width: '100%' }}
+                className="form-input"
               />
             </label>
-            <label>
-              <div style={{ fontSize: 12, color: '#475569' }}>Provider ID *</div>
+            <label className="grid gap-1.5">
+              <span className="text-sm font-medium text-slate-600">Provider ID *</span>
               <input
                 type="text"
                 value={form.providerId}
                 onChange={(e) => setForm((f) => ({ ...f, providerId: e.target.value }))}
                 placeholder="e.g. NPI or internal id"
-                style={{ width: '100%' }}
+                className="form-input"
               />
             </label>
-            <label>
-              <div style={{ fontSize: 12, color: '#475569' }}>Service date</div>
+            <label className="grid gap-1.5">
+              <span className="text-sm font-medium text-slate-600">Service date</span>
               <input
                 type="date"
                 value={form.serviceDate}
                 onChange={(e) => setForm((f) => ({ ...f, serviceDate: e.target.value }))}
-                style={{ width: '100%' }}
+                className="form-input"
               />
             </label>
           </div>
-          <label style={{ display: 'block', marginTop: 12 }}>
-            <div style={{ fontSize: 12, color: '#475569' }}>
+          <label className="mt-4 grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">
               Diagnosis codes (space or comma separated)
-            </div>
+            </span>
             <input
               type="text"
               value={form.diagnosisInput}
               onChange={(e) => setForm((f) => ({ ...f, diagnosisInput: e.target.value }))}
               placeholder="J18.9 I10 E11.9"
-              style={{ width: '100%' }}
+              className="form-input"
             />
           </label>
 
-          <div style={{ marginTop: 12 }}>
-            <div style={{ fontSize: 12, color: '#475569', marginBottom: 4 }}>Procedures *</div>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <div className="mt-4">
+            <div className="mb-1 text-sm font-medium text-slate-600">Procedures *</div>
+            <table className="w-full border-collapse text-sm">
               <thead>
-                <tr style={{ textAlign: 'left', fontSize: 12, color: '#64748b' }}>
-                  <th style={{ padding: 4, width: '40%' }}>Code</th>
-                  <th style={{ padding: 4, width: '15%' }}>Modifier</th>
-                  <th style={{ padding: 4, width: '15%' }}>Units</th>
-                  <th style={{ padding: 4, width: '30%' }}>Charge</th>
+                <tr className="text-left text-xs font-medium uppercase tracking-wide text-slate-500">
+                  <th className="w-2/5 px-1 py-1">Code</th>
+                  <th className="w-[15%] px-1 py-1">Modifier</th>
+                  <th className="w-[15%] px-1 py-1">Units</th>
+                  <th className="w-[30%] px-1 py-1">Charge</th>
                 </tr>
               </thead>
               <tbody>
                 {form.procedures.map((p, i) => (
                   <tr key={i}>
-                    <td style={{ padding: 4 }}>
+                    <td className="px-1 py-1">
                       <BillingCodeAutocomplete
                         id={`sb-cpt-${i}`}
                         type="cpt"
@@ -271,59 +273,64 @@ export function SuperbillsPage() {
                         onChange={(v) => updateProcedure(i, { code: v })}
                       />
                     </td>
-                    <td style={{ padding: 4 }}>
+                    <td className="px-1 py-1">
                       <input
                         type="text"
                         value={p.modifier}
                         onChange={(e) => updateProcedure(i, { modifier: e.target.value })}
-                        style={{ width: '100%' }}
+                        className="form-input"
                       />
                     </td>
-                    <td style={{ padding: 4 }}>
+                    <td className="px-1 py-1">
                       <input
                         type="number"
                         min={1}
                         value={p.units}
                         onChange={(e) => updateProcedure(i, { units: e.target.value })}
-                        style={{ width: '100%' }}
+                        className="form-input"
                       />
                     </td>
-                    <td style={{ padding: 4 }}>
+                    <td className="px-1 py-1">
                       <input
                         type="number"
                         min={0}
                         step="0.01"
                         value={p.charge}
                         onChange={(e) => updateProcedure(i, { charge: e.target.value })}
-                        style={{ width: '100%' }}
+                        className="form-input"
                       />
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            <button type="button" onClick={addProcedureRow} style={{ marginTop: 6, fontSize: 12 }}>
+            <button
+              type="button"
+              onClick={addProcedureRow}
+              className="mt-1.5 rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+            >
               + Add procedure row
             </button>
           </div>
 
-          <label style={{ display: 'block', marginTop: 12 }}>
-            <div style={{ fontSize: 12, color: '#475569' }}>Notes (optional)</div>
+          <label className="mt-4 grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">Notes (optional)</span>
             <textarea
               value={form.notes}
               onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
               rows={2}
-              style={{ width: '100%' }}
+              className="form-input"
             />
           </label>
 
-          <div style={{ marginTop: 12 }}>
+          <div className="mt-4">
             <button
               type="button"
               onClick={() => { void handleCreate(); }}
               disabled={creating || !canManage}
               aria-busy={creating}
               title={!canManage ? NO_PERMISSION : undefined}
+              className="btn-primary disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {creating ? 'Saving…' : 'Save draft'}
             </button>
@@ -331,117 +338,116 @@ export function SuperbillsPage() {
         </div>
       )}
 
-      {isLoading && <div>Loading…</div>}
+      {isLoading && <div role="status" className="text-slate-500">Loading…</div>}
       {!isLoading && rows.length === 0 && !error && (
-        <div style={{ color: '#64748b' }}>No superbills yet.</div>
+        <div className="text-slate-500">No superbills yet.</div>
       )}
 
       {rows.length > 0 && (
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ textAlign: 'left', borderBottom: '2px solid #e2e8f0' }}>
-              <th style={{ padding: 8 }}>ID</th>
-              <th style={{ padding: 8 }}>Service date</th>
-              <th style={{ padding: 8 }}>Patient</th>
-              <th style={{ padding: 8 }}>Provider</th>
-              <th style={{ padding: 8, textAlign: 'right' }}>Total</th>
-              <th style={{ padding: 8 }}>Status</th>
-              <th style={{ padding: 8 }}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((sb) => {
-              const diagnoses = parseCodes(sb.diagnosisCodes);
-              return (
-                <tr key={sb.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td style={{ padding: 8 }}>#{sb.id}</td>
-                  <td style={{ padding: 8 }}>{new Date(sb.serviceDate).toLocaleDateString()}</td>
-                  <td style={{ padding: 8 }}>#{sb.patientId}</td>
-                  <td style={{ padding: 8 }}>{sb.providerId}</td>
-                  <td style={{ padding: 8, textAlign: 'right' }}>{money(sb.totalCharge)}</td>
-                  <td style={{ padding: 8 }}>
-                    <span style={{
-                      padding: '2px 8px', borderRadius: 4, fontSize: 12, fontWeight: 600,
-                      background: sb.status === 'finalized' ? '#dcfce7' : '#fef3c7',
-                      color: sb.status === 'finalized' ? '#166534' : '#92400e',
-                    }}>
-                      {sb.status}
-                    </span>
-                    {diagnoses.length > 0 && (
-                      <span style={{ marginLeft: 8, color: '#64748b', fontSize: 12 }}>
-                        Dx: {diagnoses.slice(0, 2).join(', ')}
-                        {diagnoses.length > 2 && ` +${diagnoses.length - 2}`}
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                <th className="px-4 py-3">ID</th>
+                <th className="px-4 py-3">Service date</th>
+                <th className="px-4 py-3">Patient</th>
+                <th className="px-4 py-3">Provider</th>
+                <th className="px-4 py-3 text-right">Total</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((sb) => {
+                const diagnoses = parseCodes(sb.diagnosisCodes);
+                return (
+                  <tr key={sb.id} className="border-t border-slate-100 hover:bg-slate-50">
+                    <td className="px-4 py-3 text-slate-700">#{sb.id}</td>
+                    <td className="px-4 py-3 text-slate-700">{new Date(sb.serviceDate).toLocaleDateString()}</td>
+                    <td className="px-4 py-3 text-slate-700">#{sb.patientId}</td>
+                    <td className="px-4 py-3 text-slate-700">{sb.providerId}</td>
+                    <td className="px-4 py-3 text-right text-slate-700">{money(sb.totalCharge)}</td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${
+                        sb.status === 'finalized' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
+                      }`}>
+                        {sb.status}
                       </span>
-                    )}
-                  </td>
-                  <td style={{ padding: 8, display: 'flex', gap: 6 }}>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedId(selectedId === sb.id ? null : sb.id)}
-                      style={{ fontSize: 12 }}
-                    >
-                      {selectedId === sb.id ? 'Hide' : 'View'}
-                    </button>
-                    {sb.status === 'draft' && (
-                      <button
-                        type="button"
-                        onClick={() => { void handleFinalize(sb); }}
-                        disabled={!canManage}
-                        title={!canManage ? NO_PERMISSION : undefined}
-                        style={{ fontSize: 12 }}
-                      >
-                        Finalize
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => { void handlePdf(sb); }}
-                      disabled={!canManage}
-                      title={!canManage ? NO_PERMISSION : undefined}
-                      style={{ fontSize: 12 }}
-                    >
-                      PDF
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                      {diagnoses.length > 0 && (
+                        <span className="ml-2 text-xs text-slate-500">
+                          Dx: {diagnoses.slice(0, 2).join(', ')}
+                          {diagnoses.length > 2 && ` +${diagnoses.length - 2}`}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedId(selectedId === sb.id ? null : sb.id)}
+                          className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                        >
+                          {selectedId === sb.id ? 'Hide' : 'View'}
+                        </button>
+                        {sb.status === 'draft' && (
+                          <button
+                            type="button"
+                            onClick={() => { void handleFinalize(sb); }}
+                            disabled={!canManage}
+                            title={!canManage ? NO_PERMISSION : undefined}
+                            className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed"
+                          >
+                            Finalize
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => { void handlePdf(sb); }}
+                          disabled={!canManage}
+                          title={!canManage ? NO_PERMISSION : undefined}
+                          className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                          PDF
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {selected && (
-        <div style={{
-          marginTop: 16, border: '1px solid #cbd5e1',
-          borderRadius: 8, padding: 16, background: '#f8fafc',
-        }}>
-          <h2 style={{ marginTop: 0 }}>Superbill #{selected.id} detail</h2>
-          <div style={{ marginBottom: 8 }}>
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <h3 className="text-lg font-semibold">Superbill #{selected.id} detail</h3>
+          <div className="mt-2 text-slate-700">
             <strong>Diagnoses:</strong>{' '}
             {parseCodes(selected.diagnosisCodes).join(', ') || '—'}
           </div>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <table className="mt-3 w-full border-collapse text-sm">
             <thead>
-              <tr style={{ textAlign: 'left', fontSize: 12, color: '#64748b' }}>
-                <th style={{ padding: 4 }}>Code</th>
-                <th style={{ padding: 4 }}>Modifier</th>
-                <th style={{ padding: 4 }}>Units</th>
-                <th style={{ padding: 4 }}>Charge</th>
+              <tr className="text-left text-xs font-medium uppercase tracking-wide text-slate-500">
+                <th className="px-1 py-1">Code</th>
+                <th className="px-1 py-1">Modifier</th>
+                <th className="px-1 py-1">Units</th>
+                <th className="px-1 py-1">Charge</th>
               </tr>
             </thead>
             <tbody>
               {parseProcedures(selected.procedureCodes).map((p, i) => (
                 <tr key={i}>
-                  <td style={{ padding: 4, fontFamily: 'monospace' }}>{p.code}</td>
-                  <td style={{ padding: 4, fontFamily: 'monospace' }}>{p.modifier ?? ''}</td>
-                  <td style={{ padding: 4 }}>{p.units}</td>
-                  <td style={{ padding: 4 }}>{money(p.charge)}</td>
+                  <td className="px-1 py-1 font-mono text-slate-700">{p.code}</td>
+                  <td className="px-1 py-1 font-mono text-slate-700">{p.modifier ?? ''}</td>
+                  <td className="px-1 py-1 text-slate-700">{p.units}</td>
+                  <td className="px-1 py-1 text-slate-700">{money(p.charge)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
           {selected.notes && (
-            <div style={{ marginTop: 8, color: '#475569' }}>
+            <div className="mt-2 text-slate-600">
               <strong>Notes:</strong> {selected.notes}
             </div>
           )}
@@ -449,15 +455,21 @@ export function SuperbillsPage() {
       )}
 
       {rows.length > 0 && (
-        <div style={{ display: 'flex', gap: 12, marginTop: 12, alignItems: 'center' }}>
-          <button type="button" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            disabled={page <= 1}
+            onClick={() => setPage((p) => p - 1)}
+            className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed"
+          >
             Prev
           </button>
-          <span>Page {page} of {totalPages} · {total.toLocaleString()} rows</span>
+          <span className="text-sm text-slate-500">Page {page} of {totalPages} · {total.toLocaleString()} rows</span>
           <button
             type="button"
             disabled={page >= totalPages}
             onClick={() => setPage((p) => p + 1)}
+            className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             Next
           </button>

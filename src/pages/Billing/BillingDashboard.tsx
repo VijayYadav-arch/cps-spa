@@ -25,59 +25,61 @@ export function BillingDashboard() {
     return () => { cancelled = true; };
   }, []);
 
-  if (isLoading) return <div role="status">Loading billing dashboard…</div>;
-  if (error) return <div role="alert">{error}</div>;
+  if (isLoading) return <div role="status" className="text-slate-500">Loading billing dashboard…</div>;
+  if (error) return <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">{error}</div>;
 
   return (
-    <div>
-      <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 16 }}>Billing Dashboard</h2>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <h2 className="text-2xl">Billing Dashboard</h2>
       {stats && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 32 }}>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
           {[
             { label: 'Total Items', value: stats.total },
             { label: 'Pending', value: stats.pending },
             { label: 'In Progress', value: stats.inProgress },
             { label: 'Overdue', value: stats.overdue },
           ].map(({ label, value }) => (
-            <div key={label} style={{ padding: 16, border: '1px solid #e2e8f0', borderRadius: 8 }}>
-              <p style={{ fontSize: 12, color: '#64748b', marginBottom: 4 }}>{label}</p>
-              <p style={{ fontSize: 28, fontWeight: 700 }}>{value}</p>
+            <div key={label} className="card-hover rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>
+              <p className="mt-1.5 text-2xl font-bold text-navy-900">{value}</p>
             </div>
           ))}
         </div>
       )}
-      <div style={{ marginBottom: 24 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <h3 style={{ fontWeight: 600 }}>Recent Denials</h3>
-          <Link to="/billing/denials/queue" style={{ color: '#2563eb', fontSize: 14 }}>View all</Link>
+      <div className="grid gap-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold">Recent Denials</h3>
+          <Link to="/billing/denials/queue" className="font-medium text-teal-700 hover:underline">View all</Link>
         </div>
         {denials.length === 0 ? (
-          <p style={{ color: '#64748b' }}>No recent denials.</p>
+          <p className="text-slate-500">No recent denials.</p>
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-                <th style={{ padding: '6px 10px' }}>ID</th>
-                <th style={{ padding: '6px 10px' }}>Payer</th>
-                <th style={{ padding: '6px 10px' }}>Code</th>
-                <th style={{ padding: '6px 10px' }}>Status</th>
-                <th style={{ padding: '6px 10px' }}>Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {denials.map((d) => (
-                <tr key={d.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td style={{ padding: '6px 10px' }}>{d.id}</td>
-                  <td style={{ padding: '6px 10px' }}>{d.payerName}</td>
-                  <td style={{ padding: '6px 10px' }}>{d.denialCode}</td>
-                  <td style={{ padding: '6px 10px' }}>{d.status}</td>
-                  <td style={{ padding: '6px 10px' }}>
-                    {(() => { const dt = new Date(d.createdAt); return isNaN(dt.getTime()) ? d.createdAt : dt.toLocaleDateString(); })()}
-                  </td>
+          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                  <th className="px-4 py-3">ID</th>
+                  <th className="px-4 py-3">Payer</th>
+                  <th className="px-4 py-3">Code</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3">Date</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {denials.map((d) => (
+                  <tr key={d.id} className="border-t border-slate-100 hover:bg-slate-50">
+                    <td className="px-4 py-3 text-slate-700">{d.id}</td>
+                    <td className="px-4 py-3 text-slate-700">{d.payerName}</td>
+                    <td className="px-4 py-3 text-slate-700">{d.denialCode}</td>
+                    <td className="px-4 py-3 text-slate-700">{d.status}</td>
+                    <td className="px-4 py-3 text-slate-700">
+                      {(() => { const dt = new Date(d.createdAt); return isNaN(dt.getTime()) ? d.createdAt : dt.toLocaleDateString(); })()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>

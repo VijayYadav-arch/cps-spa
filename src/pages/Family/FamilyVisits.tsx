@@ -31,14 +31,18 @@ export function FamilyVisits() {
 
   if (error) {
     return (
-      <p data-testid="family-error" role="alert" style={{ color: '#dc2626', padding: 16 }}>
+      <p
+        data-testid="family-error"
+        role="alert"
+        className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800"
+      >
         {error}
       </p>
     );
   }
   if (visits === null) {
     return (
-      <p data-testid="family-loading" style={{ color: '#94a3b8', padding: 16 }}>
+      <p data-testid="family-loading" role="status" className="p-4 text-slate-500">
         {t('common.loading')}
       </p>
     );
@@ -46,52 +50,36 @@ export function FamilyVisits() {
   const dateLocale = i18n.resolvedLanguage ?? 'en-US';
 
   return (
-    <section style={{ padding: 16 }}>
-      <h1
-        data-testid="page-title"
-        style={{ fontSize: 24, fontWeight: 600, color: '#1e293b', marginBottom: 24 }}
-      >
+    <section className="grid max-w-[1200px] gap-6 p-6">
+      <h1 data-testid="page-title" className="text-2xl">
         {t('family.visits.title')}
       </h1>
-      <div
-        style={{
-          background: '#fff',
-          border: '1px solid #e2e8f0',
-          borderRadius: 12,
-          overflow: 'hidden',
-        }}
-      >
-        <table style={{ width: '100%', fontSize: 14, borderCollapse: 'collapse' }}>
-          <thead style={{ background: '#f8fafc' }}>
-            <tr>
-              <th style={{ padding: '12px 16px', textAlign: 'left', color: '#475569', fontWeight: 500 }}>
-                {t('family.visits.columnDate')}
-              </th>
-              <th style={{ padding: '12px 16px', textAlign: 'left', color: '#475569', fontWeight: 500 }}>
-                {t('family.visits.columnType')}
-              </th>
-              <th style={{ padding: '12px 16px', textAlign: 'left', color: '#475569', fontWeight: 500 }}>
-                {t('family.visits.columnStatus')}
-              </th>
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+              <th className="px-4 py-3">{t('family.visits.columnDate')}</th>
+              <th className="px-4 py-3">{t('family.visits.columnType')}</th>
+              <th className="px-4 py-3">{t('family.visits.columnStatus')}</th>
             </tr>
           </thead>
           <tbody data-testid="visits-rows">
             {visits.map((v) => (
-              <tr key={v.id} style={{ borderTop: '1px solid #f1f5f9' }}>
-                <td style={{ padding: '12px 16px' }}>
+              <tr key={v.id} className="border-t border-slate-100 hover:bg-slate-50">
+                <td className="px-4 py-3 text-slate-700">
                   {new Date(v.visitDate).toLocaleDateString(dateLocale)}
                 </td>
-                <td style={{ padding: '12px 16px', textTransform: 'capitalize' }}>
+                <td className="px-4 py-3 capitalize text-slate-700">
                   {v.visitType.replace(/-/g, ' ')}
                 </td>
-                <td style={{ padding: '12px 16px', textTransform: 'capitalize' }}>{v.status}</td>
+                <td className="px-4 py-3 capitalize text-slate-700">{v.status}</td>
               </tr>
             ))}
             {visits.length === 0 && (
               <tr>
                 <td
                   colSpan={3}
-                  style={{ padding: '24px 16px', textAlign: 'center', color: '#94a3b8' }}
+                  className="px-4 py-6 text-center text-slate-500"
                   data-testid="visits-empty"
                 >
                   {t('family.visits.empty')}

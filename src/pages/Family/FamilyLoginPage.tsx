@@ -36,46 +36,31 @@ export function FamilyLoginPage() {
   }
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: '#f8fafc',
-        padding: 16,
-      }}
-    >
+    <div className="hero-gradient flex min-h-screen items-center justify-center p-4">
       <form
         onSubmit={handleSubmit}
-        style={{
-          background: '#fff',
-          padding: 32,
-          borderRadius: 12,
-          boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-          minWidth: 360,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 12,
-        }}
+        className="flex min-w-[360px] flex-col gap-3 rounded-xl border border-slate-200 bg-white p-8 shadow-sm"
       >
         <h1
           data-testid="family-login-title"
-          style={{ fontSize: 24, fontWeight: 700, color: '#0ea5e9', margin: 0, marginBottom: 4 }}
+          className="m-0 mb-1 text-2xl text-teal-700"
         >
           {t('family.login.title')}
         </h1>
-        <div style={{ fontSize: 13, color: '#64748b', marginBottom: 12 }}>
+        <div className="mb-3 text-sm text-slate-500">
           {t('family.login.description')}
         </div>
 
         {reason === 'expired' && (
-          <div role="status" style={{ fontSize: 13, color: '#b45309', marginBottom: 4 }}>
+          <div
+            role="status"
+            className="rounded-lg border-l-4 border-warning bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800"
+          >
             {t('family.login.sessionExpired')}
           </div>
         )}
 
-        <label htmlFor="family-patient-id" style={{ fontSize: 13, color: '#475569' }}>
+        <label htmlFor="family-patient-id" className="text-sm font-medium text-slate-600">
           {t('family.login.patientIdLabel')}
         </label>
         <input
@@ -86,10 +71,10 @@ export function FamilyLoginPage() {
           value={patientId}
           onChange={(e) => setPatientId(e.target.value)}
           required
-          style={{ padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: 6 }}
+          className="form-input"
         />
 
-        <label htmlFor="family-pin" style={{ fontSize: 13, color: '#475569' }}>
+        <label htmlFor="family-pin" className="text-sm font-medium text-slate-600">
           {t('family.login.pinLabel')}
         </label>
         <input
@@ -99,14 +84,14 @@ export function FamilyLoginPage() {
           value={pin}
           onChange={(e) => setPin(e.target.value)}
           required
-          style={{ padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: 6 }}
+          className="form-input"
         />
 
         {error && (
           <div
             role="alert"
             data-testid="family-login-error"
-            style={{ color: '#dc2626', fontSize: 13, marginTop: 4 }}
+            className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
           >
             {error}
           </div>
@@ -116,21 +101,11 @@ export function FamilyLoginPage() {
           type="submit"
           disabled={submitting}
           data-testid="family-login-submit"
-          style={{
-            marginTop: 12,
-            padding: '10px 16px',
-            border: 'none',
-            background: submitting ? '#94a3b8' : '#0ea5e9',
-            color: '#fff',
-            borderRadius: 6,
-            cursor: submitting ? 'not-allowed' : 'pointer',
-            fontSize: 14,
-            fontWeight: 600,
-          }}
+          className="btn-primary mt-3 justify-center disabled:cursor-not-allowed disabled:opacity-60"
         >
           {submitting ? t('family.login.submitting') : t('family.login.submit')}
         </button>
-        <div style={{ marginTop: 16, color: '#64748b' }}>
+        <div className="mt-4 text-slate-500">
           <LanguagePicker />
         </div>
       </form>

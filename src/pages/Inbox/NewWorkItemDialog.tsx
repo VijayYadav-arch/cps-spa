@@ -71,43 +71,32 @@ export function NewWorkItemDialog({ onClose, onCreated }: NewWorkItemDialogProps
       <div
         role="presentation"
         onClick={onClose}
-        style={{
-          position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.35)',
-          zIndex: 50,
-        }}
+        className="fixed inset-0 z-50 bg-navy-950/35"
       />
       <form
         role="dialog"
         aria-label="New work item"
         onSubmit={handleSubmit}
-        style={{
-          position: 'fixed', top: '15vh', left: '50%', transform: 'translateX(-50%)',
-          width: 440, background: '#fff', padding: 24, borderRadius: 8,
-          boxShadow: '0 8px 32px rgba(0,0,0,0.20)', zIndex: 51,
-          display: 'flex', flexDirection: 'column', gap: 12,
-        }}
+        className="fixed left-1/2 top-[15vh] z-[51] flex w-[440px] -translate-x-1/2 flex-col gap-3 rounded-xl bg-white p-6 shadow-[0_8px_32px_rgba(0,0,0,0.20)]"
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2 style={{ margin: 0, fontSize: 18 }}>New work item</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg">New work item</h2>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close new work item dialog"
-            style={{
-              background: 'transparent', border: 'none', cursor: 'pointer',
-              fontSize: 20, color: '#64748b',
-            }}
+            className="cursor-pointer border-none bg-transparent text-xl text-slate-500"
           >
             ×
           </button>
         </div>
 
-        <label style={{ fontSize: 13, color: '#475569' }}>
-          Type
+        <label className="grid gap-1.5">
+          <span className="text-sm font-medium text-slate-600">Type</span>
           <select
             value={type}
             onChange={(e) => setType(e.target.value)}
-            style={inputStyle}
+            className="form-input"
           >
             {TYPE_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>{o.label}</option>
@@ -115,12 +104,12 @@ export function NewWorkItemDialog({ onClose, onCreated }: NewWorkItemDialogProps
           </select>
         </label>
 
-        <label style={{ fontSize: 13, color: '#475569' }}>
-          Priority
+        <label className="grid gap-1.5">
+          <span className="text-sm font-medium text-slate-600">Priority</span>
           <select
             value={priority}
             onChange={(e) => setPriority(e.target.value as EnqueueWorkItemRequest['priority'])}
-            style={inputStyle}
+            className="form-input"
           >
             {PRIORITY_OPTIONS.map((p) => (
               <option key={p} value={p}>{p}</option>
@@ -128,74 +117,66 @@ export function NewWorkItemDialog({ onClose, onCreated }: NewWorkItemDialogProps
           </select>
         </label>
 
-        <label style={{ fontSize: 13, color: '#475569' }}>
-          Description *
+        <label className="grid gap-1.5">
+          <span className="text-sm font-medium text-slate-600">Description *</span>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={3}
             placeholder="What needs to happen?"
-            style={{ ...inputStyle, resize: 'vertical' }}
+            className="form-input resize-y"
           />
         </label>
 
-        <div style={{ display: 'flex', gap: 8 }}>
-          <label style={{ flex: 1, fontSize: 13, color: '#475569' }}>
-            Claim ID
+        <div className="flex gap-2">
+          <label className="grid flex-1 gap-1.5">
+            <span className="text-sm font-medium text-slate-600">Claim ID</span>
             <input
               value={claimId}
               onChange={(e) => setClaimId(e.target.value)}
               placeholder="optional"
-              style={inputStyle}
+              className="form-input"
             />
           </label>
-          <label style={{ flex: 1, fontSize: 13, color: '#475569' }}>
-            Patient ID
+          <label className="grid flex-1 gap-1.5">
+            <span className="text-sm font-medium text-slate-600">Patient ID</span>
             <input
               value={patientId}
               onChange={(e) => setPatientId(e.target.value)}
               placeholder="optional"
-              style={inputStyle}
+              className="form-input"
             />
           </label>
         </div>
 
-        <label style={{ fontSize: 13, color: '#475569' }}>
-          Due date
+        <label className="grid gap-1.5">
+          <span className="text-sm font-medium text-slate-600">Due date</span>
           <input
             type="date"
             value={dueDate}
             onChange={(e) => setDueDate(e.target.value)}
-            style={inputStyle}
+            className="form-input"
           />
         </label>
 
         {error && (
-          <div role="alert" style={{ color: '#991b1b', background: '#fee2e2', padding: 8, borderRadius: 4, fontSize: 13 }}>
+          <div role="alert" className="rounded border border-red-200 bg-red-50 px-2 py-2 text-[13px] text-red-800">
             {error}
           </div>
         )}
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
+        <div className="mt-2 flex justify-end gap-2">
           <button
             type="button"
             onClick={onClose}
-            style={{
-              background: '#fff', color: '#475569', border: '1px solid #cbd5e1',
-              borderRadius: 4, padding: '8px 16px', cursor: 'pointer', fontSize: 13,
-            }}
+            className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={submitting}
-            style={{
-              background: submitting ? '#94a3b8' : '#0ea5e9', color: '#fff',
-              border: 'none', borderRadius: 4, padding: '8px 16px',
-              cursor: submitting ? 'not-allowed' : 'pointer', fontSize: 13,
-              fontWeight: 600,
-            }}
+            className="btn-primary disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {submitting ? 'Creating…' : 'Create'}
           </button>
@@ -204,12 +185,3 @@ export function NewWorkItemDialog({ onClose, onCreated }: NewWorkItemDialogProps
     </>
   );
 }
-
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '6px 10px',
-  border: '1px solid #cbd5e1',
-  borderRadius: 4,
-  fontSize: 13,
-  marginTop: 4,
-};

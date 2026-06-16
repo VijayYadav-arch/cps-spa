@@ -57,25 +57,34 @@ export function QapiPipDetailPage() {
     await reload();
   };
 
-  if (!pip) return <p>Loading…</p>;
+  if (!pip) return <div role="status" className="text-slate-500">Loading…</div>;
 
   return (
-    <div>
+    <div className="grid max-w-[1200px] gap-6 p-6">
       <PipScorecard pip={pip} />
-      <p>{pip.description}</p>
-      <p>Status: {pip.status}</p>
+      <p className="text-slate-700">{pip.description}</p>
+      <p className="text-slate-700">Status: {pip.status}</p>
 
-      <section>
-        <h2>Update Measurements</h2>
-        <form onSubmit={handleUpdate}>
-          <label>Baseline <input type="number" step="0.01" value={baseline} onChange={e => setBaseline(e.target.value as unknown as number)} /></label>
-          <label>Target <input type="number" step="0.01" value={target} onChange={e => setTarget(e.target.value as unknown as number)} /></label>
-          <label>Current <input type="number" step="0.01" value={current} onChange={e => setCurrent(e.target.value as unknown as number)} /></label>
+      <section className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <h3 className="text-lg font-semibold">Update Measurements</h3>
+        <form onSubmit={handleUpdate} className="flex flex-wrap items-end gap-4">
+          <label className="grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">Baseline</span>
+            <input className="form-input w-auto" type="number" step="0.01" value={baseline} onChange={e => setBaseline(e.target.value as unknown as number)} />
+          </label>
+          <label className="grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">Target</span>
+            <input className="form-input w-auto" type="number" step="0.01" value={target} onChange={e => setTarget(e.target.value as unknown as number)} />
+          </label>
+          <label className="grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">Current</span>
+            <input className="form-input w-auto" type="number" step="0.01" value={current} onChange={e => setCurrent(e.target.value as unknown as number)} />
+          </label>
           <button
             type="submit"
             disabled={!canManage}
             title={!canManage ? NO_PERMISSION : undefined}
-            style={{ cursor: !canManage ? 'not-allowed' : 'pointer' }}
+            className="btn-primary disabled:cursor-not-allowed disabled:opacity-60"
           >
             Save
           </button>
@@ -87,23 +96,25 @@ export function QapiPipDetailPage() {
           onClick={handleActivate}
           disabled={!canManage}
           title={!canManage ? NO_PERMISSION : undefined}
-          style={{ cursor: !canManage ? 'not-allowed' : 'pointer' }}
+          className="justify-self-start rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
         >
           Move to Active
         </button>
       )}
 
       {pip.status !== 'Completed' && (
-        <section>
-          <h2>Complete PIP</h2>
-          <form onSubmit={handleComplete}>
-            <label>Outcome Summary</label>
-            <textarea value={outcomeSummary} onChange={e => setOutcomeSummary(e.target.value)} rows={4} required />
+        <section className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <h3 className="text-lg font-semibold">Complete PIP</h3>
+          <form onSubmit={handleComplete} className="grid gap-4">
+            <label className="grid gap-1.5">
+              <span className="text-sm font-medium text-slate-600">Outcome Summary</span>
+              <textarea className="form-input" value={outcomeSummary} onChange={e => setOutcomeSummary(e.target.value)} rows={4} required />
+            </label>
             <button
               type="submit"
               disabled={!canManage}
               title={!canManage ? NO_PERMISSION : undefined}
-              style={{ cursor: !canManage ? 'not-allowed' : 'pointer' }}
+              className="btn-primary justify-self-start disabled:cursor-not-allowed disabled:opacity-60"
             >
               Complete
             </button>

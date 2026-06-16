@@ -22,42 +22,45 @@ export function AdminDashboard() {
     return () => { cancelled = true; };
   }, []);
 
-  if (isLoading) return <div role="status">Loading admin dashboard…</div>;
-  if (error) return <div role="alert">{error}</div>;
+  if (isLoading) return <div role="status" className="text-slate-500">Loading admin dashboard…</div>;
+  if (error) return <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">{error}</div>;
 
   return (
-    <div>
-      <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 24 }}>Admin Dashboard</h2>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <header className="space-y-2">
+        <h2 className="text-2xl">Admin Dashboard</h2>
+        <div className="section-line" />
+      </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-        <section>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-            <h3 style={{ fontWeight: 600 }}>Organizations</h3>
-            <Link to="/admin/organizations" style={{ color: '#2563eb', fontSize: 14 }}>View all</Link>
+      <div className="grid gap-6 sm:grid-cols-2">
+        <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="text-lg font-semibold">Organizations</h3>
+            <Link to="/admin/organizations" className="font-medium text-teal-700 hover:underline">View all</Link>
           </div>
-          {orgs.length === 0 ? <p style={{ color: '#64748b' }}>No organizations.</p> : (
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+          {orgs.length === 0 ? <p className="text-slate-500">No organizations.</p> : (
+            <ul className="m-0 list-none p-0">
               {orgs.map((o) => (
-                <li key={o.id} style={{ padding: '8px 0', borderBottom: '1px solid #f1f5f9' }}>
-                  <span style={{ fontWeight: 500 }}>{o.name}</span>
-                  <span style={{ fontSize: 12, color: '#64748b', marginLeft: 8 }}>{o.slug}</span>
+                <li key={o.id} className="border-b border-slate-100 py-2">
+                  <span className="font-medium text-slate-700">{o.name}</span>
+                  <span className="ml-2 text-xs text-slate-500">{o.slug}</span>
                 </li>
               ))}
             </ul>
           )}
         </section>
 
-        <section>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-            <h3 style={{ fontWeight: 600 }}>Recent Users</h3>
-            <Link to="/admin/users" style={{ color: '#2563eb', fontSize: 14 }}>View all</Link>
+        <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="text-lg font-semibold">Recent Users</h3>
+            <Link to="/admin/users" className="font-medium text-teal-700 hover:underline">View all</Link>
           </div>
-          {users.length === 0 ? <p style={{ color: '#64748b' }}>No users.</p> : (
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+          {users.length === 0 ? <p className="text-slate-500">No users.</p> : (
+            <ul className="m-0 list-none p-0">
               {users.map((u) => (
-                <li key={u.id} style={{ padding: '8px 0', borderBottom: '1px solid #f1f5f9' }}>
-                  <span>{u.firstName} {u.lastName}</span>
-                  <span style={{ fontSize: 12, color: '#64748b', marginLeft: 8 }}>{u.email}</span>
+                <li key={u.id} className="border-b border-slate-100 py-2">
+                  <span className="text-slate-700">{u.firstName} {u.lastName}</span>
+                  <span className="ml-2 text-xs text-slate-500">{u.email}</span>
                 </li>
               ))}
             </ul>

@@ -139,12 +139,12 @@ export function CommercialSettingsSSOPage() {
   };
 
   return (
-    <div style={{ padding: '1rem', maxWidth: 800, margin: '0 auto' }}>
-      <div style={{ marginBottom: 24 }}>
-        <h1 data-testid="page-title" style={{ fontSize: 24, fontWeight: 600 }}>
+    <div className="grid max-w-[800px] gap-6 p-6">
+      <div>
+        <h1 data-testid="page-title" className="text-2xl">
           Single Sign-On (SSO)
         </h1>
-        <p style={{ color: '#64748b', fontSize: 14, marginTop: 4 }}>
+        <p className="mt-1 text-sm text-slate-500">
           Configure SAML 2.0 or OpenID Connect for your organization.
         </p>
       </div>
@@ -152,38 +152,21 @@ export function CommercialSettingsSSOPage() {
       {message && (
         <div
           role="alert"
-          style={{
-            marginBottom: 16,
-            padding: 12,
-            background: message.type === 'success' ? '#f0fdf4' : '#fef2f2',
-            border: `1px solid ${message.type === 'success' ? '#bbf7d0' : '#fecaca'}`,
-            color: message.type === 'success' ? '#166534' : '#b91c1c',
-            borderRadius: 8,
-          }}
+          className={`rounded-lg border-l-4 px-4 py-3 font-semibold ${
+            message.type === 'success'
+              ? 'border-success bg-green-50 text-green-800'
+              : 'border-error bg-red-50 text-red-800'
+          }`}
         >
           {message.text}
         </div>
       )}
 
-      <section
-        style={{
-          background: 'white',
-          padding: 16,
-          borderRadius: 12,
-          border: '1px solid #e2e8f0',
-          marginBottom: 16,
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
+      <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="flex items-center justify-between">
           <div>
-            <h2 style={{ fontSize: 16, fontWeight: 600 }}>Enable SSO</h2>
-            <p style={{ fontSize: 13, color: '#64748b' }}>
+            <h2 className="text-lg font-semibold">Enable SSO</h2>
+            <p className="text-sm text-slate-500">
               Allow users to sign in with your identity provider.
             </p>
           </div>
@@ -192,277 +175,162 @@ export function CommercialSettingsSSOPage() {
             onClick={() => setForm({ ...form, isActive: !form.isActive })}
             role="switch"
             aria-checked={form.isActive}
-            style={{
-              width: 48,
-              height: 24,
-              borderRadius: 999,
-              border: 'none',
-              background: form.isActive ? '#0d9488' : '#cbd5e1',
-              cursor: 'pointer',
-              position: 'relative',
-            }}
+            className={`relative h-6 w-12 cursor-pointer rounded-full border-none ${
+              form.isActive ? 'bg-teal-600' : 'bg-slate-300'
+            }`}
           >
             <span
-              style={{
-                position: 'absolute',
-                top: 2,
-                left: form.isActive ? 26 : 2,
-                width: 20,
-                height: 20,
-                borderRadius: '50%',
-                background: 'white',
-                transition: 'left 0.15s',
-              }}
+              className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-[left] ${
+                form.isActive ? 'left-[26px]' : 'left-0.5'
+              }`}
             />
           </button>
         </div>
       </section>
 
-      <section
-        style={{
-          background: 'white',
-          padding: 16,
-          borderRadius: 12,
-          border: '1px solid #e2e8f0',
-          marginBottom: 16,
-        }}
-      >
-        <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12 }}>Provider Type</h2>
-        <div style={{ display: 'flex', gap: 12 }}>
+      <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <h2 className="mb-3 text-lg font-semibold">Provider Type</h2>
+        <div className="flex gap-3">
           <label
             data-testid="provider-saml"
-            style={{
-              flex: 1,
-              padding: 12,
-              borderRadius: 8,
-              border: `2px solid ${form.provider === 'saml' ? '#0d9488' : '#e2e8f0'}`,
-              background: form.provider === 'saml' ? '#f0fdfa' : 'white',
-              cursor: 'pointer',
-            }}
+            className={`flex-1 cursor-pointer rounded-lg border-2 p-3 ${
+              form.provider === 'saml'
+                ? 'border-teal-600 bg-teal-50'
+                : 'border-slate-200 bg-white'
+            }`}
           >
             <input
               type="radio"
               name="provider"
               checked={form.provider === 'saml'}
               onChange={() => setForm({ ...form, provider: 'saml' })}
-              style={{ position: 'absolute', opacity: 0 }}
+              className="absolute opacity-0"
             />
-            <div style={{ fontWeight: 600 }}>SAML 2.0</div>
-            <div style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>
-              For Okta, Azure AD, OneLogin
-            </div>
+            <div className="font-semibold">SAML 2.0</div>
+            <div className="mt-1 text-sm text-slate-500">For Okta, Azure AD, OneLogin</div>
           </label>
           <label
             data-testid="provider-oidc"
-            style={{
-              flex: 1,
-              padding: 12,
-              borderRadius: 8,
-              border: `2px solid ${form.provider === 'oidc' ? '#0d9488' : '#e2e8f0'}`,
-              background: form.provider === 'oidc' ? '#f0fdfa' : 'white',
-              cursor: 'pointer',
-            }}
+            className={`flex-1 cursor-pointer rounded-lg border-2 p-3 ${
+              form.provider === 'oidc'
+                ? 'border-teal-600 bg-teal-50'
+                : 'border-slate-200 bg-white'
+            }`}
           >
             <input
               type="radio"
               name="provider"
               checked={form.provider === 'oidc'}
               onChange={() => setForm({ ...form, provider: 'oidc' })}
-              style={{ position: 'absolute', opacity: 0 }}
+              className="absolute opacity-0"
             />
-            <div style={{ fontWeight: 600 }}>OpenID Connect</div>
-            <div style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>
-              For Google Workspace, Auth0
-            </div>
+            <div className="font-semibold">OpenID Connect</div>
+            <div className="mt-1 text-sm text-slate-500">For Google Workspace, Auth0</div>
           </label>
         </div>
       </section>
 
       {form.provider === 'saml' && (
-        <section
-          style={{
-            background: 'white',
-            padding: 16,
-            borderRadius: 12,
-            border: '1px solid #e2e8f0',
-            marginBottom: 16,
-          }}
-        >
-          <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12 }}>
-            SAML Configuration
-          </h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div>
-              <label style={{ fontSize: 12, fontWeight: 500 }}>Entity ID (Issuer)</label>
+        <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <h2 className="mb-3 text-lg font-semibold">SAML Configuration</h2>
+          <div className="flex flex-col gap-4">
+            <label className="grid gap-1.5">
+              <span className="text-sm font-medium text-slate-600">Entity ID (Issuer)</span>
               <input
                 data-testid="input-sso-issuer"
                 type="text"
                 value={form.entityId}
                 onChange={(e) => setForm({ ...form, entityId: e.target.value })}
-                style={{
-                  width: '100%',
-                  padding: 8,
-                  border: '1px solid #cbd5e1',
-                  borderRadius: 6,
-                  marginTop: 4,
-                }}
+                className="form-input"
               />
-            </div>
-            <div>
-              <label style={{ fontSize: 12, fontWeight: 500 }}>SSO URL</label>
+            </label>
+            <label className="grid gap-1.5">
+              <span className="text-sm font-medium text-slate-600">SSO URL</span>
               <input
                 data-testid="input-sso-url"
                 type="url"
                 value={form.ssoUrl}
                 onChange={(e) => setForm({ ...form, ssoUrl: e.target.value })}
-                style={{
-                  width: '100%',
-                  padding: 8,
-                  border: '1px solid #cbd5e1',
-                  borderRadius: 6,
-                  marginTop: 4,
-                }}
+                className="form-input"
               />
-            </div>
-            <div>
-              <label style={{ fontSize: 12, fontWeight: 500 }}>Callback URL</label>
+            </label>
+            <label className="grid gap-1.5">
+              <span className="text-sm font-medium text-slate-600">Callback URL</span>
               <input
                 data-testid="input-sso-callback"
                 type="url"
                 value={form.callbackUrl}
                 onChange={(e) => setForm({ ...form, callbackUrl: e.target.value })}
-                style={{
-                  width: '100%',
-                  padding: 8,
-                  border: '1px solid #cbd5e1',
-                  borderRadius: 6,
-                  marginTop: 4,
-                }}
+                className="form-input"
               />
-            </div>
-            <div>
-              <label style={{ fontSize: 12, fontWeight: 500 }}>X.509 Certificate</label>
+            </label>
+            <label className="grid gap-1.5">
+              <span className="text-sm font-medium text-slate-600">X.509 Certificate</span>
               <textarea
                 data-testid="input-sso-cert"
                 value={form.certificate}
                 onChange={(e) => setForm({ ...form, certificate: e.target.value })}
                 rows={6}
-                style={{
-                  width: '100%',
-                  padding: 8,
-                  border: '1px solid #cbd5e1',
-                  borderRadius: 6,
-                  marginTop: 4,
-                  fontFamily: 'monospace',
-                  fontSize: 12,
-                }}
+                className="form-input font-mono text-xs"
               />
-            </div>
+            </label>
           </div>
         </section>
       )}
 
       {form.provider === 'oidc' && (
-        <section
-          style={{
-            background: 'white',
-            padding: 16,
-            borderRadius: 12,
-            border: '1px solid #e2e8f0',
-            marginBottom: 16,
-          }}
-        >
-          <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12 }}>
-            OIDC Configuration
-          </h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div>
-              <label style={{ fontSize: 12, fontWeight: 500 }}>Client ID</label>
+        <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <h2 className="mb-3 text-lg font-semibold">OIDC Configuration</h2>
+          <div className="flex flex-col gap-4">
+            <label className="grid gap-1.5">
+              <span className="text-sm font-medium text-slate-600">Client ID</span>
               <input
                 data-testid="input-oidc-client-id"
                 type="text"
                 value={form.clientId}
                 onChange={(e) => setForm({ ...form, clientId: e.target.value })}
-                style={{
-                  width: '100%',
-                  padding: 8,
-                  border: '1px solid #cbd5e1',
-                  borderRadius: 6,
-                  marginTop: 4,
-                }}
+                className="form-input"
               />
-            </div>
-            <div>
-              <label style={{ fontSize: 12, fontWeight: 500 }}>Client Secret</label>
+            </label>
+            <label className="grid gap-1.5">
+              <span className="text-sm font-medium text-slate-600">Client Secret</span>
               <input
                 data-testid="input-oidc-client-secret"
                 type="password"
                 value={form.clientSecret}
                 onChange={(e) => setForm({ ...form, clientSecret: e.target.value })}
-                style={{
-                  width: '100%',
-                  padding: 8,
-                  border: '1px solid #cbd5e1',
-                  borderRadius: 6,
-                  marginTop: 4,
-                }}
+                className="form-input"
               />
-            </div>
-            <div>
-              <label style={{ fontSize: 12, fontWeight: 500 }}>Issuer URL</label>
+            </label>
+            <label className="grid gap-1.5">
+              <span className="text-sm font-medium text-slate-600">Issuer URL</span>
               <input
                 data-testid="input-sso-issuer"
                 type="url"
                 value={form.issuer}
                 onChange={(e) => setForm({ ...form, issuer: e.target.value })}
-                style={{
-                  width: '100%',
-                  padding: 8,
-                  border: '1px solid #cbd5e1',
-                  borderRadius: 6,
-                  marginTop: 4,
-                }}
+                className="form-input"
               />
-            </div>
-            <div>
-              <label style={{ fontSize: 12, fontWeight: 500 }}>Callback URL</label>
+            </label>
+            <label className="grid gap-1.5">
+              <span className="text-sm font-medium text-slate-600">Callback URL</span>
               <input
                 data-testid="input-sso-callback"
                 type="url"
                 value={form.callbackUrl}
                 onChange={(e) => setForm({ ...form, callbackUrl: e.target.value })}
-                style={{
-                  width: '100%',
-                  padding: 8,
-                  border: '1px solid #cbd5e1',
-                  borderRadius: 6,
-                  marginTop: 4,
-                }}
+                className="form-input"
               />
-            </div>
+            </label>
           </div>
         </section>
       )}
 
-      <section
-        style={{
-          background: 'white',
-          padding: 16,
-          borderRadius: 12,
-          border: '1px solid #e2e8f0',
-          marginBottom: 16,
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
+      <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="flex items-center justify-between">
           <div>
-            <h2 style={{ fontSize: 16, fontWeight: 600 }}>Enforce SSO</h2>
-            <p style={{ fontSize: 13, color: '#64748b' }}>
+            <h2 className="text-lg font-semibold">Enforce SSO</h2>
+            <p className="text-sm text-slate-500">
               When enabled, all users must authenticate through SSO.
             </p>
           </div>
@@ -471,47 +339,26 @@ export function CommercialSettingsSSOPage() {
             onClick={() => setForm({ ...form, enforceSso: !form.enforceSso })}
             role="switch"
             aria-checked={form.enforceSso}
-            style={{
-              width: 48,
-              height: 24,
-              borderRadius: 999,
-              border: 'none',
-              background: form.enforceSso ? '#0d9488' : '#cbd5e1',
-              cursor: 'pointer',
-              position: 'relative',
-            }}
+            className={`relative h-6 w-12 cursor-pointer rounded-full border-none ${
+              form.enforceSso ? 'bg-teal-600' : 'bg-slate-300'
+            }`}
           >
             <span
-              style={{
-                position: 'absolute',
-                top: 2,
-                left: form.enforceSso ? 26 : 2,
-                width: 20,
-                height: 20,
-                borderRadius: '50%',
-                background: 'white',
-                transition: 'left 0.15s',
-              }}
+              className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-[left] ${
+                form.enforceSso ? 'left-[26px]' : 'left-0.5'
+              }`}
             />
           </button>
         </div>
       </section>
 
-      <div style={{ display: 'flex', gap: 8 }}>
+      <div className="flex gap-2">
         <button
           data-testid="submit-sso"
           onClick={handleSave}
           disabled={saving || !canSave}
           title={!canSave ? NO_PERMISSION : undefined}
-          style={{
-            padding: '10px 24px',
-            background: '#0d9488',
-            color: 'white',
-            border: 'none',
-            borderRadius: 8,
-            fontWeight: 500,
-            cursor: (saving || !canSave) ? 'not-allowed' : 'pointer',
-          }}
+          className="btn-primary disabled:cursor-not-allowed disabled:opacity-60"
         >
           {saving ? 'Saving…' : 'Save Configuration'}
         </button>
@@ -519,16 +366,7 @@ export function CommercialSettingsSSOPage() {
           data-testid="action-test-sso"
           onClick={handleTest}
           disabled={testing || !form.isActive}
-          style={{
-            padding: '10px 24px',
-            background: 'white',
-            color: '#475569',
-            border: '1px solid #cbd5e1',
-            borderRadius: 8,
-            fontWeight: 500,
-            cursor: testing || !form.isActive ? 'not-allowed' : 'pointer',
-            opacity: testing || !form.isActive ? 0.5 : 1,
-          }}
+          className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {testing ? 'Testing…' : 'Test Connection'}
         </button>

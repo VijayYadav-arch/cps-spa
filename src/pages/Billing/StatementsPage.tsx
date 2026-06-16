@@ -16,39 +16,30 @@ import { PERMISSIONS } from '@/permissions/permissions';
 
 const NO_PERMISSION = 'You do not have permission to perform this action';
 
-const STATUS_COLORS: Record<StatementRunStatus, { bg: string; fg: string }> = {
-  draft: { bg: '#f1f5f9', fg: '#475569' },
-  sent: { bg: '#dbeafe', fg: '#1e40af' },
-  'partial-pay': { bg: '#fef3c7', fg: '#92400e' },
-  paid: { bg: '#d1fae5', fg: '#065f46' },
-  'written-off': { bg: '#fee2e2', fg: '#991b1b' },
+const STATUS_BADGE: Record<StatementRunStatus, string> = {
+  draft: 'bg-slate-100 text-slate-600',
+  sent: 'bg-blue-100 text-blue-800',
+  'partial-pay': 'bg-amber-100 text-amber-800',
+  paid: 'bg-green-100 text-green-800',
+  'written-off': 'bg-red-100 text-red-800',
 };
 
 function statusBadge(s: StatementRunStatus) {
-  const c = STATUS_COLORS[s] ?? STATUS_COLORS.draft;
+  const cls = STATUS_BADGE[s] ?? STATUS_BADGE.draft;
   return (
     <span
-      style={{
-        background: c.bg, color: c.fg,
-        padding: '2px 8px', borderRadius: 6,
-        fontSize: 12, fontWeight: 600,
-      }}
+      className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${cls}`}
     >
       {s}
     </span>
   );
 }
 
-function metricCard(label: string, value: string, color: string) {
+function metricCard(label: string, value: string, toneClass: string) {
   return (
-    <div
-      style={{
-        border: '1px solid #e2e8f0',
-        borderRadius: 8, padding: 16, background: '#fff', minWidth: 160,
-      }}
-    >
-      <div style={{ color: '#64748b', fontSize: 13 }}>{label}</div>
-      <div style={{ fontSize: 22, fontWeight: 700, color, marginTop: 6 }}>{value}</div>
+    <div className="card-hover min-w-40 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</div>
+      <div className={`mt-1.5 text-2xl font-bold ${toneClass}`}>{value}</div>
     </div>
   );
 }
@@ -169,11 +160,12 @@ export function StatementsPage() {
   }
 
   return (
-    <div style={{ padding: 24, maxWidth: 1200, display: 'grid', gap: 24 }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-        <div>
-          <h2 style={{ fontSize: 22, fontWeight: 700 }}>Patient Statements</h2>
-          <p style={{ color: '#64748b', marginTop: 4 }}>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <header className="flex items-baseline justify-between">
+        <div className="space-y-2">
+          <h2 className="text-2xl">Patient Statements</h2>
+          <div className="section-line" />
+          <p className="max-w-3xl text-slate-500">
             Statement runs and dunning cadence (30 / 60 / 90 day notices).
           </p>
         </div>
@@ -182,253 +174,259 @@ export function StatementsPage() {
           onClick={() => void handleGenerate()}
           disabled={!canManage}
           title={!canManage ? NO_PERMISSION : undefined}
-          style={{ cursor: !canManage ? 'not-allowed' : 'pointer' }}
+          className="btn-primary disabled:opacity-60 disabled:cursor-not-allowed"
         >
           + Generate Statement
         </button>
       </header>
 
-      {error && <div role="alert" style={{ color: '#b91c1c' }}>{error}</div>}
-      {actionMsg && <div style={{ color: '#15803d' }}>{actionMsg}</div>}
+      {error && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">{error}</div>}
+      {actionMsg && <div className="rounded-lg border-l-4 border-success bg-green-50 px-4 py-3 font-semibold text-green-800">{actionMsg}</div>}
 
       {dunning && (
-        <section style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+        <section className="flex flex-wrap gap-4">
           {metricCard(
             'Cycle 2 Due (30d)',
             dunning.cycle2Eligible.toString(),
-            dunning.cycle2Eligible > 0 ? '#b45309' : '#15803d',
+            dunning.cycle2Eligible > 0 ? 'text-accent-600' : 'text-success',
           )}
           {metricCard(
             'Cycle 3 Due (60d)',
             dunning.cycle3Eligible.toString(),
-            dunning.cycle3Eligible > 0 ? '#b91c1c' : '#15803d',
+            dunning.cycle3Eligible > 0 ? 'text-error' : 'text-success',
           )}
         </section>
       )}
 
-      <section style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        <strong>Filter:</strong>
+      <section className="flex flex-wrap items-center gap-2">
+        <strong className="text-slate-700">Filter:</strong>
         {(['all', 'draft', 'sent', 'partial-pay', 'paid', 'written-off'] as const).map((s) => (
           <button
             key={s}
             type="button"
             onClick={() => setStatusFilter(s)}
-            style={{
-              fontWeight: statusFilter === s ? 700 : 400,
-              background: statusFilter === s ? '#0ea5e9' : '#f1f5f9',
-              color: statusFilter === s ? '#fff' : '#0f172a',
-              border: 'none', padding: '4px 12px', borderRadius: 4,
-              cursor: 'pointer',
-            }}
+            className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+              statusFilter === s
+                ? 'bg-teal-600 font-semibold text-white'
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            }`}
           >
             {s}
           </button>
         ))}
       </section>
 
-      {isLoading && <div role="status">Loading…</div>}
+      {isLoading && <div role="status" className="text-slate-500">Loading…</div>}
 
       {!isLoading && runs.length === 0 && (
-        <p style={{ color: '#64748b' }}>No statement runs match this filter.</p>
+        <p className="text-slate-500">No statement runs match this filter.</p>
       )}
 
       {!isLoading && runs.length > 0 && (
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-              <th style={{ padding: '6px 10px' }}>Patient</th>
-              <th style={{ padding: '6px 10px' }}>Status</th>
-              <th style={{ padding: '6px 10px', textAlign: 'right' }}>Cycle</th>
-              <th style={{ padding: '6px 10px' }}>Statement Date</th>
-              <th style={{ padding: '6px 10px', textAlign: 'right' }}>Balance</th>
-              <th style={{ padding: '6px 10px', textAlign: 'right' }}>Paid</th>
-              <th style={{ padding: '6px 10px' }}></th>
-            </tr>
-          </thead>
-          <tbody>
-            {runs.map((r) => (
-              <tr key={r.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                <td style={{ padding: '6px 10px', fontWeight: 600 }}>{r.patientName}</td>
-                <td style={{ padding: '6px 10px' }}>{statusBadge(r.status)}</td>
-                <td style={{ padding: '6px 10px', textAlign: 'right' }}>{r.dunningCycle}</td>
-                <td style={{ padding: '6px 10px' }}>{r.statementDate.slice(0, 10)}</td>
-                <td style={{ padding: '6px 10px', textAlign: 'right' }}>
-                  {formatMoney(r.patientBalance)}
-                </td>
-                <td style={{ padding: '6px 10px', textAlign: 'right' }}>
-                  {formatMoney(r.amountPaid)}
-                </td>
-                <td style={{ padding: '6px 10px', display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                  <button
-                    type="button"
-                    onClick={() => setSelected(r)}
-                    style={{ fontSize: 12 }}
-                  >
-                    Details
-                  </button>
-                  {r.status === 'draft' && (
-                    <button
-                      type="button"
-                      onClick={() => void handleMarkSent(r)}
-                      disabled={!canManage}
-                      title={!canManage ? NO_PERMISSION : undefined}
-                      style={{ fontSize: 12, cursor: !canManage ? 'not-allowed' : 'pointer' }}
-                    >
-                      Mark Sent
-                    </button>
-                  )}
-                  {(r.status === 'sent' || r.status === 'partial-pay' || r.status === 'draft') && (
-                    <button
-                      type="button"
-                      onClick={() => void handleRecordPayment(r)}
-                      disabled={!canManage}
-                      title={!canManage ? NO_PERMISSION : undefined}
-                      style={{ fontSize: 12, cursor: !canManage ? 'not-allowed' : 'pointer' }}
-                    >
-                      Record Payment
-                    </button>
-                  )}
-                  {(r.status === 'sent' || r.status === 'partial-pay')
-                    && r.dunningCycle < 3 && (
-                      <button
-                        type="button"
-                        onClick={() => void handleEscalate(r)}
-                        disabled={!canManage}
-                        title={!canManage ? NO_PERMISSION : undefined}
-                        style={{ fontSize: 12, cursor: !canManage ? 'not-allowed' : 'pointer' }}
-                      >
-                        Escalate
-                      </button>
-                    )}
-                  {r.status !== 'paid' && r.status !== 'written-off' && (
-                    <button
-                      type="button"
-                      onClick={() => void handleWriteOff(r)}
-                      disabled={!canManage}
-                      title={!canManage ? NO_PERMISSION : undefined}
-                      style={{ fontSize: 12, color: '#b91c1c', cursor: !canManage ? 'not-allowed' : 'pointer' }}
-                    >
-                      Write Off
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-
-      {selected && (
-        <section
-          style={{
-            border: '1px solid #cbd5e1',
-            borderRadius: 8, padding: 16, background: '#f8fafc',
-            display: 'grid', gap: 12,
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <div>
-              <h3 style={{ fontSize: 16, fontWeight: 600 }}>
-                Run #{selected.id} — {selected.patientName}
-              </h3>
-              <div style={{ color: '#64748b', fontSize: 13, marginTop: 4 }}>
-                {statusBadge(selected.status)} · Cycle {selected.dunningCycle} ·
-                {' '}Statement {selected.statementDate.slice(0, 10)} · Due{' '}
-                {selected.dueDate.slice(0, 10)}
-              </div>
-            </div>
-            <button type="button" onClick={() => setSelected(null)}>Close</button>
-          </div>
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            {metricCard('Charges', formatMoney(selected.totalCharges), '#0f172a')}
-            {metricCard('Payments', formatMoney(selected.totalPayments), '#0f172a')}
-            {metricCard('Adjustments', formatMoney(selected.totalAdjustments), '#0f172a')}
-            {metricCard('Balance', formatMoney(selected.patientBalance), '#1e40af')}
-            {metricCard('Amount Paid', formatMoney(selected.amountPaid), '#15803d')}
-          </div>
-          <h4 style={{ fontSize: 14, fontWeight: 600 }}>Line Items</h4>
-          {selected.lineItems.length === 0 ? (
-            <p style={{ color: '#64748b' }}>No line items.</p>
-          ) : (
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-                  <th style={{ padding: '6px 10px' }}>Date</th>
-                  <th style={{ padding: '6px 10px' }}>Claim #</th>
-                  <th style={{ padding: '6px 10px' }}>Description</th>
-                  <th style={{ padding: '6px 10px', textAlign: 'right' }}>Charges</th>
-                  <th style={{ padding: '6px 10px', textAlign: 'right' }}>Paid</th>
-                  <th style={{ padding: '6px 10px', textAlign: 'right' }}>Balance</th>
-                </tr>
-              </thead>
-              <tbody>
-                {selected.lineItems.map((l, i) => (
-                  <tr key={i} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                    <td style={{ padding: '6px 10px' }}>{l.serviceDate.slice(0, 10)}</td>
-                    <td style={{ padding: '6px 10px', fontFamily: 'monospace', fontSize: 12 }}>
-                      {l.claimNumber ?? '—'}
-                    </td>
-                    <td style={{ padding: '6px 10px' }}>{l.description}</td>
-                    <td style={{ padding: '6px 10px', textAlign: 'right' }}>
-                      {formatMoney(l.chargeAmount)}
-                    </td>
-                    <td style={{ padding: '6px 10px', textAlign: 'right' }}>
-                      {formatMoney(l.paidAmount)}
-                    </td>
-                    <td style={{ padding: '6px 10px', textAlign: 'right', fontWeight: 600 }}>
-                      {formatMoney(l.patientBalance)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </section>
-      )}
-
-      {dunning && dunning.entries.length > 0 && (
-        <section style={{ display: 'grid', gap: 12 }}>
-          <h3 style={{ fontSize: 18, fontWeight: 600 }}>
-            Dunning Queue ({dunning.entries.length})
-          </h3>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <table className="w-full border-collapse text-sm">
             <thead>
-              <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-                <th style={{ padding: '6px 10px' }}>Patient</th>
-                <th style={{ padding: '6px 10px' }}>Sent</th>
-                <th style={{ padding: '6px 10px', textAlign: 'right' }}>Days</th>
-                <th style={{ padding: '6px 10px', textAlign: 'right' }}>Cycle</th>
-                <th style={{ padding: '6px 10px', textAlign: 'right' }}>Balance</th>
-                <th style={{ padding: '6px 10px' }}></th>
+              <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                <th className="px-4 py-3">Patient</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3 text-right">Cycle</th>
+                <th className="px-4 py-3">Statement Date</th>
+                <th className="px-4 py-3 text-right">Balance</th>
+                <th className="px-4 py-3 text-right">Paid</th>
+                <th className="px-4 py-3"></th>
               </tr>
             </thead>
             <tbody>
-              {dunning.entries.map((e) => (
-                <tr key={e.runId} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td style={{ padding: '6px 10px' }}>{e.patientName}</td>
-                  <td style={{ padding: '6px 10px' }}>{e.sentAt.slice(0, 10)}</td>
-                  <td style={{ padding: '6px 10px', textAlign: 'right' }}>{e.daysSinceSent}d</td>
-                  <td style={{ padding: '6px 10px', textAlign: 'right' }}>
-                    {e.currentCycle} → {e.nextCycle}
+              {runs.map((r) => (
+                <tr key={r.id} className="border-t border-slate-100 hover:bg-slate-50">
+                  <td className="px-4 py-3 font-semibold text-slate-700">{r.patientName}</td>
+                  <td className="px-4 py-3">{statusBadge(r.status)}</td>
+                  <td className="px-4 py-3 text-right text-slate-700">{r.dunningCycle}</td>
+                  <td className="px-4 py-3 text-slate-700">{r.statementDate.slice(0, 10)}</td>
+                  <td className="px-4 py-3 text-right text-slate-700">
+                    {formatMoney(r.patientBalance)}
                   </td>
-                  <td style={{ padding: '6px 10px', textAlign: 'right' }}>
-                    {formatMoney(e.patientBalance)}
+                  <td className="px-4 py-3 text-right text-slate-700">
+                    {formatMoney(r.amountPaid)}
                   </td>
-                  <td style={{ padding: '6px 10px' }}>
-                    <button
-                      type="button"
-                      onClick={() => void handleEscalate({ ...runs[0], id: e.runId, dunningCycle: e.currentCycle, patientBalance: e.patientBalance } as StatementRun)}
-                      disabled={!canManage}
-                      title={!canManage ? NO_PERMISSION : undefined}
-                      style={{ fontSize: 12, cursor: !canManage ? 'not-allowed' : 'pointer' }}
-                    >
-                      Send Cycle {e.nextCycle} Notice
-                    </button>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setSelected(r)}
+                        className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                      >
+                        Details
+                      </button>
+                      {r.status === 'draft' && (
+                        <button
+                          type="button"
+                          onClick={() => void handleMarkSent(r)}
+                          disabled={!canManage}
+                          title={!canManage ? NO_PERMISSION : undefined}
+                          className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                          Mark Sent
+                        </button>
+                      )}
+                      {(r.status === 'sent' || r.status === 'partial-pay' || r.status === 'draft') && (
+                        <button
+                          type="button"
+                          onClick={() => void handleRecordPayment(r)}
+                          disabled={!canManage}
+                          title={!canManage ? NO_PERMISSION : undefined}
+                          className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                          Record Payment
+                        </button>
+                      )}
+                      {(r.status === 'sent' || r.status === 'partial-pay')
+                        && r.dunningCycle < 3 && (
+                          <button
+                            type="button"
+                            onClick={() => void handleEscalate(r)}
+                            disabled={!canManage}
+                            title={!canManage ? NO_PERMISSION : undefined}
+                            className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed"
+                          >
+                            Escalate
+                          </button>
+                        )}
+                      {r.status !== 'paid' && r.status !== 'written-off' && (
+                        <button
+                          type="button"
+                          onClick={() => void handleWriteOff(r)}
+                          disabled={!canManage}
+                          title={!canManage ? NO_PERMISSION : undefined}
+                          className="rounded-md border border-red-200 px-2.5 py-1 text-xs font-medium text-red-700 transition-colors hover:bg-red-50 disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                          Write Off
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {selected && (
+        <section className="grid gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="flex justify-between">
+            <div>
+              <h3 className="text-lg font-semibold">
+                Run #{selected.id} — {selected.patientName}
+              </h3>
+              <div className="mt-1 text-sm text-slate-500">
+                {statusBadge(selected.status)} · Cycle {selected.dunningCycle} ·
+                {' '}Statement {selected.statementDate.slice(0, 10)} · Due{' '}
+                {selected.dueDate.slice(0, 10)}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSelected(null)}
+              className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+            >
+              Close
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-4">
+            {metricCard('Charges', formatMoney(selected.totalCharges), 'text-navy-900')}
+            {metricCard('Payments', formatMoney(selected.totalPayments), 'text-navy-900')}
+            {metricCard('Adjustments', formatMoney(selected.totalAdjustments), 'text-navy-900')}
+            {metricCard('Balance', formatMoney(selected.patientBalance), 'text-blue-800')}
+            {metricCard('Amount Paid', formatMoney(selected.amountPaid), 'text-success')}
+          </div>
+          <h4 className="text-sm font-semibold text-slate-700">Line Items</h4>
+          {selected.lineItems.length === 0 ? (
+            <p className="text-slate-500">No line items.</p>
+          ) : (
+            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+              <table className="w-full border-collapse text-sm">
+                <thead>
+                  <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                    <th className="px-4 py-3">Date</th>
+                    <th className="px-4 py-3">Claim #</th>
+                    <th className="px-4 py-3">Description</th>
+                    <th className="px-4 py-3 text-right">Charges</th>
+                    <th className="px-4 py-3 text-right">Paid</th>
+                    <th className="px-4 py-3 text-right">Balance</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {selected.lineItems.map((l, i) => (
+                    <tr key={i} className="border-t border-slate-100 hover:bg-slate-50">
+                      <td className="px-4 py-3 text-slate-700">{l.serviceDate.slice(0, 10)}</td>
+                      <td className="px-4 py-3 font-mono text-xs text-slate-700">
+                        {l.claimNumber ?? '—'}
+                      </td>
+                      <td className="px-4 py-3 text-slate-700">{l.description}</td>
+                      <td className="px-4 py-3 text-right text-slate-700">
+                        {formatMoney(l.chargeAmount)}
+                      </td>
+                      <td className="px-4 py-3 text-right text-slate-700">
+                        {formatMoney(l.paidAmount)}
+                      </td>
+                      <td className="px-4 py-3 text-right font-semibold text-slate-700">
+                        {formatMoney(l.patientBalance)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      )}
+
+      {dunning && dunning.entries.length > 0 && (
+        <section className="grid gap-3">
+          <h3 className="text-lg font-semibold">
+            Dunning Queue ({dunning.entries.length})
+          </h3>
+          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                  <th className="px-4 py-3">Patient</th>
+                  <th className="px-4 py-3">Sent</th>
+                  <th className="px-4 py-3 text-right">Days</th>
+                  <th className="px-4 py-3 text-right">Cycle</th>
+                  <th className="px-4 py-3 text-right">Balance</th>
+                  <th className="px-4 py-3"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {dunning.entries.map((e) => (
+                  <tr key={e.runId} className="border-t border-slate-100 hover:bg-slate-50">
+                    <td className="px-4 py-3 text-slate-700">{e.patientName}</td>
+                    <td className="px-4 py-3 text-slate-700">{e.sentAt.slice(0, 10)}</td>
+                    <td className="px-4 py-3 text-right text-slate-700">{e.daysSinceSent}d</td>
+                    <td className="px-4 py-3 text-right text-slate-700">
+                      {e.currentCycle} → {e.nextCycle}
+                    </td>
+                    <td className="px-4 py-3 text-right text-slate-700">
+                      {formatMoney(e.patientBalance)}
+                    </td>
+                    <td className="px-4 py-3">
+                      <button
+                        type="button"
+                        onClick={() => void handleEscalate({ ...runs[0], id: e.runId, dunningCycle: e.currentCycle, patientBalance: e.patientBalance } as StatementRun)}
+                        disabled={!canManage}
+                        title={!canManage ? NO_PERMISSION : undefined}
+                        className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        Send Cycle {e.nextCycle} Notice
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </section>
       )}
     </div>

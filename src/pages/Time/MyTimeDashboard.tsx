@@ -17,19 +17,11 @@ function defaultRange(): { from: string; to: string } {
   return { from: from.toISOString().slice(0, 10), to };
 }
 
-function metricCard(label: string, value: string, color: string) {
+function metricCard(label: string, value: string, toneClass: string) {
   return (
-    <div
-      style={{
-        border: '1px solid #e2e8f0',
-        borderRadius: 8,
-        padding: 16,
-        background: '#fff',
-        minWidth: 140,
-      }}
-    >
-      <div style={{ color: '#64748b', fontSize: 13 }}>{label}</div>
-      <div style={{ fontSize: 22, fontWeight: 700, color, marginTop: 6 }}>
+    <div className="card-hover min-w-[140px] flex-1 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</div>
+      <div className={`mt-1.5 text-2xl font-bold ${toneClass}`}>
         {value}
       </div>
     </div>
@@ -116,10 +108,11 @@ export function MyTimeDashboard() {
   }
 
   return (
-    <div style={{ padding: 24, maxWidth: 1000, display: 'grid', gap: 24 }}>
-      <header>
-        <h2 style={{ fontSize: 22, fontWeight: 700 }}>My Time</h2>
-        <p style={{ color: '#64748b', marginTop: 4 }}>
+    <div className="grid max-w-[1000px] gap-6 p-6">
+      <header className="space-y-2">
+        <h2 className="text-2xl">My Time</h2>
+        <div className="section-line" />
+        <p className="max-w-3xl text-slate-500">
           Log and review your paid hours by activity. The authenticated identity is
           used automatically — no employee ID required.
           {auth.user?.userId ? ` Signed in as user #${auth.user.userId}.` : ''}
@@ -128,51 +121,54 @@ export function MyTimeDashboard() {
 
       <form
         onSubmit={handleApply}
-        style={{ display: 'flex', gap: 12, alignItems: 'end' }}
+        className="flex flex-wrap items-end gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
       >
-        <label style={{ display: 'grid', gap: 4 }}>
-          <span>From</span>
+        <label className="grid gap-1.5">
+          <span className="text-sm font-medium text-slate-600">From</span>
           <input
             type="date"
             value={range.from}
             onChange={(e) => setRange({ ...range, from: e.target.value })}
             required
+            className="form-input"
           />
         </label>
-        <label style={{ display: 'grid', gap: 4 }}>
-          <span>To</span>
+        <label className="grid gap-1.5">
+          <span className="text-sm font-medium text-slate-600">To</span>
           <input
             type="date"
             value={range.to}
             onChange={(e) => setRange({ ...range, to: e.target.value })}
             required
+            className="form-input"
           />
         </label>
-        <button type="submit">Apply</button>
+        <button type="submit" className="btn-primary">Apply</button>
       </form>
 
-      {isLoading && <div role="status">Loading…</div>}
-      {error && <div role="alert">{error}</div>}
+      {isLoading && <div role="status" className="text-slate-500">Loading…</div>}
+      {error && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">{error}</div>}
 
       {summary && !isLoading && (
-        <section style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          {metricCard('Patient Care', `${summary.patientCareHours}h`, '#15803d')}
-          {metricCard('Administrative', `${summary.administrativeHours}h`, '#0e7490')}
-          {metricCard('Training', `${summary.trainingHours}h`, '#7c3aed')}
-          {metricCard('Non-Billable', `${summary.nonBillableHours}h`, '#64748b')}
-          {metricCard('Total', `${summary.totalHours}h`, '#0f172a')}
+        <section className="flex flex-wrap gap-4">
+          {metricCard('Patient Care', `${summary.patientCareHours}h`, 'text-success')}
+          {metricCard('Administrative', `${summary.administrativeHours}h`, 'text-teal-700')}
+          {metricCard('Training', `${summary.trainingHours}h`, 'text-purple-700')}
+          {metricCard('Non-Billable', `${summary.nonBillableHours}h`, 'text-slate-500')}
+          {metricCard('Total', `${summary.totalHours}h`, 'text-navy-900')}
         </section>
       )}
 
-      <section style={{ display: 'grid', gap: 12, maxWidth: 600 }}>
-        <h3 style={{ fontSize: 16, fontWeight: 600 }}>Log My Time</h3>
-        <form onSubmit={handleLog} style={{ display: 'grid', gap: 8 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+      <section className="grid max-w-[600px] gap-3">
+        <h3 className="text-lg font-semibold">Log My Time</h3>
+        <form onSubmit={handleLog} className="grid gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="grid grid-cols-2 gap-4">
             <input
               type="date"
               value={serviceDate}
               onChange={(e) => setServiceDate(e.target.value)}
               required
+              className="form-input"
             />
             <input
               type="number"
@@ -182,11 +178,13 @@ export function MyTimeDashboard() {
               max={24}
               step={0.25}
               required
+              className="form-input"
             />
           </div>
           <select
             value={activity}
             onChange={(e) => setActivity(e.target.value as EmployeeTimeActivityType)}
+            className="form-input"
           >
             <option value="PatientCare">Patient Care</option>
             <option value="Administrative">Administrative</option>
@@ -197,47 +195,50 @@ export function MyTimeDashboard() {
             placeholder="Description (optional)"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
+            className="form-input"
           />
           {actionError && (
-            <div role="alert" style={{ color: '#b91c1c' }}>
+            <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">
               {actionError}
             </div>
           )}
-          <button type="submit" disabled={isLogging}>
+          <button type="submit" disabled={isLogging} className="btn-primary justify-self-start disabled:cursor-not-allowed disabled:opacity-60">
             {isLogging ? 'Saving…' : 'Log Time'}
           </button>
         </form>
       </section>
 
-      <section style={{ display: 'grid', gap: 12 }}>
-        <h3 style={{ fontSize: 18, fontWeight: 600 }}>
+      <section className="grid gap-3">
+        <h3 className="text-lg font-semibold">
           My Recent Logs ({logs.length})
         </h3>
         {logs.length === 0 ? (
-          <p style={{ color: '#64748b' }}>No logs in this window.</p>
+          <p className="text-slate-500">No logs in this window.</p>
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-                <th style={{ padding: '6px 10px' }}>Date</th>
-                <th style={{ padding: '6px 10px' }}>Hours</th>
-                <th style={{ padding: '6px 10px' }}>Activity</th>
-                <th style={{ padding: '6px 10px' }}>Description</th>
-              </tr>
-            </thead>
-            <tbody>
-              {logs.map((l) => (
-                <tr key={l.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td style={{ padding: '6px 10px' }}>{l.serviceDate}</td>
-                  <td style={{ padding: '6px 10px' }}>{l.hours}</td>
-                  <td style={{ padding: '6px 10px' }}>{l.activityType}</td>
-                  <td style={{ padding: '6px 10px', color: '#64748b' }}>
-                    {l.description ?? '—'}
-                  </td>
+          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                  <th className="px-4 py-3">Date</th>
+                  <th className="px-4 py-3">Hours</th>
+                  <th className="px-4 py-3">Activity</th>
+                  <th className="px-4 py-3">Description</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {logs.map((l) => (
+                  <tr key={l.id} className="border-t border-slate-100 hover:bg-slate-50">
+                    <td className="px-4 py-3 text-slate-700">{l.serviceDate}</td>
+                    <td className="px-4 py-3 text-slate-700">{l.hours}</td>
+                    <td className="px-4 py-3 text-slate-700">{l.activityType}</td>
+                    <td className="px-4 py-3 text-slate-500">
+                      {l.description ?? '—'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
     </div>

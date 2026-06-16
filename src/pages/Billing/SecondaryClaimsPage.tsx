@@ -80,35 +80,30 @@ export function SecondaryClaimsPage() {
   }
 
   return (
-    <div style={{ padding: 24, maxWidth: 1200, display: 'grid', gap: 24 }}>
-      <header>
-        <h2 style={{ fontSize: 22, fontWeight: 700 }}>Secondary Payer Submissions</h2>
-        <p style={{ color: '#64748b', marginTop: 4 }}>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <header className="space-y-2">
+        <h2 className="text-2xl">Secondary Payer Submissions</h2>
+        <div className="section-line" />
+        <p className="max-w-3xl text-slate-500">
           Claims with partial primary payment + secondary payer set. Generate a
           COB-framed secondary 837 to recover the remaining balance.
         </p>
       </header>
 
-      {error && <div role="alert" style={{ color: '#b91c1c' }}>{error}</div>}
-      {actionMsg && <div style={{ color: '#15803d' }}>{actionMsg}</div>}
+      {error && (
+        <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">{error}</div>
+      )}
+      {actionMsg && (
+        <div className="rounded-lg border-l-4 border-success bg-green-50 px-4 py-3 font-semibold text-green-800">{actionMsg}</div>
+      )}
 
-      <section
-        style={{
-          border: '1px solid #e2e8f0',
-          borderRadius: 8,
-          padding: 12,
-          background: '#fff',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
-        }}
-      >
-        <label style={{ display: 'grid', gap: 4 }}>
-          <span>Clearinghouse for outgoing secondary 837</span>
+      <section className="flex flex-wrap items-end gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <label className="grid gap-1.5">
+          <span className="text-sm font-medium text-slate-600">Clearinghouse for outgoing secondary 837</span>
           <select
             value={clearinghouse}
             onChange={(e) => setClearinghouse(e.target.value)}
-            style={{ minWidth: 220 }}
+            className="form-input min-w-[220px]"
           >
             {CLEARINGHOUSES.map((c) => (
               <option key={c} value={c}>
@@ -119,117 +114,97 @@ export function SecondaryClaimsPage() {
         </label>
       </section>
 
-      {isLoading && <div role="status">Loading…</div>}
+      {isLoading && <div role="status" className="text-slate-500">Loading…</div>}
       {!isLoading && items.length === 0 && (
-        <p style={{ color: '#64748b' }}>
+        <p className="text-slate-500">
           No claims currently eligible for secondary submission. They appear here
           when a primary 835 pays partial and the claim has a SecondaryPayer set.
         </p>
       )}
 
       {!isLoading && items.length > 0 && (
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-              <th style={{ padding: '6px 10px' }}>Claim</th>
-              <th style={{ padding: '6px 10px' }}>Patient</th>
-              <th style={{ padding: '6px 10px' }}>Primary</th>
-              <th style={{ padding: '6px 10px' }}>Secondary</th>
-              <th style={{ padding: '6px 10px', textAlign: 'right' }}>Charges</th>
-              <th style={{ padding: '6px 10px', textAlign: 'right' }}>Primary Paid</th>
-              <th style={{ padding: '6px 10px', textAlign: 'right' }}>Balance</th>
-              <th style={{ padding: '6px 10px' }}></th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((c) => (
-              <tr key={c.claimId} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                <td style={{ padding: '6px 10px', fontFamily: 'monospace', fontSize: 13 }}>
-                  {c.claimNumber}
-                </td>
-                <td style={{ padding: '6px 10px' }}>{c.patientName}</td>
-                <td style={{ padding: '6px 10px' }}>{c.primaryPayer}</td>
-                <td style={{ padding: '6px 10px' }}>{c.secondaryPayer}</td>
-                <td style={{ padding: '6px 10px', textAlign: 'right' }}>
-                  {formatMoney(c.chargeAmount)}
-                </td>
-                <td style={{ padding: '6px 10px', textAlign: 'right' }}>
-                  {formatMoney(c.primaryPaidAmount)}
-                </td>
-                <td
-                  style={{
-                    padding: '6px 10px',
-                    textAlign: 'right',
-                    fontWeight: 600,
-                    color: '#0e7490',
-                  }}
-                >
-                  {formatMoney(c.balanceForSecondary)}
-                </td>
-                <td style={{ padding: '6px 10px' }}>
-                  <button
-                    type="button"
-                    onClick={() => void handleBuild(c)}
-                    disabled={building === c.claimId || !canBuild}
-                    title={!canBuild ? NO_PERMISSION : undefined}
-                    style={{ fontSize: 12 }}
-                  >
-                    {building === c.claimId ? 'Building…' : 'Build 837'}
-                  </button>
-                </td>
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                <th className="px-4 py-3">Claim</th>
+                <th className="px-4 py-3">Patient</th>
+                <th className="px-4 py-3">Primary</th>
+                <th className="px-4 py-3">Secondary</th>
+                <th className="px-4 py-3 text-right">Charges</th>
+                <th className="px-4 py-3 text-right">Primary Paid</th>
+                <th className="px-4 py-3 text-right">Balance</th>
+                <th className="px-4 py-3"></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {items.map((c) => (
+                <tr key={c.claimId} className="border-t border-slate-100 hover:bg-slate-50">
+                  <td className="px-4 py-3 font-mono text-slate-700">
+                    {c.claimNumber}
+                  </td>
+                  <td className="px-4 py-3 text-slate-700">{c.patientName}</td>
+                  <td className="px-4 py-3 text-slate-700">{c.primaryPayer}</td>
+                  <td className="px-4 py-3 text-slate-700">{c.secondaryPayer}</td>
+                  <td className="px-4 py-3 text-right text-slate-700">
+                    {formatMoney(c.chargeAmount)}
+                  </td>
+                  <td className="px-4 py-3 text-right text-slate-700">
+                    {formatMoney(c.primaryPaidAmount)}
+                  </td>
+                  <td className="px-4 py-3 text-right font-semibold text-teal-700">
+                    {formatMoney(c.balanceForSecondary)}
+                  </td>
+                  <td className="px-4 py-3">
+                    <button
+                      type="button"
+                      onClick={() => void handleBuild(c)}
+                      disabled={building === c.claimId || !canBuild}
+                      title={!canBuild ? NO_PERMISSION : undefined}
+                      className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      {building === c.claimId ? 'Building…' : 'Build 837'}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {result && (
-        <section
-          style={{
-            border: '1px solid #cbd5e1',
-            borderRadius: 8,
-            padding: 16,
-            background: '#f8fafc',
-            display: 'grid',
-            gap: 12,
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+        <section className="grid gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="flex justify-between">
             <div>
-              <h3 style={{ fontSize: 16, fontWeight: 600 }}>
+              <h3 className="text-lg font-semibold">
                 Secondary 837 — Submission #{result.submissionId}
               </h3>
-              <div style={{ color: '#64748b', fontSize: 13, marginTop: 4 }}>
+              <div className="mt-1 text-sm text-slate-500">
                 Control #{result.controlNumber} · Primary paid{' '}
                 {formatMoney(result.primaryPaidAmount)} · Secondary balance{' '}
                 {formatMoney(result.secondaryClaimAmount)}
               </div>
             </div>
-            <button type="button" onClick={() => setResult(null)}>Close</button>
+            <button
+              type="button"
+              onClick={() => setResult(null)}
+              className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+            >
+              Close
+            </button>
           </div>
           {result.warnings.length > 0 && (
-            <div style={{ background: '#fef3c7', padding: 10, borderRadius: 6 }}>
-              <strong style={{ color: '#92400e' }}>Warnings:</strong>
-              <ul style={{ marginTop: 6, paddingLeft: 18, color: '#92400e' }}>
+            <div className="rounded-lg border-l-4 border-warning bg-amber-50 px-4 py-3">
+              <strong className="text-amber-800">Warnings:</strong>
+              <ul className="mt-1.5 list-disc pl-5 text-amber-800">
                 {result.warnings.map((w, i) => (
                   <li key={i}>{w}</li>
                 ))}
               </ul>
             </div>
           )}
-          <pre
-            style={{
-              background: '#0f172a',
-              color: '#e2e8f0',
-              padding: 12,
-              borderRadius: 6,
-              maxHeight: 320,
-              overflow: 'auto',
-              fontSize: 11,
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-all',
-            }}
-          >
+          <pre className="max-h-80 overflow-auto whitespace-pre-wrap break-all rounded-lg bg-navy-900 p-3 font-mono text-[11px] text-slate-200">
             {result.edi837}
           </pre>
         </section>

@@ -27,11 +27,11 @@ function formatUserName(u: AssignableUser): string {
   return full || u.email;
 }
 
-const PRIORITY_COLORS: Record<string, { bg: string; fg: string }> = {
-  critical: { bg: '#fee2e2', fg: '#991b1b' },
-  high: { bg: '#ffedd5', fg: '#9a3412' },
-  medium: { bg: '#dbeafe', fg: '#1e40af' },
-  low: { bg: '#f1f5f9', fg: '#475569' },
+const PRIORITY_COLORS: Record<string, string> = {
+  critical: 'bg-red-100 text-red-800',
+  high: 'bg-orange-100 text-orange-800',
+  medium: 'bg-blue-100 text-blue-800',
+  low: 'bg-slate-100 text-slate-600',
 };
 
 const TYPE_LABELS: Record<string, string> = {
@@ -51,20 +51,14 @@ const SNOOZE_OPTIONS = [
   { label: 'Next week', deltaMs: 7 * 24 * 60 * 60 * 1000 },
 ];
 
+const SMALL_SELECT =
+  'rounded border border-slate-300 bg-white px-2 py-1 text-xs';
+
 function priorityBadge(p: string) {
   const c = PRIORITY_COLORS[p] ?? PRIORITY_COLORS.medium;
   return (
     <span
-      style={{
-        display: 'inline-block',
-        padding: '2px 8px',
-        borderRadius: 999,
-        fontSize: 11,
-        fontWeight: 700,
-        textTransform: 'uppercase',
-        background: c.bg,
-        color: c.fg,
-      }}
+      className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-bold uppercase ${c}`}
     >
       {p}
     </span>
@@ -74,15 +68,7 @@ function priorityBadge(p: string) {
 function typeChip(t: string) {
   return (
     <span
-      style={{
-        display: 'inline-block',
-        padding: '2px 8px',
-        borderRadius: 4,
-        fontSize: 11,
-        fontWeight: 500,
-        background: '#f1f5f9',
-        color: '#334155',
-      }}
+      className="inline-block rounded bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700"
     >
       {TYPE_LABELS[t] ?? t}
     </span>
@@ -356,17 +342,13 @@ export function InboxPage() {
   const now = new Date();
 
   return (
-    <div style={{ padding: 24 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1 style={{ marginTop: 0, marginBottom: 16 }}>Inbox</h1>
+    <div className="p-6">
+      <div className="flex items-center justify-between">
+        <h1 className="mb-4 mt-0 text-2xl">Inbox</h1>
         <button
           type="button"
           onClick={() => setShowNewDialog(true)}
-          style={{
-            background: '#0ea5e9', color: '#fff', border: 'none',
-            padding: '8px 14px', borderRadius: 6, cursor: 'pointer',
-            fontWeight: 600, fontSize: 13,
-          }}
+          className="btn-primary"
         >
           + New work item
         </button>
@@ -374,30 +356,25 @@ export function InboxPage() {
 
       {/* Stats row */}
       {stats && (
-        <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
+        <div className="mb-4 flex flex-wrap gap-3">
           {statCard('Open', stats.pending + stats.inProgress)}
-          {statCard('Critical', stats.critical, stats.critical > 0 ? '#dc2626' : undefined)}
-          {statCard('Overdue', stats.overdue, stats.overdue > 0 ? '#f59e0b' : undefined)}
+          {statCard('Critical', stats.critical, stats.critical > 0 ? 'text-error' : undefined)}
+          {statCard('Overdue', stats.overdue, stats.overdue > 0 ? 'text-accent-500' : undefined)}
         </div>
       )}
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 4, marginBottom: 16 }}>
+      <div className="mb-4 flex gap-1">
         {(['mine', 'all'] as const).map((t) => (
           <button
             key={t}
             type="button"
             onClick={() => setTab(t)}
-            style={{
-              padding: '6px 14px',
-              background: tab === t ? '#0ea5e9' : '#fff',
-              color: tab === t ? '#fff' : '#475569',
-              border: '1px solid #cbd5e1',
-              borderRadius: 6,
-              cursor: 'pointer',
-              fontWeight: 500,
-              fontSize: 13,
-            }}
+            className={`rounded-md border px-3.5 py-1.5 text-[13px] font-medium transition-colors ${
+              tab === t
+                ? 'border-teal-600 bg-teal-600 text-white'
+                : 'border-slate-300 bg-white text-slate-600 hover:bg-slate-50'
+            }`}
           >
             {t === 'mine' ? 'My work' : 'All open'}
           </button>
@@ -408,10 +385,7 @@ export function InboxPage() {
       <div
         role="region"
         aria-label="Inbox filters"
-        style={{
-          display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center',
-          marginBottom: 16,
-        }}
+        className="mb-4 flex flex-wrap items-center gap-1.5"
       >
         {(['critical', 'high', 'medium', 'low'] as const).map((p) => {
           const active = filter.priority?.includes(p) ?? false;
@@ -425,7 +399,7 @@ export function InboxPage() {
                   ? prev.priority?.filter((x) => x !== p)
                   : [...(prev.priority ?? []), p],
               }))}
-              style={chipStyle(active)}
+              className={chipClass(active, 'teal')}
               aria-pressed={active}
             >
               {p}
@@ -435,22 +409,22 @@ export function InboxPage() {
         <button
           type="button"
           onClick={() => setFilter((prev) => ({ ...prev, overdueOnly: !prev.overdueOnly }))}
-          style={chipStyle(filter.overdueOnly ?? false, '#f59e0b')}
+          className={chipClass(filter.overdueOnly ?? false, 'amber')}
           aria-pressed={filter.overdueOnly ?? false}
         >
           overdue
         </button>
 
-        <span style={{ width: 1, height: 20, background: '#e2e8f0', margin: '0 4px' }} />
+        <span className="mx-1 h-5 w-px bg-slate-200" />
 
         {savedFilters.map((sf) => {
           const active = activeFilterId === sf.id;
           return (
-            <span key={sf.id} style={{ display: 'inline-flex', gap: 2 }}>
+            <span key={sf.id} className="inline-flex gap-0.5">
               <button
                 type="button"
                 onClick={() => applyFilter(sf)}
-                style={chipStyle(active, '#8b5cf6')}
+                className={chipClass(active, 'violet')}
                 aria-pressed={active}
               >
                 {sf.name}
@@ -458,11 +432,7 @@ export function InboxPage() {
               <button
                 type="button"
                 onClick={() => handleDeleteFilter(sf.id)}
-                style={{
-                  background: 'transparent', border: '1px solid #cbd5e1',
-                  borderRadius: 4, padding: '2px 6px', cursor: 'pointer',
-                  fontSize: 12, color: '#64748b',
-                }}
+                className="rounded border border-slate-300 bg-transparent px-1.5 py-0.5 text-xs text-slate-500 hover:bg-slate-50"
                 aria-label={`Delete saved filter ${sf.name}`}
               >
                 ×
@@ -474,11 +444,7 @@ export function InboxPage() {
         <button
           type="button"
           onClick={handleSaveCurrentFilter}
-          style={{
-            background: 'transparent', border: '1px dashed #cbd5e1',
-            borderRadius: 4, padding: '4px 10px', cursor: 'pointer',
-            fontSize: 12, color: '#475569',
-          }}
+          className="rounded border border-dashed border-slate-300 bg-transparent px-2.5 py-1 text-xs text-slate-600 disabled:opacity-60 disabled:cursor-not-allowed"
           disabled={
             !(filter.priority?.length || filter.type?.length || filter.overdueOnly)
           }
@@ -490,10 +456,7 @@ export function InboxPage() {
           <button
             type="button"
             onClick={clearFilter}
-            style={{
-              background: 'transparent', border: 'none', padding: '4px 8px',
-              cursor: 'pointer', color: '#64748b', fontSize: 12,
-            }}
+            className="border-none bg-transparent px-2 py-1 text-xs text-slate-500 hover:text-slate-700"
           >
             Clear filters
           </button>
@@ -501,12 +464,12 @@ export function InboxPage() {
       </div>
 
       {notice && (
-        <div role="status" style={{ marginBottom: 12, color: '#166534', background: '#dcfce7', padding: 10, borderRadius: 6 }}>
+        <div role="status" className="mb-3 rounded-md bg-green-100 px-2.5 py-2.5 text-green-800">
           {notice}
         </div>
       )}
       {error && (
-        <div role="alert" style={{ marginBottom: 12, color: '#991b1b', background: '#fee2e2', padding: 10, borderRadius: 6 }}>
+        <div role="alert" className="mb-3 rounded-md bg-red-100 px-2.5 py-2.5 text-red-800">
           {error}
         </div>
       )}
@@ -516,29 +479,20 @@ export function InboxPage() {
         <div
           role="region"
           aria-label="Bulk actions"
-          style={{
-            display: 'flex',
-            gap: 8,
-            alignItems: 'center',
-            padding: 12,
-            marginBottom: 12,
-            background: '#eff6ff',
-            border: '1px solid #93c5fd',
-            borderRadius: 6,
-          }}
+          className="mb-3 flex items-center gap-2 rounded-md border border-blue-300 bg-blue-50 p-3"
         >
           <strong>{selected.size} selected</strong>
           <button
             type="button"
             onClick={() => runBulk('claim')}
-            style={btnStyle('primary')}
+            className={btnClass('primary')}
           >
             Claim all
           </button>
           <button
             type="button"
             onClick={() => runBulk('complete')}
-            style={btnStyle('success')}
+            className={btnClass('success')}
           >
             Complete all
           </button>
@@ -547,7 +501,7 @@ export function InboxPage() {
             onChange={(e) => {
               if (e.target.value) handleBulkSnooze(e.target.value);
             }}
-            style={{ padding: '4px 8px', border: '1px solid #cbd5e1', borderRadius: 4, fontSize: 12 }}
+            className={SMALL_SELECT}
             aria-label="Snooze all selected"
           >
             <option value="">Snooze all…</option>
@@ -561,7 +515,7 @@ export function InboxPage() {
               const uid = Number(e.target.value);
               if (uid > 0) handleBulkAssign(uid);
             }}
-            style={{ padding: '4px 8px', border: '1px solid #cbd5e1', borderRadius: 4, fontSize: 12 }}
+            className={SMALL_SELECT}
             aria-label="Assign all selected to"
             disabled={assignableUsers.length === 0}
           >
@@ -573,7 +527,7 @@ export function InboxPage() {
           <button
             type="button"
             onClick={() => setSelected(new Set())}
-            style={{ ...btnStyle('default'), marginLeft: 'auto' }}
+            className={`${btnClass('default')} ml-auto`}
           >
             Clear
           </button>
@@ -581,172 +535,153 @@ export function InboxPage() {
       )}
 
       {loading ? (
-        <div style={{ color: '#64748b' }}>Loading…</div>
+        <div className="text-slate-500">Loading…</div>
       ) : filteredItems.length === 0 ? (
-        <div style={{ color: '#64748b', padding: 24, textAlign: 'center', background: '#f8fafc', borderRadius: 8 }}>
+        <div className="rounded-xl bg-slate-50 p-6 text-center text-slate-500">
           🎉 Inbox zero. Nothing assigned to you right now.
         </div>
       ) : (
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-          <thead>
-            <tr style={{ borderBottom: '1px solid #e2e8f0', color: '#64748b' }}>
-              <th style={{ textAlign: 'left', padding: '8px 6px', width: 24 }}>
-                <input
-                  type="checkbox"
-                  checked={allSelected}
-                  ref={(el) => {
-                    if (el) el.indeterminate = someSelected;
-                  }}
-                  onChange={toggleAll}
-                  aria-label="Select all items"
-                />
-              </th>
-              <th style={{ textAlign: 'left', padding: '8px 6px' }}>Priority</th>
-              <th style={{ textAlign: 'left', padding: '8px 6px' }}>Type</th>
-              <th style={{ textAlign: 'left', padding: '8px 6px' }}>Description</th>
-              <th style={{ textAlign: 'left', padding: '8px 6px' }}>Linked</th>
-              <th style={{ textAlign: 'left', padding: '8px 6px' }}>Due</th>
-              <th style={{ textAlign: 'left', padding: '8px 6px' }}>Status</th>
-              <th style={{ textAlign: 'right', padding: '8px 6px' }}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredItems.map((item) => {
-              const overdue = isOverdue(item, now);
-              const snoozed = item.snoozeUntilUtc && new Date(item.snoozeUntilUtc) > now;
-              return (
-                <tr
-                  key={item.id}
-                  style={{
-                    borderBottom: '1px solid #f1f5f9',
-                    background: selected.has(item.id) ? '#eff6ff' : undefined,
-                  }}
-                >
-                  <td style={{ padding: '8px 6px' }}>
-                    <input
-                      type="checkbox"
-                      checked={selected.has(item.id)}
-                      onChange={() => toggleOne(item.id)}
-                      aria-label={`Select item ${item.id}`}
-                    />
-                  </td>
-                  <td style={{ padding: '8px 6px' }}>{priorityBadge(item.priority)}</td>
-                  <td style={{ padding: '8px 6px' }}>{typeChip(item.type)}</td>
-                  <td style={{ padding: '8px 6px' }}>
-                    <button
-                      type="button"
-                      onClick={() => setDrawerItem(item)}
-                      style={{
-                        background: 'transparent', border: 'none', padding: 0,
-                        cursor: 'pointer', color: '#0f172a', textAlign: 'left',
-                        textDecoration: 'underline', textDecorationColor: '#cbd5e1',
-                        textUnderlineOffset: 3, font: 'inherit',
-                      }}
-                      aria-label={`Open details for item ${item.id}`}
-                    >
-                      {item.description}
-                    </button>
-                  </td>
-                  <td style={{ padding: '8px 6px', fontSize: 12 }}>
-                    {item.claimId && (
-                      <Link to={`/claims/${item.claimId}`} style={{ color: '#0ea5e9', marginRight: 8 }}>
-                        Claim #{item.claimId}
-                      </Link>
-                    )}
-                    {item.patientId && (
-                      <Link to={`/patients/${item.patientId}`} style={{ color: '#0ea5e9' }}>
-                        Patient #{item.patientId}
-                      </Link>
-                    )}
-                  </td>
-                  <td style={{ padding: '8px 6px', color: overdue ? '#dc2626' : '#475569', fontWeight: overdue ? 600 : 400 }}>
-                    {item.dueDate ? item.dueDate.slice(0, 10) : '—'}
-                    {overdue && ' (overdue)'}
-                  </td>
-                  <td style={{ padding: '8px 6px' }}>
-                    {item.status}
-                    {snoozed && <span style={{ color: '#64748b' }}> · snoozed</span>}
-                  </td>
-                  <td style={{ padding: '8px 6px', textAlign: 'right', whiteSpace: 'nowrap' }}>
-                    {!item.assignedTo && (
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <table className="w-full border-collapse text-[13px]">
+            <thead>
+              <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                <th className="w-6 px-2 py-3">
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    ref={(el) => {
+                      if (el) el.indeterminate = someSelected;
+                    }}
+                    onChange={toggleAll}
+                    aria-label="Select all items"
+                  />
+                </th>
+                <th className="px-2 py-3">Priority</th>
+                <th className="px-2 py-3">Type</th>
+                <th className="px-2 py-3">Description</th>
+                <th className="px-2 py-3">Linked</th>
+                <th className="px-2 py-3">Due</th>
+                <th className="px-2 py-3">Status</th>
+                <th className="px-2 py-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredItems.map((item) => {
+                const overdue = isOverdue(item, now);
+                const snoozed = item.snoozeUntilUtc && new Date(item.snoozeUntilUtc) > now;
+                return (
+                  <tr
+                    key={item.id}
+                    className={`border-t border-slate-100 ${
+                      selected.has(item.id) ? 'bg-blue-50' : 'hover:bg-slate-50'
+                    }`}
+                  >
+                    <td className="px-2 py-2">
+                      <input
+                        type="checkbox"
+                        checked={selected.has(item.id)}
+                        onChange={() => toggleOne(item.id)}
+                        aria-label={`Select item ${item.id}`}
+                      />
+                    </td>
+                    <td className="px-2 py-2">{priorityBadge(item.priority)}</td>
+                    <td className="px-2 py-2">{typeChip(item.type)}</td>
+                    <td className="px-2 py-2">
                       <button
                         type="button"
-                        onClick={() => handleClaim(item.id)}
-                        style={btnStyle('primary')}
+                        onClick={() => setDrawerItem(item)}
+                        className="cursor-pointer border-none bg-transparent p-0 text-left font-medium text-teal-700 underline decoration-slate-300 underline-offset-[3px] hover:decoration-teal-700"
+                        aria-label={`Open details for item ${item.id}`}
                       >
-                        Claim
+                        {item.description}
                       </button>
-                    )}
-                    {snoozed ? (
+                    </td>
+                    <td className="px-2 py-2 text-xs">
+                      {item.claimId && (
+                        <Link to={`/claims/${item.claimId}`} className="mr-2 font-medium text-teal-700 hover:underline">
+                          Claim #{item.claimId}
+                        </Link>
+                      )}
+                      {item.patientId && (
+                        <Link to={`/patients/${item.patientId}`} className="font-medium text-teal-700 hover:underline">
+                          Patient #{item.patientId}
+                        </Link>
+                      )}
+                    </td>
+                    <td className={`px-2 py-2 ${overdue ? 'font-semibold text-error' : 'text-slate-600'}`}>
+                      {item.dueDate ? item.dueDate.slice(0, 10) : '—'}
+                      {overdue && ' (overdue)'}
+                    </td>
+                    <td className="px-2 py-2 text-slate-700">
+                      {item.status}
+                      {snoozed && <span className="text-slate-500"> · snoozed</span>}
+                    </td>
+                    <td className="whitespace-nowrap px-2 py-2 text-right">
+                      {!item.assignedTo && (
+                        <button
+                          type="button"
+                          onClick={() => handleClaim(item.id)}
+                          className={btnClass('primary')}
+                        >
+                          Claim
+                        </button>
+                      )}
+                      {snoozed ? (
+                        <button
+                          type="button"
+                          onClick={() => handleWake(item.id)}
+                          className={btnClass('default')}
+                        >
+                          Wake
+                        </button>
+                      ) : (
+                        <select
+                          onChange={(e) => {
+                            const opt = SNOOZE_OPTIONS.find((o) => o.label === e.target.value);
+                            if (opt) handleSnooze(item.id, opt.deltaMs, opt.label);
+                            e.target.value = '';
+                          }}
+                          defaultValue=""
+                          className={`${SMALL_SELECT} mr-1`}
+                          aria-label={`Snooze item ${item.id}`}
+                        >
+                          <option value="" disabled>Snooze…</option>
+                          {SNOOZE_OPTIONS.map((o) => (
+                            <option key={o.label} value={o.label}>{o.label}</option>
+                          ))}
+                        </select>
+                      )}
+                      {assignableUsers.length > 0 && (
+                        <select
+                          onChange={(e) => {
+                            const uid = Number(e.target.value);
+                            if (uid > 0) void handleRowAssign(item.id, uid);
+                            e.target.value = '';
+                          }}
+                          defaultValue=""
+                          className={`${SMALL_SELECT} mr-1 max-w-[110px]`}
+                          aria-label={`Assign item ${item.id} to`}
+                        >
+                          <option value="" disabled>Assign…</option>
+                          {assignableUsers.map((u) => (
+                            <option key={u.id} value={u.id}>{formatUserName(u)}</option>
+                          ))}
+                        </select>
+                      )}
                       <button
                         type="button"
-                        onClick={() => handleWake(item.id)}
-                        style={btnStyle('default')}
+                        onClick={() => handleComplete(item.id)}
+                        className={btnClass('success')}
                       >
-                        Wake
+                        Complete
                       </button>
-                    ) : (
-                      <select
-                        onChange={(e) => {
-                          const opt = SNOOZE_OPTIONS.find((o) => o.label === e.target.value);
-                          if (opt) handleSnooze(item.id, opt.deltaMs, opt.label);
-                          e.target.value = '';
-                        }}
-                        defaultValue=""
-                        style={{
-                          padding: '2px 4px',
-                          border: '1px solid #cbd5e1',
-                          borderRadius: 4,
-                          fontSize: 12,
-                          marginRight: 4,
-                          background: '#fff',
-                        }}
-                        aria-label={`Snooze item ${item.id}`}
-                      >
-                        <option value="" disabled>Snooze…</option>
-                        {SNOOZE_OPTIONS.map((o) => (
-                          <option key={o.label} value={o.label}>{o.label}</option>
-                        ))}
-                      </select>
-                    )}
-                    {assignableUsers.length > 0 && (
-                      <select
-                        onChange={(e) => {
-                          const uid = Number(e.target.value);
-                          if (uid > 0) void handleRowAssign(item.id, uid);
-                          e.target.value = '';
-                        }}
-                        defaultValue=""
-                        style={{
-                          padding: '2px 4px',
-                          border: '1px solid #cbd5e1',
-                          borderRadius: 4,
-                          fontSize: 12,
-                          marginRight: 4,
-                          background: '#fff',
-                          maxWidth: 110,
-                        }}
-                        aria-label={`Assign item ${item.id} to`}
-                      >
-                        <option value="" disabled>Assign…</option>
-                        {assignableUsers.map((u) => (
-                          <option key={u.id} value={u.id}>{formatUserName(u)}</option>
-                        ))}
-                      </select>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => handleComplete(item.id)}
-                      style={btnStyle('success')}
-                    >
-                      Complete
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {drawerItem && (
@@ -766,51 +701,34 @@ export function InboxPage() {
   );
 }
 
-function statCard(label: string, value: number, color = '#0f172a') {
+function statCard(label: string, value: number, toneClass = 'text-navy-900') {
   return (
-    <div
-      style={{
-        border: '1px solid #e2e8f0',
-        borderRadius: 8,
-        padding: 12,
-        minWidth: 120,
-        background: '#fff',
-      }}
-    >
-      <div style={{ color: '#64748b', fontSize: 12 }}>{label}</div>
-      <div style={{ fontSize: 22, fontWeight: 700, color, marginTop: 4 }}>{value}</div>
+    <div className="card-hover min-w-[120px] rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+      <div className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</div>
+      <div className={`mt-1 text-2xl font-bold ${toneClass}`}>{value}</div>
     </div>
   );
 }
 
-function chipStyle(active: boolean, accent = '#0ea5e9') {
-  return {
-    padding: '4px 10px',
-    background: active ? accent : '#fff',
-    color: active ? '#fff' : '#475569',
-    border: `1px solid ${active ? accent : '#cbd5e1'}`,
-    borderRadius: 999,
-    cursor: 'pointer',
-    fontSize: 12,
-    fontWeight: 500,
+type ChipAccent = 'teal' | 'amber' | 'violet';
+
+function chipClass(active: boolean, accent: ChipAccent) {
+  const activeByAccent: Record<ChipAccent, string> = {
+    teal: 'border-teal-600 bg-teal-600 text-white',
+    amber: 'border-amber-500 bg-amber-500 text-white',
+    violet: 'border-violet-500 bg-violet-500 text-white',
   };
+  const base = 'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors';
+  return active
+    ? `${base} ${activeByAccent[accent]}`
+    : `${base} border-slate-300 bg-white text-slate-600 hover:bg-slate-50`;
 }
 
-function btnStyle(kind: 'primary' | 'success' | 'default') {
-  const colors = {
-    primary: { bg: '#0ea5e9', fg: '#fff', border: '#0ea5e9' },
-    success: { bg: '#16a34a', fg: '#fff', border: '#16a34a' },
-    default: { bg: '#fff', fg: '#475569', border: '#cbd5e1' },
+function btnClass(kind: 'primary' | 'success' | 'default') {
+  const byKind = {
+    primary: 'border-teal-600 bg-teal-600 text-white hover:brightness-110',
+    success: 'border-success bg-success text-white hover:brightness-110',
+    default: 'border-slate-300 bg-white text-slate-600 hover:bg-slate-50',
   }[kind];
-  return {
-    padding: '4px 10px',
-    background: colors.bg,
-    color: colors.fg,
-    border: `1px solid ${colors.border}`,
-    borderRadius: 4,
-    cursor: 'pointer',
-    fontSize: 12,
-    fontWeight: 500,
-    marginLeft: 4,
-  };
+  return `ml-1 rounded border px-2.5 py-1 text-xs font-medium transition-colors ${byKind}`;
 }

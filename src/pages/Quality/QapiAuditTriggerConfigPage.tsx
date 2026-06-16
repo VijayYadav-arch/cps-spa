@@ -61,66 +61,78 @@ export function QapiAuditTriggerConfigPage() {
   };
 
   return (
-    <div>
-      <header>
-        <h1>QAPI Audit Triggers</h1>
-        <p>Configure which audit-anomaly event codes automatically generate Draft adverse events. Admin only.</p>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <header className="space-y-2">
+        <h2 className="text-2xl">QAPI Audit Triggers</h2>
+        <div className="section-line" />
+        <p className="max-w-3xl text-slate-500">Configure which audit-anomaly event codes automatically generate Draft adverse events. Admin only.</p>
       </header>
 
-      <form onSubmit={handleAdd} aria-label="Add trigger">
-        <input value={newCode} onChange={e => setNewCode(e.target.value)} placeholder="audit event code (e.g., bulk-read)" required />
-        <select value={newCategory} onChange={e => setNewCategory(e.target.value as HospiceAdverseEventCategory)}>
+      <form onSubmit={handleAdd} aria-label="Add trigger" className="flex flex-wrap items-end gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <input className="form-input w-auto" value={newCode} onChange={e => setNewCode(e.target.value)} placeholder="audit event code (e.g., bulk-read)" required />
+        <select className="form-input w-auto" value={newCategory} onChange={e => setNewCategory(e.target.value as HospiceAdverseEventCategory)}>
           {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
-        <select value={newSeverity} onChange={e => setNewSeverity(e.target.value as HospiceAdverseEventSeverity)}>
+        <select className="form-input w-auto" value={newSeverity} onChange={e => setNewSeverity(e.target.value as HospiceAdverseEventSeverity)}>
           {SEVERITIES.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
         <button
           type="submit"
           disabled={!canManage}
           title={!canManage ? NO_PERMISSION : undefined}
-          style={{ cursor: !canManage ? 'not-allowed' : 'pointer' }}
+          className="btn-primary disabled:cursor-not-allowed disabled:opacity-60"
         >
           Add Trigger
         </button>
       </form>
 
-      <table>
-        <thead><tr><th>Code</th><th>Category</th><th>Severity</th><th>Enabled</th></tr></thead>
-        <tbody>
-          {triggers.map(t => (
-            <tr key={t.id}>
-              <td>{t.auditEventCode}</td>
-              <td>
-                <select
-                  value={t.category}
-                  onChange={e => handleUpdate(t, { category: e.target.value as HospiceAdverseEventCategory })}
-                  disabled={!canManage}
-                  title={!canManage ? NO_PERMISSION : undefined}
-                >
-                  {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </td>
-              <td>
-                <select
-                  value={t.severity}
-                  onChange={e => handleUpdate(t, { severity: e.target.value as HospiceAdverseEventSeverity })}
-                  disabled={!canManage}
-                  title={!canManage ? NO_PERMISSION : undefined}
-                >
-                  {SEVERITIES.map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
-              </td>
-              <td>
-                <label title={!canManage ? NO_PERMISSION : undefined}>
-                  <input type="checkbox" checked={t.isEnabled} onChange={() => handleToggle(t)} disabled={!canManage} />
-                  {t.isEnabled ? 'Enabled' : 'Disabled'}
-                </label>
-              </td>
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+              <th className="px-4 py-3">Code</th>
+              <th className="px-4 py-3">Category</th>
+              <th className="px-4 py-3">Severity</th>
+              <th className="px-4 py-3">Enabled</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {triggers.map(t => (
+              <tr key={t.id} className="border-t border-slate-100 hover:bg-slate-50">
+                <td className="px-4 py-3 text-slate-700">{t.auditEventCode}</td>
+                <td className="px-4 py-3 text-slate-700">
+                  <select
+                    className="form-input w-auto"
+                    value={t.category}
+                    onChange={e => handleUpdate(t, { category: e.target.value as HospiceAdverseEventCategory })}
+                    disabled={!canManage}
+                    title={!canManage ? NO_PERMISSION : undefined}
+                  >
+                    {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </td>
+                <td className="px-4 py-3 text-slate-700">
+                  <select
+                    className="form-input w-auto"
+                    value={t.severity}
+                    onChange={e => handleUpdate(t, { severity: e.target.value as HospiceAdverseEventSeverity })}
+                    disabled={!canManage}
+                    title={!canManage ? NO_PERMISSION : undefined}
+                  >
+                    {SEVERITIES.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </td>
+                <td className="px-4 py-3 text-slate-700">
+                  <label className="inline-flex items-center gap-2" title={!canManage ? NO_PERMISSION : undefined}>
+                    <input type="checkbox" checked={t.isEnabled} onChange={() => handleToggle(t)} disabled={!canManage} />
+                    {t.isEnabled ? 'Enabled' : 'Disabled'}
+                  </label>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

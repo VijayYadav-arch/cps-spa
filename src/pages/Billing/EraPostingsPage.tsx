@@ -95,163 +95,182 @@ export function EraPostingsPage() {
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
-    <div style={{ padding: 24 }}>
-      <header style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
-        <div>
-          <h1 style={{ margin: 0 }}>ERA postings</h1>
-          <p style={{ color: '#64748b', maxWidth: 720 }}>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <header className="flex items-start justify-between">
+        <div className="space-y-2">
+          <h2 className="text-2xl">ERA postings</h2>
+          <div className="section-line" />
+          <p className="max-w-3xl text-slate-500">
             Electronic remittance advice (835) postings — what payers have paid,
             check numbers, and per-ERA claim match counts. Drill into a
             specific claim's lifecycle for the line-level breakdown.
           </p>
         </div>
-        <button type="button" onClick={() => setUploadOpen((o) => !o)}>
+        <button
+          type="button"
+          onClick={() => setUploadOpen((o) => !o)}
+          className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+        >
           {uploadOpen ? 'Cancel upload' : '+ Manual upload'}
         </button>
       </header>
 
       {error && (
-        <div role="alert" style={{ color: '#b91c1c', marginBottom: 12 }}>{error}</div>
+        <div
+          role="alert"
+          className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800"
+        >
+          {error}
+        </div>
       )}
       {uploadMessage && (
-        <div style={{
-          color: uploadMessage.startsWith('Failed') ? '#b91c1c' : '#15803d',
-          marginBottom: 12,
-        }}>
+        <div
+          className={`rounded-lg border-l-4 px-4 py-3 font-semibold ${
+            uploadMessage.startsWith('Failed')
+              ? 'border-error bg-red-50 text-red-800'
+              : 'border-success bg-green-50 text-green-800'
+          }`}
+        >
           {uploadMessage}
         </div>
       )}
 
       {uploadOpen && (
-        <div style={{
-          border: '1px solid #cbd5e1', borderRadius: 8, padding: 16,
-          marginBottom: 16, background: '#f8fafc',
-        }}>
-          <p style={{ marginTop: 0, color: '#64748b' }}>
+        <div className="grid gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-slate-500">
             Paste a raw 835 (preferred) <em>or</em> pass a submission id to
             re-fetch the remittance from the clearinghouse.
           </p>
-          <label style={{ display: 'block', marginBottom: 8 }}>
-            Raw 835
+          <label className="grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">Raw 835</span>
             <textarea
               value={raw835}
               onChange={(e) => setRaw835(e.target.value)}
               rows={6}
               placeholder="ISA*00*…~"
-              style={{ width: '100%', fontFamily: 'monospace', fontSize: 12 }}
+              className="form-input font-mono text-xs"
             />
           </label>
-          <label style={{ display: 'block', marginBottom: 8 }}>
-            Or submission id
+          <label className="grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">Or submission id</span>
             <input
               type="number"
               value={submissionId}
               onChange={(e) => setSubmissionId(e.target.value)}
-              style={{ width: 200 }}
+              className="form-input w-52"
             />
           </label>
-          <button
-            type="button"
-            disabled={uploading || !canPostEra}
-            aria-busy={uploading}
-            title={!canPostEra ? NO_PERMISSION : undefined}
-            onClick={() => { void submitUpload(); }}
-          >
-            {uploading ? 'Uploading…' : 'Post ERA'}
-          </button>
+          <div>
+            <button
+              type="button"
+              disabled={uploading || !canPostEra}
+              aria-busy={uploading}
+              title={!canPostEra ? NO_PERMISSION : undefined}
+              onClick={() => { void submitUpload(); }}
+              className="btn-primary disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {uploading ? 'Uploading…' : 'Post ERA'}
+            </button>
+          </div>
         </div>
       )}
 
       {/* Summary row */}
       {rows.length > 0 && (
-        <div style={{
-          display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-          gap: 12, marginBottom: 16,
-        }}>
-          <div style={{ border: '1px solid #e2e8f0', borderRadius: 8, padding: 12 }}>
-            <div style={{ color: '#64748b', fontSize: 12 }}>This page paid</div>
-            <div style={{ fontWeight: 600, fontSize: 18, color: '#15803d' }}>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+          <div className="card-hover rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="text-xs font-medium uppercase tracking-wide text-slate-500">This page paid</div>
+            <div className="mt-1.5 text-2xl font-bold text-success">
               {formatMoney(totals.paid)}
             </div>
           </div>
-          <div style={{ border: '1px solid #e2e8f0', borderRadius: 8, padding: 12 }}>
-            <div style={{ color: '#64748b', fontSize: 12 }}>Claims matched</div>
-            <div style={{ fontWeight: 600, fontSize: 18 }}>
+          <div className="card-hover rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="text-xs font-medium uppercase tracking-wide text-slate-500">Claims matched</div>
+            <div className="mt-1.5 text-2xl font-bold text-navy-900">
               {totals.matched.toLocaleString()}
             </div>
           </div>
-          <div style={{ border: '1px solid #e2e8f0', borderRadius: 8, padding: 12 }}>
-            <div style={{ color: '#64748b', fontSize: 12 }}>Unmatched</div>
-            <div style={{
-              fontWeight: 600, fontSize: 18,
-              color: totals.unmatched > 0 ? '#b45309' : '#475569',
-            }}>
+          <div className="card-hover rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="text-xs font-medium uppercase tracking-wide text-slate-500">Unmatched</div>
+            <div
+              className={`mt-1.5 text-2xl font-bold ${
+                totals.unmatched > 0 ? 'text-accent-600' : 'text-slate-600'
+              }`}
+            >
               {totals.unmatched.toLocaleString()}
             </div>
           </div>
-          <div style={{ border: '1px solid #e2e8f0', borderRadius: 8, padding: 12 }}>
-            <div style={{ color: '#64748b', fontSize: 12 }}>Total postings</div>
-            <div style={{ fontWeight: 600, fontSize: 18 }}>
+          <div className="card-hover rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="text-xs font-medium uppercase tracking-wide text-slate-500">Total postings</div>
+            <div className="mt-1.5 text-2xl font-bold text-navy-900">
               {total.toLocaleString()}
             </div>
           </div>
         </div>
       )}
 
-      {isLoading && <div>Loading…</div>}
+      {isLoading && <div role="status" className="text-slate-500">Loading…</div>}
       {!isLoading && rows.length === 0 && !error && (
-        <div style={{ color: '#64748b' }}>No ERA postings yet.</div>
+        <div className="text-slate-500">No ERA postings yet.</div>
       )}
 
       {rows.length > 0 && (
         <>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ textAlign: 'left', borderBottom: '2px solid #e2e8f0' }}>
-                <th style={{ padding: 8 }}>Posted</th>
-                <th style={{ padding: 8 }}>Payer</th>
-                <th style={{ padding: 8 }}>Check #</th>
-                <th style={{ padding: 8 }}>Check date</th>
-                <th style={{ padding: 8, textAlign: 'right' }}>Amount</th>
-                <th style={{ padding: 8 }}>Matched</th>
-                <th style={{ padding: 8 }}>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => (
-                <tr key={r.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td style={{ padding: 8, whiteSpace: 'nowrap' }}>{fmtDate(r.postedAt)}</td>
-                  <td style={{ padding: 8 }}>{r.payerName}</td>
-                  <td style={{ padding: 8, fontFamily: 'monospace', fontSize: 13 }}>
-                    {r.checkNumber || '—'}
-                  </td>
-                  <td style={{ padding: 8 }}>{r.checkDate || '—'}</td>
-                  <td style={{ padding: 8, textAlign: 'right', fontWeight: 600, color: '#15803d' }}>
-                    {formatMoney(r.paymentAmount)}
-                  </td>
-                  <td style={{ padding: 8 }}>
-                    {r.matchedClaims}/{r.matchedClaims + r.unmatchedClaims}
-                    {r.unmatchedClaims > 0 && (
-                      <span style={{ color: '#b45309', marginLeft: 6, fontSize: 12 }}>
-                        ({r.unmatchedClaims} unmatched)
-                      </span>
-                    )}
-                  </td>
-                  <td style={{ padding: 8 }}>{r.status}</td>
+          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                  <th className="px-4 py-3">Posted</th>
+                  <th className="px-4 py-3">Payer</th>
+                  <th className="px-4 py-3">Check #</th>
+                  <th className="px-4 py-3">Check date</th>
+                  <th className="px-4 py-3 text-right">Amount</th>
+                  <th className="px-4 py-3">Matched</th>
+                  <th className="px-4 py-3">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {rows.map((r) => (
+                  <tr key={r.id} className="border-t border-slate-100 hover:bg-slate-50">
+                    <td className="whitespace-nowrap px-4 py-3 text-slate-700">{fmtDate(r.postedAt)}</td>
+                    <td className="px-4 py-3 text-slate-700">{r.payerName}</td>
+                    <td className="px-4 py-3 font-mono text-slate-700">
+                      {r.checkNumber || '—'}
+                    </td>
+                    <td className="px-4 py-3 text-slate-700">{r.checkDate || '—'}</td>
+                    <td className="px-4 py-3 text-right font-semibold text-success">
+                      {formatMoney(r.paymentAmount)}
+                    </td>
+                    <td className="px-4 py-3 text-slate-700">
+                      {r.matchedClaims}/{r.matchedClaims + r.unmatchedClaims}
+                      {r.unmatchedClaims > 0 && (
+                        <span className="ml-1.5 text-xs text-accent-600">
+                          ({r.unmatchedClaims} unmatched)
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-slate-700">{r.status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-          <div style={{ display: 'flex', gap: 12, marginTop: 12, alignItems: 'center' }}>
-            <button type="button" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => p - 1)}
+              className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
               Prev
             </button>
-            <span>Page {page} of {totalPages} · {total.toLocaleString()} rows</span>
+            <span className="text-sm text-slate-500">Page {page} of {totalPages} · {total.toLocaleString()} rows</span>
             <button
               type="button"
               disabled={page >= totalPages}
               onClick={() => setPage((p) => p + 1)}
+              className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               Next
             </button>

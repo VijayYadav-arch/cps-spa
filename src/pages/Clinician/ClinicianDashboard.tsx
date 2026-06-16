@@ -81,23 +81,31 @@ export function ClinicianDashboard() {
 
   if (error)
     return (
-      <div style={{ padding: '1rem', color: 'red' }} role="alert">
+      <div
+        className="m-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800"
+        role="alert"
+      >
         Failed to load dashboard.
       </div>
     );
-  if (!data) return <div style={{ padding: '1rem' }}>Loading…</div>;
+  if (!data)
+    return (
+      <div role="status" className="p-4 text-slate-500">
+        Loading…
+      </div>
+    );
 
   const hour = new Date().getHours();
   const greeting =
     hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 
   return (
-    <div style={{ padding: '1rem', maxWidth: 640, margin: '0 auto' }}>
-      <div style={{ marginTop: 16, marginBottom: 24 }}>
-        <h1 data-testid="page-title" style={{ fontSize: 24, fontWeight: 600 }}>
+    <div className="mx-auto grid max-w-[640px] gap-6 p-4">
+      <div>
+        <h1 data-testid="page-title" className="text-2xl">
           {greeting}, <span data-testid="user-firstname">{data.user.firstName}</span>
         </h1>
-        <p style={{ color: '#64748b', fontSize: 14, marginTop: 4 }}>
+        <p className="mt-1 text-sm text-slate-500">
           {new Date().toLocaleDateString('en-US', {
             weekday: 'long',
             month: 'long',
@@ -106,143 +114,60 @@ export function ClinicianDashboard() {
         </p>
       </div>
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: 12,
-          marginBottom: 24,
-        }}
-      >
-        <div
-          style={{
-            background: 'white',
-            borderRadius: 12,
-            padding: 16,
-            border: '1px solid #f1f5f9',
-            textAlign: 'center',
-          }}
-        >
+      <div className="grid grid-cols-3 gap-3">
+        <div className="card-hover rounded-xl border border-slate-200 bg-white p-4 text-center shadow-sm">
           <div
             data-testid="stat-assigned-patients"
-            style={{ fontSize: 24, fontWeight: 700 }}
+            className="text-2xl font-bold text-navy-900"
           >
             {data.assignedPatients}
           </div>
-          <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>Patients</div>
+          <div className="mt-1 text-xs text-slate-500">Patients</div>
         </div>
-        <div
-          style={{
-            background: 'white',
-            borderRadius: 12,
-            padding: 16,
-            border: '1px solid #f1f5f9',
-            textAlign: 'center',
-          }}
-        >
+        <div className="card-hover rounded-xl border border-slate-200 bg-white p-4 text-center shadow-sm">
           <div
             data-testid="stat-visits-this-week"
-            style={{ fontSize: 24, fontWeight: 700 }}
+            className="text-2xl font-bold text-navy-900"
           >
             {data.visitsThisWeek}
           </div>
-          <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>
-            Visits This Week
-          </div>
+          <div className="mt-1 text-xs text-slate-500">Visits This Week</div>
         </div>
-        <div
-          style={{
-            background: 'white',
-            borderRadius: 12,
-            padding: 16,
-            border: '1px solid #f1f5f9',
-            textAlign: 'center',
-          }}
-        >
+        <div className="card-hover rounded-xl border border-slate-200 bg-white p-4 text-center shadow-sm">
           <div
             data-testid="stat-pending-documentation"
-            style={{ fontSize: 24, fontWeight: 700, color: '#0d9488' }}
+            className="text-2xl font-bold text-teal-700"
           >
             {data.pendingDocumentation}
           </div>
-          <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>Pending Docs</div>
+          <div className="mt-1 text-xs text-slate-500">Pending Docs</div>
         </div>
       </div>
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(2, 1fr)',
-          gap: 12,
-          marginBottom: 24,
-        }}
-      >
+      <div className="grid grid-cols-2 gap-3">
         <Link
           to="/clinician/visits/new"
           data-testid="action-new-visit"
-          style={{
-            background: '#0d9488',
-            color: 'white',
-            borderRadius: 12,
-            padding: 16,
-            textDecoration: 'none',
-            fontWeight: 600,
-            minHeight: 56,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
+          className="flex min-h-[56px] items-center justify-center rounded-xl bg-teal-600 p-4 font-semibold text-white no-underline transition-colors hover:bg-teal-700"
         >
           New Visit
         </Link>
         <Link
           to="/clinician/patients"
           data-testid="action-my-patients"
-          style={{
-            background: 'white',
-            color: '#0f172a',
-            borderRadius: 12,
-            padding: 16,
-            border: '1px solid #f1f5f9',
-            textDecoration: 'none',
-            fontWeight: 600,
-            minHeight: 56,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
+          className="flex min-h-[56px] items-center justify-center rounded-xl border border-slate-200 bg-white p-4 font-semibold text-navy-900 no-underline transition-colors hover:bg-slate-50"
         >
           My Patients
         </Link>
       </div>
 
-      <div
-        style={{
-          background: 'white',
-          borderRadius: 12,
-          border: '1px solid #f1f5f9',
-          overflow: 'hidden',
-        }}
-      >
-        <div
-          style={{
-            padding: '12px 16px',
-            borderBottom: '1px solid #f1f5f9',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
-          <h2 style={{ fontWeight: 600 }}>Today&apos;s Visits</h2>
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+          <h2 className="text-lg font-semibold">Today&apos;s Visits</h2>
           <Link
             to="/clinician/visits"
             data-testid="action-all-visits"
-            style={{
-              fontSize: 13,
-              color: '#0d9488',
-              textDecoration: 'none',
-              fontWeight: 500,
-            }}
+            className="text-[13px] font-medium text-teal-700 no-underline hover:underline"
           >
             All visits ›
           </Link>
@@ -252,29 +177,20 @@ export function ClinicianDashboard() {
             <div
               key={visit.id}
               data-testid="visit-row"
-              style={{
-                padding: '12px 16px',
-                borderBottom: '1px solid #f1f5f9',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                minHeight: 56,
-              }}
+              className="flex min-h-[56px] items-center justify-between border-b border-slate-100 px-4 py-3"
             >
-              <div style={{ minWidth: 0, flex: 1 }}>
+              <div className="min-w-0 flex-1">
                 <p
                   data-testid="visit-patient-name"
-                  style={{ fontSize: 14, fontWeight: 500 }}
+                  className="text-sm font-medium text-slate-700"
                 >
                   {visit.patientName}
                 </p>
-                <p style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
-                  {visit.visitType}
-                </p>
-                <p style={{ fontSize: 12, color: '#94a3b8' }}>{visit.address}</p>
+                <p className="mt-0.5 text-xs text-slate-500">{visit.visitType}</p>
+                <p className="text-xs text-slate-400">{visit.address}</p>
               </div>
-              <div style={{ textAlign: 'right', marginLeft: 12 }}>
-                <p style={{ fontSize: 14, fontWeight: 500, color: '#0d9488' }}>
+              <div className="ml-3 text-right">
+                <p className="text-sm font-medium text-teal-700">
                   {new Date(visit.scheduledTime).toLocaleTimeString('en-US', {
                     hour: 'numeric',
                     minute: '2-digit',

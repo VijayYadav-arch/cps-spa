@@ -140,81 +140,87 @@ export function PriorAuthDetailPage() {
     }
   };
 
-  if (isLoading) return <div style={{ padding: 24 }}>Loading…</div>;
+  if (isLoading) return <div role="status" className="p-6 text-slate-500">Loading…</div>;
   if (error || !auth) return (
-    <div style={{ padding: 24 }}>
-      <div role="alert" style={{ color: '#b91c1c', marginBottom: 12 }}>
+    <div className="grid gap-4 p-6">
+      <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">
         {error ?? 'Prior auth not found'}
       </div>
-      <button type="button" onClick={() => navigate('/billing/prior-auth')}>
-        Back to prior auths
-      </button>
+      <div>
+        <button
+          type="button"
+          onClick={() => navigate('/billing/prior-auth')}
+          className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+        >
+          Back to prior auths
+        </button>
+      </div>
     </div>
   );
 
   const timeline = buildTimeline(auth);
 
   return (
-    <div style={{ padding: 24 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-        <button type="button" onClick={() => navigate('/billing/prior-auth')}>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => navigate('/billing/prior-auth')}
+          className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+        >
           ← Back
         </button>
-        <h1 style={{ margin: 0 }}>
+        <h2 className="text-2xl">
           Prior auth #{auth.id} · {auth.payerName}
-        </h1>
-        <span style={{
-          background: STATUS_TONES[auth.status], color: '#fff',
-          padding: '2px 10px', borderRadius: 6, fontSize: 13, fontWeight: 600,
-        }}>
+        </h2>
+        <span
+          className="inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold text-white"
+          style={{ background: STATUS_TONES[auth.status] }}
+        >
           {auth.status}
         </span>
       </div>
 
-      <div style={{
-        display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-        gap: 12, border: '1px solid #e2e8f0', borderRadius: 8, padding: 16,
-        marginBottom: 24, background: '#f8fafc',
-      }}>
+      <div className="grid grid-cols-2 gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-3 lg:grid-cols-4">
         <div>
-          <div style={{ color: '#64748b', fontSize: 12 }}>Patient ID</div>
-          <div style={{ fontWeight: 600 }}>{auth.patientId}</div>
+          <div className="text-xs font-medium uppercase tracking-wide text-slate-500">Patient ID</div>
+          <div className="mt-1 font-semibold text-slate-700">{auth.patientId}</div>
         </div>
         <div>
-          <div style={{ color: '#64748b', fontSize: 12 }}>Service type</div>
-          <div>{auth.serviceTypeCode ?? '—'}</div>
+          <div className="text-xs font-medium uppercase tracking-wide text-slate-500">Service type</div>
+          <div className="mt-1 text-slate-700">{auth.serviceTypeCode ?? '—'}</div>
         </div>
         <div>
-          <div style={{ color: '#64748b', fontSize: 12 }}>Service dates</div>
-          <div>{auth.fromDate ?? '?'} → {auth.toDate ?? '?'}</div>
+          <div className="text-xs font-medium uppercase tracking-wide text-slate-500">Service dates</div>
+          <div className="mt-1 text-slate-700">{auth.fromDate ?? '?'} → {auth.toDate ?? '?'}</div>
         </div>
         <div>
-          <div style={{ color: '#64748b', fontSize: 12 }}>Requested units</div>
-          <div>{auth.requestedUnits ?? '—'}</div>
+          <div className="text-xs font-medium uppercase tracking-wide text-slate-500">Requested units</div>
+          <div className="mt-1 text-slate-700">{auth.requestedUnits ?? '—'}</div>
         </div>
         <div>
-          <div style={{ color: '#64748b', fontSize: 12 }}>Approved units</div>
-          <div style={{ fontWeight: 600, color: '#15803d' }}>
+          <div className="text-xs font-medium uppercase tracking-wide text-slate-500">Approved units</div>
+          <div className="mt-1 font-semibold text-success">
             {auth.approvedUnits ?? '—'}
           </div>
         </div>
         <div>
-          <div style={{ color: '#64748b', fontSize: 12 }}>Auth number</div>
-          <div style={{ fontFamily: 'monospace' }}>{auth.authNumber ?? '—'}</div>
+          <div className="text-xs font-medium uppercase tracking-wide text-slate-500">Auth number</div>
+          <div className="mt-1 font-mono text-slate-700">{auth.authNumber ?? '—'}</div>
         </div>
         <div>
-          <div style={{ color: '#64748b', fontSize: 12 }}>Effective window</div>
-          <div>
+          <div className="text-xs font-medium uppercase tracking-wide text-slate-500">Effective window</div>
+          <div className="mt-1 text-slate-700">
             {auth.authEffectiveDate ?? '—'} → {auth.authExpirationDate ?? '—'}
           </div>
         </div>
         <div>
-          <div style={{ color: '#64748b', fontSize: 12 }}>Submitted by</div>
-          <div>{auth.submittedByEmail ?? '—'}</div>
+          <div className="text-xs font-medium uppercase tracking-wide text-slate-500">Submitted by</div>
+          <div className="mt-1 text-slate-700">{auth.submittedByEmail ?? '—'}</div>
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 12, marginBottom: 16, alignItems: 'center' }}>
+      <div className="flex items-center gap-3">
         {auth.status === 'pending' && (
           <>
             <button
@@ -223,6 +229,7 @@ export function PriorAuthDetailPage() {
               disabled={isRefreshing || !canManage}
               aria-busy={isRefreshing}
               title={!canManage ? NO_PERMISSION : undefined}
+              className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {isRefreshing ? 'Refreshing…' : 'Refresh status now'}
             </button>
@@ -231,6 +238,7 @@ export function PriorAuthDetailPage() {
               onClick={() => openDecision('approved')}
               disabled={!canManage}
               title={!canManage ? NO_PERMISSION : undefined}
+              className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               Record approval
             </button>
@@ -239,55 +247,48 @@ export function PriorAuthDetailPage() {
               onClick={() => openDecision('denied')}
               disabled={!canManage}
               title={!canManage ? NO_PERMISSION : undefined}
+              className="rounded-md border border-red-200 px-2.5 py-1 text-xs font-medium text-red-700 transition-colors hover:bg-red-50 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               Record denial
             </button>
           </>
         )}
         {refreshMessage && (
-          <span style={{ color: '#0369a1' }}>{refreshMessage}</span>
+          <span className="text-teal-700">{refreshMessage}</span>
         )}
       </div>
 
-      <h2>Timeline</h2>
+      <h3 className="text-lg font-semibold">Timeline</h3>
       {timeline.length === 0 ? (
-        <div style={{ color: '#64748b' }}>No events yet.</div>
+        <div className="text-slate-500">No events yet.</div>
       ) : (
-        <ol style={{ listStyle: 'none', padding: 0 }}>
+        <ol className="list-none p-0">
           {timeline.map((e, i) => (
             <li
               key={`${e.label}-${e.atUtc}-${i}`}
-              style={{
-                display: 'grid', gridTemplateColumns: '170px 130px 1fr',
-                gap: 12, alignItems: 'baseline', padding: '6px 0',
-                borderBottom: '1px solid #f1f5f9',
-              }}
+              className="grid grid-cols-[170px_130px_1fr] items-baseline gap-3 border-b border-slate-100 py-1.5"
             >
-              <div style={{ color: '#64748b', fontSize: 13 }}>
+              <div className="text-sm text-slate-500">
                 {new Date(e.atUtc).toLocaleString()}
               </div>
               <div>
-                <span style={{
-                  background: e.tone, color: '#fff',
-                  padding: '2px 8px', borderRadius: 4,
-                  fontSize: 12, fontWeight: 600,
-                }}>
+                <span
+                  className="inline-block rounded px-2 py-0.5 text-xs font-semibold text-white"
+                  style={{ background: e.tone }}
+                >
                   {e.label}
                 </span>
               </div>
-              <div>{e.description}</div>
+              <div className="text-slate-700">{e.description}</div>
             </li>
           ))}
         </ol>
       )}
 
       {auth.status === 'denied' && auth.denialReason && (
-        <div style={{
-          marginTop: 24, padding: 16, background: '#fef2f2',
-          border: '1px solid #fecaca', borderRadius: 8,
-        }}>
-          <strong style={{ color: '#991b1b' }}>Denial reason:</strong>{' '}
-          {auth.denialReason}
+        <div className="rounded-lg border-l-4 border-error bg-red-50 px-4 py-3">
+          <strong className="text-red-800">Denial reason:</strong>{' '}
+          <span className="text-red-800">{auth.denialReason}</span>
         </div>
       )}
 
@@ -296,83 +297,85 @@ export function PriorAuthDetailPage() {
           role="dialog"
           aria-modal="true"
           aria-label={decisionOpen === 'approved' ? 'Record approval' : 'Record denial'}
-          style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(15,23,42,0.5)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            zIndex: 100,
-          }}
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-navy-900/50"
         >
-          <div style={{ background: '#fff', padding: 24, borderRadius: 8, minWidth: 420 }}>
-            <h2 style={{ marginTop: 0 }}>
+          <div className="min-w-[420px] rounded-xl bg-white p-6 shadow-sm">
+            <h3 className="text-lg font-semibold">
               {decisionOpen === 'approved' ? 'Record approval' : 'Record denial'}
-            </h2>
+            </h3>
             {decisionOpen === 'approved' && (
               <>
-                <label style={{ display: 'block', marginBottom: 8 }}>
-                  Auth number
+                <label className="mt-4 grid gap-1.5">
+                  <span className="text-sm font-medium text-slate-600">Auth number</span>
                   <input
                     type="text"
                     value={decisionForm.authNumber ?? ''}
                     onChange={(e) => setDecisionForm((f) => ({ ...f, authNumber: e.target.value }))}
-                    style={{ width: '100%' }}
+                    className="form-input"
                   />
                 </label>
-                <label style={{ display: 'block', marginBottom: 8 }}>
-                  Approved units
+                <label className="mt-4 grid gap-1.5">
+                  <span className="text-sm font-medium text-slate-600">Approved units</span>
                   <input
                     type="number"
                     value={decisionForm.approvedUnits ?? ''}
                     onChange={(e) => setDecisionForm((f) => ({
                       ...f, approvedUnits: e.target.value ? Number(e.target.value) : null,
                     }))}
-                    style={{ width: '100%' }}
+                    className="form-input"
                   />
                 </label>
-                <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-                  <label style={{ flex: 1 }}>
-                    Effective
+                <div className="mt-4 flex gap-3">
+                  <label className="grid flex-1 gap-1.5">
+                    <span className="text-sm font-medium text-slate-600">Effective</span>
                     <input
                       type="date"
                       value={decisionForm.authEffectiveDate ?? ''}
                       onChange={(e) => setDecisionForm((f) => ({
                         ...f, authEffectiveDate: e.target.value || null,
                       }))}
-                      style={{ width: '100%' }}
+                      className="form-input"
                     />
                   </label>
-                  <label style={{ flex: 1 }}>
-                    Expires
+                  <label className="grid flex-1 gap-1.5">
+                    <span className="text-sm font-medium text-slate-600">Expires</span>
                     <input
                       type="date"
                       value={decisionForm.authExpirationDate ?? ''}
                       onChange={(e) => setDecisionForm((f) => ({
                         ...f, authExpirationDate: e.target.value || null,
                       }))}
-                      style={{ width: '100%' }}
+                      className="form-input"
                     />
                   </label>
                 </div>
               </>
             )}
             {decisionOpen === 'denied' && (
-              <label style={{ display: 'block', marginBottom: 8 }}>
-                Denial reason
+              <label className="mt-4 grid gap-1.5">
+                <span className="text-sm font-medium text-slate-600">Denial reason</span>
                 <textarea
                   value={decisionForm.denialReason ?? ''}
                   onChange={(e) => setDecisionForm((f) => ({ ...f, denialReason: e.target.value }))}
                   rows={3}
-                  style={{ width: '100%' }}
+                  className="form-input"
                 />
               </label>
             )}
-            <div style={{ display: 'flex', gap: 8, marginTop: 12, justifyContent: 'flex-end' }}>
-              <button type="button" onClick={() => setDecisionOpen(null)}>Cancel</button>
+            <div className="mt-4 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setDecisionOpen(null)}
+                className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+              >
+                Cancel
+              </button>
               <button
                 type="button"
                 onClick={() => { void submitDecision(); }}
                 disabled={!canManage}
                 title={!canManage ? NO_PERMISSION : undefined}
+                className="btn-primary disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 Save
               </button>

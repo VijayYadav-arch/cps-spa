@@ -87,79 +87,49 @@ export function ClinicianVisits() {
   };
 
   return (
-    <div style={{ padding: '1rem', maxWidth: 720, margin: '0 auto' }}>
-      <div
-        style={{
-          marginTop: 16,
-          marginBottom: 16,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        <h1 data-testid="page-title" style={{ fontSize: 20, fontWeight: 600 }}>
+    <div className="mx-auto max-w-[720px] p-4">
+      <div className="mb-4 flex items-center justify-between">
+        <h1 data-testid="page-title" className="text-xl">
           Recent Visits
         </h1>
         <Link
           to="/clinician/visits/new"
           data-testid="action-new-visit"
-          style={{
-            padding: '8px 14px',
-            background: '#0d9488',
-            color: 'white',
-            borderRadius: 8,
-            textDecoration: 'none',
-            fontWeight: 500,
-            fontSize: 14,
-          }}
+          className="rounded-md bg-teal-600 px-3.5 py-2 text-sm font-medium text-white no-underline transition-colors hover:bg-teal-700"
         >
           New
         </Link>
       </div>
 
-      {loading && <div>Loading…</div>}
+      {loading && (
+        <div role="status" className="text-slate-500">
+          Loading…
+        </div>
+      )}
       {error && (
-        <div role="alert" style={{ color: '#b91c1c' }}>
+        <div role="alert" className="text-red-700">
           {error}
         </div>
       )}
 
       {!loading && !error && visits.length === 0 && (
-        <p data-testid="empty-state" style={{ color: '#64748b' }}>
+        <p data-testid="empty-state" className="text-slate-500">
           No visit notes yet.
         </p>
       )}
 
-      <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+      <ul className="m-0 list-none p-0">
         {visits.map((v) => (
           <li
             key={v.id}
             data-testid={`visit-row-${v.id}`}
-            style={{
-              background: 'white',
-              borderRadius: 12,
-              padding: 12,
-              border: '1px solid #f1f5f9',
-              marginBottom: 8,
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              gap: 8,
-            }}
+            className="mb-2 flex items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-sm"
           >
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <div
-                style={{
-                  fontWeight: 600,
-                  fontSize: 14,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}
-              >
+            <div className="min-w-0 flex-1">
+              <div className="overflow-hidden text-ellipsis whitespace-nowrap text-sm font-semibold text-slate-700">
                 {patientName(v)}
               </div>
-              <div style={{ fontSize: 12, color: '#64748b' }}>
+              <div className="text-xs text-slate-500">
                 {v.visitType} · {formatDate(v.visitDate)} · {v.status}
               </div>
             </div>
@@ -169,16 +139,7 @@ export function ClinicianVisits() {
               onClick={() => setSummarizing(v)}
               disabled={!canSummarize}
               title={!canSummarize ? NO_PERMISSION : undefined}
-              style={{
-                padding: '6px 10px',
-                fontSize: 13,
-                background: '#f0fdfa',
-                color: '#0d9488',
-                border: '1px solid #99f6e4',
-                borderRadius: 8,
-                cursor: canSummarize ? 'pointer' : 'not-allowed',
-                fontWeight: 500,
-              }}
+              className="rounded-md border border-teal-200 bg-teal-50 px-2.5 py-1.5 text-[13px] font-medium text-teal-700 transition-colors hover:bg-teal-100 disabled:cursor-not-allowed disabled:opacity-60"
             >
               AI summary
             </button>

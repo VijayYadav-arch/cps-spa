@@ -19,26 +19,27 @@ const NO_PERMISSION = 'You do not have permission to perform this action';
 
 const BUCKETS: DenialAgingBucket[] = ['0-7', '8-30', '31-60', '61+'];
 
-const BUCKET_COLOR: Record<DenialAgingBucket, string> = {
-  '0-7': '#15803d',
-  '8-30': '#0e7490',
-  '31-60': '#b45309',
-  '61+': '#b91c1c',
+// Text-color class for the days-outstanding cell, keyed by aging bucket.
+const BUCKET_TEXT: Record<DenialAgingBucket, string> = {
+  '0-7': 'text-success',
+  '8-30': 'text-cyan-700',
+  '31-60': 'text-accent-600',
+  '61+': 'text-error',
 };
 
-function metricCard(label: string, value: string, color: string) {
+// Background-color class for the active aging-filter tab, keyed by aging bucket.
+const BUCKET_BG: Record<DenialAgingBucket, string> = {
+  '0-7': 'bg-green-700',
+  '8-30': 'bg-cyan-700',
+  '31-60': 'bg-accent-700',
+  '61+': 'bg-red-700',
+};
+
+function metricCard(label: string, value: string, tone: string) {
   return (
-    <div
-      style={{
-        border: '1px solid #e2e8f0',
-        borderRadius: 8,
-        padding: 16,
-        background: '#fff',
-        minWidth: 160,
-      }}
-    >
-      <div style={{ color: '#64748b', fontSize: 13 }}>{label}</div>
-      <div style={{ fontSize: 22, fontWeight: 700, color, marginTop: 6 }}>
+    <div className="card-hover rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</div>
+      <div className={`mt-1.5 text-2xl font-bold ${tone}`}>
         {value}
       </div>
     </div>
@@ -145,48 +146,45 @@ export function DenialQueuePage() {
   }
 
   return (
-    <div style={{ padding: 24, maxWidth: 1200, display: 'grid', gap: 24 }}>
+    <div className="grid max-w-[1200px] gap-6 p-6">
       <header>
-        <h2 style={{ fontSize: 22, fontWeight: 700 }}>Denial Queue</h2>
-        <p style={{ color: '#64748b', marginTop: 4 }}>
+        <h2 className="text-2xl">Denial Queue</h2>
+        <div className="section-line mt-2" />
+        <p className="mt-2 max-w-3xl text-slate-500">
           Open denials grouped by aging. Click a row to draft an appeal letter,
           assign a worker, or move it through the appeal workflow.
         </p>
       </header>
 
-      {error && <div role="alert" style={{ color: '#b91c1c' }}>{error}</div>}
-      {actionMsg && <div style={{ color: '#15803d' }}>{actionMsg}</div>}
+      {error && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">{error}</div>}
+      {actionMsg && <div className="rounded-lg border-l-4 border-success bg-green-50 px-4 py-3 font-semibold text-green-800">{actionMsg}</div>}
 
       {summary && !isLoading && (
-        <section style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          {metricCard('Open Total', summary.totalOpen.toString(), '#0f172a')}
-          {metricCard('New', summary.new.toString(), '#0e7490')}
-          {metricCard('In Review', summary.inReview.toString(), '#0e7490')}
-          {metricCard('Appealing', summary.appealing.toString(), '#1e40af')}
+        <section className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+          {metricCard('Open Total', summary.totalOpen.toString(), 'text-navy-900')}
+          {metricCard('New', summary.new.toString(), 'text-cyan-700')}
+          {metricCard('In Review', summary.inReview.toString(), 'text-cyan-700')}
+          {metricCard('Appealing', summary.appealing.toString(), 'text-blue-800')}
           {metricCard(
             'Overdue Deadline',
             summary.overdueAppealDeadline.toString(),
-            summary.overdueAppealDeadline > 0 ? '#b91c1c' : '#15803d',
+            summary.overdueAppealDeadline > 0 ? 'text-error' : 'text-success',
           )}
         </section>
       )}
 
       {queue && !isLoading && (
         <>
-          <section style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'baseline' }}>
-            <strong>Aging:</strong>
+          <section className="flex flex-wrap items-baseline gap-3">
+            <strong className="text-slate-700">Aging:</strong>
             <button
               type="button"
               onClick={() => setBucketFilter('all')}
-              style={{
-                fontWeight: bucketFilter === 'all' ? 700 : 400,
-                background: bucketFilter === 'all' ? '#0ea5e9' : '#f1f5f9',
-                color: bucketFilter === 'all' ? '#fff' : '#0f172a',
-                border: 'none',
-                padding: '4px 12px',
-                borderRadius: 4,
-                cursor: 'pointer',
-              }}
+              className={`rounded px-3 py-1 transition-colors ${
+                bucketFilter === 'all'
+                  ? 'bg-sky-500 font-bold text-white'
+                  : 'bg-slate-100 text-navy-900 hover:bg-slate-200'
+              }`}
             >
               All ({queue.totalOpen})
             </button>
@@ -195,15 +193,11 @@ export function DenialQueuePage() {
                 key={b}
                 type="button"
                 onClick={() => setBucketFilter(b)}
-                style={{
-                  fontWeight: bucketFilter === b ? 700 : 400,
-                  background: bucketFilter === b ? BUCKET_COLOR[b] : '#f1f5f9',
-                  color: bucketFilter === b ? '#fff' : '#0f172a',
-                  border: 'none',
-                  padding: '4px 12px',
-                  borderRadius: 4,
-                  cursor: 'pointer',
-                }}
+                className={`rounded px-3 py-1 transition-colors ${
+                  bucketFilter === b
+                    ? `${BUCKET_BG[b]} font-bold text-white`
+                    : 'bg-slate-100 text-navy-900 hover:bg-slate-200'
+                }`}
               >
                 {b} ({{
                   '0-7': queue.bucket0To7,
@@ -213,139 +207,123 @@ export function DenialQueuePage() {
                 }[b]})
               </button>
             ))}
-            <span style={{ marginLeft: 'auto', color: '#64748b' }}>
-              Total at risk: <strong style={{ color: '#0f172a' }}>{formatMoney(queue.totalAmountAtRisk)}</strong>
+            <span className="ml-auto text-slate-500">
+              Total at risk: <strong className="text-navy-900">{formatMoney(queue.totalAmountAtRisk)}</strong>
             </span>
           </section>
 
           {filtered.length === 0 ? (
-            <p style={{ color: '#64748b' }}>
+            <p className="text-slate-500">
               No open denials {bucketFilter !== 'all' && `in the ${bucketFilter} bucket`}.
             </p>
           ) : (
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-                  <th style={{ padding: '6px 10px' }}>Claim</th>
-                  <th style={{ padding: '6px 10px' }}>Payer</th>
-                  <th style={{ padding: '6px 10px' }}>Code</th>
-                  <th style={{ padding: '6px 10px' }}>Category</th>
-                  <th style={{ padding: '6px 10px' }}>Status</th>
-                  <th style={{ padding: '6px 10px', textAlign: 'right' }}>$</th>
-                  <th style={{ padding: '6px 10px', textAlign: 'right' }}>Days</th>
-                  <th style={{ padding: '6px 10px' }}></th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((d) => (
-                  <tr key={d.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                    <td style={{ padding: '6px 10px', fontFamily: 'monospace', fontSize: 13 }}>
-                      {d.claimNumber}
-                    </td>
-                    <td style={{ padding: '6px 10px' }}>{d.payerName}</td>
-                    <td style={{ padding: '6px 10px' }}>{d.denialCode}</td>
-                    <td style={{ padding: '6px 10px', color: '#64748b' }}>{d.category}</td>
-                    <td style={{ padding: '6px 10px' }}>{d.status}</td>
-                    <td style={{ padding: '6px 10px', textAlign: 'right' }}>
-                      {formatMoney(d.claimAmount)}
-                    </td>
-                    <td
-                      style={{
-                        padding: '6px 10px',
-                        textAlign: 'right',
-                        color: BUCKET_COLOR[d.agingBucket],
-                        fontWeight: 600,
-                      }}
-                    >
-                      {d.daysOutstanding}d
-                    </td>
-                    <td style={{ padding: '6px 10px', display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                      <button
-                        type="button"
-                        onClick={() => void handleDraftLetter(d)}
-                        style={{ fontSize: 12 }}
-                      >
-                        Letter
-                      </button>
-                      {d.status === 'new' && (
-                        <button
-                          type="button"
-                          onClick={() => void handleStartAppeal(d)}
-                          disabled={!canManageDenials}
-                          title={!canManageDenials ? NO_PERMISSION : undefined}
-                          style={{ fontSize: 12, cursor: canManageDenials ? 'pointer' : 'not-allowed' }}
-                        >
-                          Start
-                        </button>
-                      )}
-                      {d.status === 'in-review' && (
-                        <button
-                          type="button"
-                          onClick={() => void handleSubmitAppeal(d)}
-                          disabled={!canManageDenials}
-                          title={!canManageDenials ? NO_PERMISSION : undefined}
-                          style={{ fontSize: 12, cursor: canManageDenials ? 'pointer' : 'not-allowed' }}
-                        >
-                          Submit
-                        </button>
-                      )}
-                      {(d.status === 'appealing' || d.status === 'in-review') && (
-                        <button
-                          type="button"
-                          onClick={() => void handleResolve(d)}
-                          disabled={!canManageDenials}
-                          title={!canManageDenials ? NO_PERMISSION : undefined}
-                          style={{ fontSize: 12, cursor: canManageDenials ? 'pointer' : 'not-allowed' }}
-                        >
-                          Resolve
-                        </button>
-                      )}
-                    </td>
+            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+              <table className="w-full border-collapse text-sm">
+                <thead>
+                  <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                    <th className="px-4 py-3">Claim</th>
+                    <th className="px-4 py-3">Payer</th>
+                    <th className="px-4 py-3">Code</th>
+                    <th className="px-4 py-3">Category</th>
+                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3 text-right">$</th>
+                    <th className="px-4 py-3 text-right">Days</th>
+                    <th className="px-4 py-3"></th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {filtered.map((d) => (
+                    <tr key={d.id} className="border-t border-slate-100 hover:bg-slate-50">
+                      <td className="px-4 py-3 font-mono text-xs text-slate-700">
+                        {d.claimNumber}
+                      </td>
+                      <td className="px-4 py-3 text-slate-700">{d.payerName}</td>
+                      <td className="px-4 py-3 text-slate-700">{d.denialCode}</td>
+                      <td className="px-4 py-3 text-slate-500">{d.category}</td>
+                      <td className="px-4 py-3 text-slate-700">{d.status}</td>
+                      <td className="px-4 py-3 text-right text-slate-700">
+                        {formatMoney(d.claimAmount)}
+                      </td>
+                      <td className={`px-4 py-3 text-right font-semibold ${BUCKET_TEXT[d.agingBucket]}`}>
+                        {d.daysOutstanding}d
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-wrap gap-1">
+                          <button
+                            type="button"
+                            onClick={() => void handleDraftLetter(d)}
+                            className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                          >
+                            Letter
+                          </button>
+                          {d.status === 'new' && (
+                            <button
+                              type="button"
+                              onClick={() => void handleStartAppeal(d)}
+                              disabled={!canManageDenials}
+                              title={!canManageDenials ? NO_PERMISSION : undefined}
+                              className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              Start
+                            </button>
+                          )}
+                          {d.status === 'in-review' && (
+                            <button
+                              type="button"
+                              onClick={() => void handleSubmitAppeal(d)}
+                              disabled={!canManageDenials}
+                              title={!canManageDenials ? NO_PERMISSION : undefined}
+                              className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              Submit
+                            </button>
+                          )}
+                          {(d.status === 'appealing' || d.status === 'in-review') && (
+                            <button
+                              type="button"
+                              onClick={() => void handleResolve(d)}
+                              disabled={!canManageDenials}
+                              title={!canManageDenials ? NO_PERMISSION : undefined}
+                              className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              Resolve
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </>
       )}
 
       {letter && (
-        <section
-          style={{
-            border: '1px solid #cbd5e1',
-            borderRadius: 8,
-            padding: 16,
-            background: '#f8fafc',
-            display: 'grid',
-            gap: 12,
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+        <section className="grid gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <div className="flex justify-between">
             <div>
-              <h3 style={{ fontSize: 16, fontWeight: 600 }}>
+              <h3 className="text-lg font-semibold">
                 Appeal Letter Draft — Denial #{letter.denialWorkItemId}
               </h3>
-              <div style={{ color: '#64748b', fontSize: 13, marginTop: 4 }}>
+              <div className="mt-1 text-sm text-slate-500">
                 {letter.payerName} · Claim {letter.claimNumber}
               </div>
             </div>
-            <button type="button" onClick={() => setLetter(null)}>Close</button>
+            <button
+              type="button"
+              onClick={() => setLetter(null)}
+              className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+            >
+              Close
+            </button>
           </div>
           <div>
-            <strong>Subject:</strong>
-            <div style={{ marginTop: 4 }}>{letter.subjectLine}</div>
+            <strong className="text-slate-700">Subject:</strong>
+            <div className="mt-1 text-slate-700">{letter.subjectLine}</div>
           </div>
-          <pre
-            style={{
-              background: '#fff',
-              border: '1px solid #e2e8f0',
-              borderRadius: 6,
-              padding: 12,
-              whiteSpace: 'pre-wrap',
-              fontFamily: 'system-ui',
-              fontSize: 13,
-            }}
-          >
+          <pre className="whitespace-pre-wrap rounded-md border border-slate-200 bg-white p-3 font-sans text-sm text-slate-700">
             {letter.body}
           </pre>
           <button
@@ -354,7 +332,7 @@ export function DenialQueuePage() {
               void navigator.clipboard.writeText(`${letter.subjectLine}\n\n${letter.body}`);
               setActionMsg('Letter copied to clipboard.');
             }}
-            style={{ justifySelf: 'start' }}
+            className="btn-primary justify-self-start"
           >
             Copy to Clipboard
           </button>

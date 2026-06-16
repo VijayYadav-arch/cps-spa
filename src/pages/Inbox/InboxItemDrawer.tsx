@@ -8,6 +8,8 @@ import {
   type WorkQueueItemEvent,
 } from '@/api/billing';
 
+// Per-event-type glyph background colour. Data-driven, so kept as an inline
+// style on the avatar circle below.
 const EVENT_COLORS: Record<string, string> = {
   created: '#64748b',
   claimed: '#0ea5e9',
@@ -87,61 +89,51 @@ export function InboxItemDrawer({ item, onClose }: InboxItemDrawerProps) {
       <div
         role="presentation"
         onClick={onClose}
-        style={{
-          position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.35)',
-          zIndex: 40,
-        }}
+        className="fixed inset-0 z-40 bg-navy-950/35"
       />
       {/* Drawer */}
       <aside
         role="dialog"
         aria-label={`Work item #${item.id} detail`}
-        style={{
-          position: 'fixed', right: 0, top: 0, bottom: 0, width: 480,
-          background: '#fff', boxShadow: '-4px 0 24px rgba(0,0,0,0.15)',
-          padding: 24, overflowY: 'auto', zIndex: 41,
-        }}
+        className="fixed bottom-0 right-0 top-0 z-[41] w-[480px] overflow-y-auto bg-white p-6 shadow-[-4px_0_24px_rgba(0,0,0,0.15)]"
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <h2 style={{ margin: 0, fontSize: 18 }}>Item #{item.id}</h2>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg">Item #{item.id}</h2>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close detail drawer"
-            style={{
-              background: 'transparent', border: 'none', cursor: 'pointer',
-              fontSize: 20, color: '#64748b', padding: 4,
-            }}
+            className="cursor-pointer border-none bg-transparent p-1 text-xl text-slate-500"
           >
             ×
           </button>
         </div>
 
-        <div style={{ marginBottom: 20, fontSize: 13 }}>
-          <div style={{ marginBottom: 4 }}>
+        <div className="mb-5 text-[13px]">
+          <div className="mb-1">
             <strong>Type:</strong> {item.type}
-            <span style={{ marginLeft: 12 }}>
+            <span className="ml-3">
               <strong>Priority:</strong> {item.priority}
             </span>
-            <span style={{ marginLeft: 12 }}>
+            <span className="ml-3">
               <strong>Status:</strong> {item.status}
             </span>
           </div>
-          <div style={{ marginBottom: 4, color: '#475569' }}>{item.description}</div>
+          <div className="mb-1 text-slate-600">{item.description}</div>
           {(item.claimId || item.patientId) && (
-            <div style={{ color: '#64748b', fontSize: 12 }}>
+            <div className="text-xs text-slate-500">
               {item.claimId && <span>Claim #{item.claimId}</span>}
               {item.claimId && item.patientId && ' · '}
               {item.patientId && <span>Patient #{item.patientId}</span>}
             </div>
           )}
           {item.dueDate && (
-            <div style={{ color: '#64748b', fontSize: 12 }}>
+            <div className="text-xs text-slate-500">
               Due: {item.dueDate.slice(0, 10)}
             </div>
           )}
           {item.snoozeUntilUtc && new Date(item.snoozeUntilUtc) > new Date() && (
-            <div style={{ color: '#f59e0b', fontSize: 12 }}>
+            <div className="text-xs text-accent-500">
               Snoozed until {item.snoozeUntilUtc.slice(0, 16).replace('T', ' ')} UTC
             </div>
           )}
@@ -151,69 +143,59 @@ export function InboxItemDrawer({ item, onClose }: InboxItemDrawerProps) {
         {timing && (timing.timeToClaim || timing.timeToComplete) && (
           <div
             aria-label="Item timing"
-            style={{
-              display: 'flex', gap: 12, marginBottom: 16, fontSize: 13,
-              background: '#f8fafc', padding: 10, borderRadius: 6,
-            }}
+            className="mb-4 flex gap-3 rounded-md bg-slate-50 p-2.5 text-[13px]"
           >
             {timing.timeToClaim && (
               <span>
-                <span style={{ color: '#64748b', fontSize: 11, display: 'block' }}>Claimed in</span>
-                <strong style={{ color: '#0f172a' }}>{formatDuration(timing.timeToClaim)}</strong>
+                <span className="block text-[11px] text-slate-500">Claimed in</span>
+                <strong className="text-slate-900">{formatDuration(timing.timeToClaim)}</strong>
               </span>
             )}
             {timing.timeToComplete && (
               <span>
-                <span style={{ color: '#64748b', fontSize: 11, display: 'block' }}>Completed in</span>
-                <strong style={{ color: '#16a34a' }}>{formatDuration(timing.timeToComplete)}</strong>
+                <span className="block text-[11px] text-slate-500">Completed in</span>
+                <strong className="text-success">{formatDuration(timing.timeToComplete)}</strong>
               </span>
             )}
           </div>
         )}
 
-        <h3 style={{ fontSize: 14, color: '#334155', marginBottom: 8, marginTop: 0 }}>
+        <h3 className="mb-2 mt-0 text-sm font-semibold text-slate-700">
           Activity
         </h3>
 
         {error && (
-          <div role="alert" style={{ color: '#991b1b', background: '#fee2e2', padding: 10, borderRadius: 6, fontSize: 13 }}>
+          <div role="alert" className="rounded-md bg-red-100 px-2.5 py-2.5 text-[13px] text-red-800">
             {error}
           </div>
         )}
         {!error && events === null && (
-          <div style={{ color: '#64748b', fontSize: 13 }}>Loading…</div>
+          <div className="text-[13px] text-slate-500">Loading…</div>
         )}
         {!error && events !== null && events.length === 0 && (
-          <div style={{ color: '#64748b', fontSize: 13 }}>
+          <div className="text-[13px] text-slate-500">
             No activity recorded yet.
           </div>
         )}
         {!error && events !== null && events.length > 0 && (
-          <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+          <ul className="m-0 list-none p-0">
             {events.map((ev) => (
               <li
                 key={ev.id}
-                style={{
-                  display: 'flex', gap: 12, padding: '8px 0',
-                  borderBottom: '1px solid #f1f5f9',
-                }}
+                className="flex gap-3 border-b border-slate-100 py-2"
               >
                 <span
                   aria-hidden="true"
-                  style={{
-                    flex: '0 0 24px', width: 24, height: 24, borderRadius: 12,
-                    background: EVENT_COLORS[ev.eventType] ?? '#64748b',
-                    color: '#fff', fontSize: 12, fontWeight: 700,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}
+                  className="flex h-6 w-6 flex-[0_0_24px] items-center justify-center rounded-xl text-xs font-bold text-white"
+                  style={{ background: EVENT_COLORS[ev.eventType] ?? '#64748b' }}
                 >
                   {eventGlyph(ev.eventType)}
                 </span>
-                <div style={{ flex: 1, fontSize: 13 }}>
-                  <div style={{ color: '#0f172a' }}>
+                <div className="flex-1 text-[13px]">
+                  <div className="text-slate-900">
                     <strong>{ev.eventType}</strong> · {ev.description}
                   </div>
-                  <div style={{ color: '#64748b', fontSize: 12, marginTop: 2 }}>
+                  <div className="mt-0.5 text-xs text-slate-500">
                     {formatActor(ev)} · {formatTimestamp(ev.occurredAtUtc)}
                   </div>
                 </div>

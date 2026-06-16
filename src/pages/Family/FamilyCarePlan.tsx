@@ -31,25 +31,26 @@ export function FamilyCarePlan() {
 
   if (error) {
     return (
-      <p data-testid="family-error" role="alert" style={{ color: '#dc2626', padding: 16 }}>
+      <p
+        data-testid="family-error"
+        role="alert"
+        className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800"
+      >
         {error}
       </p>
     );
   }
   if (plans === null) {
     return (
-      <p data-testid="family-loading" style={{ color: '#94a3b8', padding: 16 }}>
+      <p data-testid="family-loading" role="status" className="p-4 text-slate-500">
         Loading…
       </p>
     );
   }
 
   return (
-    <section style={{ padding: 16 }}>
-      <h1
-        data-testid="page-title"
-        style={{ fontSize: 24, fontWeight: 600, color: '#1e293b', marginBottom: 24 }}
-      >
+    <section className="grid max-w-[1200px] gap-6 p-6">
+      <h1 data-testid="page-title" className="text-2xl">
         Care Plan
       </h1>
       {plans.map((plan) => {
@@ -64,50 +65,27 @@ export function FamilyCarePlan() {
           <div
             key={plan.id}
             data-testid="care-plan-item"
-            style={{
-              background: '#fff',
-              border: '1px solid #e2e8f0',
-              borderRadius: 12,
-              padding: 24,
-              marginBottom: 16,
-            }}
+            className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-              <span
-                style={{
-                  fontSize: 14,
-                  fontWeight: 500,
-                  color: '#475569',
-                  textTransform: 'capitalize',
-                }}
-              >
+            <div className="mb-3 flex items-center gap-3">
+              <span className="text-sm font-medium capitalize text-slate-600">
                 {plan.status}
               </span>
-              <span style={{ color: '#cbd5e1' }}>·</span>
-              <span style={{ fontSize: 14, color: '#64748b' }}>
+              <span className="text-slate-300">·</span>
+              <span className="text-sm text-slate-500">
                 Effective {new Date(plan.effectiveDate).toLocaleDateString()}
               </span>
             </div>
-            <ul
-              style={{
-                fontSize: 14,
-                color: '#475569',
-                paddingLeft: 20,
-                margin: 0,
-                listStyle: 'disc',
-              }}
-            >
+            <ul className="m-0 list-disc space-y-1 pl-5 text-sm text-slate-600">
               {goals.map((g, i) => (
-                <li key={`${i}:${String(g)}`} style={{ marginBottom: 4 }}>
-                  {String(g)}
-                </li>
+                <li key={`${i}:${String(g)}`}>{String(g)}</li>
               ))}
             </ul>
           </div>
         );
       })}
       {plans.length === 0 && (
-        <p data-testid="care-plan-empty" style={{ color: '#94a3b8' }}>
+        <p data-testid="care-plan-empty" className="text-slate-500">
           No care plan on file.
         </p>
       )}

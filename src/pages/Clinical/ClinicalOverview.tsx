@@ -25,43 +25,73 @@ export function ClinicalOverview() {
     return () => { cancelled = true; };
   }, []);
 
-  if (isLoading) return <div role="status">Loading clinical overview…</div>;
-  if (error) return <div role="alert">{error}</div>;
+  if (isLoading)
+    return (
+      <div role="status" className="text-slate-500">
+        Loading clinical overview…
+      </div>
+    );
+  if (error)
+    return (
+      <div
+        role="alert"
+        className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800"
+      >
+        {error}
+      </div>
+    );
 
   return (
-    <div>
-      <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 24 }}>Clinical Overview</h2>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <header className="space-y-2">
+        <h2 className="text-2xl">Clinical Overview</h2>
+        <div className="section-line" />
+      </header>
 
-      <section style={{ marginBottom: 32 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-          <h3 style={{ fontWeight: 600 }}>Recent Care Plans</h3>
-          <Link to="/clinical/care-plans" style={{ color: '#2563eb', fontSize: 14 }}>View all</Link>
+      <section className="grid gap-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold">Recent Care Plans</h3>
+          <Link
+            to="/clinical/care-plans"
+            className="text-sm font-medium text-teal-700 hover:underline"
+          >
+            View all
+          </Link>
         </div>
-        {carePlans.length === 0 ? <p style={{ color: '#64748b' }}>No care plans.</p> : (
-          <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+        {carePlans.length === 0 ? (
+          <p className="text-slate-500">No care plans.</p>
+        ) : (
+          <ul className="m-0 list-none rounded-xl border border-slate-200 bg-white p-0 shadow-sm">
             {carePlans.map((cp) => (
-              <li key={cp.id} style={{ padding: '10px 0', borderBottom: '1px solid #f1f5f9' }}>
-                <span style={{ fontWeight: 500 }}>{cp.title}</span>
+              <li key={cp.id} className="border-b border-slate-100 px-4 py-2.5 last:border-b-0">
+                <span className="font-medium text-slate-700">{cp.title}</span>
                 {' — '}
-                <span style={{ color: '#64748b', fontSize: 14 }}>{cp.status}</span>
+                <span className="text-sm text-slate-500">{cp.status}</span>
               </li>
             ))}
           </ul>
         )}
       </section>
 
-      <section>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-          <h3 style={{ fontWeight: 600 }}>Recent Prior Authorizations</h3>
-          <Link to="/clinical/prior-auth" style={{ color: '#2563eb', fontSize: 14 }}>View all</Link>
+      <section className="grid gap-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold">Recent Prior Authorizations</h3>
+          <Link
+            to="/clinical/prior-auth"
+            className="text-sm font-medium text-teal-700 hover:underline"
+          >
+            View all
+          </Link>
         </div>
-        {priorAuths.length === 0 ? <p style={{ color: '#64748b' }}>No prior authorizations.</p> : (
-          <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+        {priorAuths.length === 0 ? (
+          <p className="text-slate-500">No prior authorizations.</p>
+        ) : (
+          <ul className="m-0 list-none rounded-xl border border-slate-200 bg-white p-0 shadow-sm">
             {priorAuths.map((pa) => (
-              <li key={pa.id} style={{ padding: '10px 0', borderBottom: '1px solid #f1f5f9' }}>
-                <span style={{ fontWeight: 500 }}>{pa.serviceType}</span>
+              <li key={pa.id} className="border-b border-slate-100 px-4 py-2.5 last:border-b-0">
+                <span className="font-medium text-slate-700">{pa.serviceType}</span>
                 {' — '}
-                <span style={{ color: '#64748b', fontSize: 14 }}>{pa.payerName} / {pa.status}</span>
+                <span className="text-sm text-slate-500">{pa.payerName} / {pa.status}</span>
               </li>
             ))}
           </ul>

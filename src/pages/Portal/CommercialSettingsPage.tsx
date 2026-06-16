@@ -23,48 +23,27 @@ const SETTINGS_CARDS = [
 
 export function CommercialSettingsPage() {
   return (
-    <div style={{ padding: '1rem', maxWidth: 1200, margin: '0 auto' }}>
-      <div style={{ marginBottom: 24 }}>
-        <h1 data-testid="page-title" style={{ fontSize: 24, fontWeight: 600 }}>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <div>
+        <h1 data-testid="page-title" className="text-2xl">
           Settings
         </h1>
-        <p style={{ color: '#64748b', fontSize: 14, marginTop: 4 }}>
+        <p className="mt-1 text-sm text-slate-500">
           Manage your organization settings and integrations.
         </p>
       </div>
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-          gap: 16,
-        }}
-      >
+      <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(280px,1fr))]">
         {SETTINGS_CARDS.map((card) => (
           <Link
             key={card.href}
             to={card.href}
             data-testid={card.testid}
-            style={{
-              background: 'white',
-              padding: 24,
-              borderRadius: 12,
-              border: '1px solid #e2e8f0',
-              textDecoration: 'none',
-              color: 'inherit',
-              display: 'block',
-            }}
+            className="card-hover block rounded-xl border border-slate-200 bg-white p-6 text-inherit no-underline shadow-sm"
           >
-            <div
-              data-testid="setting-row"
-              style={{ display: 'flex', flexDirection: 'column' }}
-            >
-              <h3
-                style={{ fontSize: 16, fontWeight: 600, color: '#0f172a', marginBottom: 4 }}
-              >
-                {card.title}
-              </h3>
-              <p style={{ fontSize: 14, color: '#64748b' }}>{card.description}</p>
+            <div data-testid="setting-row" className="flex flex-col">
+              <h3 className="mb-1 text-lg font-semibold text-navy-900">{card.title}</h3>
+              <p className="text-sm text-slate-500">{card.description}</p>
             </div>
           </Link>
         ))}

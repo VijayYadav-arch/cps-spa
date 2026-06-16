@@ -52,10 +52,10 @@ function buildParams(
 
 function resultColor(r: string): string {
   switch (r) {
-    case 'success': return '#15803d';
-    case 'denied': return '#b91c1c';
-    case 'error': return '#b45309';
-    default: return '#475569';
+    case 'success': return 'text-green-700';
+    case 'denied': return 'text-red-700';
+    case 'error': return 'text-amber-700';
+    default: return 'text-slate-600';
   }
 }
 
@@ -120,80 +120,99 @@ export function AuditLogSearchPage() {
   const totalPages = pagination?.totalPages ?? 1;
 
   return (
-    <div style={{ padding: 24 }}>
-      <h1 style={{ marginTop: 0 }}>Audit log search</h1>
-      <p style={{ color: '#64748b', maxWidth: 720 }}>
-        Search the HIPAA audit log. Default window is the last 90 days when
-        no start date is set. Export downloads the same filter as CSV (up to
-        50,000 rows).
-      </p>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <header className="space-y-2">
+        <h1 className="text-2xl">Audit log search</h1>
+        <div className="section-line" />
+        <p className="max-w-3xl text-slate-500">
+          Search the HIPAA audit log. Default window is the last 90 days when
+          no start date is set. Export downloads the same filter as CSV (up to
+          50,000 rows).
+        </p>
+      </header>
 
       <form
         onSubmit={onSearch}
-        style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 16 }}
+        className="grid grid-cols-1 gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-4"
         aria-label="Audit log filters"
       >
-        <label>Start date<br />
-          <input type="date" value={form.startDate}
+        <label className="grid gap-1.5">
+          <span className="text-sm font-medium text-slate-600">Start date</span>
+          <input type="date" className="form-input" value={form.startDate}
             onChange={(e) => setForm((f) => ({ ...f, startDate: e.target.value }))} />
         </label>
-        <label>End date<br />
-          <input type="date" value={form.endDate}
+        <label className="grid gap-1.5">
+          <span className="text-sm font-medium text-slate-600">End date</span>
+          <input type="date" className="form-input" value={form.endDate}
             onChange={(e) => setForm((f) => ({ ...f, endDate: e.target.value }))} />
         </label>
-        <label>Event type<br />
-          <select value={form.eventType}
+        <label className="grid gap-1.5">
+          <span className="text-sm font-medium text-slate-600">Event type</span>
+          <select className="form-input" value={form.eventType}
             onChange={(e) => setForm((f) => ({ ...f, eventType: e.target.value }))}>
             {EVENT_TYPES.map((t) => (
               <option key={t} value={t}>{t || 'Any'}</option>
             ))}
           </select>
         </label>
-        <label>Result<br />
-          <select value={form.result}
+        <label className="grid gap-1.5">
+          <span className="text-sm font-medium text-slate-600">Result</span>
+          <select className="form-input" value={form.result}
             onChange={(e) => setForm((f) => ({ ...f, result: e.target.value }))}>
             {RESULTS.map((r) => <option key={r} value={r}>{r || 'Any'}</option>)}
           </select>
         </label>
-        <label>User id<br />
-          <input type="number" value={form.userId}
+        <label className="grid gap-1.5">
+          <span className="text-sm font-medium text-slate-600">User id</span>
+          <input type="number" className="form-input" value={form.userId}
             onChange={(e) => setForm((f) => ({ ...f, userId: e.target.value }))} />
         </label>
-        <label>User email contains<br />
-          <input type="text" value={form.userEmail} placeholder="alice@…"
+        <label className="grid gap-1.5">
+          <span className="text-sm font-medium text-slate-600">User email contains</span>
+          <input type="text" className="form-input" value={form.userEmail} placeholder="alice@…"
             onChange={(e) => setForm((f) => ({ ...f, userEmail: e.target.value }))} />
         </label>
-        <label>Patient id<br />
-          <input type="number" value={form.patientId}
+        <label className="grid gap-1.5">
+          <span className="text-sm font-medium text-slate-600">Patient id</span>
+          <input type="number" className="form-input" value={form.patientId}
             onChange={(e) => setForm((f) => ({ ...f, patientId: e.target.value }))} />
         </label>
-        <label>Resource type<br />
-          <input type="text" value={form.resourceType} placeholder="Patient, Claim, …"
+        <label className="grid gap-1.5">
+          <span className="text-sm font-medium text-slate-600">Resource type</span>
+          <input type="text" className="form-input" value={form.resourceType} placeholder="Patient, Claim, …"
             onChange={(e) => setForm((f) => ({ ...f, resourceType: e.target.value }))} />
         </label>
-        <label>Resource id<br />
-          <input type="number" value={form.resourceId}
+        <label className="grid gap-1.5">
+          <span className="text-sm font-medium text-slate-600">Resource id</span>
+          <input type="number" className="form-input" value={form.resourceId}
             onChange={(e) => setForm((f) => ({ ...f, resourceId: e.target.value }))} />
         </label>
-        <label>IP address<br />
-          <input type="text" value={form.ipAddress}
+        <label className="grid gap-1.5">
+          <span className="text-sm font-medium text-slate-600">IP address</span>
+          <input type="text" className="form-input" value={form.ipAddress}
             onChange={(e) => setForm((f) => ({ ...f, ipAddress: e.target.value }))} />
         </label>
-        <label style={{ gridColumn: 'span 2' }}>Description contains<br />
-          <input type="text" value={form.q} placeholder="surveyor, bulk export, …"
-            onChange={(e) => setForm((f) => ({ ...f, q: e.target.value }))}
-            style={{ width: '100%' }} />
+        <label className="grid gap-1.5 sm:col-span-2">
+          <span className="text-sm font-medium text-slate-600">Description contains</span>
+          <input type="text" className="form-input" value={form.q} placeholder="surveyor, bulk export, …"
+            onChange={(e) => setForm((f) => ({ ...f, q: e.target.value }))} />
         </label>
 
-        <div style={{ gridColumn: 'span 4', display: 'flex', gap: 8 }}>
-          <button type="submit">Search</button>
-          <button type="button" onClick={onClear}>Clear</button>
+        <div className="flex gap-2 sm:col-span-2 lg:col-span-4">
+          <button type="submit" className="btn-primary">Search</button>
+          <button
+            type="button"
+            onClick={onClear}
+            className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+          >
+            Clear
+          </button>
           <button
             type="button"
             onClick={onExport}
             disabled={!canExport}
             title={!canExport ? NO_PERMISSION : undefined}
-            style={{ cursor: !canExport ? 'not-allowed' : 'pointer' }}
+            className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
           >
             Download CSV
           </button>
@@ -201,64 +220,72 @@ export function AuditLogSearchPage() {
       </form>
 
       {error && (
-        <div role="alert" style={{ color: '#b91c1c', marginBottom: 12 }}>{error}</div>
+        <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">{error}</div>
       )}
-      {isLoading && <div>Loading…</div>}
+      {isLoading && <div role="status" className="text-slate-500">Loading…</div>}
       {!isLoading && !error && rows.length === 0 && (
-        <div style={{ color: '#64748b' }}>No audit events matched these filters.</div>
+        <div className="text-slate-500">No audit events matched these filters.</div>
       )}
 
       {rows.length > 0 && (
         <>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ textAlign: 'left', borderBottom: '1px solid #e2e8f0' }}>
-                <th style={{ padding: 8 }}>When</th>
-                <th style={{ padding: 8 }}>Event</th>
-                <th style={{ padding: 8 }}>Result</th>
-                <th style={{ padding: 8 }}>User</th>
-                <th style={{ padding: 8 }}>Resource</th>
-                <th style={{ padding: 8 }}>Patient</th>
-                <th style={{ padding: 8 }}>IP</th>
-                <th style={{ padding: 8 }}>Description</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => (
-                <tr key={r.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td style={{ padding: 8, whiteSpace: 'nowrap' }}>
-                    {new Date(r.createdAt).toLocaleString()}
-                  </td>
-                  <td style={{ padding: 8 }}>{r.eventType}</td>
-                  <td style={{ padding: 8, color: resultColor(r.result), fontWeight: 600 }}>
-                    {r.result}
-                  </td>
-                  <td style={{ padding: 8 }}>{r.userEmail || r.userId || '—'}</td>
-                  <td style={{ padding: 8 }}>
-                    {r.resourceType ? `${r.resourceType}/${r.resourceId ?? '—'}` : '—'}
-                  </td>
-                  <td style={{ padding: 8 }}>{r.patientId ?? '—'}</td>
-                  <td style={{ padding: 8 }}>{r.ipAddress ?? '—'}</td>
-                  <td style={{ padding: 8, color: '#475569', fontSize: 13 }}>
-                    {r.description}
-                  </td>
+          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                  <th className="px-4 py-3">When</th>
+                  <th className="px-4 py-3">Event</th>
+                  <th className="px-4 py-3">Result</th>
+                  <th className="px-4 py-3">User</th>
+                  <th className="px-4 py-3">Resource</th>
+                  <th className="px-4 py-3">Patient</th>
+                  <th className="px-4 py-3">IP</th>
+                  <th className="px-4 py-3">Description</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {rows.map((r) => (
+                  <tr key={r.id} className="border-t border-slate-100 hover:bg-slate-50">
+                    <td className="whitespace-nowrap px-4 py-3 text-slate-700">
+                      {new Date(r.createdAt).toLocaleString()}
+                    </td>
+                    <td className="px-4 py-3 text-slate-700">{r.eventType}</td>
+                    <td className={`px-4 py-3 font-semibold ${resultColor(r.result)}`}>
+                      {r.result}
+                    </td>
+                    <td className="px-4 py-3 text-slate-700">{r.userEmail || r.userId || '—'}</td>
+                    <td className="px-4 py-3 text-slate-700">
+                      {r.resourceType ? `${r.resourceType}/${r.resourceId ?? '—'}` : '—'}
+                    </td>
+                    <td className="px-4 py-3 text-slate-700">{r.patientId ?? '—'}</td>
+                    <td className="px-4 py-3 text-slate-700">{r.ipAddress ?? '—'}</td>
+                    <td className="px-4 py-3 text-slate-600">
+                      {r.description}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
           {pagination && (
-            <div style={{ display: 'flex', gap: 8, marginTop: 12, alignItems: 'center' }}>
-              <button type="button" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => p - 1)}
+                className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+              >
                 Prev
               </button>
-              <span>
+              <span className="text-sm text-slate-600">
                 Page {pagination.page} of {totalPages} ({pagination.total.toLocaleString()} rows)
               </span>
               <button
                 type="button"
                 disabled={page >= totalPages}
                 onClick={() => setPage((p) => p + 1)}
+                className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Next
               </button>

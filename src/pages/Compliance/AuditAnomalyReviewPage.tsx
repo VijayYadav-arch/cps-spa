@@ -20,9 +20,9 @@ const STATUS_FILTERS: { value: AnomalyStatus | ''; label: string }[] = [
 ];
 
 const ANOMALY_LABELS: Record<string, { label: string; tone: string }> = {
-  'bulk-read': { label: 'Bulk PHI read', tone: '#b45309' },
-  'off-hours': { label: 'Off-hours access', tone: '#0369a1' },
-  'denial-cluster': { label: 'Denial cluster (IP)', tone: '#b91c1c' },
+  'bulk-read': { label: 'Bulk PHI read', tone: 'text-accent-700' },
+  'off-hours': { label: 'Off-hours access', tone: 'text-blue-700' },
+  'denial-cluster': { label: 'Denial cluster (IP)', tone: 'text-red-700' },
 };
 
 function fmtWindow(startIso: string, endIso: string): string {
@@ -30,6 +30,9 @@ function fmtWindow(startIso: string, endIso: string): string {
   const end = new Date(endIso);
   return `${start.toLocaleString()} → ${end.toLocaleString()}`;
 }
+
+const ROW_ACTION_BTN =
+  'rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed';
 
 export function AuditAnomalyReviewPage() {
   const [statusFilter, setStatusFilter] = useState<AnomalyStatus | ''>('open');
@@ -118,18 +121,22 @@ export function AuditAnomalyReviewPage() {
   };
 
   return (
-    <div style={{ padding: 24 }}>
-      <h1 style={{ marginTop: 0 }}>Audit anomaly review</h1>
-      <p style={{ color: '#64748b', maxWidth: 720 }}>
-        Anomalies detected by the background scanner. Each alert covers a
-        user/time window; dismiss to acknowledge as expected, or escalate
-        to send to incident response.
-      </p>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <header className="space-y-2">
+        <h2 className="text-2xl">Audit anomaly review</h2>
+        <div className="section-line" />
+        <p className="max-w-3xl text-slate-500">
+          Anomalies detected by the background scanner. Each alert covers a
+          user/time window; dismiss to acknowledge as expected, or escalate
+          to send to incident response.
+        </p>
+      </header>
 
-      <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 16 }}>
-        <label>
-          Filter:&nbsp;
+      <div className="flex flex-wrap items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <label className="grid gap-1.5">
+          <span className="text-sm font-medium text-slate-600">Filter</span>
           <select
+            className="form-input"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as AnomalyStatus | '')}
             aria-label="Filter by status"
@@ -144,7 +151,7 @@ export function AuditAnomalyReviewPage() {
           onClick={runScan}
           disabled={!canReview}
           title={!canReview ? NO_PERMISSION : undefined}
-          style={{ cursor: !canReview ? 'not-allowed' : 'pointer' }}
+          className={ROW_ACTION_BTN}
         >
           Scan now
         </button>
@@ -153,140 +160,124 @@ export function AuditAnomalyReviewPage() {
           onClick={runNarrate}
           disabled={!canReview}
           title={!canReview ? NO_PERMISSION : undefined}
-          style={{ cursor: !canReview ? 'not-allowed' : 'pointer' }}
+          className={ROW_ACTION_BTN}
         >
           Generate narratives
         </button>
-        {scanResult && <span style={{ color: '#15803d' }}>{scanResult}</span>}
-        {narrateResult && <span style={{ color: '#15803d' }}>{narrateResult}</span>}
+        {scanResult && <span className="text-sm font-medium text-success">{scanResult}</span>}
+        {narrateResult && <span className="text-sm font-medium text-success">{narrateResult}</span>}
       </div>
 
       {error && (
-        <div role="alert" style={{ color: '#b91c1c', marginBottom: 12 }}>{error}</div>
+        <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">{error}</div>
       )}
-      {isLoading && <div>Loading…</div>}
+      {isLoading && <div role="status" className="text-slate-500">Loading…</div>}
       {!isLoading && !error && rows.length === 0 && (
-        <div style={{ color: '#64748b' }}>No anomalies match this filter.</div>
+        <div className="text-slate-500">No anomalies match this filter.</div>
       )}
 
       {rows.length > 0 && (
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ textAlign: 'left', borderBottom: '1px solid #e2e8f0' }}>
-              <th style={{ padding: 8 }}>Detected</th>
-              <th style={{ padding: 8 }}>Type</th>
-              <th style={{ padding: 8 }}>Subject</th>
-              <th style={{ padding: 8 }}>Window</th>
-              <th style={{ padding: 8 }}>Evidence</th>
-              <th style={{ padding: 8 }}>Status</th>
-              <th style={{ padding: 8 }}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => {
-              const label = ANOMALY_LABELS[r.anomalyType] ?? {
-                label: r.anomalyType, tone: '#475569',
-              };
-              const isExpanded = expandedNarrativeId === r.id;
-              return (
-                <Fragment key={r.id}>
-                  <tr style={{ borderBottom: r.narrativeText && isExpanded ? 'none' : '1px solid #f1f5f9' }}>
-                    <td style={{ padding: 8, whiteSpace: 'nowrap' }}>
-                      {new Date(r.detectedAtUtc).toLocaleString()}
-                    </td>
-                    <td style={{ padding: 8, color: label.tone, fontWeight: 600 }}>
-                      {label.label}
-                      {r.narrativeText && (
-                        <button
-                          type="button"
-                          onClick={() => setExpandedNarrativeId(isExpanded ? null : r.id)}
-                          aria-expanded={isExpanded}
-                          aria-label={isExpanded ? `Hide narrative for alert ${r.id}` : `Show narrative for alert ${r.id}`}
-                          style={{
-                            marginLeft: 8,
-                            background: 'none',
-                            border: '1px solid #cbd5e1',
-                            borderRadius: 4,
-                            padding: '0 6px',
-                            fontSize: 11,
-                            cursor: 'pointer',
-                            color: '#475569',
-                          }}
-                        >
-                          {isExpanded ? '▾ AI' : '▸ AI'}
-                        </button>
-                      )}
-                    </td>
-                    <td style={{ padding: 8 }}>
-                      {r.userEmail ?? r.ipAddress ?? `user ${r.userId ?? '?'}`}
-                    </td>
-                    <td style={{ padding: 8, fontSize: 13 }}>
-                      {fmtWindow(r.windowStartUtc, r.windowEndUtc)}
-                    </td>
-                    <td style={{ padding: 8 }}>{r.evidence}</td>
-                    <td style={{ padding: 8 }}>{r.status}</td>
-                    <td style={{ padding: 8 }}>
-                      {r.status === 'open' && (
-                        <>
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                <th className="px-4 py-3">Detected</th>
+                <th className="px-4 py-3">Type</th>
+                <th className="px-4 py-3">Subject</th>
+                <th className="px-4 py-3">Window</th>
+                <th className="px-4 py-3">Evidence</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => {
+                const label = ANOMALY_LABELS[r.anomalyType] ?? {
+                  label: r.anomalyType, tone: 'text-slate-600',
+                };
+                const isExpanded = expandedNarrativeId === r.id;
+                return (
+                  <Fragment key={r.id}>
+                    <tr className={r.narrativeText && isExpanded ? '' : 'border-t border-slate-100 hover:bg-slate-50'}>
+                      <td className="whitespace-nowrap px-4 py-3 text-slate-700">
+                        {new Date(r.detectedAtUtc).toLocaleString()}
+                      </td>
+                      <td className={`px-4 py-3 font-semibold ${label.tone}`}>
+                        {label.label}
+                        {r.narrativeText && (
                           <button
                             type="button"
-                            onClick={() => openAction(r.id, 'dismissed')}
-                            disabled={!canReview}
-                            title={!canReview ? NO_PERMISSION : undefined}
-                            style={{ marginRight: 8, cursor: !canReview ? 'not-allowed' : 'pointer' }}
+                            onClick={() => setExpandedNarrativeId(isExpanded ? null : r.id)}
+                            aria-expanded={isExpanded}
+                            aria-label={isExpanded ? `Hide narrative for alert ${r.id}` : `Show narrative for alert ${r.id}`}
+                            className="ml-2 rounded border border-slate-300 px-1.5 text-[11px] text-slate-600 transition-colors hover:bg-slate-50"
                           >
-                            Dismiss
+                            {isExpanded ? '▾ AI' : '▸ AI'}
                           </button>
-                          <button
-                            type="button"
-                            onClick={() => openAction(r.id, 'escalated')}
-                            disabled={!canReview}
-                            title={!canReview ? NO_PERMISSION : undefined}
-                            style={{ cursor: !canReview ? 'not-allowed' : 'pointer' }}
-                          >
-                            Escalate
-                          </button>
-                        </>
-                      )}
-                      {r.status !== 'open' && r.notes && (
-                        <span style={{ color: '#64748b', fontSize: 13 }}>
-                          {r.notes}
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                  {r.narrativeText && isExpanded && (
-                    <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
-                      <td colSpan={7} style={{ padding: '0 8px 12px 32px', background: '#f8fafc' }}>
-                        <div
-                          aria-label={`AI narrative for alert ${r.id}`}
-                          style={{
-                            fontSize: 13,
-                            lineHeight: 1.5,
-                            color: '#334155',
-                            whiteSpace: 'pre-wrap',
-                            padding: '8px 12px',
-                            borderLeft: '3px solid #6366f1',
-                            background: '#fff',
-                            borderRadius: 4,
-                          }}
-                        >
-                          {r.narrativeText}
-                          {r.narrativeGeneratedAtUtc && (
-                            <div style={{ marginTop: 8, fontSize: 11, color: '#94a3b8' }}>
-                              AI-generated {new Date(r.narrativeGeneratedAtUtc).toLocaleString()}
-                              {' '}— review and verify before acting.
-                            </div>
-                          )}
-                        </div>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-slate-700">
+                        {r.userEmail ?? r.ipAddress ?? `user ${r.userId ?? '?'}`}
+                      </td>
+                      <td className="px-4 py-3 text-[13px] text-slate-700">
+                        {fmtWindow(r.windowStartUtc, r.windowEndUtc)}
+                      </td>
+                      <td className="px-4 py-3 text-slate-700">{r.evidence}</td>
+                      <td className="px-4 py-3 text-slate-700">{r.status}</td>
+                      <td className="px-4 py-3 text-slate-700">
+                        {r.status === 'open' && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => openAction(r.id, 'dismissed')}
+                              disabled={!canReview}
+                              title={!canReview ? NO_PERMISSION : undefined}
+                              className={`mr-2 ${ROW_ACTION_BTN}`}
+                            >
+                              Dismiss
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => openAction(r.id, 'escalated')}
+                              disabled={!canReview}
+                              title={!canReview ? NO_PERMISSION : undefined}
+                              className={ROW_ACTION_BTN}
+                            >
+                              Escalate
+                            </button>
+                          </>
+                        )}
+                        {r.status !== 'open' && r.notes && (
+                          <span className="text-[13px] text-slate-500">
+                            {r.notes}
+                          </span>
+                        )}
                       </td>
                     </tr>
-                  )}
-                </Fragment>
-              );
-            })}
-          </tbody>
-        </table>
+                    {r.narrativeText && isExpanded && (
+                      <tr className="border-t border-slate-100">
+                        <td colSpan={7} className="bg-slate-50 px-4 pb-3 pl-8">
+                          <div
+                            aria-label={`AI narrative for alert ${r.id}`}
+                            className="whitespace-pre-wrap rounded border-l-[3px] border-accent-400 bg-white px-3 py-2 text-[13px] leading-relaxed text-slate-700"
+                          >
+                            {r.narrativeText}
+                            {r.narrativeGeneratedAtUtc && (
+                              <div className="mt-2 text-[11px] text-slate-400">
+                                AI-generated {new Date(r.narrativeGeneratedAtUtc).toLocaleString()}
+                                {' '}— review and verify before acting.
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {actionRowId != null && (
@@ -294,34 +285,29 @@ export function AuditAnomalyReviewPage() {
           role="dialog"
           aria-modal="true"
           aria-label="Review action"
-          style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(15,23,42,0.5)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            zIndex: 100,
-          }}
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-navy-950/50"
         >
-          <div style={{ background: '#fff', padding: 24, borderRadius: 8, minWidth: 400 }}>
-            <h2 style={{ marginTop: 0 }}>
+          <div className="min-w-[400px] rounded-xl bg-white p-6 shadow-sm">
+            <h3 className="text-lg font-semibold">
               {actionStatus === 'dismissed' ? 'Dismiss alert' : 'Escalate alert'}
-            </h2>
-            <p style={{ color: '#64748b' }}>
+            </h3>
+            <p className="mt-1 text-slate-500">
               {actionStatus === 'dismissed'
                 ? 'Mark this alert as reviewed and expected behaviour.'
                 : 'Send this alert to incident response. Include any context.'}
             </p>
-            <label style={{ display: 'block' }}>
-              Notes
+            <label className="mt-4 grid gap-1.5">
+              <span className="text-sm font-medium text-slate-600">Notes</span>
               <textarea
                 value={actionNotes}
                 onChange={(e) => setActionNotes(e.target.value)}
                 rows={4}
-                style={{ width: '100%', marginTop: 4 }}
+                className="form-input"
               />
             </label>
-            <div style={{ display: 'flex', gap: 8, marginTop: 12, justifyContent: 'flex-end' }}>
-              <button type="button" onClick={cancelAction}>Cancel</button>
-              <button type="button" onClick={submitAction}>Save</button>
+            <div className="mt-4 flex justify-end gap-2">
+              <button type="button" onClick={cancelAction} className={ROW_ACTION_BTN}>Cancel</button>
+              <button type="button" onClick={submitAction} className="btn-primary">Save</button>
             </div>
           </div>
         </div>

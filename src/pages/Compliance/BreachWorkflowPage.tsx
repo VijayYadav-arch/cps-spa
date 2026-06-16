@@ -20,24 +20,23 @@ import { PERMISSIONS } from '@/permissions/permissions';
 
 const NO_PERMISSION = 'You do not have permission to perform this action';
 
-const STATUS_COLORS: Record<BreachStatus, { bg: string; fg: string }> = {
-  draft: { bg: '#f1f5f9', fg: '#475569' },
-  confirmed: { bg: '#fef3c7', fg: '#92400e' },
-  assessed: { bg: '#dbeafe', fg: '#1e40af' },
-  notifying: { bg: '#ede9fe', fg: '#5b21b6' },
-  hhs_notified: { bg: '#dcfce7', fg: '#166534' },
-  closed: { bg: '#d1fae5', fg: '#065f46' },
-  overdue: { bg: '#fee2e2', fg: '#991b1b' },
+const ROW_ACTION_BTN =
+  'rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed';
+
+const STATUS_COLORS: Record<BreachStatus, string> = {
+  draft: 'bg-slate-100 text-slate-600',
+  confirmed: 'bg-amber-100 text-amber-800',
+  assessed: 'bg-blue-100 text-blue-800',
+  notifying: 'bg-violet-100 text-violet-800',
+  hhs_notified: 'bg-green-100 text-green-800',
+  closed: 'bg-emerald-100 text-emerald-800',
+  overdue: 'bg-red-100 text-red-800',
 };
 
 function statusBadge(s: BreachStatus) {
   const c = STATUS_COLORS[s] ?? STATUS_COLORS.draft;
   return (
-    <span style={{
-      background: c.bg, color: c.fg,
-      padding: '2px 8px', borderRadius: 6,
-      fontSize: 12, fontWeight: 600,
-    }}>
+    <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${c}`}>
       {s}
     </span>
   );
@@ -47,19 +46,19 @@ function deadlineBadge(b: BreachWorkflowSummary) {
   if (b.daysUntilDeadline === null) return null;
   if (b.isOverdue) {
     return (
-      <span style={{ color: '#991b1b', fontWeight: 600 }}>
+      <span className="font-semibold text-red-800">
         OVERDUE by {Math.abs(b.daysUntilDeadline)}d
       </span>
     );
   }
   if (b.daysUntilDeadline <= 7) {
     return (
-      <span style={{ color: '#b45309', fontWeight: 600 }}>
+      <span className="font-semibold text-accent-700">
         {b.daysUntilDeadline}d remaining
       </span>
     );
   }
-  return <span style={{ color: '#64748b' }}>{b.daysUntilDeadline}d remaining</span>;
+  return <span className="text-slate-500">{b.daysUntilDeadline}d remaining</span>;
 }
 
 function extractError(err: unknown, fallback: string): string {
@@ -257,11 +256,12 @@ export function BreachWorkflowPage() {
   }
 
   return (
-    <div style={{ padding: 24, maxWidth: 1200, display: 'grid', gap: 24 }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div>
-          <h2 style={{ fontSize: 22, fontWeight: 700 }}>HIPAA Breach Workflow</h2>
-          <p style={{ color: '#64748b', marginTop: 4, maxWidth: 720 }}>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <header className="flex items-start justify-between">
+        <div className="space-y-2">
+          <h2 className="text-2xl">HIPAA Breach Workflow</h2>
+          <div className="section-line" />
+          <p className="max-w-3xl text-slate-500">
             State-machine view of breach notifications: confirm → assess
             risk → notify individuals/media/HHS → close. 60-day deadline
             tracking and activity log per HIPAA §164.404, §164.406,
@@ -273,76 +273,77 @@ export function BreachWorkflowPage() {
           onClick={() => openModal('register')}
           disabled={!canManage}
           title={!canManage ? NO_PERMISSION : undefined}
-          style={{ cursor: !canManage ? 'not-allowed' : 'pointer' }}
+          className="btn-primary disabled:opacity-60 disabled:cursor-not-allowed"
         >
           + Register breach
         </button>
       </header>
 
-      {error && <div role="alert" style={{ color: '#b91c1c' }}>{error}</div>}
-      {actionMsg && <div style={{ color: '#15803d' }}>{actionMsg}</div>}
+      {error && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">{error}</div>}
+      {actionMsg && (
+        <div className="rounded-lg border-l-4 border-success bg-green-50 px-4 py-3 font-semibold text-green-800">{actionMsg}</div>
+      )}
 
-      {isLoading && <div role="status">Loading…</div>}
+      {isLoading && <div role="status" className="text-slate-500">Loading…</div>}
       {!isLoading && items.length === 0 && (
-        <p style={{ color: '#64748b' }}>No breach notifications recorded.</p>
+        <p className="text-slate-500">No breach notifications recorded.</p>
       )}
       {!isLoading && items.length > 0 && (
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-              <th style={{ padding: '6px 10px' }}>Discovered</th>
-              <th style={{ padding: '6px 10px' }}>Status</th>
-              <th style={{ padding: '6px 10px' }}>Risk</th>
-              <th style={{ padding: '6px 10px' }}>Affected</th>
-              <th style={{ padding: '6px 10px' }}>Deadline</th>
-              <th style={{ padding: '6px 10px' }}></th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((b) => (
-              <tr key={b.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                <td style={{ padding: '6px 10px' }}>{b.discoveredAt.slice(0, 10)}</td>
-                <td style={{ padding: '6px 10px' }}>
-                  {statusBadge(b.isOverdue ? 'overdue' : b.status)}
-                </td>
-                <td style={{ padding: '6px 10px' }}>{b.riskLevel ?? '—'}</td>
-                <td style={{ padding: '6px 10px' }}>
-                  {b.affectedPatientCount ?? '—'}
-                </td>
-                <td style={{ padding: '6px 10px' }}>{deadlineBadge(b)}</td>
-                <td style={{ padding: '6px 10px' }}>
-                  <button type="button" onClick={() => void openDetail(b)}>
-                    Open
-                  </button>
-                </td>
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                <th className="px-4 py-3">Discovered</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Risk</th>
+                <th className="px-4 py-3">Affected</th>
+                <th className="px-4 py-3">Deadline</th>
+                <th className="px-4 py-3"></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {items.map((b) => (
+                <tr key={b.id} className="border-t border-slate-100 hover:bg-slate-50">
+                  <td className="px-4 py-3 text-slate-700">{b.discoveredAt.slice(0, 10)}</td>
+                  <td className="px-4 py-3 text-slate-700">
+                    {statusBadge(b.isOverdue ? 'overdue' : b.status)}
+                  </td>
+                  <td className="px-4 py-3 text-slate-700">{b.riskLevel ?? '—'}</td>
+                  <td className="px-4 py-3 text-slate-700">
+                    {b.affectedPatientCount ?? '—'}
+                  </td>
+                  <td className="px-4 py-3 text-slate-700">{deadlineBadge(b)}</td>
+                  <td className="px-4 py-3 text-slate-700">
+                    <button type="button" onClick={() => void openDetail(b)} className={ROW_ACTION_BTN}>
+                      Open
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {selected && (
-        <section style={{
-          border: '1px solid #cbd5e1', borderRadius: 8, padding: 16,
-          background: '#f8fafc', display: 'grid', gap: 12,
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+        <section className="grid gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-sm">
+          <div className="flex justify-between">
             <div>
-              <h3 style={{ fontSize: 16, fontWeight: 600 }}>Breach #{selected.id}</h3>
-              <div style={{ color: '#64748b', fontSize: 13, marginTop: 4 }}>
+              <h3 className="text-lg font-semibold">Breach #{selected.id}</h3>
+              <div className="mt-1 text-[13px] text-slate-500">
                 Discovered {selected.discoveredAt.slice(0, 10)} ·{' '}
                 {statusBadge(selected.isOverdue ? 'overdue' : selected.status)}{' · '}
                 {deadlineBadge(selected)}
               </div>
             </div>
-            <button type="button" onClick={() => setSelected(null)}>Close panel</button>
+            <button type="button" onClick={() => setSelected(null)} className={ROW_ACTION_BTN}>Close panel</button>
           </div>
 
           {selected.description && (
-            <div style={{ color: '#475569' }}>{selected.description}</div>
+            <div className="text-slate-600">{selected.description}</div>
           )}
 
-          <div style={{ display: 'grid', gap: 6, color: '#475569', fontSize: 13 }}>
+          <div className="grid gap-1.5 text-[13px] text-slate-600">
             <div><strong>Confirmed:</strong> {selected.confirmedAt?.slice(0, 10) ?? '—'}</div>
             <div>
               <strong>Risk Assessment:</strong>{' '}
@@ -366,13 +367,13 @@ export function BreachWorkflowPage() {
             <div><strong>Closed:</strong> {selected.closedAt?.slice(0, 10) ?? '—'}</div>
           </div>
 
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          <div className="flex flex-wrap gap-1.5">
             {selected.confirmedAt && selected.riskAssessmentAt === null && (
               <button
                 onClick={() => openModal('assess', selected)}
                 disabled={!canManage}
                 title={!canManage ? NO_PERMISSION : undefined}
-                style={{ cursor: !canManage ? 'not-allowed' : 'pointer' }}
+                className={ROW_ACTION_BTN}
               >
                 Assess Risk
               </button>
@@ -384,7 +385,7 @@ export function BreachWorkflowPage() {
                   onClick={() => openModal('send-patients')}
                   disabled={!canManage}
                   title={!canManage ? NO_PERMISSION : undefined}
-                  style={{ cursor: !canManage ? 'not-allowed' : 'pointer' }}
+                  className={ROW_ACTION_BTN}
                 >
                   Mark Patient Notifications Sent
                 </button>
@@ -396,7 +397,7 @@ export function BreachWorkflowPage() {
                   onClick={() => openModal('send-media')}
                   disabled={!canManage}
                   title={!canManage ? NO_PERMISSION : undefined}
-                  style={{ cursor: !canManage ? 'not-allowed' : 'pointer' }}
+                  className={ROW_ACTION_BTN}
                 >
                   Mark Media Notice Sent
                 </button>
@@ -408,7 +409,7 @@ export function BreachWorkflowPage() {
                   onClick={() => openModal('send-hhs')}
                   disabled={!canManage}
                   title={!canManage ? NO_PERMISSION : undefined}
-                  style={{ cursor: !canManage ? 'not-allowed' : 'pointer' }}
+                  className={ROW_ACTION_BTN}
                 >
                   Mark HHS Notified
                 </button>
@@ -418,7 +419,7 @@ export function BreachWorkflowPage() {
                 onClick={() => openModal('close')}
                 disabled={!canManage}
                 title={!canManage ? NO_PERMISSION : undefined}
-                style={{ cursor: !canManage ? 'not-allowed' : 'pointer' }}
+                className={ROW_ACTION_BTN}
               >
                 Close Breach
               </button>
@@ -426,24 +427,20 @@ export function BreachWorkflowPage() {
           </div>
 
           <div>
-            <h4 style={{ fontSize: 14, fontWeight: 600, marginBottom: 6 }}>Activity</h4>
+            <h4 className="mb-1.5 text-sm font-semibold text-slate-700">Activity</h4>
             {activity.length === 0 ? (
-              <p style={{ color: '#64748b' }}>No activity yet.</p>
+              <p className="text-slate-500">No activity yet.</p>
             ) : (
-              <ul style={{ paddingLeft: 18, display: 'grid', gap: 4 }}>
+              <ul className="grid gap-1 pl-4">
                 {activity.map((a) => (
                   <li key={a.id}>
-                    <span style={{ color: '#64748b', fontSize: 13 }}>
+                    <span className="text-[13px] text-slate-500">
                       {a.occurredAtUtc.slice(0, 19).replace('T', ' ')}
                     </span>
                     {' · '}<strong>{a.eventType}</strong>
-                    {' · '}<span style={{ color: '#475569' }}>{a.actorEmail}</span>
+                    {' · '}<span className="text-slate-600">{a.actorEmail}</span>
                     {a.notes && (
-                      <pre style={{
-                        color: '#0f172a', margin: '4px 0 0 0',
-                        fontFamily: 'inherit', fontSize: 13,
-                        whiteSpace: 'pre-wrap',
-                      }}>
+                      <pre className="m-0 mt-1 whitespace-pre-wrap font-sans text-[13px] text-slate-900">
                         {a.notes}
                       </pre>
                     )}
@@ -467,63 +464,54 @@ export function BreachWorkflowPage() {
               : modal === 'send-hhs' ? 'Mark HHS notified'
               : 'Close breach'
           }
-          style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(15,23,42,0.5)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            zIndex: 100,
-          }}
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-navy-950/50"
         >
-          <div style={{
-            background: '#fff', padding: 24, borderRadius: 8,
-            minWidth: 480, maxWidth: 640, maxHeight: '85vh',
-            overflowY: 'auto',
-          }}>
+          <div className="max-h-[85vh] min-w-[480px] max-w-[640px] overflow-y-auto rounded-xl bg-white p-6 shadow-sm">
             {modal === 'register' && (
               <>
-                <h3 style={{ marginTop: 0 }}>Register breach</h3>
-                <label style={{ display: 'block', marginBottom: 8 }}>
-                  Discovered on
+                <h3 className="text-lg font-semibold">Register breach</h3>
+                <label className="mt-3 grid gap-1.5">
+                  <span className="text-sm font-medium text-slate-600">Discovered on</span>
                   <input
                     type="date"
                     value={registerDate}
                     onChange={(e) => setRegisterDate(e.target.value)}
-                    style={{ width: '100%' }}
+                    className="form-input"
                   />
                 </label>
-                <label style={{ display: 'block', marginBottom: 8 }}>
-                  Affected patient count (estimated; ≥500 triggers media notice)
+                <label className="mt-3 grid gap-1.5">
+                  <span className="text-sm font-medium text-slate-600">Affected patient count (estimated; ≥500 triggers media notice)</span>
                   <input
                     type="number"
                     min={0}
                     value={registerAffected}
                     onChange={(e) => setRegisterAffected(e.target.value)}
-                    style={{ width: '100%' }}
+                    className="form-input"
                   />
                 </label>
-                <label style={{ display: 'block', marginBottom: 8 }}>
-                  PHI types involved
+                <label className="mt-3 grid gap-1.5">
+                  <span className="text-sm font-medium text-slate-600">PHI types involved</span>
                   <input
                     type="text"
                     placeholder="e.g. names, SSN, treatment records"
                     value={registerPhiTypes}
                     onChange={(e) => setRegisterPhiTypes(e.target.value)}
-                    style={{ width: '100%' }}
+                    className="form-input"
                   />
                 </label>
-                <label style={{ display: 'block', marginBottom: 8 }}>
-                  Description
+                <label className="mt-3 grid gap-1.5">
+                  <span className="text-sm font-medium text-slate-600">Description</span>
                   <textarea
                     rows={4}
                     value={registerDescription}
                     onChange={(e) => setRegisterDescription(e.target.value)}
                     placeholder="What happened, when, how was it discovered…"
-                    style={{ width: '100%' }}
+                    className="form-input"
                   />
                 </label>
-                <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 12 }}>
-                  <button type="button" onClick={() => setModal(null)}>Cancel</button>
-                  <button type="button" onClick={() => { void submitRegister(); }}>
+                <div className="mt-4 flex justify-end gap-2">
+                  <button type="button" onClick={() => setModal(null)} className={ROW_ACTION_BTN}>Cancel</button>
+                  <button type="button" onClick={() => { void submitRegister(); }} className="btn-primary">
                     Register
                   </button>
                 </div>
@@ -532,19 +520,19 @@ export function BreachWorkflowPage() {
 
             {modal === 'assess' && (
               <>
-                <h3 style={{ marginTop: 0 }}>Risk assessment</h3>
-                <p style={{ fontSize: 13, color: '#64748b' }}>
+                <h3 className="text-lg font-semibold">Risk assessment</h3>
+                <p className="mt-1 text-[13px] text-slate-500">
                   HIPAA §164.402: assess the four factors to determine
                   whether the impermissible use/disclosure compromised PHI.
                   All four are required for the determination to be
                   defensible.
                 </p>
-                <label style={{ display: 'block', marginBottom: 12 }}>
-                  Risk level
+                <label className="mt-3 grid gap-1.5">
+                  <span className="text-sm font-medium text-slate-600">Risk level</span>
                   <select
                     value={riskLevel}
                     onChange={(e) => setRiskLevel(e.target.value as BreachRiskLevel)}
-                    style={{ width: '100%' }}
+                    className="form-input"
                   >
                     <option value="Low">Low</option>
                     <option value="Moderate">Moderate</option>
@@ -552,31 +540,31 @@ export function BreachWorkflowPage() {
                   </select>
                 </label>
                 {RISK_FACTORS.map((f) => (
-                  <label key={f.key} style={{ display: 'block', marginBottom: 8 }}>
-                    <div style={{ fontSize: 13, color: '#475569' }}>{f.label}</div>
+                  <label key={f.key} className="mt-3 grid gap-1.5">
+                    <span className="text-[13px] text-slate-600">{f.label}</span>
                     <textarea
                       rows={2}
                       value={riskFactors[f.key] ?? ''}
                       onChange={(e) =>
                         setRiskFactors((prev) => ({ ...prev, [f.key]: e.target.value }))
                       }
-                      style={{ width: '100%' }}
+                      className="form-input"
                     />
                   </label>
                 ))}
-                <label style={{ display: 'block', marginBottom: 8 }}>
-                  Affected patient count (≥500 triggers media notice)
+                <label className="mt-3 grid gap-1.5">
+                  <span className="text-sm font-medium text-slate-600">Affected patient count (≥500 triggers media notice)</span>
                   <input
                     type="number"
                     min={0}
                     value={riskAffected}
                     onChange={(e) => setRiskAffected(e.target.value)}
-                    style={{ width: '100%' }}
+                    className="form-input"
                   />
                 </label>
-                <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 12 }}>
-                  <button type="button" onClick={() => setModal(null)}>Cancel</button>
-                  <button type="button" onClick={() => { void submitAssess(); }}>
+                <div className="mt-4 flex justify-end gap-2">
+                  <button type="button" onClick={() => setModal(null)} className={ROW_ACTION_BTN}>Cancel</button>
+                  <button type="button" onClick={() => { void submitAssess(); }} className="btn-primary">
                     Save assessment
                   </button>
                 </div>
@@ -585,26 +573,26 @@ export function BreachWorkflowPage() {
 
             {(modal === 'send-patients' || modal === 'send-media' || modal === 'send-hhs') && (
               <>
-                <h3 style={{ marginTop: 0 }}>
+                <h3 className="text-lg font-semibold">
                   {modal === 'send-patients' && 'Patient notifications sent'}
                   {modal === 'send-media' && 'Media notice sent'}
                   {modal === 'send-hhs' && 'HHS notification sent'}
                 </h3>
-                <p style={{ fontSize: 13, color: '#64748b' }}>
+                <p className="mt-1 text-[13px] text-slate-500">
                   Notes are appended to the activity log. Reference batch IDs,
                   publication URLs, or OCR submission numbers as appropriate.
                 </p>
-                <label style={{ display: 'block', marginBottom: 8 }}>
-                  Notes (optional)
+                <label className="mt-3 grid gap-1.5">
+                  <span className="text-sm font-medium text-slate-600">Notes (optional)</span>
                   <textarea
                     rows={4}
                     value={actionNotes}
                     onChange={(e) => setActionNotes(e.target.value)}
-                    style={{ width: '100%' }}
+                    className="form-input"
                   />
                 </label>
-                <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 12 }}>
-                  <button type="button" onClick={() => setModal(null)}>Cancel</button>
+                <div className="mt-4 flex justify-end gap-2">
+                  <button type="button" onClick={() => setModal(null)} className={ROW_ACTION_BTN}>Cancel</button>
                   <button
                     type="button"
                     onClick={() => {
@@ -612,6 +600,7 @@ export function BreachWorkflowPage() {
                       else if (modal === 'send-media') void submitSendMedia();
                       else void submitSendHhs();
                     }}
+                    className="btn-primary"
                   >
                     Confirm
                   </button>
@@ -621,25 +610,25 @@ export function BreachWorkflowPage() {
 
             {modal === 'close' && (
               <>
-                <h3 style={{ marginTop: 0 }}>Close breach</h3>
+                <h3 className="text-lg font-semibold">Close breach</h3>
                 {selected && selected.confirmedAt && selected.hhsNotifiedAt === null && (
-                  <p style={{ fontSize: 13, color: '#b45309' }}>
+                  <p className="mt-1 text-[13px] text-accent-700">
                     HHS has not been notified for this breach. A closure note
                     explaining the reason is required.
                   </p>
                 )}
-                <label style={{ display: 'block', marginBottom: 8 }}>
-                  Closure notes
+                <label className="mt-3 grid gap-1.5">
+                  <span className="text-sm font-medium text-slate-600">Closure notes</span>
                   <textarea
                     rows={4}
                     value={actionNotes}
                     onChange={(e) => setActionNotes(e.target.value)}
-                    style={{ width: '100%' }}
+                    className="form-input"
                   />
                 </label>
-                <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 12 }}>
-                  <button type="button" onClick={() => setModal(null)}>Cancel</button>
-                  <button type="button" onClick={() => { void submitClose(); }}>
+                <div className="mt-4 flex justify-end gap-2">
+                  <button type="button" onClick={() => setModal(null)} className={ROW_ACTION_BTN}>Cancel</button>
+                  <button type="button" onClick={() => { void submitClose(); }} className="btn-primary">
                     Close breach
                   </button>
                 </div>

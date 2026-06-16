@@ -87,107 +87,129 @@ export function SessionsPage() {
   const revokedRows = rows.filter((r) => !r.isActive);
 
   return (
-    <div style={{ padding: 24, maxWidth: 900 }}>
-      <h1 style={{ margin: 0 }}>Active sessions</h1>
-      <p style={{ color: '#64748b', maxWidth: 720 }}>
-        Each row is a refresh token issued for your account. Revoke a
-        session to immediately sign out the app or device that still
-        holds it. The full token value is never shown — only an id.
-      </p>
+    <div className="grid max-w-[900px] gap-6 p-6">
+      <header className="space-y-2">
+        <h1 className="text-2xl">Active sessions</h1>
+        <div className="section-line" />
+        <p className="max-w-3xl text-slate-500">
+          Each row is a refresh token issued for your account. Revoke a
+          session to immediately sign out the app or device that still
+          holds it. The full token value is never shown — only an id.
+        </p>
+      </header>
 
       {error && (
-        <div role="alert" style={{ color: '#b91c1c', marginBottom: 12 }}>{error}</div>
+        <div
+          role="alert"
+          className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800"
+        >
+          {error}
+        </div>
       )}
       {message && (
-        <div style={{ color: '#15803d', marginBottom: 12 }}>{message}</div>
+        <div className="rounded-lg border border-success bg-green-50 px-4 py-3 text-green-800">
+          {message}
+        </div>
       )}
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-        <button type="button" onClick={() => { void load(); }}>Refresh</button>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => { void load(); }}
+          className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+        >
+          Refresh
+        </button>
         {activeRows.length > 0 && (
           <button
             type="button"
             onClick={() => setConfirmingRevokeAll(true)}
-            style={{ color: '#b91c1c' }}
+            className="rounded-md border border-red-200 px-2.5 py-1 text-xs font-medium text-red-700 transition-colors hover:bg-red-50"
           >
             Sign out everywhere
           </button>
         )}
       </div>
 
-      {isLoading && rows.length === 0 && <div>Loading…</div>}
+      {isLoading && rows.length === 0 && (
+        <div role="status" className="text-slate-500">
+          Loading…
+        </div>
+      )}
 
       {!isLoading && rows.length === 0 && !error && (
-        <div style={{ color: '#64748b' }}>No sessions on record.</div>
+        <div className="text-slate-500">No sessions on record.</div>
       )}
 
       {activeRows.length > 0 && (
-        <>
-          <h2 style={{ fontSize: 16, marginTop: 16 }}>
-            Active ({activeRows.length})
-          </h2>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-                <th style={{ padding: 8 }}>Session</th>
-                <th style={{ padding: 8 }}>Issued</th>
-                <th style={{ padding: 8 }}>Expires</th>
-                <th style={{ padding: 8 }}></th>
-              </tr>
-            </thead>
-            <tbody>
-              {activeRows.map((r) => (
-                <tr key={r.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td style={{ padding: 8, fontFamily: 'monospace' }}>#{r.id}</td>
-                  <td style={{ padding: 8 }}>
-                    {fmtRelative(r.createdAt)}
-                    <div style={{ fontSize: 12, color: '#64748b' }}>
-                      {fmtDate(r.createdAt)}
-                    </div>
-                  </td>
-                  <td style={{ padding: 8 }}>{fmtDate(r.expiresAt)}</td>
-                  <td style={{ padding: 8 }}>
-                    <button
-                      type="button"
-                      onClick={() => { void handleRevoke(r); }}
-                      style={{ color: '#b91c1c', fontSize: 12 }}
-                    >
-                      Revoke
-                    </button>
-                  </td>
+        <section className="grid gap-3">
+          <h2 className="text-lg font-semibold">Active ({activeRows.length})</h2>
+          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                  <th className="px-4 py-3">Session</th>
+                  <th className="px-4 py-3">Issued</th>
+                  <th className="px-4 py-3">Expires</th>
+                  <th className="px-4 py-3"></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </>
+              </thead>
+              <tbody>
+                {activeRows.map((r) => (
+                  <tr key={r.id} className="border-t border-slate-100 hover:bg-slate-50">
+                    <td className="px-4 py-3 font-mono text-slate-700">#{r.id}</td>
+                    <td className="px-4 py-3 text-slate-700">
+                      {fmtRelative(r.createdAt)}
+                      <div className="text-xs text-slate-500">
+                        {fmtDate(r.createdAt)}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-slate-700">{fmtDate(r.expiresAt)}</td>
+                    <td className="px-4 py-3">
+                      <button
+                        type="button"
+                        onClick={() => { void handleRevoke(r); }}
+                        className="rounded-md border border-red-200 px-2.5 py-1 text-xs font-medium text-red-700 transition-colors hover:bg-red-50"
+                      >
+                        Revoke
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
       )}
 
       {revokedRows.length > 0 && (
-        <>
-          <h2 style={{ fontSize: 16, marginTop: 24, color: '#64748b' }}>
+        <section className="grid gap-3">
+          <h2 className="text-lg font-semibold text-slate-500">
             Revoked / expired ({revokedRows.length})
           </h2>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-                <th style={{ padding: 8 }}>Session</th>
-                <th style={{ padding: 8 }}>Issued</th>
-                <th style={{ padding: 8 }}>Revoked / expired</th>
-              </tr>
-            </thead>
-            <tbody>
-              {revokedRows.map((r) => (
-                <tr key={r.id} style={{ borderBottom: '1px solid #f1f5f9', color: '#64748b' }}>
-                  <td style={{ padding: 8, fontFamily: 'monospace' }}>#{r.id}</td>
-                  <td style={{ padding: 8 }}>{fmtDate(r.createdAt)}</td>
-                  <td style={{ padding: 8 }}>
-                    {r.revokedAt ? `Revoked ${fmtDate(r.revokedAt)}` : `Expired ${fmtDate(r.expiresAt)}`}
-                  </td>
+          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                  <th className="px-4 py-3">Session</th>
+                  <th className="px-4 py-3">Issued</th>
+                  <th className="px-4 py-3">Revoked / expired</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </>
+              </thead>
+              <tbody>
+                {revokedRows.map((r) => (
+                  <tr key={r.id} className="border-t border-slate-100 text-slate-500 hover:bg-slate-50">
+                    <td className="px-4 py-3 font-mono">#{r.id}</td>
+                    <td className="px-4 py-3">{fmtDate(r.createdAt)}</td>
+                    <td className="px-4 py-3">
+                      {r.revokedAt ? `Revoked ${fmtDate(r.revokedAt)}` : `Expired ${fmtDate(r.expiresAt)}`}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
       )}
 
       {confirmingRevokeAll && (
@@ -195,31 +217,30 @@ export function SessionsPage() {
           role="dialog"
           aria-modal="true"
           aria-label="Sign out everywhere"
-          style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(15,23,42,0.5)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            zIndex: 100,
-          }}
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-navy-900/50"
         >
-          <div style={{ background: '#fff', padding: 24, borderRadius: 8, maxWidth: 480 }}>
-            <h3 style={{ marginTop: 0 }}>Sign out everywhere?</h3>
-            <p>
+          <div className="max-w-[480px] rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h3 className="text-lg font-semibold">Sign out everywhere?</h3>
+            <p className="mt-2 text-slate-700">
               Every active session for your account will be revoked,
               including this one. You will need to sign in again.
             </p>
-            <p style={{ color: '#b45309', fontSize: 13 }}>
+            <p className="mt-2 text-[13px] text-accent-700">
               This is the safe choice if you suspect your account is
               compromised.
             </p>
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button type="button" onClick={() => setConfirmingRevokeAll(false)}>
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setConfirmingRevokeAll(false)}
+                className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+              >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={() => { void handleRevokeAllOthers(); }}
-                style={{ background: '#dc2626', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: 4 }}
+                className="rounded-md bg-error px-3.5 py-1.5 text-sm font-medium text-white transition-colors hover:brightness-110"
               >
                 Sign out everywhere
               </button>

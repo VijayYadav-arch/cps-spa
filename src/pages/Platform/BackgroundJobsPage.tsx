@@ -48,22 +48,23 @@ export function BackgroundJobsPage() {
   }, []);
 
   return (
-    <div style={{ padding: 24 }}>
-      <header style={{ marginBottom: 16 }}>
-        <h1 style={{ margin: 0 }}>Background jobs</h1>
-        <p style={{ color: '#64748b', maxWidth: 720 }}>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <header className="space-y-2">
+        <h1 className="text-2xl">Background jobs</h1>
+        <div className="section-line" />
+        <p className="max-w-3xl text-slate-500">
           Health of recurring background services. Each service updates its
           row after every tick. The registry is in-memory — services with
           no row yet either haven't ticked since the last deploy or aren't
           registered.
         </p>
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center', fontSize: 13, color: '#64748b' }}>
-          <Link to="/platform">← Platform dashboard</Link>
+        <div className="flex items-center gap-3 text-sm text-slate-500">
+          <Link to="/platform" className="font-medium text-teal-700 hover:underline">← Platform dashboard</Link>
           {asOf && <span>· as of {new Date(asOf).toLocaleTimeString()}</span>}
           <button
             type="button"
             onClick={() => { void load(); }}
-            style={{ fontSize: 12 }}
+            className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
           >
             Refresh now
           </button>
@@ -72,81 +73,76 @@ export function BackgroundJobsPage() {
       </header>
 
       {error && (
-        <div role="alert" style={{ color: '#b91c1c', marginBottom: 12 }}>{error}</div>
+        <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">{error}</div>
       )}
 
-      {isLoading && rows.length === 0 && <div>Loading…</div>}
+      {isLoading && rows.length === 0 && <div role="status" className="text-slate-500">Loading…</div>}
       {!isLoading && rows.length === 0 && !error && (
-        <div style={{ color: '#64748b' }}>
+        <div className="text-slate-500">
           No background services have ticked since the last deploy.
         </div>
       )}
 
       {rows.length > 0 && (
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-              <th style={{ padding: 8 }}>Service</th>
-              <th style={{ padding: 8 }}>Cadence</th>
-              <th style={{ padding: 8 }}>Last ran</th>
-              <th style={{ padding: 8 }}>Last result</th>
-              <th style={{ padding: 8 }}>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => {
-              const tone =
-                r.lastError ? '#b91c1c'
-                  : r.stale ? '#b45309'
-                  : '#15803d';
-              const label =
-                r.lastError ? 'failed'
-                  : r.stale ? 'stale'
-                  : 'healthy';
-              return (
-                <tr key={r.name} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td style={{ padding: 8 }}>
-                    <div style={{ fontWeight: 600 }}>{r.displayName}</div>
-                    <div style={{ fontSize: 12, color: '#64748b', fontFamily: 'monospace' }}>
-                      {r.name}
-                    </div>
-                  </td>
-                  <td style={{ padding: 8, fontSize: 13 }}>
-                    {formatInterval(r.intervalSeconds)}
-                  </td>
-                  <td style={{ padding: 8, fontSize: 13 }}>
-                    {formatRelative(r.secondsSinceLastRun)}
-                    <div style={{ fontSize: 12, color: '#64748b' }}>
-                      {new Date(r.lastRanAtUtc).toLocaleString()}
-                    </div>
-                  </td>
-                  <td style={{ padding: 8, fontSize: 13, maxWidth: 360 }}>
-                    {r.summary}
-                    {r.lastError && (
-                      <div style={{ color: '#b91c1c', fontSize: 12, marginTop: 4 }}>
-                        last error{r.lastErrorAtUtc
-                          ? ` (${new Date(r.lastErrorAtUtc).toLocaleTimeString()})`
-                          : ''}:{' '}{r.lastError}
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                <th className="px-4 py-3">Service</th>
+                <th className="px-4 py-3">Cadence</th>
+                <th className="px-4 py-3">Last ran</th>
+                <th className="px-4 py-3">Last result</th>
+                <th className="px-4 py-3">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => {
+                const badgeTone =
+                  r.lastError ? 'bg-red-100 text-red-800'
+                    : r.stale ? 'bg-amber-100 text-amber-800'
+                    : 'bg-green-100 text-green-800';
+                const label =
+                  r.lastError ? 'failed'
+                    : r.stale ? 'stale'
+                    : 'healthy';
+                return (
+                  <tr key={r.name} className="border-t border-slate-100 hover:bg-slate-50">
+                    <td className="px-4 py-3">
+                      <div className="font-semibold text-slate-700">{r.displayName}</div>
+                      <div className="font-mono text-xs text-slate-500">
+                        {r.name}
                       </div>
-                    )}
-                  </td>
-                  <td style={{ padding: 8 }}>
-                    <span style={{
-                      padding: '2px 8px', borderRadius: 4,
-                      fontSize: 12, fontWeight: 600,
-                      background: r.lastError ? '#fee2e2'
-                        : r.stale ? '#fef3c7'
-                        : '#dcfce7',
-                      color: tone,
-                    }}>
-                      {label}
-                    </span>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                    </td>
+                    <td className="px-4 py-3 text-slate-700">
+                      {formatInterval(r.intervalSeconds)}
+                    </td>
+                    <td className="px-4 py-3 text-slate-700">
+                      {formatRelative(r.secondsSinceLastRun)}
+                      <div className="text-xs text-slate-500">
+                        {new Date(r.lastRanAtUtc).toLocaleString()}
+                      </div>
+                    </td>
+                    <td className="max-w-[360px] px-4 py-3 text-slate-700">
+                      {r.summary}
+                      {r.lastError && (
+                        <div className="mt-1 text-xs text-red-700">
+                          last error{r.lastErrorAtUtc
+                            ? ` (${new Date(r.lastErrorAtUtc).toLocaleTimeString()})`
+                            : ''}:{' '}{r.lastError}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${badgeTone}`}>
+                        {label}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

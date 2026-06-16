@@ -31,16 +31,9 @@ function DetailRow({
 }) {
   if (!value) return null;
   return (
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        padding: '8px 0',
-        borderBottom: '1px solid #f1f5f9',
-      }}
-    >
-      <span style={{ fontSize: 14, color: '#64748b' }}>{label}</span>
-      <span data-testid={testId} style={{ fontSize: 14, fontWeight: 500 }}>
+    <div className="flex justify-between border-b border-slate-100 py-2">
+      <span className="text-sm text-slate-500">{label}</span>
+      <span data-testid={testId} className="text-sm font-medium text-slate-700">
         {value}
       </span>
     </div>
@@ -80,57 +73,48 @@ export function ClinicianPatientDetail() {
 
   if (notFound)
     return (
-      <div style={{ padding: '1rem' }} role="alert">
+      <div
+        className="m-4 rounded-lg border border-slate-300 bg-slate-50 px-4 py-3 text-slate-600"
+        role="alert"
+      >
         Patient not found.
       </div>
     );
   if (error)
     return (
-      <div style={{ padding: '1rem', color: 'red' }} role="alert">
+      <div
+        className="m-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800"
+        role="alert"
+      >
         Failed to load patient.
       </div>
     );
-  if (!patient) return <div style={{ padding: '1rem' }}>Loading…</div>;
+  if (!patient)
+    return (
+      <div role="status" className="p-4 text-slate-500">
+        Loading…
+      </div>
+    );
 
   return (
-    <div style={{ padding: '1rem', maxWidth: 640, margin: '0 auto' }}>
-      <div
-        style={{
-          marginTop: 16,
-          marginBottom: 16,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
-        }}
-      >
+    <div className="mx-auto max-w-[640px] p-4">
+      <div className="mb-4 flex items-center gap-3">
         <Link
           to="/clinician/patients"
           aria-label="Back to patients"
           data-testid="back-link"
-          style={{
-            padding: 8,
-            borderRadius: 8,
-            textDecoration: 'none',
-            color: '#475569',
-          }}
+          className="rounded-md p-2 text-slate-600 no-underline transition-colors hover:bg-slate-50"
         >
           ‹
         </Link>
-        <h1 data-testid="page-title" style={{ fontSize: 20, fontWeight: 600 }}>
+        <h1 data-testid="page-title" className="text-xl">
           <span data-testid="patient-name">
             {patient.lastName}, {patient.firstName}
           </span>
         </h1>
       </div>
 
-      <div
-        style={{
-          background: 'white',
-          borderRadius: 12,
-          padding: 16,
-          border: '1px solid #f1f5f9',
-        }}
-      >
+      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
         <DetailRow label="MRN" value={patient.mrn} testId="patient-mrn" />
         <DetailRow
           label="Date of Birth"
@@ -176,23 +160,11 @@ export function ClinicianPatientDetail() {
         />
       </div>
 
-      <div style={{ marginTop: 16 }}>
+      <div className="mt-4">
         <Link
           to={`/clinician/visits/new?patientId=${patient.id}`}
           data-testid="action-new-visit-note"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '100%',
-            padding: 16,
-            background: '#0d9488',
-            color: 'white',
-            fontWeight: 600,
-            borderRadius: 12,
-            textDecoration: 'none',
-            minHeight: 56,
-          }}
+          className="flex min-h-[56px] w-full items-center justify-center rounded-xl bg-teal-600 p-4 font-semibold text-white no-underline transition-colors hover:bg-teal-700"
         >
           New Visit Note
         </Link>

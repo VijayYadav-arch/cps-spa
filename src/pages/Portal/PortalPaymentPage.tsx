@@ -110,18 +110,20 @@ export function PortalPaymentPage() {
 
   if (isLoading) {
     return (
-      <div style={{ padding: 48, textAlign: 'center' }}>
-        <div role="status">Loading…</div>
+      <div className="p-12 text-center">
+        <div role="status" className="text-slate-500">
+          Loading…
+        </div>
       </div>
     );
   }
 
   if (error && !run) {
     return (
-      <div style={{ padding: 48, maxWidth: 480, margin: '0 auto' }}>
-        <h1 style={{ fontSize: 24 }}>Statement Not Found</h1>
-        <p style={{ color: '#b91c1c', marginTop: 8 }}>{error}</p>
-        <p style={{ color: '#64748b', marginTop: 16 }}>
+      <div className="mx-auto max-w-[480px] p-12">
+        <h1 className="text-2xl">Statement Not Found</h1>
+        <p className="mt-2 text-red-800">{error}</p>
+        <p className="mt-4 text-slate-500">
           Please contact the hospice billing department for assistance.
         </p>
       </div>
@@ -132,32 +134,25 @@ export function PortalPaymentPage() {
 
   if (confirmation) {
     return (
-      <div style={{ padding: 48, maxWidth: 560, margin: '0 auto' }}>
-        <div
-          style={{
-            background: '#f0fdf4', border: '1px solid #86efac',
-            borderRadius: 8, padding: 24, textAlign: 'center',
-          }}
-        >
-          <h1 style={{ fontSize: 26, color: '#15803d' }}>Thank you!</h1>
-          <p style={{ marginTop: 12, fontSize: 18 }}>
+      <div className="mx-auto max-w-[560px] p-12">
+        <div className="rounded-lg border border-green-200 bg-green-50 p-6 text-center">
+          <h1 className="text-2xl text-green-800">Thank you!</h1>
+          <p className="mt-3 text-lg">
             We received your payment of{' '}
             <strong>{formatMoney(confirmation.amount)}</strong>.
           </p>
-          <p style={{ color: '#475569', marginTop: 8 }}>
+          <p className="mt-2 text-slate-600">
             Account status: <strong>{confirmation.newStatus}</strong>
           </p>
           {confirmation.newBalance > 0 ? (
-            <p style={{ color: '#475569' }}>
+            <p className="text-slate-600">
               Remaining balance: <strong>{formatMoney(confirmation.newBalance)}</strong>
             </p>
           ) : (
-            <p style={{ color: '#15803d', marginTop: 8 }}>
-              Your balance is paid in full.
-            </p>
+            <p className="mt-2 text-green-800">Your balance is paid in full.</p>
           )}
         </div>
-        <p style={{ color: '#64748b', fontSize: 13, marginTop: 24, textAlign: 'center' }}>
+        <p className="mt-6 text-center text-xs text-slate-500">
           A confirmation email will be sent shortly. Reference statement #{run.id}.
         </p>
       </div>
@@ -167,49 +162,41 @@ export function PortalPaymentPage() {
   const balanceRemaining = run.patientBalance - run.amountPaid;
 
   return (
-    <div style={{ padding: 48, maxWidth: 560, margin: '0 auto' }}>
-      <header style={{ textAlign: 'center', marginBottom: 32 }}>
-        <h1 style={{ fontSize: 28 }}>Pay Your Statement</h1>
-        <p style={{ color: '#64748b', marginTop: 4 }}>
-          Hospice billing payment portal
-        </p>
+    <div className="mx-auto max-w-[560px] p-12">
+      <header className="mb-8 text-center">
+        <h1 className="text-3xl">Pay Your Statement</h1>
+        <p className="mt-1 text-slate-500">Hospice billing payment portal</p>
       </header>
 
-      <section
-        style={{
-          border: '1px solid #e2e8f0', borderRadius: 8, padding: 16,
-          background: '#f8fafc', marginBottom: 24,
-        }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+      <section className="mb-6 rounded-lg border border-slate-200 bg-slate-50 p-4">
+        <div className="flex justify-between">
           <div>
             <strong>{run.patientName}</strong>
-            <div style={{ color: '#64748b', fontSize: 13, marginTop: 2 }}>
+            <div className="mt-0.5 text-sm text-slate-500">
               Statement #{run.id} · Issued {run.statementDate.slice(0, 10)}
             </div>
           </div>
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ color: '#64748b', fontSize: 13 }}>Amount Due</div>
-            <div style={{ fontSize: 22, fontWeight: 700 }}>
-              {formatMoney(balanceRemaining)}
-            </div>
+          <div className="text-right">
+            <div className="text-sm text-slate-500">Amount Due</div>
+            <div className="text-2xl font-bold">{formatMoney(balanceRemaining)}</div>
           </div>
         </div>
       </section>
 
-      {error && <div role="alert" style={{ color: '#b91c1c', marginBottom: 16 }}>{error}</div>}
+      {error && (
+        <div role="alert" className="mb-4 text-red-800">
+          {error}
+        </div>
+      )}
 
       <form
         onSubmit={handleSubmit}
-        style={{
-          border: '1px solid #e2e8f0', borderRadius: 8, padding: 16,
-          background: '#fff', display: 'grid', gap: 12,
-        }}
+        className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4"
       >
-        <h2 style={{ fontSize: 16, fontWeight: 600 }}>Payment Information</h2>
+        <h2 className="text-lg font-semibold">Payment Information</h2>
 
-        <label>
-          <div>Payment Amount *</div>
+        <label className="grid gap-1.5">
+          <span className="text-sm font-medium text-slate-600">Payment Amount *</span>
           <input
             type="number"
             value={amount}
@@ -218,55 +205,55 @@ export function PortalPaymentPage() {
             step={0.01}
             max={balanceRemaining}
             required
-            style={{ width: '100%', fontSize: 16 }}
+            className="form-input"
           />
-          <div style={{ color: '#64748b', fontSize: 12, marginTop: 4 }}>
+          <span className="text-xs text-slate-500">
             Max: {formatMoney(balanceRemaining)}
-          </div>
+          </span>
         </label>
 
-        <label>
-          <div>Name on Card *</div>
+        <label className="grid gap-1.5">
+          <span className="text-sm font-medium text-slate-600">Name on Card *</span>
           <input
             value={nameOnCard}
             onChange={(e) => setNameOnCard(e.target.value)}
             required
-            style={{ width: '100%' }}
+            className="form-input"
           />
         </label>
 
-        <label>
-          <div>Card Number *</div>
+        <label className="grid gap-1.5">
+          <span className="text-sm font-medium text-slate-600">Card Number *</span>
           <input
             inputMode="numeric"
             value={cardNumber}
             onChange={(e) => setCardNumber(e.target.value)}
             required
             placeholder="4111 1111 1111 1111"
-            style={{ width: '100%' }}
+            className="form-input"
           />
         </label>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <label>
-            <div>Expiration *</div>
+        <div className="grid grid-cols-2 gap-3">
+          <label className="grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">Expiration *</span>
             <input
               value={expiry}
               onChange={(e) => setExpiry(e.target.value)}
               required
               placeholder="MM/YY"
-              style={{ width: '100%' }}
+              className="form-input"
             />
           </label>
-          <label>
-            <div>CVV *</div>
+          <label className="grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">CVV *</span>
             <input
               value={cvv}
               onChange={(e) => setCvv(e.target.value)}
               required
               inputMode="numeric"
               maxLength={4}
-              style={{ width: '100%' }}
+              className="form-input"
             />
           </label>
         </div>
@@ -275,16 +262,12 @@ export function PortalPaymentPage() {
           type="submit"
           disabled={submitting || !canPay}
           title={!canPay ? NO_PERMISSION : undefined}
-          style={{
-            fontSize: 16, fontWeight: 600, padding: '12px 24px',
-            background: '#0ea5e9', color: '#fff', border: 'none',
-            borderRadius: 6, cursor: (submitting || !canPay) ? 'not-allowed' : 'pointer',
-          }}
+          className="btn-primary disabled:cursor-not-allowed disabled:opacity-60"
         >
           {submitting ? 'Processing…' : `Pay ${formatMoney(Number(amount) || 0)}`}
         </button>
 
-        <p style={{ color: '#64748b', fontSize: 12, marginTop: 4, textAlign: 'center' }}>
+        <p className="mt-1 text-center text-xs text-slate-500">
           Demo environment — no real charge is processed. Card details
           are not transmitted to a payment gateway.
         </p>

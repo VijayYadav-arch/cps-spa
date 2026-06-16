@@ -148,11 +148,12 @@ export function BranchesPage() {
   }
 
   return (
-    <div style={{ padding: 24, maxWidth: 1100, display: 'grid', gap: 24 }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-        <div>
-          <h2 style={{ fontSize: 22, fontWeight: 700 }}>Branches</h2>
-          <p style={{ color: '#64748b', marginTop: 4 }}>
+    <div className="grid max-w-[1200px] gap-6 p-6">
+      <header className="flex items-baseline justify-between">
+        <div className="space-y-2">
+          <h2 className="text-2xl">Branches</h2>
+          <div className="section-line" />
+          <p className="max-w-3xl text-slate-500">
             Intra-organization sites or service lines. Patients and claims can be
             optionally assigned to a branch for operational reporting.
           </p>
@@ -162,172 +163,178 @@ export function BranchesPage() {
           onClick={startCreate}
           disabled={!canManage}
           title={!canManage ? NO_PERMISSION : undefined}
-          style={{ cursor: !canManage ? 'not-allowed' : 'pointer' }}
+          className="btn-primary disabled:cursor-not-allowed disabled:opacity-60"
         >
           + New Branch
         </button>
       </header>
 
-      {error && <div role="alert" style={{ color: '#b91c1c' }}>{error}</div>}
-      {actionMsg && <div style={{ color: '#15803d' }}>{actionMsg}</div>}
+      {error && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">{error}</div>}
+      {actionMsg && <div className="rounded-lg border-l-4 border-success bg-green-50 px-4 py-3 font-semibold text-green-800">{actionMsg}</div>}
 
       {showForm && (
         <form
           onSubmit={handleSubmit}
-          style={{
-            border: '1px solid #cbd5e1',
-            borderRadius: 8,
-            padding: 16,
-            background: '#f8fafc',
-            display: 'grid',
-            gap: 8,
-            gridTemplateColumns: '1fr 1fr',
-          }}
+          className="grid grid-cols-2 gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
         >
-          <h3 style={{ gridColumn: '1 / -1', fontSize: 16, fontWeight: 600 }}>
+          <h3 className="col-span-full text-lg font-semibold">
             {editing ? `Edit Branch #${editing.id}` : 'New Branch'}
           </h3>
-          <label>
-            <div>Name *</div>
+          <label className="grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">Name *</span>
             <input
               required
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              style={{ width: '100%' }}
+              className="form-input"
             />
           </label>
-          <label>
-            <div>Code *</div>
+          <label className="grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">Code *</span>
             <input
               required
               value={form.code}
               onChange={(e) => setForm({ ...form, code: e.target.value })}
               disabled={!!editing}
-              style={{ width: '100%' }}
+              className="form-input"
             />
           </label>
-          <label>
-            <div>CCN Number</div>
+          <label className="grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">CCN Number</span>
             <input
               value={form.ccnNumber ?? ''}
               onChange={(e) => setForm({ ...form, ccnNumber: e.target.value || null })}
-              style={{ width: '100%' }}
+              className="form-input"
             />
           </label>
-          <label>
-            <div>Phone</div>
+          <label className="grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">Phone</span>
             <input
               value={form.phone ?? ''}
               onChange={(e) => setForm({ ...form, phone: e.target.value || null })}
-              style={{ width: '100%' }}
+              className="form-input"
             />
           </label>
-          <label style={{ gridColumn: '1 / -1' }}>
-            <div>Address line 1</div>
+          <label className="col-span-full grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">Address line 1</span>
             <input
               value={form.addressLine1 ?? ''}
               onChange={(e) => setForm({ ...form, addressLine1: e.target.value || null })}
-              style={{ width: '100%' }}
+              className="form-input"
             />
           </label>
-          <label>
-            <div>City</div>
+          <label className="grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">City</span>
             <input
               value={form.city ?? ''}
               onChange={(e) => setForm({ ...form, city: e.target.value || null })}
-              style={{ width: '100%' }}
+              className="form-input"
             />
           </label>
-          <label>
-            <div>State</div>
+          <label className="grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">State</span>
             <input
               value={form.state ?? ''}
               onChange={(e) => setForm({ ...form, state: e.target.value || null })}
               maxLength={2}
-              style={{ width: '100%' }}
+              className="form-input"
             />
           </label>
-          <label>
-            <div>ZIP</div>
+          <label className="grid gap-1.5">
+            <span className="text-sm font-medium text-slate-600">ZIP</span>
             <input
               value={form.zipCode ?? ''}
               onChange={(e) => setForm({ ...form, zipCode: e.target.value || null })}
-              style={{ width: '100%' }}
+              className="form-input"
             />
           </label>
-          <div style={{ gridColumn: '1 / -1', display: 'flex', gap: 8 }}>
+          <div className="col-span-full flex gap-2">
             <button
               type="submit"
               disabled={!canManage}
               title={!canManage ? NO_PERMISSION : undefined}
-              style={{ cursor: !canManage ? 'not-allowed' : 'pointer' }}
+              className="btn-primary disabled:cursor-not-allowed disabled:opacity-60"
             >
               {editing ? 'Save' : 'Create'}
             </button>
-            <button type="button" onClick={() => setShowForm(false)}>Cancel</button>
+            <button
+              type="button"
+              onClick={() => setShowForm(false)}
+              className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+            >
+              Cancel
+            </button>
           </div>
         </form>
       )}
 
-      {isLoading && <div role="status">Loading…</div>}
+      {isLoading && <div role="status" className="text-slate-500">Loading…</div>}
       {!isLoading && branches.length === 0 && (
-        <p style={{ color: '#64748b' }}>No branches yet — create one to get started.</p>
+        <p className="text-slate-500">No branches yet — create one to get started.</p>
       )}
       {!isLoading && branches.length > 0 && (
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-              <th style={{ padding: '6px 10px' }}>Name</th>
-              <th style={{ padding: '6px 10px' }}>Code</th>
-              <th style={{ padding: '6px 10px' }}>CCN</th>
-              <th style={{ padding: '6px 10px' }}>Location</th>
-              <th style={{ padding: '6px 10px' }}>Active</th>
-              <th style={{ padding: '6px 10px' }}></th>
-            </tr>
-          </thead>
-          <tbody>
-            {branches.map((b) => (
-              <tr key={b.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                <td style={{ padding: '6px 10px', fontWeight: 600 }}>{b.name}</td>
-                <td style={{ padding: '6px 10px', fontFamily: 'monospace', fontSize: 13 }}>{b.code}</td>
-                <td style={{ padding: '6px 10px', color: '#64748b' }}>{b.ccnNumber ?? '—'}</td>
-                <td style={{ padding: '6px 10px', color: '#64748b' }}>
-                  {[b.city, b.state].filter(Boolean).join(', ') || '—'}
-                </td>
-                <td style={{ padding: '6px 10px' }}>
-                  {b.isActive ? (
-                    <span style={{ color: '#15803d' }}>Active</span>
-                  ) : (
-                    <span style={{ color: '#64748b' }}>Inactive</span>
-                  )}
-                </td>
-                <td style={{ padding: '6px 10px', display: 'flex', gap: 6 }}>
-                  <button type="button" onClick={() => startEdit(b)} style={{ fontSize: 12 }}>
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void handleToggleActive(b)}
-                    disabled={!canManage}
-                    title={!canManage ? NO_PERMISSION : undefined}
-                    style={{ fontSize: 12, cursor: !canManage ? 'not-allowed' : 'pointer' }}
-                  >
-                    {b.isActive ? 'Deactivate' : 'Reactivate'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void handleDelete(b)}
-                    disabled={!canManage}
-                    title={!canManage ? NO_PERMISSION : undefined}
-                    style={{ fontSize: 12, color: '#b91c1c', cursor: !canManage ? 'not-allowed' : 'pointer' }}
-                  >
-                    Delete
-                  </button>
-                </td>
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
+                <th className="px-4 py-3">Name</th>
+                <th className="px-4 py-3">Code</th>
+                <th className="px-4 py-3">CCN</th>
+                <th className="px-4 py-3">Location</th>
+                <th className="px-4 py-3">Active</th>
+                <th className="px-4 py-3"></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {branches.map((b) => (
+                <tr key={b.id} className="border-t border-slate-100 hover:bg-slate-50">
+                  <td className="px-4 py-3 font-semibold text-slate-700">{b.name}</td>
+                  <td className="px-4 py-3 font-mono text-slate-700">{b.code}</td>
+                  <td className="px-4 py-3 text-slate-500">{b.ccnNumber ?? '—'}</td>
+                  <td className="px-4 py-3 text-slate-500">
+                    {[b.city, b.state].filter(Boolean).join(', ') || '—'}
+                  </td>
+                  <td className="px-4 py-3">
+                    {b.isActive ? (
+                      <span className="text-success">Active</span>
+                    ) : (
+                      <span className="text-slate-500">Inactive</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => startEdit(b)}
+                        className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void handleToggleActive(b)}
+                        disabled={!canManage}
+                        title={!canManage ? NO_PERMISSION : undefined}
+                        className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {b.isActive ? 'Deactivate' : 'Reactivate'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void handleDelete(b)}
+                        disabled={!canManage}
+                        title={!canManage ? NO_PERMISSION : undefined}
+                        className="rounded-md border border-red-200 px-2.5 py-1 text-xs font-medium text-red-700 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
