@@ -1,6 +1,7 @@
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { apiClient } from '@/api/client';
-import { generateIdgPrepBrief, type IdgMeeting } from '@/api/hospice';
+import { streamIdgPrepBrief, type IdgMeeting } from '@/api/hospice';
+import type { AiStreamErrorEvent } from '@/api/aiStream';
 
 function safeJsonArrayLen(s: string | null | undefined): number {
   if (!s) return 0;
@@ -12,29 +13,72 @@ function safeJsonArrayLen(s: string | null | undefined): number {
   }
 }
 
+function mapBriefError(event: AiStreamErrorEvent): string {
+  switch (event.error) {
+    case 'not_found':
+      return 'IDG meeting not found.';
+    case 'rate_limited':
+      return 'Too many brief requests recently. Please try again in a moment.';
+    case 'ai_not_available':
+      return 'The AI assistant is not available for your organization right now.';
+    case 'ai_provider_unreachable':
+      return "Couldn't reach the AI service. Try again shortly.";
+    default:
+      return event.message || 'Something went wrong generating the brief.';
+  }
+}
+
 export function IdgMeetingsPage() {
   const [meetings, setMeetings] = useState<IdgMeeting[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedBriefId, setExpandedBriefId] = useState<number | null>(null);
   const [generatingId, setGeneratingId] = useState<number | null>(null);
+  const [streamingText, setStreamingText] = useState('');
   const [briefError, setBriefError] = useState<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+
+  // Abort an in-flight stream if the page unmounts mid-generation.
+  useEffect(() => () => abortRef.current?.abort(), []);
 
   const handleGenerateBrief = async (meetingId: number) => {
+    abortRef.current?.abort();
+    const ac = new AbortController();
+    abortRef.current = ac;
     setGeneratingId(meetingId);
     setBriefError(null);
+    setStreamingText('');
+    setExpandedBriefId(meetingId); // reveal the row so the brief streams in live
+    let assembled = '';
     try {
-      const result = await generateIdgPrepBrief(meetingId);
-      setMeetings((prev) => prev.map((m) =>
-        m.id === meetingId
-          ? { ...m, prepBriefText: result.prepBriefText, prepBriefGeneratedAtUtc: result.prepBriefGeneratedAtUtc }
-          : m
-      ));
-      setExpandedBriefId(meetingId);
-    } catch (e) {
-      setBriefError((e as Error).message || 'Failed to generate brief');
+      await streamIdgPrepBrief(
+        meetingId,
+        {
+          onDelta: (text) => {
+            assembled += text;
+            setStreamingText(assembled);
+          },
+          onDone: (result) => {
+            // Trust the done event as authoritative (server persists the final text).
+            setMeetings((prev) => prev.map((m) =>
+              m.id === meetingId
+                ? { ...m, prepBriefText: result.prepBriefText, prepBriefGeneratedAtUtc: result.prepBriefGeneratedAtUtc }
+                : m
+            ));
+          },
+          onError: (event) => {
+            setBriefError(mapBriefError(event));
+          },
+        },
+        ac.signal,
+      );
+    } catch {
+      setBriefError('Something went wrong generating the brief.');
     } finally {
-      setGeneratingId(null);
+      if (abortRef.current === ac) {
+        setGeneratingId(null);
+        abortRef.current = null;
+      }
     }
   };
 
@@ -99,6 +143,8 @@ export function IdgMeetingsPage() {
               {meetings.map((m) => {
                 const isExpanded = expandedBriefId === m.id;
                 const hasBrief = Boolean(m.prepBriefText);
+                const isGenerating = generatingId === m.id;
+                const showBriefRow = isExpanded && (hasBrief || isGenerating);
                 return (
                   <Fragment key={m.id}>
                     <tr className="hover:bg-slate-50">
@@ -144,15 +190,26 @@ export function IdgMeetingsPage() {
                         </div>
                       </td>
                     </tr>
-                    {hasBrief && isExpanded && (
+                    {showBriefRow && (
                       <tr>
                         <td colSpan={7} className="px-5 pb-4 bg-slate-50">
                           <div
                             aria-label={`AI prep brief for meeting ${m.id}`}
+                            aria-live={isGenerating ? 'polite' : undefined}
                             className="text-sm text-slate-700 whitespace-pre-wrap p-3 border-l-4 border-indigo-500 bg-white rounded"
                           >
-                            {m.prepBriefText}
-                            {m.prepBriefGeneratedAtUtc && (
+                            {isGenerating && streamingText.length === 0 ? (
+                              <span className="text-slate-500">Generating brief…</span>
+                            ) : (
+                              isGenerating ? streamingText : m.prepBriefText
+                            )}
+                            {isGenerating && (
+                              <span
+                                aria-hidden="true"
+                                className="inline-block w-1.5 h-3.5 ml-0.5 align-middle bg-indigo-500 animate-pulse"
+                              />
+                            )}
+                            {!isGenerating && m.prepBriefGeneratedAtUtc && (
                               <div className="mt-3 text-xs text-slate-400">
                                 AI-generated {new Date(m.prepBriefGeneratedAtUtc).toLocaleString()}
                                 {' '}— review and verify before the meeting.

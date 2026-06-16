@@ -10,11 +10,11 @@ vi.mock('@/api/client', () => ({
 
 vi.mock('@/api/hospice', async (orig) => ({
   ...(await orig<object>()),
-  generateIdgPrepBrief: vi.fn(),
+  streamIdgPrepBrief: vi.fn(),
 }));
 
 import { apiClient } from '@/api/client';
-import { generateIdgPrepBrief } from '@/api/hospice';
+import { streamIdgPrepBrief } from '@/api/hospice';
 
 function meeting(id: number, over: Partial<{
   prepBriefText: string | null;
@@ -79,10 +79,12 @@ describe('IdgMeetingsPage', () => {
     vi.mocked(apiClient.get).mockResolvedValueOnce({
       data: { data: [meeting(1)] },
     } as never);
-    vi.mocked(generateIdgPrepBrief).mockResolvedValueOnce({
-      id: 1,
-      prepBriefText: 'Patient #1 -- 3 visits since last IDG. Discuss pain plan.',
-      prepBriefGeneratedAtUtc: '2026-06-14T10:00:00Z',
+    vi.mocked(streamIdgPrepBrief).mockImplementationOnce(async (_id, handlers) => {
+      handlers.onDelta('Patient #1 -- 3 visits since last IDG. ');
+      handlers.onDone({
+        prepBriefText: 'Patient #1 -- 3 visits since last IDG. Discuss pain plan.',
+        prepBriefGeneratedAtUtc: '2026-06-14T10:00:00Z',
+      });
     });
     renderPage();
     await screen.findByText('2 attendees');
@@ -90,8 +92,9 @@ describe('IdgMeetingsPage', () => {
     await user.click(screen.getByRole('button', { name: /^generate$/i }));
 
     await waitFor(() => {
-      expect(generateIdgPrepBrief).toHaveBeenCalledWith(1);
+      expect(streamIdgPrepBrief).toHaveBeenCalled();
     });
+    expect(vi.mocked(streamIdgPrepBrief).mock.calls[0][0]).toBe(1);
     expect(await screen.findByText(/3 visits since last IDG/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /^regenerate$/i })).toBeInTheDocument();
   });
@@ -118,11 +121,13 @@ describe('IdgMeetingsPage', () => {
     vi.mocked(apiClient.get).mockResolvedValueOnce({
       data: { data: [meeting(1)] },
     } as never);
-    vi.mocked(generateIdgPrepBrief).mockRejectedValueOnce(new Error('AI provider unavailable'));
+    vi.mocked(streamIdgPrepBrief).mockImplementationOnce(async (_id, handlers) => {
+      handlers.onError({ status: 0, error: 'ai_provider_unreachable' });
+    });
     renderPage();
     await screen.findByText('2 attendees');
 
     await user.click(screen.getByRole('button', { name: /^generate$/i }));
-    expect(await screen.findByText(/AI provider unavailable/i)).toBeInTheDocument();
+    expect(await screen.findByText(/couldn't reach the ai service/i)).toBeInTheDocument();
   });
 });

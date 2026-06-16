@@ -1,4 +1,6 @@
 import { apiClient } from '@/api/client';
+import { consumeAiStream, type AiStreamErrorEvent } from '@/api/aiStream';
+import { staffAuthHeaders } from '@/api/staffAuthHeaders';
 
 export type HospiceElectionStatus = 'Active' | 'Revoked' | 'Expired' | 'Discharged';
 export type HospiceElectionType = 'InitialElection' | 'ReElection';
@@ -528,6 +530,40 @@ export const generateIdgPrepBrief = (meetingId: number): Promise<IdgPrepBriefRes
   apiClient
     .post<{ data: IdgPrepBriefResult }>(`/hospice/idg-meetings/${meetingId}/prep-brief`)
     .then((r) => r.data.data);
+
+/** Terminal `done` payload of the prep-brief SSE stream (mirrors the persisted brief). */
+export interface IdgPrepBriefStreamDoneEvent {
+  prepBriefText: string;
+  prepBriefGeneratedAtUtc: string;
+}
+
+export interface IdgPrepBriefStreamHandlers {
+  onDelta: (text: string) => void;
+  onDone: (result: IdgPrepBriefStreamDoneEvent) => void;
+  onError: (event: AiStreamErrorEvent) => void;
+}
+
+/**
+ * Streaming variant of {@link generateIdgPrepBrief}. Wraps the generic SSE
+ * consumer + staff auth headers; the `done` payload mirrors the persisted
+ * brief (prepBriefText / prepBriefGeneratedAtUtc), so the caller can reuse the
+ * same row update as the non-streaming path.
+ */
+export async function streamIdgPrepBrief(
+  meetingId: number,
+  handlers: IdgPrepBriefStreamHandlers,
+  signal?: AbortSignal,
+): Promise<void> {
+  const headers = await staffAuthHeaders();
+  await consumeAiStream<IdgPrepBriefStreamDoneEvent>(
+    {
+      url: `/api/v2/hospice/idg-meetings/${meetingId}/prep-brief/stream`,
+      headers,
+      signal,
+    },
+    handlers,
+  );
+}
 
 // CarePlan reviews
 export const recordCarePlanReview = (
