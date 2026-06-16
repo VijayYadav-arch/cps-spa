@@ -1,58 +1,11 @@
 /*
- * Tailwind v4 entry scoped to /billing/denials + /billing/denials/:id.
- * Imported by DenialsList and DenialDetail. Mirrors clients.css palette
- * + adds category badge color tokens from the cps Next.js DenialsClient
- * origin (commit 72b8c43).
+ * /billing/denials + /billing/denials/:id pages.
+ *
+ * The scoped @import "tailwindcss" + @theme were removed: Tailwind utilities
+ * and the Mira design tokens now come globally from src/index.css. The denial
+ * category badges use stock Tailwind color utilities (bg-purple-100,
+ * text-cyan-700, etc.) which Tailwind's default palette provides at the same
+ * values the old local @theme pinned — so badges are unchanged, while navy now
+ * resolves to Mira navy #0B1D3A. Left as an (intentionally empty) import
+ * target so the page imports don't need churning.
  */
-@import "tailwindcss";
-
-@theme {
-  --color-navy-50: #f8fafc;
-  --color-navy-100: #f1f5f9;
-  --color-navy-200: #e2e8f0;
-  --color-navy-300: #cbd5e1;
-  --color-navy-400: #94a3b8;
-  --color-navy-500: #64748b;
-  --color-navy-600: #475569;
-  --color-navy-700: #334155;
-  --color-navy-800: #1e293b;
-  --color-navy-900: #0f172a;
-
-  --color-teal-50: #f0fdfa;
-  --color-teal-100: #ccfbf1;
-  --color-teal-600: #0d9488;
-  --color-teal-700: #0f766e;
-
-  --color-red-50: #fef2f2;
-  --color-red-100: #fee2e2;
-  --color-red-600: #dc2626;
-  --color-red-700: #b91c1c;
-
-  --color-amber-50: #fffbeb;
-  --color-amber-100: #fef3c7;
-  --color-amber-600: #d97706;
-  --color-amber-700: #b45309;
-
-  --color-green-50: #f0fdf4;
-  --color-green-100: #dcfce7;
-  --color-green-600: #16a34a;
-  --color-green-700: #15803d;
-
-  --color-purple-100: #f3e8ff;
-  --color-purple-700: #7e22ce;
-
-  --color-blue-100: #dbeafe;
-  --color-blue-700: #1d4ed8;
-
-  --color-cyan-100: #cffafe;
-  --color-cyan-700: #0e7490;
-
-  --color-pink-100: #fce7f3;
-  --color-pink-700: #be185d;
-
-  --color-orange-100: #ffedd5;
-  --color-orange-700: #c2410c;
-
-  --color-slate-100: #f1f5f9;
-  --color-slate-600: #475569;
-}

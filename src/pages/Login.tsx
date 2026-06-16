@@ -12,8 +12,8 @@ export function Login() {
     <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-cream px-4 py-10">
       <header className="flex flex-col items-center text-center">
         <img src="/brand/mira-wordmark.svg" alt="Mira" className="h-14 w-auto" />
-        <p className="mt-2 text-sm font-medium tracking-wide text-slate-500">
-          Care Practice Platform
+        <p className="mt-2 max-w-xs text-sm font-medium tracking-wide text-slate-500">
+          The AI-native platform for hospice &amp; home-health.
         </p>
       </header>
 
