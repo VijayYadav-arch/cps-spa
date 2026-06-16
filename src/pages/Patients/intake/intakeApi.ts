@@ -15,6 +15,17 @@ export const intakeApi = {
       .then((r) => r.data),
   deleteDraft: (id: number) =>
     apiClient.delete(`${BASE}/${id}`).then(() => undefined),
-  submitFinal: (form: FormData) =>
-    apiClient.post<{ id: number }>('/patients', form).then((r) => r.data),
+  submitFinal: (form: FormData) => {
+    // Optional fields left blank must be sent as null, not "" — the patient-create
+    // endpoint runs format validators (e.g. [EmailAddress]) that reject an empty
+    // string but allow null. Coerce every empty string in the payload to null.
+    const payload: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(form)) {
+      payload[key] = value === '' ? null : value;
+    }
+    // POST /patients responds with an enveloped body: { data: { id, ... } }.
+    return apiClient
+      .post<{ data: { id: number } }>('/patients', payload)
+      .then((r) => r.data.data);
+  },
 };
