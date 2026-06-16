@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getPatients, type PatientSummary } from '@/api/patients';
+import { usePermission, PERMISSIONS } from '@/permissions';
 
 export function PatientsList() {
   const [patients, setPatients] = useState<PatientSummary[]>([]);
@@ -8,6 +9,7 @@ export function PatientsList() {
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const canIntake = usePermission(PERMISSIONS.PATIENTS_INTAKE);
 
   useEffect(() => {
     let cancelled = false;
@@ -30,7 +32,23 @@ export function PatientsList() {
 
   return (
     <div className="grid max-w-[1200px] gap-6 p-6">
-      <h2 className="text-2xl">Patients</h2>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <h2 className="text-2xl">Patients</h2>
+        {canIntake ? (
+          <Link to="/patients/intake" className="btn-primary">
+            + New Patient
+          </Link>
+        ) : (
+          <button
+            type="button"
+            disabled
+            title="You don't have permission to start patient intake."
+            className="btn-primary"
+          >
+            + New Patient
+          </button>
+        )}
+      </div>
       {patients.length === 0 ? (
         <p className="text-slate-500">No patients found.</p>
       ) : (
