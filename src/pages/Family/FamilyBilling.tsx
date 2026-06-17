@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { familyApi } from '@/portal/familyApi';
 import { usePortalAuth } from '@/portal/PortalAuthContext';
 
@@ -50,9 +51,14 @@ export function FamilyBilling() {
 
   return (
     <section className="grid max-w-[1200px] gap-6 p-6">
-      <h1 data-testid="page-title" className="text-2xl">
-        Billing
-      </h1>
+      <div className="flex items-center justify-between">
+        <h1 data-testid="page-title" className="text-2xl">
+          Billing
+        </h1>
+        <Link to="/family/payments" className="text-sm font-medium text-teal-700 hover:underline">
+          Statements &amp; payments →
+        </Link>
+      </div>
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         <table className="w-full border-collapse text-sm">
           <thead>
