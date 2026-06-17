@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import {
+  getElection,
   getFtfForPeriod,
   listFtfForElection,
   recordFtf,
@@ -13,6 +14,9 @@ export function HospiceFtfPage() {
     useParams<{ electionId: string; periodId: string }>();
   const electionId = Number(idStr);
   const periodId = Number(pidStr);
+  // These pages are reachable both from the election detail and from the work queue,
+  // so the :patientId isn't in the route — resolve it from the election for breadcrumbs.
+  const [patientId, setPatientId] = useState<number | null>(null);
 
   const [history, setHistory] = useState<HospiceFaceToFaceEncounter[]>([]);
   const [periodFtf, setPeriodFtf] = useState<HospiceFaceToFaceEncounter | null>(null);
@@ -50,6 +54,13 @@ export function HospiceFtfPage() {
     if (Number.isFinite(electionId) && Number.isFinite(periodId)) void refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [electionId, periodId]);
+
+  useEffect(() => {
+    if (!Number.isFinite(electionId)) return;
+    getElection(electionId)
+      .then((e) => setPatientId(e.patientId))
+      .catch(() => undefined);
+  }, [electionId]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -90,6 +101,14 @@ export function HospiceFtfPage() {
   return (
     <div className="grid max-w-[1200px] gap-6 p-6">
       <header className="space-y-2">
+        {patientId != null && (
+          <Link
+            to={`/patients/${patientId}/hospice/${electionId}`}
+            className="inline-block rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+          >
+            ← Back to election
+          </Link>
+        )}
         <h2 className="text-2xl">
           Face-to-Face Encounter — Election #{electionId}, Period #{periodId}
         </h2>

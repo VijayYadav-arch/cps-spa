@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import {
   acknowledgeAddendum,
   draftAddendum,
   getCurrentAddendum,
+  getElection,
   issueAddendum,
   listAddenda,
   refuseAddendum,
@@ -16,6 +17,9 @@ import { HospiceAddendumItemList } from '@/components/HospiceAddendumItemList';
 export function HospiceAddendumPage() {
   const { electionId: idStr } = useParams<{ electionId: string }>();
   const electionId = Number(idStr);
+  // Reachable from the election detail and the work queue; the :patientId isn't in the
+  // route, so resolve it from the election for the breadcrumb back-link.
+  const [patientId, setPatientId] = useState<number | null>(null);
 
   const [history, setHistory] = useState<HospiceElectionAddendum[]>([]);
   const [current, setCurrent] = useState<HospiceElectionAddendum | null>(null);
@@ -57,6 +61,13 @@ export function HospiceAddendumPage() {
   useEffect(() => {
     if (Number.isFinite(electionId)) void refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [electionId]);
+
+  useEffect(() => {
+    if (!Number.isFinite(electionId)) return;
+    getElection(electionId)
+      .then((e) => setPatientId(e.patientId))
+      .catch(() => undefined);
   }, [electionId]);
 
   async function handleSaveDraft() {
@@ -193,6 +204,14 @@ export function HospiceAddendumPage() {
   return (
     <div className="grid max-w-[900px] gap-6 p-6">
       <header className="space-y-2">
+        {patientId != null && (
+          <Link
+            to={`/patients/${patientId}/hospice/${electionId}`}
+            className="inline-block rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+          >
+            ← Back to election
+          </Link>
+        )}
         <h2 className="text-2xl">
           Hospice Election Addendum — Election #{electionId}
         </h2>
