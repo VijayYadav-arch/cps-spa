@@ -8,7 +8,7 @@ import { Dashboard } from '@/pages/Dashboard';
 import { ClaimsRoutes } from '@/pages/Claims/ClaimsRoutes';
 import { PatientsRoutes } from '@/pages/Patients/PatientsRoutes';
 import { BillingRoutes } from '@/pages/Billing/BillingRoutes';
-import { ClinicalOverview } from '@/pages/Clinical/ClinicalOverview';
+import { ClinicalRoutes } from '@/pages/Clinical/ClinicalRoutes';
 import { DocumentsList } from '@/pages/Documents/DocumentsList';
 import { PlatformRoutes } from '@/pages/Platform/PlatformRoutes';
 import { AdminDashboard } from '@/pages/Admin/AdminDashboard';
@@ -145,7 +145,7 @@ export default function App() {
               path="clinical/*"
               element={
                 <RoleRoute required={PERMISSIONS.CLINICAL_VISIT_NOTES}>
-                  <ClinicalOverview />
+                  <ClinicalRoutes />
                 </RoleRoute>
               }
             />
