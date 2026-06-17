@@ -140,7 +140,14 @@ export function HospicePerDiemClaim() {
       ) : (
         <section className="grid gap-4">
           <div>
-            <h3 className="text-lg font-semibold">Claim {draft.claimNumber}</h3>
+            <h3 className="text-lg font-semibold">
+              Claim {draft.claimNumber}
+              {draft.isFinalClaim && (
+                <span className="ml-2 inline-block rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-800">
+                  Final claim · TOB {draft.typeOfBill}
+                </span>
+              )}
+            </h3>
             <p className="text-slate-500">
               Total: <strong>${draft.totalCharges.toFixed(2)}</strong> across{' '}
               {draft.attendanceDayIds.length} attendance day(s)
