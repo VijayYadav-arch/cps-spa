@@ -15,6 +15,11 @@ export const intakeApi = {
       .then((r) => r.data),
   deleteDraft: (id: number) =>
     apiClient.delete(`${BASE}/${id}`).then(() => undefined),
+  // Links a referral to the patient just created from it and flips it to "converted".
+  convertReferral: (referralId: number, patientId: number) =>
+    apiClient
+      .post(`/clinical/referrals/${referralId}/convert`, { patientId })
+      .then(() => undefined),
   submitFinal: (form: FormData) => {
     // Optional fields left blank must be sent as null, not "" — the patient-create
     // endpoint runs format validators (e.g. [EmailAddress]) that reject an empty

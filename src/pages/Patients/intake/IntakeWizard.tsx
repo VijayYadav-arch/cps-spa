@@ -1,6 +1,6 @@
 import '@/styles/intake.css';
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { intakeApi } from './intakeApi';
 import { initialForm, STEP_NAMES, type DraftResponse, type FormData } from './intakeTypes';
 import { DraftResumeBanner } from './DraftResumeBanner';
@@ -15,10 +15,20 @@ import { PERMISSIONS } from '@/permissions/permissions';
 
 const NO_PERMISSION = 'You do not have permission to perform this action';
 
+interface IntakeNavState {
+  prefill?: Partial<FormData>;
+  referralId?: number;
+}
+
 export function IntakeWizard() {
   const navigate = useNavigate();
+  const location = useLocation();
+  // A referral conversion lands here with prefill + the referral id (see ReferralsPage).
+  const navState = (location.state as IntakeNavState | null) ?? null;
   const [step, setStep] = useState(1);
-  const [form, setForm] = useState<FormData>(initialForm);
+  const [form, setForm] = useState<FormData>(() =>
+    navState?.prefill ? { ...initialForm, ...navState.prefill } : initialForm,
+  );
   const [draftId, setDraftId] = useState<number | null>(null);
   const [pendingDraft, setPendingDraft] = useState<DraftResponse | null>(null);
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
@@ -34,6 +44,9 @@ export function IntakeWizard() {
   const canComplete = usePermission([PERMISSIONS.PATIENTS_CREATE, PERMISSIONS.PATIENTS_INTAKE]);
 
   useEffect(() => {
+    // A referral conversion starts a fresh prefilled intake — don't offer to resume an
+    // unrelated open draft over the top of it.
+    if (navState?.referralId) return;
     // Best-effort: a failed draft lookup must not block starting a fresh intake.
     intakeApi
       .getMyOpenDraft()
@@ -41,7 +54,7 @@ export function IntakeWizard() {
         if (d) setPendingDraft(d);
       })
       .catch(() => undefined);
-  }, []);
+  }, [navState?.referralId]);
 
   const totalSteps = form.admissionType === 'hospice' ? 5 : 4;
 
@@ -121,6 +134,13 @@ export function IntakeWizard() {
       if (draftId) {
         // Draft cleanup is best-effort — the patient is already created.
         await intakeApi.deleteDraft(draftId).catch(() => undefined);
+      }
+      if (navState?.referralId) {
+        // Link the originating referral to the new patient. Best-effort — the patient
+        // is already created, so a convert failure must not strand the intake.
+        await intakeApi
+          .convertReferral(navState.referralId, result.id)
+          .catch(() => undefined);
       }
       // Hospice admissions hand off straight into the election wizard, pre-filling
       // the election date from the admission date captured at intake.
