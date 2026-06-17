@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getPatient, type PatientDetail as PatientDetailType } from '@/api/patients';
 import { HospiceSummaryCard } from '@/components/HospiceSummaryCard';
+import { PatientEligibilityCard } from '@/components/PatientEligibilityCard';
 
 export function PatientDetail() {
   const { id } = useParams<{ id: string }>();
@@ -57,6 +58,13 @@ export function PatientDetail() {
         <dd className="text-slate-700">{[patient.address, patient.city, patient.state, patient.zip].filter(Boolean).join(', ') || '—'}</dd>
         <dt className="font-medium text-slate-600">Insurance ID</dt><dd className="text-slate-700">{patient.insuranceId ?? '—'}</dd>
       </dl>
+      <PatientEligibilityCard
+        patientId={parseInt(id!, 10)}
+        firstName={patient.firstName}
+        lastName={patient.lastName}
+        dateOfBirth={patient.dateOfBirth}
+        insuranceId={patient.insuranceId}
+      />
       <HospiceSummaryCard patientId={parseInt(id!, 10)} />
     </div>
   );
