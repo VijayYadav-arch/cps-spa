@@ -62,3 +62,59 @@ export const getPriorAuths = (params?: {
   apiClient
     .get<{ data: PriorAuth[]; pagination: PaginationMeta }>('/clinical/prior-auth', { params })
     .then((r) => r.data);
+
+// --- Medications (GET/POST/PUT /api/v2/clinical/medications) ---
+export interface Medication {
+  id: number;
+  patientId: number;
+  organizationId: number;
+  name: string;
+  genericName: string | null;
+  dosage: string;
+  route: string;
+  frequency: string;
+  prescribedBy: string | null;
+  purpose: string | null;
+  isHospiceRelated: boolean | null;
+  isActive: boolean;
+  notes: string | null;
+}
+
+export interface CreateMedicationRequest {
+  patientId: number;
+  name: string;
+  genericName?: string | null;
+  dosage: string;
+  route: string;
+  frequency: string;
+  prescribedBy?: string | null;
+  purpose?: string | null;
+  isHospiceRelated?: boolean | null;
+  isActive?: boolean;
+  notes?: string | null;
+}
+
+export type UpdateMedicationRequest = Partial<Omit<CreateMedicationRequest, 'patientId'>>;
+
+export const getMedications = (params?: {
+  patientId?: number;
+  activeOnly?: boolean;
+  page?: number;
+  pageSize?: number;
+}): Promise<{ data: Medication[]; pagination: PaginationMeta }> =>
+  apiClient
+    .get<{ data: Medication[]; pagination: PaginationMeta }>('/clinical/medications', { params })
+    .then((r) => r.data);
+
+export const createMedication = (req: CreateMedicationRequest): Promise<Medication> =>
+  apiClient
+    .post<{ data: Medication }>('/clinical/medications', req)
+    .then((r) => r.data.data);
+
+export const updateMedication = (
+  id: number,
+  req: UpdateMedicationRequest,
+): Promise<Medication> =>
+  apiClient
+    .put<{ data: Medication }>(`/clinical/medications/${id}`, req)
+    .then((r) => r.data.data);

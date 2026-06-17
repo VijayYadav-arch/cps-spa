@@ -7,6 +7,9 @@ vi.mock('@/api/client', () => ({
   apiClient: { get: vi.fn() },
 }));
 
+// usePermission pulls from a TanStack Query hook needing a provider; stub it here.
+vi.mock('@/permissions/usePermission', () => ({ usePermission: () => false }));
+
 import { apiClient } from '@/api/client';
 
 function med(id: number, overrides: Partial<{ isActive: boolean; isHospiceRelated: boolean }> = {}) {
@@ -32,7 +35,12 @@ function renderPage() {
 }
 
 describe('MedicationsPage', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // Default for the secondary patient-list fetch (the page also loads patients for
+    // the add-form picker); per-test mockResolvedValueOnce still wins for the meds call.
+    vi.mocked(apiClient.get).mockResolvedValue({ data: { data: [] } } as never);
+  });
 
   it('renders heading + summary cards from data', async () => {
     vi.mocked(apiClient.get).mockResolvedValueOnce({
