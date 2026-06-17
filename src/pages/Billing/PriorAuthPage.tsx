@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   listExpiringPriorAuths,
   listPriorAuths,
@@ -77,6 +77,10 @@ const EMPTY_FORM: SubmitPriorAuthRequest = {
 
 export function PriorAuthPage() {
   const navigate = useNavigate();
+  // This page is mounted at both /billing/prior-auth (billing roles) and /prior-auth
+  // (clinical:prior_auth roles). Navigate to the detail relative to wherever we are.
+  const { pathname } = useLocation();
+  const detailBase = pathname.replace(/\/$/, '');
   const [items, setItems] = useState<PriorAuth[]>([]);
   const [expiring, setExpiring] = useState<PriorAuth[]>([]);
   const [statusFilter, setStatusFilter] = useState<PriorAuthStatus | 'all'>('all');
@@ -415,7 +419,7 @@ export function PriorAuthPage() {
                     <div className="flex gap-2">
                       <button
                         type="button"
-                        onClick={() => navigate(`/billing/prior-auth/${a.id}`)}
+                        onClick={() => navigate(`${detailBase}/${a.id}`)}
                         className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
                       >
                         View

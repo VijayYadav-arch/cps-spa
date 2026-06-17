@@ -149,7 +149,7 @@ export function PriorAuthDetailPage() {
       <div>
         <button
           type="button"
-          onClick={() => navigate('/billing/prior-auth')}
+          onClick={() => navigate(-1)}
           className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
         >
           Back to prior auths
@@ -165,7 +165,7 @@ export function PriorAuthDetailPage() {
       <div className="flex items-center gap-3">
         <button
           type="button"
-          onClick={() => navigate('/billing/prior-auth')}
+          onClick={() => navigate(-1)}
           className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
         >
           ← Back
