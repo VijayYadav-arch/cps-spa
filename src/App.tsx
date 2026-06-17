@@ -16,6 +16,7 @@ import { DocumentsList } from '@/pages/Documents/DocumentsList';
 import { PlatformRoutes } from '@/pages/Platform/PlatformRoutes';
 import { AdminDashboard } from '@/pages/Admin/AdminDashboard';
 import { UsersAdminPage } from '@/pages/Admin/UsersAdminPage';
+import { RolesAdminPage } from '@/pages/Admin/RolesAdminPage';
 import { HospiceDischargeWizard } from '@/pages/Hospice/HospiceDischargeWizard';
 import { HospiceDischargeDetail } from '@/pages/Hospice/HospiceDischargeDetail';
 import { HospiceDischargedElectionsList } from '@/pages/Hospice/HospiceDischargedElectionsList';
@@ -194,6 +195,14 @@ export default function App() {
               element={
                 <RoleRoute required={PERMISSIONS.ADMIN_MANAGE_USERS}>
                   <UsersAdminPage />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="admin/roles"
+              element={
+                <RoleRoute required={PERMISSIONS.ADMIN_MANAGE_ROLES}>
+                  <RolesAdminPage />
                 </RoleRoute>
               }
             />
