@@ -32,6 +32,16 @@ export function PlatformDashboard() {
       <h2 className="text-2xl">Platform Dashboard</h2>
 
       <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold">SSO &amp; SCIM</h3>
+          <Link to="/platform/sso" className="font-medium text-teal-700 hover:underline">Configure</Link>
+        </div>
+        <p className="mt-1 text-sm text-slate-500">
+          Set up SAML/OIDC single sign-on and SCIM provisioning for a customer organization.
+        </p>
+      </section>
+
+      <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="mb-3 flex justify-between">
           <h3 className="text-lg font-semibold">API Keys ({apiKeys.filter((k) => k.isActive).length} active)</h3>
           <Link to="/platform/api-keys" className="font-medium text-teal-700 hover:underline">Manage</Link>

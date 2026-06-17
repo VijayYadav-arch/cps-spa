@@ -3,6 +3,7 @@ import { PlatformDashboard } from './PlatformDashboard';
 import { ApiKeysPage } from './ApiKeysPage';
 import { WebhooksPage } from './WebhooksPage';
 import { BackgroundJobsPage } from './BackgroundJobsPage';
+import { SsoConfigPage } from './SsoConfigPage';
 
 export function PlatformRoutes() {
   return (
@@ -11,6 +12,7 @@ export function PlatformRoutes() {
       <Route path="api-keys" element={<ApiKeysPage />} />
       <Route path="webhooks" element={<WebhooksPage />} />
       <Route path="background-jobs" element={<BackgroundJobsPage />} />
+      <Route path="sso" element={<SsoConfigPage />} />
       <Route path="*" element={<Navigate to="/platform" replace />} />
     </Routes>
   );
