@@ -122,7 +122,15 @@ export function IntakeWizard() {
         // Draft cleanup is best-effort — the patient is already created.
         await intakeApi.deleteDraft(draftId).catch(() => undefined);
       }
-      navigate(`/patients/${result.id}`);
+      // Hospice admissions hand off straight into the election wizard, pre-filling
+      // the election date from the admission date captured at intake.
+      if (form.admissionType === 'hospice') {
+        const electionDate = form.effectiveFrom || form.admittedAt;
+        const q = electionDate ? `?electionDate=${electionDate}` : '';
+        navigate(`/patients/${result.id}/hospice/new${q}`);
+      } else {
+        navigate(`/patients/${result.id}`);
+      }
     } catch (err) {
       setActionError(extractError(err, 'Could not complete intake. Please review and try again.'));
     } finally {
