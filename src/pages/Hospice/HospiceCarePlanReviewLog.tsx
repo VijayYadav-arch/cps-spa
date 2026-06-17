@@ -3,8 +3,10 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
   listCarePlanReviews,
   recordCarePlanReview,
+  listUpcomingIdg,
   type CarePlanReview,
   type CarePlanReviewOutcome,
+  type IdgMeeting,
 } from '@/api/hospice';
 
 const OUTCOMES: CarePlanReviewOutcome[] = [
@@ -15,16 +17,29 @@ const OUTCOMES: CarePlanReviewOutcome[] = [
 ];
 
 export function HospiceCarePlanReviewLog() {
-  const { carePlanId } = useParams<{ carePlanId: string }>();
+  const { electionId, carePlanId } = useParams<{
+    electionId: string;
+    carePlanId: string;
+  }>();
   const navigate = useNavigate();
   const [reviews, setReviews] = useState<CarePlanReview[]>([]);
+  const [meetings, setMeetings] = useState<IdgMeeting[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [reviewDate, setReviewDate] = useState(new Date().toISOString().slice(0, 10));
   const [outcome, setOutcome] = useState<CarePlanReviewOutcome>('NoChange');
   const [summary, setSummary] = useState('');
+  const [idgMeetingId, setIdgMeetingId] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!electionId) return;
+    // Offer the election's IDG meetings so a review can be linked to where it happened.
+    listUpcomingIdg({ electionId: parseInt(electionId, 10) })
+      .then((r) => setMeetings(r.data))
+      .catch(() => undefined);
+  }, [electionId]);
 
   async function refresh() {
     if (!carePlanId) return;
@@ -52,7 +67,7 @@ export function HospiceCarePlanReviewLog() {
     try {
       await recordCarePlanReview(parseInt(carePlanId, 10), {
         reviewDate,
-        idgMeetingId: null,
+        idgMeetingId,
         outcome,
         changesSummary: summary || null,
       });
@@ -129,6 +144,25 @@ export function HospiceCarePlanReviewLog() {
                 {OUTCOMES.map((o) => (
                   <option key={o} value={o}>
                     {o}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="grid gap-1.5">
+              <span className="text-sm font-medium text-slate-600">
+                IDG Meeting (optional)
+              </span>
+              <select
+                value={idgMeetingId ?? ''}
+                onChange={(e) =>
+                  setIdgMeetingId(e.target.value ? parseInt(e.target.value, 10) : null)
+                }
+                className="form-input w-72"
+              >
+                <option value="">— Independent review (no meeting) —</option>
+                {meetings.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.meetingDate} · #{m.id} ({m.status})
                   </option>
                 ))}
               </select>
