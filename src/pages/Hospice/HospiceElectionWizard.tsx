@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { createElection } from '@/api/hospice';
 import { usePermission } from '@/permissions/usePermission';
 import { PERMISSIONS } from '@/permissions/permissions';
@@ -27,8 +27,13 @@ function computeNoeDeadline(electionDate: string): string {
 export function HospiceElectionWizard() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  // Pre-fill from intake's admission date when handed off from the intake wizard.
+  const prefillDate = searchParams.get('electionDate');
   const [step, setStep] = useState(1);
-  const [electionDate, setElectionDate] = useState(todayIso());
+  const [electionDate, setElectionDate] = useState(
+    prefillDate && /^\d{4}-\d{2}-\d{2}$/.test(prefillDate) ? prefillDate : todayIso(),
+  );
   const [payerCode, setPayerCode] = useState('MEDICARE_A');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
