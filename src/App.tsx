@@ -10,6 +10,8 @@ import { PatientsRoutes } from '@/pages/Patients/PatientsRoutes';
 import { BillingRoutes } from '@/pages/Billing/BillingRoutes';
 import { ClinicalRoutes } from '@/pages/Clinical/ClinicalRoutes';
 import { SchedulePage } from '@/pages/Schedule/SchedulePage';
+import { PriorAuthPage } from '@/pages/Billing/PriorAuthPage';
+import { PriorAuthDetailPage } from '@/pages/Billing/PriorAuthDetailPage';
 import { DocumentsList } from '@/pages/Documents/DocumentsList';
 import { PlatformRoutes } from '@/pages/Platform/PlatformRoutes';
 import { AdminDashboard } from '@/pages/Admin/AdminDashboard';
@@ -158,6 +160,25 @@ export default function App() {
                 </RoleRoute>
               }
             />
+            {/* Prior-auth management, reachable by clinical:prior_auth (intake/physician/
+                case-manager) without needing the billing:queue or clinical:visit_notes
+                wrappers that previously hid it. */}
+            <Route
+              path="prior-auth"
+              element={
+                <RoleRoute required={PERMISSIONS.CLINICAL_PRIOR_AUTH}>
+                  <PriorAuthPage />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="prior-auth/:id"
+              element={
+                <RoleRoute required={PERMISSIONS.CLINICAL_PRIOR_AUTH}>
+                  <PriorAuthDetailPage />
+                </RoleRoute>
+              }
+            />
             <Route path="documents/*" element={<DocumentsList />} />
             <Route
               path="platform/*"
@@ -226,7 +247,7 @@ export default function App() {
             <Route
               path="hospice/elections/:electionId/addendum"
               element={
-                <RoleRoute required={PERMISSIONS.CLINICAL_QUALITY}>
+                <RoleRoute required={PERMISSIONS.HOSPICE_ADDENDUM}>
                   <HospiceAddendumPage />
                 </RoleRoute>
               }
@@ -373,7 +394,7 @@ export default function App() {
             <Route
               path="admin/organizations/*"
               element={
-                <RoleRoute required={PERMISSIONS.ADMIN_MANAGE_ORGS}>
+                <RoleRoute anyOf={[PERMISSIONS.ADMIN_MANAGE_ORGS, PERMISSIONS.PLATFORM_ADMIN]}>
                   <OrganizationsRoutes />
                 </RoleRoute>
               }
@@ -405,7 +426,7 @@ export default function App() {
             <Route
               path="admin/b2c-migration"
               element={
-                <RoleRoute required={PERMISSIONS.ADMIN_MANAGE_ORGS}>
+                <RoleRoute anyOf={[PERMISSIONS.ADMIN_MANAGE_ORGS, PERMISSIONS.PLATFORM_ADMIN]}>
                   <B2cMigrationPage />
                 </RoleRoute>
               }
