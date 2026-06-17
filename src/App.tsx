@@ -15,6 +15,7 @@ import { PriorAuthDetailPage } from '@/pages/Billing/PriorAuthDetailPage';
 import { DocumentsList } from '@/pages/Documents/DocumentsList';
 import { PlatformRoutes } from '@/pages/Platform/PlatformRoutes';
 import { AdminDashboard } from '@/pages/Admin/AdminDashboard';
+import { UsersAdminPage } from '@/pages/Admin/UsersAdminPage';
 import { HospiceDischargeWizard } from '@/pages/Hospice/HospiceDischargeWizard';
 import { HospiceDischargeDetail } from '@/pages/Hospice/HospiceDischargeDetail';
 import { HospiceDischargedElectionsList } from '@/pages/Hospice/HospiceDischargedElectionsList';
@@ -185,6 +186,14 @@ export default function App() {
               element={
                 <RoleRoute required={PERMISSIONS.PLATFORM_ADMIN}>
                   <PlatformRoutes />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="admin/users"
+              element={
+                <RoleRoute required={PERMISSIONS.ADMIN_MANAGE_USERS}>
+                  <UsersAdminPage />
                 </RoleRoute>
               }
             />
