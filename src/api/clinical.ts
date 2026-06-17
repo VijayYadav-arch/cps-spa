@@ -1,17 +1,59 @@
 import { apiClient } from './client';
 
-// --- Care Plans (GET /api/v2/clinical/care-plans) ---
+// --- Care Plans (GET/POST/PUT /api/v2/clinical/care-plans) ---
+// Mirrors the CarePlan entity. Goals/Interventions are JSON-array strings.
 export interface CarePlan {
   id: number;
   patientId: number;
   organizationId: number;
+  admissionId: number | null;
+  version: number;
   status: string;
-  title: string;
-  goals: string | null;
   effectiveDate: string;
   reviewDate: string | null;
+  goals: string;
+  interventions: string;
+  frequency: string | null;
+  signedBy: string | null;
+  signedAt: string | null;
   createdAt: string;
   updatedAt: string | null;
+}
+
+export interface CreateCarePlanRequest {
+  patientId: number;
+  status?: string;
+  effectiveDate: string;
+  reviewDate?: string | null;
+  goals?: string;
+  interventions?: string;
+  frequency?: string | null;
+}
+
+export type UpdateCarePlanRequest = Partial<Omit<CreateCarePlanRequest, 'patientId'>>;
+
+export const createCarePlan = (req: CreateCarePlanRequest): Promise<CarePlan> =>
+  apiClient
+    .post<{ data: CarePlan }>('/clinical/care-plans', req)
+    .then((r) => r.data.data);
+
+export const updateCarePlan = (
+  id: number,
+  req: UpdateCarePlanRequest,
+): Promise<CarePlan> =>
+  apiClient
+    .put<{ data: CarePlan }>(`/clinical/care-plans/${id}`, req)
+    .then((r) => r.data.data);
+
+/** Parse a JSON-array string into a string[]; tolerant of malformed/empty input. */
+export function parseJsonStringArray(json: string | null | undefined): string[] {
+  if (!json) return [];
+  try {
+    const parsed = JSON.parse(json);
+    return Array.isArray(parsed) ? parsed.map((x) => String(x)) : [];
+  } catch {
+    return [];
+  }
 }
 
 // --- Prior Auth (GET /api/v2/clinical/prior-auth) ---
