@@ -142,7 +142,14 @@ const navItems: NavEntry[] = [
     ],
   },
   { kind: 'leaf', to: '/platform', label: 'Platform', perm: PERMISSIONS.PLATFORM_ADMIN },
-  { kind: 'leaf', to: '/admin', label: 'Admin', perm: PERMISSIONS.ADMIN_DASHBOARD },
+  {
+    kind: 'group',
+    label: 'Administration',
+    items: [
+      { kind: 'leaf', to: '/admin', label: 'Dashboard', perm: PERMISSIONS.ADMIN_DASHBOARD, exact: true },
+      { kind: 'leaf', to: '/admin/users', label: 'Users', perm: PERMISSIONS.ADMIN_MANAGE_USERS },
+    ],
+  },
 ];
 
 function leafStyle({ isActive }: { isActive: boolean }, indented = false): React.CSSProperties {
