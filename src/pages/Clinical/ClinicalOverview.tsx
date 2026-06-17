@@ -64,9 +64,13 @@ export function ClinicalOverview() {
           <ul className="m-0 list-none rounded-xl border border-slate-200 bg-white p-0 shadow-sm">
             {carePlans.map((cp) => (
               <li key={cp.id} className="border-b border-slate-100 px-4 py-2.5 last:border-b-0">
-                <span className="font-medium text-slate-700">{cp.title}</span>
+                <span className="font-medium text-slate-700">
+                  Care Plan #{cp.id} (v{cp.version})
+                </span>
                 {' — '}
-                <span className="text-sm text-slate-500">{cp.status}</span>
+                <span className="text-sm text-slate-500">
+                  {cp.status} · effective {cp.effectiveDate.slice(0, 10)}
+                </span>
               </li>
             ))}
           </ul>
