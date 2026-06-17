@@ -240,6 +240,8 @@ export interface HospicePerDiemClaimDraft {
   lines: HospicePerDiemClaimLine[];
   attendanceDayIds: number[];
   warnings: string[];
+  typeOfBill: string;
+  isFinalClaim: boolean;
 }
 
 export interface RecordAttendanceRequest {

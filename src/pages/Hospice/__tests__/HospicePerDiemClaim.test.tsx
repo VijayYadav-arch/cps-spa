@@ -92,6 +92,8 @@ describe('HospicePerDiemClaim', () => {
       ],
       attendanceDayIds: Array.from({ length: 30 }, (_, i) => i + 1),
       warnings: [],
+      typeOfBill: '0811',
+      isFinalClaim: false,
     });
 
     const user = userEvent.setup();
@@ -114,6 +116,8 @@ describe('HospicePerDiemClaim', () => {
       lines: [],
       attendanceDayIds: [1, 2, 3, 4, 5, 6, 7],
       warnings: ['Inpatient Respite Care exceeds the 5-day consecutive cap (longest run: 7 days).'],
+      typeOfBill: '0811',
+      isFinalClaim: false,
     });
 
     const user = userEvent.setup();
@@ -135,6 +139,8 @@ describe('HospicePerDiemClaim', () => {
       lines: [],
       attendanceDayIds: [1],
       warnings: [],
+      typeOfBill: '0811',
+      isFinalClaim: false,
     });
 
     const user = userEvent.setup();

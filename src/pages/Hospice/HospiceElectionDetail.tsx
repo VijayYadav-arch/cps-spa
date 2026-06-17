@@ -451,6 +451,29 @@ export function HospiceElectionDetail() {
         </section>
       )}
 
+      {(election.status === 'Expired' ||
+        election.status === 'Discharged' ||
+        election.status === 'Revoked') && (
+        <section className="rounded-lg border-l-4 border-green-400 bg-green-50 px-4 py-3">
+          <h3 className="text-lg font-semibold text-green-800">Final Claim</h3>
+          <p className="mt-1 text-slate-600">
+            The election is {election.status}. Bill any remaining unbilled days
+            through the close date as the final hospice claim (type-of-bill
+            0814) so the stay is closed out with CMS.
+          </p>
+          <button
+            onClick={() =>
+              navigate(
+                `/patients/${patientId}/hospice/${election.id}/per-diem-claim`,
+              )
+            }
+            className="mt-2 rounded-md border border-green-200 bg-white px-4 py-2 text-sm font-medium text-green-700 transition-colors hover:bg-green-100"
+          >
+            Generate Final Claim
+          </button>
+        </section>
+      )}
+
       <div>
         <HospiceNotrCard electionId={election.id} />
       </div>
