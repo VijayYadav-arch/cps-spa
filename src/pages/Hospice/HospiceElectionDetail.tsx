@@ -3,6 +3,7 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import {
   getElection,
   submitNoe,
+  beginRecertification,
   type HospiceElection,
   type NoeSubmissionMode,
 } from '@/api/hospice';
@@ -42,6 +43,35 @@ export function HospiceElectionDetail() {
   const [noeMode, setNoeMode] = useState<NoeSubmissionMode | null>(null);
   const [noeUrl, setNoeUrl] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [recertMsg, setRecertMsg] = useState<string | null>(null);
+
+  async function handleBeginRecert() {
+    if (!election || !patientId) return;
+    setRecertMsg(null);
+    try {
+      const res = await beginRecertification(election.id, {
+        certifyingPhysicianId: auth.user?.userId ?? 0,
+        narrativeText: null,
+      });
+      if (res.f2fRequired) {
+        setRecertMsg(
+          `Period ${res.periodNumber} requires a face-to-face encounter before recertification — redirecting…`,
+        );
+        navigate(
+          `/hospice/elections/${election.id}/periods/${res.periodId}/ftf`,
+        );
+      } else if (res.certId) {
+        navigate(
+          `/patients/${patientId}/hospice/${election.id}/certifications/${res.certId}`,
+        );
+      }
+    } catch (e) {
+      setRecertMsg(
+        (e as { response?: { data?: { error?: string } } })?.response?.data
+          ?.error ?? 'Could not begin recertification.',
+      );
+    }
+  }
 
   const reload = () => {
     if (!electionId) return;
@@ -251,6 +281,14 @@ export function HospiceElectionDetail() {
             Schedule IDG Meeting
           </button>
           <button
+            onClick={handleBeginRecert}
+            disabled={!canManage}
+            title={!canManage ? NO_PERMISSION : undefined}
+            className="rounded-md border border-teal-200 bg-teal-50 px-4 py-2 text-sm font-medium text-teal-700 transition-colors hover:bg-teal-100 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            Begin Recertification
+          </button>
+          <button
             onClick={() =>
               navigate(`/patients/${patientId}/hospice/${election.id}/revoke`)
             }
@@ -282,6 +320,15 @@ export function HospiceElectionDetail() {
               Discharge Patient
             </button>
           )}
+        </div>
+      )}
+
+      {recertMsg && (
+        <div
+          role="alert"
+          className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"
+        >
+          {recertMsg}
         </div>
       )}
 

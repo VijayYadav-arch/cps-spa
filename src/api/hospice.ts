@@ -582,6 +582,23 @@ export const listCarePlanReviews = (
     .then((r) => r.data);
 
 // Certifications
+export interface BeginRecertResult {
+  periodId: number;
+  periodNumber: number;
+  f2fRequired: boolean;
+  certId: number | null;
+}
+
+/** One-click recert entry: ensures the next benefit period exists, advances the
+ *  election, and opens a draft cert (or signals that a face-to-face is needed first). */
+export const beginRecertification = (
+  electionId: number,
+  req: StartCertRequest,
+): Promise<BeginRecertResult> =>
+  apiClient
+    .post<BeginRecertResult>(`/hospice/elections/${electionId}/begin-recert`, req)
+    .then((r) => r.data);
+
 export const startCertification = (
   electionId: number,
   periodId: number,
