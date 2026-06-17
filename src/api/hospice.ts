@@ -659,6 +659,14 @@ export const listCertificationsByElection = (
     )
     .then((r) => r.data);
 
+// Downloads the printable Notice of Election document (application/pdf bytes).
+export const downloadNoeDocument = (electionId: number): Promise<Blob> =>
+  apiClient
+    .get<Blob>(`/hospice/elections/${electionId}/noe-document.pdf`, {
+      responseType: 'blob',
+    })
+    .then((r) => r.data);
+
 // ─── Sub-system D: Bereavement ─────────────────────────────────────────────
 
 export type BereavementProgramStatus = 'Active' | 'Completed' | 'Closed';

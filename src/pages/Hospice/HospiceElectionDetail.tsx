@@ -6,6 +6,7 @@ import {
   beginRecertification,
   startCertification,
   listCertificationsByElection,
+  downloadNoeDocument,
   recordDeath,
   type HospiceElection,
   type HospiceCertification,
@@ -77,6 +78,22 @@ export function HospiceElectionDetail() {
             ?.error ??
           'Could not record death.',
       );
+    }
+  }
+
+  async function handleDownloadNoe() {
+    if (!election) return;
+    setRecertMsg(null);
+    try {
+      const blob = await downloadNoeDocument(election.id);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `NOE-election-${election.id}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setRecertMsg('Could not generate the Notice of Election document.');
     }
   }
 
@@ -426,6 +443,15 @@ export function HospiceElectionDetail() {
           )}
         </div>
       )}
+
+      <div className="flex flex-wrap gap-2">
+        <button
+          onClick={handleDownloadNoe}
+          className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+        >
+          Download NOE Document (PDF)
+        </button>
+      </div>
 
       {recertMsg && (
         <div
