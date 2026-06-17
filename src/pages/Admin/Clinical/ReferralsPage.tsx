@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { apiClient } from '@/api/client';
 
 interface Referral {
@@ -10,6 +11,20 @@ interface Referral {
   primaryDiagnosis?: string | null;
   urgency: string;
   status: string;
+  convertedPatientId?: number | null;
+}
+
+// Full referral as returned by GET /clinical/referrals/{id} (adds the PHI fields the
+// list view omits) — used to prefill the intake wizard on conversion.
+interface ReferralDetail extends Referral {
+  patientPhone?: string | null;
+  patientDOB?: string | null;
+}
+
+function splitName(full: string): { firstName: string; lastName: string } {
+  const parts = full.trim().split(/\s+/);
+  if (parts.length <= 1) return { firstName: parts[0] ?? '', lastName: '' };
+  return { firstName: parts[0], lastName: parts.slice(1).join(' ') };
 }
 
 const STATUS_BADGE: Record<string, string> = {
@@ -51,9 +66,39 @@ function UrgencyBadge({ urgency }: { urgency: string }) {
 }
 
 export function ReferralsPage() {
+  const navigate = useNavigate();
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [converting, setConverting] = useState<number | null>(null);
+
+  async function handleConvert(id: number) {
+    setConverting(id);
+    setError(null);
+    try {
+      // Pull the full referral so we can prefill DOB/phone/diagnosis, not just the name.
+      const res = await apiClient.get<{ data: ReferralDetail }>(
+        `/clinical/referrals/${id}`,
+      );
+      const r = res.data.data;
+      const { firstName, lastName } = splitName(r.patientName);
+      navigate('/patients/intake', {
+        state: {
+          referralId: id,
+          prefill: {
+            firstName,
+            lastName,
+            dateOfBirth: r.patientDOB ? r.patientDOB.slice(0, 10) : '',
+            phone: r.patientPhone ?? '',
+            primaryDiagnosisDesc: r.primaryDiagnosis ?? '',
+          },
+        },
+      });
+    } catch {
+      setError('Could not start conversion for this referral.');
+      setConverting(null);
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -125,6 +170,7 @@ export function ReferralsPage() {
                 <th className="px-5 py-3">Diagnosis</th>
                 <th className="px-5 py-3">Urgency</th>
                 <th className="px-5 py-3">Status</th>
+                <th className="px-5 py-3">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -137,6 +183,30 @@ export function ReferralsPage() {
                   <td className="px-5 py-4 text-sm">{r.primaryDiagnosis ?? '—'}</td>
                   <td className="px-5 py-4"><UrgencyBadge urgency={r.urgency} /></td>
                   <td className="px-5 py-4"><StatusBadge status={r.status} /></td>
+                  <td className="px-5 py-4 text-sm">
+                    {r.status === 'converted' ? (
+                      r.convertedPatientId ? (
+                        <button
+                          onClick={() => navigate(`/patients/${r.convertedPatientId}`)}
+                          className="font-medium text-teal-700 hover:underline"
+                        >
+                          View patient →
+                        </button>
+                      ) : (
+                        <span className="text-slate-400">Converted</span>
+                      )
+                    ) : r.status === 'declined' ? (
+                      <span className="text-slate-400">—</span>
+                    ) : (
+                      <button
+                        onClick={() => handleConvert(r.id)}
+                        disabled={converting === r.id}
+                        className="rounded-md border border-teal-200 bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-700 transition-colors hover:bg-teal-100 disabled:opacity-60"
+                      >
+                        {converting === r.id ? 'Opening…' : 'Convert to Intake'}
+                      </button>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
