@@ -161,6 +161,43 @@ export const updateMedication = (
     .put<{ data: Medication }>(`/clinical/medications/${id}`, req)
     .then((r) => r.data.data);
 
+// --- eMAR: Medication Administrations (/api/v2/clinical/medication-administrations) ---
+export type AdministrationStatus = 'given' | 'held' | 'refused' | 'missed';
+
+export interface MedicationAdministration {
+  id: number;
+  patientId: number;
+  medicationId: number;
+  administeredAt: string;
+  administeredByUserId: number;
+  status: AdministrationStatus;
+  dose: string | null;
+  notes: string | null;
+}
+
+export interface RecordAdministrationRequest {
+  medicationId: number;
+  status: AdministrationStatus;
+  administeredAt?: string | null;
+  dose?: string | null;
+  notes?: string | null;
+}
+
+export const listAdministrations = (params: {
+  patientId: number;
+  medicationId?: number;
+}): Promise<{ data: MedicationAdministration[] }> =>
+  apiClient
+    .get<{ data: MedicationAdministration[] }>('/clinical/medication-administrations', { params })
+    .then((r) => r.data);
+
+export const recordAdministration = (
+  req: RecordAdministrationRequest,
+): Promise<MedicationAdministration> =>
+  apiClient
+    .post<{ data: MedicationAdministration }>('/clinical/medication-administrations', req)
+    .then((r) => r.data.data);
+
 // --- Physician Orders (GET/POST/PUT /api/v2/clinical/orders) ---
 export interface PhysicianOrder {
   id: number;

@@ -3,8 +3,10 @@ import {
   getMedications,
   createMedication,
   updateMedication,
+  recordAdministration,
   type Medication,
   type CreateMedicationRequest,
+  type AdministrationStatus,
 } from '@/api/clinical';
 import { getPatients, type PatientSummary } from '@/api/patients';
 import { usePermission } from '@/permissions/usePermission';
@@ -14,6 +16,14 @@ const NO_PERMISSION = 'You do not have permission to perform this action';
 
 const ROUTES = ['oral', 'IV', 'topical', 'sublingual', 'inhaled', 'subcutaneous'];
 const FREQUENCIES = ['daily', 'BID', 'TID', 'QID', 'PRN', 'weekly'];
+const ADMIN_STATUSES: AdministrationStatus[] = ['given', 'held', 'refused', 'missed'];
+
+interface AdminState {
+  med: Medication;
+  status: AdministrationStatus;
+  dose: string;
+  notes: string;
+}
 
 interface FormState {
   id: number | null;
@@ -47,6 +57,8 @@ export function MedicationsPage() {
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<FormState | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [admin, setAdmin] = useState<AdminState | null>(null);
+  const [adminMsg, setAdminMsg] = useState<string | null>(null);
 
   function refresh() {
     setLoading(true);
@@ -123,6 +135,34 @@ export function MedicationsPage() {
     }
   }
 
+  function openAdminister(m: Medication) {
+    setAdminMsg(null);
+    setAdmin({ med: m, status: 'given', dose: m.dosage, notes: '' });
+  }
+
+  async function handleRecordAdministration() {
+    if (!admin) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      await recordAdministration({
+        medicationId: admin.med.id,
+        status: admin.status,
+        dose: admin.dose || null,
+        notes: admin.notes || null,
+      });
+      setAdminMsg(`Recorded ${admin.status} for ${admin.med.name}.`);
+      setAdmin(null);
+    } catch (e) {
+      setError(
+        (e as { response?: { data?: { error?: string } } })?.response?.data?.error ??
+          'Could not record the administration.',
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   async function toggleActive(m: Medication) {
     try {
       await updateMedication(m.id, { isActive: !m.isActive });
@@ -167,6 +207,73 @@ export function MedicationsPage() {
       {error && (
         <div role="alert" className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
           <p className="text-sm text-red-800">{error}</p>
+        </div>
+      )}
+
+      {adminMsg && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+          <p className="text-sm text-green-800">{adminMsg}</p>
+        </div>
+      )}
+
+      {admin && (
+        <div
+          role="dialog"
+          aria-label="Record administration"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+        >
+          <div className="w-[420px] rounded-xl border border-slate-200 bg-white p-6 shadow-lg grid gap-4">
+            <h2 className="text-lg font-semibold">Administer — {admin.med.name}</h2>
+            <label className="grid gap-1.5">
+              <span className="text-sm font-medium text-slate-600">Outcome</span>
+              <select
+                value={admin.status}
+                onChange={(e) =>
+                  setAdmin({ ...admin, status: e.target.value as AdministrationStatus })
+                }
+                className="form-input w-48"
+              >
+                {ADMIN_STATUSES.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="grid gap-1.5">
+              <span className="text-sm font-medium text-slate-600">Dose</span>
+              <input
+                value={admin.dose}
+                onChange={(e) => setAdmin({ ...admin, dose: e.target.value })}
+                className="form-input w-40"
+              />
+            </label>
+            <label className="grid gap-1.5">
+              <span className="text-sm font-medium text-slate-600">Notes (reason if held/refused)</span>
+              <textarea
+                value={admin.notes}
+                onChange={(e) => setAdmin({ ...admin, notes: e.target.value })}
+                rows={2}
+                className="form-input"
+              />
+            </label>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setAdmin(null)}
+                disabled={submitting}
+                className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleRecordAdministration}
+                disabled={submitting}
+                className="btn-primary disabled:opacity-60"
+              >
+                {submitting ? 'Recording…' : 'Record'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -346,6 +453,14 @@ export function MedicationsPage() {
                   <td className="px-5 py-4 text-sm">
                     {canManage && (
                       <span className="flex gap-2">
+                        {m.isActive && (
+                          <button
+                            onClick={() => openAdminister(m)}
+                            className="rounded-md border border-teal-200 bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-700 hover:bg-teal-100"
+                          >
+                            Administer
+                          </button>
+                        )}
                         <button
                           onClick={() => openEdit(m)}
                           className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
