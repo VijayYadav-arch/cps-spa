@@ -4,6 +4,7 @@ import {
   getElection,
   submitNoe,
   beginRecertification,
+  recordDeath,
   type HospiceElection,
   type NoeSubmissionMode,
 } from '@/api/hospice';
@@ -44,6 +45,36 @@ export function HospiceElectionDetail() {
   const [noeUrl, setNoeUrl] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [recertMsg, setRecertMsg] = useState<string | null>(null);
+
+  async function handleRecordDeath() {
+    if (!election) return;
+    setRecertMsg(null);
+    const today = new Date().toISOString().slice(0, 10);
+    const dod = window.prompt(
+      'Record date of death (YYYY-MM-DD). This closes the election, files a Death NOTR, and starts the 13-month bereavement program + CAHPS case.',
+      today,
+    );
+    if (!dod) return;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dod)) {
+      setRecertMsg('Date of death must be in YYYY-MM-DD format.');
+      return;
+    }
+    try {
+      const res = await recordDeath(election.id, dod, auth.user?.userId ?? null);
+      setRecertMsg(
+        `Death recorded. NOTR #${res.notrId} filed${res.bereavementProgramId ? `; bereavement program #${res.bereavementProgramId} started (CAHPS case ensured)` : ''}.`,
+      );
+      reload();
+    } catch (e) {
+      setRecertMsg(
+        (e as { response?: { data?: { userMessage?: string; error?: string } } })
+          ?.response?.data?.userMessage ??
+          (e as { response?: { data?: { error?: string } } })?.response?.data
+            ?.error ??
+          'Could not record death.',
+      );
+    }
+  }
 
   async function handleBeginRecert() {
     if (!election || !patientId) return;
@@ -318,6 +349,14 @@ export function HospiceElectionDetail() {
               className="rounded-md border border-orange-200 bg-orange-50 px-4 py-2 text-sm font-medium text-orange-700 transition-colors hover:bg-orange-100"
             >
               Discharge Patient
+            </button>
+          )}
+          {canManageDischarge && (
+            <button
+              onClick={handleRecordDeath}
+              className="rounded-md border border-slate-300 bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-200"
+            >
+              Record Death
             </button>
           )}
         </div>

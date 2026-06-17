@@ -599,6 +599,28 @@ export const beginRecertification = (
     .post<BeginRecertResult>(`/hospice/elections/${electionId}/begin-recert`, req)
     .then((r) => r.data);
 
+export interface RecordDeathResult {
+  electionId: number;
+  patientId: number;
+  dateOfDeath: string;
+  notrId: number;
+  bereavementProgramId: number | null;
+}
+
+/** Records a patient death: closes the election (Expired), files a Death NOTR, and
+ *  starts the 13-month bereavement program (which ensures the CAHPS decedent case). */
+export const recordDeath = (
+  electionId: number,
+  dateOfDeath: string,
+  bereavementCoordinatorUserId: number | null,
+): Promise<RecordDeathResult> =>
+  apiClient
+    .post<RecordDeathResult>(`/hospice/elections/${electionId}/record-death`, {
+      dateOfDeath,
+      bereavementCoordinatorUserId,
+    })
+    .then((r) => r.data);
+
 export const startCertification = (
   electionId: number,
   periodId: number,
