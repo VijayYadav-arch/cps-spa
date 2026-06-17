@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   getAuditEvents,
   auditExportUrl,
+  purgeAuditRetention,
   type AuditEvent,
   type AuditSearchParams,
   type PaginationMeta,
@@ -75,6 +76,36 @@ export function AuditLogSearchPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Retention purge (manual driver; the daily hosted service is the normal one).
+  const [showRetention, setShowRetention] = useState(false);
+  const [retentionYears, setRetentionYears] = useState('7');
+  const [purging, setPurging] = useState(false);
+  const [retentionMsg, setRetentionMsg] = useState<string | null>(null);
+
+  async function handlePurge() {
+    const years = Number(retentionYears);
+    if (!(years >= 1)) { setRetentionMsg('Retention years must be at least 1.'); return; }
+    if (!window.confirm(
+      `Permanently delete audit-log rows older than ${years} year(s) for your organization? This cannot be undone.`,
+    )) return;
+    setPurging(true);
+    setRetentionMsg(null);
+    try {
+      const r = await purgeAuditRetention(years);
+      setRetentionMsg(
+        `Purged ${r.rowsDeleted} row(s) older than ${new Date(r.cutoffUtc).toLocaleDateString()} ` +
+        `(${r.retentionYearsApplied}-year retention${r.clampedToFloor ? ', clamped to policy floor' : ''}).`,
+      );
+    } catch (e) {
+      setRetentionMsg(
+        (e as { response?: { data?: { error?: string } } })?.response?.data?.error ??
+          'Retention purge failed.',
+      );
+    } finally {
+      setPurging(false);
+    }
+  }
+
   // CSV export hits GET /audit/export, gated by admin:audit_logs.
   const canExport = usePermission(PERMISSIONS.ADMIN_AUDIT_LOGS);
 
@@ -130,6 +161,49 @@ export function AuditLogSearchPage() {
           50,000 rows).
         </p>
       </header>
+
+      <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-slate-700">Retention purge</h2>
+          <button
+            type="button"
+            onClick={() => setShowRetention((v) => !v)}
+            className="text-xs font-medium text-teal-700 hover:underline"
+          >
+            {showRetention ? 'Hide' : 'Manage'}
+          </button>
+        </div>
+        {showRetention && (
+          <div className="mt-3 grid gap-3">
+            <p className="text-xs text-slate-500">
+              Manually delete audit-log rows older than the retention window for your
+              organization. The daily retention service is the normal driver; use this
+              after a policy change. Irreversible.
+            </p>
+            <div className="flex items-end gap-3">
+              <label className="grid gap-1.5">
+                <span className="text-sm font-medium text-slate-600">Retention (years)</span>
+                <input
+                  type="number"
+                  min="1"
+                  value={retentionYears}
+                  onChange={(e) => setRetentionYears(e.target.value)}
+                  className="form-input w-28"
+                />
+              </label>
+              <button
+                type="button"
+                onClick={handlePurge}
+                disabled={purging}
+                className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 transition-colors hover:bg-red-100 disabled:opacity-60"
+              >
+                {purging ? 'Purging…' : 'Run purge'}
+              </button>
+            </div>
+            {retentionMsg && <p className="text-sm text-slate-700">{retentionMsg}</p>}
+          </div>
+        )}
+      </section>
 
       <form
         onSubmit={onSearch}

@@ -149,6 +149,7 @@ const navItems: NavEntry[] = [
       { kind: 'leaf', to: '/admin', label: 'Dashboard', perm: PERMISSIONS.ADMIN_DASHBOARD, exact: true },
       { kind: 'leaf', to: '/admin/users', label: 'Users', perm: PERMISSIONS.ADMIN_MANAGE_USERS },
       { kind: 'leaf', to: '/admin/roles', label: 'Roles & Permissions', perm: PERMISSIONS.ADMIN_MANAGE_ROLES },
+      { kind: 'leaf', to: '/admin/audit-log', label: 'Audit Log', perm: PERMISSIONS.ADMIN_AUDIT_LOGS },
     ],
   },
 ];
