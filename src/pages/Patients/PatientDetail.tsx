@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getPatient, type PatientDetail as PatientDetailType } from '@/api/patients';
 import { HospiceSummaryCard } from '@/components/HospiceSummaryCard';
 import { PatientEligibilityCard } from '@/components/PatientEligibilityCard';
+import { FamilyAccessCard } from '@/components/FamilyAccessCard';
 
 export function PatientDetail() {
   const { id } = useParams<{ id: string }>();
@@ -65,6 +66,7 @@ export function PatientDetail() {
         dateOfBirth={patient.dateOfBirth}
         insuranceId={patient.insuranceId}
       />
+      <FamilyAccessCard patientId={parseInt(id!, 10)} />
       <HospiceSummaryCard patientId={parseInt(id!, 10)} />
     </div>
   );
