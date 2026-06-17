@@ -118,3 +118,55 @@ export const updateMedication = (
   apiClient
     .put<{ data: Medication }>(`/clinical/medications/${id}`, req)
     .then((r) => r.data.data);
+
+// --- Physician Orders (GET/POST/PUT /api/v2/clinical/orders) ---
+export interface PhysicianOrder {
+  id: number;
+  patientId: number;
+  orderDate: string;
+  orderType: string;
+  orderText: string;
+  orderedBy: string;
+  frequency: string | null;
+  isVerbal: boolean;
+  signedBy: string | null;
+  status: string;
+}
+
+export interface CreatePhysicianOrderRequest {
+  patientId: number;
+  orderType: string;
+  orderText: string;
+  orderedBy: string;
+  orderDate: string;
+  frequency?: string | null;
+  isVerbal?: boolean;
+  status?: string;
+}
+
+export type UpdatePhysicianOrderRequest = Partial<
+  Omit<CreatePhysicianOrderRequest, 'patientId'>
+>;
+
+export const getOrders = (params?: {
+  patientId?: number;
+  status?: string;
+  page?: number;
+  pageSize?: number;
+}): Promise<{ data: PhysicianOrder[]; pagination?: PaginationMeta }> =>
+  apiClient
+    .get<{ data: PhysicianOrder[]; pagination?: PaginationMeta }>('/clinical/orders', { params })
+    .then((r) => r.data);
+
+export const createOrder = (req: CreatePhysicianOrderRequest): Promise<PhysicianOrder> =>
+  apiClient
+    .post<{ data: PhysicianOrder }>('/clinical/orders', req)
+    .then((r) => r.data.data);
+
+export const updateOrder = (
+  id: number,
+  req: UpdatePhysicianOrderRequest,
+): Promise<PhysicianOrder> =>
+  apiClient
+    .put<{ data: PhysicianOrder }>(`/clinical/orders/${id}`, req)
+    .then((r) => r.data.data);
