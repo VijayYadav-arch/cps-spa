@@ -8,6 +8,7 @@ import { FamilyCarePlan } from './FamilyCarePlan';
 import { FamilyChat } from './FamilyChat';
 import { FamilyDocuments } from './FamilyDocuments';
 import { FamilyMedications } from './FamilyMedications';
+import { FamilyPayments } from './FamilyPayments';
 import { FamilyPreferences } from './FamilyPreferences';
 import { FamilyVisits } from './FamilyVisits';
 
@@ -36,6 +37,14 @@ export function FamilyRoutes() {
         element={
           <RequireFamilyAuth>
             <FamilyBilling />
+          </RequireFamilyAuth>
+        }
+      />
+      <Route
+        path="payments"
+        element={
+          <RequireFamilyAuth>
+            <FamilyPayments />
           </RequireFamilyAuth>
         }
       />
