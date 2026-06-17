@@ -4,8 +4,11 @@ import {
   getElection,
   submitNoe,
   beginRecertification,
+  startCertification,
+  listCertificationsByElection,
   recordDeath,
   type HospiceElection,
+  type HospiceCertification,
   type NoeSubmissionMode,
 } from '@/api/hospice';
 import { HospiceNotrCard } from '@/components/HospiceNotrCard';
@@ -45,6 +48,7 @@ export function HospiceElectionDetail() {
   const [noeUrl, setNoeUrl] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [recertMsg, setRecertMsg] = useState<string | null>(null);
+  const [certs, setCerts] = useState<HospiceCertification[]>([]);
 
   async function handleRecordDeath() {
     if (!election) return;
@@ -72,6 +76,26 @@ export function HospiceElectionDetail() {
           (e as { response?: { data?: { error?: string } } })?.response?.data
             ?.error ??
           'Could not record death.',
+      );
+    }
+  }
+
+  async function handleStartInitialCert() {
+    if (!election || !patientId || !election.currentPeriod) return;
+    setRecertMsg(null);
+    try {
+      const cert = await startCertification(
+        election.id,
+        election.currentPeriod.id,
+        { certifyingPhysicianId: auth.user?.userId ?? 0, narrativeText: null },
+      );
+      navigate(
+        `/patients/${patientId}/hospice/${election.id}/certifications/${cert.id}`,
+      );
+    } catch (e) {
+      setRecertMsg(
+        (e as { response?: { data?: { error?: string } } })?.response?.data
+          ?.error ?? 'Could not start the initial certification.',
       );
     }
   }
@@ -108,10 +132,14 @@ export function HospiceElectionDetail() {
     if (!electionId) return;
     setIsLoading(true);
     setError(null);
-    getElection(parseInt(electionId, 10))
+    const id = parseInt(electionId, 10);
+    getElection(id)
       .then(setElection)
       .catch(() => setError('Failed to load election.'))
       .finally(() => setIsLoading(false));
+    listCertificationsByElection(id)
+      .then((r) => setCerts(r.data))
+      .catch(() => undefined);
   };
 
   useEffect(reload, [electionId]);
@@ -311,6 +339,43 @@ export function HospiceElectionDetail() {
           >
             Schedule IDG Meeting
           </button>
+          {(() => {
+            if (!election.currentPeriod) return null;
+            const openCert = certs.find(
+              (c) =>
+                c.periodId === election.currentPeriod!.id &&
+                c.status !== 'Countersigned',
+            );
+            if (openCert) {
+              return (
+                <button
+                  onClick={() =>
+                    navigate(
+                      `/patients/${patientId}/hospice/${election.id}/certifications/${openCert.id}`,
+                    )
+                  }
+                  className="rounded-md border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 transition-colors hover:bg-indigo-100"
+                >
+                  Continue Certification (Period {election.currentPeriod.periodNumber})
+                </button>
+              );
+            }
+            // No open cert for the current period: offer to start it. Period ≥3 is
+            // F2F-gated server-side; the error surfaces in recertMsg if so.
+            if (election.currentPeriod.certificationId == null) {
+              return (
+                <button
+                  onClick={handleStartInitialCert}
+                  disabled={!canManage}
+                  title={!canManage ? NO_PERMISSION : undefined}
+                  className="rounded-md border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 transition-colors hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  Start Initial Certification
+                </button>
+              );
+            }
+            return null;
+          })()}
           <button
             onClick={handleBeginRecert}
             disabled={!canManage}
