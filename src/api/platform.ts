@@ -1,5 +1,19 @@
 import { apiClient } from './client';
 
+// --- Audit-log retention purge (POST /api/v2/admin/audit-retention/purge) ---
+export interface AuditRetentionResult {
+  organizationId: number;
+  retentionYearsApplied: number;
+  cutoffUtc: string;
+  rowsDeleted: number;
+  clampedToFloor: boolean;
+}
+
+export const purgeAuditRetention = (retentionYears: number): Promise<AuditRetentionResult> =>
+  apiClient
+    .post<{ data: AuditRetentionResult }>('/admin/audit-retention/purge', { retentionYears })
+    .then((r) => r.data.data);
+
 // --- Background-job health (GET /api/v2/platform/background-jobs) ---
 export interface BackgroundJobTick {
   name: string;
