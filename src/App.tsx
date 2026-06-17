@@ -9,6 +9,7 @@ import { ClaimsRoutes } from '@/pages/Claims/ClaimsRoutes';
 import { PatientsRoutes } from '@/pages/Patients/PatientsRoutes';
 import { BillingRoutes } from '@/pages/Billing/BillingRoutes';
 import { ClinicalRoutes } from '@/pages/Clinical/ClinicalRoutes';
+import { SchedulePage } from '@/pages/Schedule/SchedulePage';
 import { DocumentsList } from '@/pages/Documents/DocumentsList';
 import { PlatformRoutes } from '@/pages/Platform/PlatformRoutes';
 import { AdminDashboard } from '@/pages/Admin/AdminDashboard';
@@ -146,6 +147,14 @@ export default function App() {
               element={
                 <RoleRoute required={PERMISSIONS.CLINICAL_VISIT_NOTES}>
                   <ClinicalRoutes />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="schedule"
+              element={
+                <RoleRoute required={PERMISSIONS.CLINICAL_VISIT_NOTES}>
+                  <SchedulePage />
                 </RoleRoute>
               }
             />

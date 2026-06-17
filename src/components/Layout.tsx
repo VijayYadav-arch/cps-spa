@@ -88,6 +88,7 @@ const navItems: NavEntry[] = [
     ],
   },
   { kind: 'leaf', to: '/clinical', label: 'Clinical', perm: PERMISSIONS.CLINICAL_VISIT_NOTES },
+  { kind: 'leaf', to: '/schedule', label: 'Schedule', perm: PERMISSIONS.CLINICAL_VISIT_NOTES },
   {
     kind: 'group',
     label: 'Hospice',
