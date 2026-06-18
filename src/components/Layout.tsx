@@ -48,8 +48,10 @@ interface NavLeaf {
   to: string;
   label: string;
   exact?: boolean;
-  /** Permission(s) required to see this entry. Omit for always-visible items. */
+  /** Permission(s) required to see this entry (ALL of them). Omit for always-visible items. */
   perm?: Permission | Permission[];
+  /** Any one of these grants visibility (OR). Takes precedence over `perm`. */
+  anyOf?: Permission[];
 }
 
 interface NavGroup {
@@ -70,6 +72,7 @@ const navItems: NavEntry[] = [
     items: [
       { kind: 'leaf', to: '/patients', label: 'All Patients', exact: true, perm: PERMISSIONS.PATIENTS_VIEW },
       { kind: 'leaf', to: '/patients/intake', label: 'New Patient', perm: PERMISSIONS.PATIENTS_INTAKE },
+      { kind: 'leaf', to: '/admin/encounters', label: 'Encounters', perm: PERMISSIONS.CLINICAL_VISIT_NOTES },
     ],
   },
   { kind: 'leaf', to: '/analytics', label: 'Analytics', perm: PERMISSIONS.REPORTS_VIEW },
@@ -94,12 +97,15 @@ const navItems: NavEntry[] = [
     kind: 'group',
     label: 'Hospice',
     items: [
-      { kind: 'leaf', to: '/hospice/work-queue', label: 'Work Queue', perm: PERMISSIONS.CLINICAL_QUALITY },
-      { kind: 'leaf', to: '/hospice/bereavement', label: 'Bereavement', perm: PERMISSIONS.CLINICAL_QUALITY },
-      { kind: 'leaf', to: '/hospice/volunteers', label: 'Volunteers', perm: PERMISSIONS.CLINICAL_QUALITY },
-      { kind: 'leaf', to: '/hospice/hqrp', label: 'HQRP Timeliness', perm: PERMISSIONS.CLINICAL_QUALITY },
-      { kind: 'leaf', to: '/hospice/medicare-cap', label: 'Medicare Cap', perm: PERMISSIONS.CLINICAL_QUALITY },
-      { kind: 'leaf', to: '/hospice/cahps', label: 'CAHPS Survey', perm: PERMISSIONS.CLINICAL_QUALITY },
+      // anyOf clinical:quality OR hospice:manage — surfaces the ops dashboards to the
+      // client admin (holds hospice:manage) too; client_viewer (view-only) stays out.
+      { kind: 'leaf', to: '/hospice/work-queue', label: 'Work Queue', anyOf: [PERMISSIONS.CLINICAL_QUALITY, PERMISSIONS.HOSPICE_MANAGE] },
+      { kind: 'leaf', to: '/hospice/bereavement', label: 'Bereavement', anyOf: [PERMISSIONS.CLINICAL_QUALITY, PERMISSIONS.HOSPICE_MANAGE] },
+      { kind: 'leaf', to: '/hospice/volunteers', label: 'Volunteers', anyOf: [PERMISSIONS.CLINICAL_QUALITY, PERMISSIONS.HOSPICE_MANAGE] },
+      { kind: 'leaf', to: '/hospice/hqrp', label: 'HQRP Timeliness', anyOf: [PERMISSIONS.CLINICAL_QUALITY, PERMISSIONS.HOSPICE_MANAGE] },
+      { kind: 'leaf', to: '/hospice/medicare-cap', label: 'Medicare Cap', anyOf: [PERMISSIONS.CLINICAL_QUALITY, PERMISSIONS.HOSPICE_MANAGE] },
+      { kind: 'leaf', to: '/hospice/cahps', label: 'CAHPS Survey', anyOf: [PERMISSIONS.CLINICAL_QUALITY, PERMISSIONS.HOSPICE_MANAGE] },
+      { kind: 'leaf', to: '/admin/idg-meetings', label: 'IDG Meetings', anyOf: [PERMISSIONS.CLINICAL_QUALITY, PERMISSIONS.HOSPICE_MANAGE] },
     ],
   },
   {
@@ -124,12 +130,14 @@ const navItems: NavEntry[] = [
     kind: 'group',
     label: 'Quality',
     items: [
-      { kind: 'leaf', to: '/quality/qapi', label: 'Dashboard', perm: PERMISSIONS.CLINICAL_QUALITY },
-      { kind: 'leaf', to: '/quality/qapi/pips', label: 'PIPs', perm: PERMISSIONS.CLINICAL_QUALITY },
-      { kind: 'leaf', to: '/quality/qapi/adverse-events', label: 'Adverse Events', perm: PERMISSIONS.CLINICAL_QUALITY },
-      { kind: 'leaf', to: '/quality/qapi/reviews', label: 'Reviews', perm: PERMISSIONS.CLINICAL_QUALITY },
-      { kind: 'leaf', to: '/quality/qapi/plan', label: 'Plan', perm: PERMISSIONS.CLINICAL_QUALITY },
-      { kind: 'leaf', to: '/quality/qapi/audit-triggers', label: 'Audit Triggers', perm: PERMISSIONS.CLINICAL_QUALITY },
+      // anyOf clinical:quality OR a QAPI view grant — so the client admin (qapi authoring,
+      // no clinical:quality) and quality_compliance both reach the QAPI surfaces.
+      { kind: 'leaf', to: '/quality/qapi', label: 'Dashboard', anyOf: [PERMISSIONS.CLINICAL_QUALITY, PERMISSIONS.HOSPICE_QAPI_PLAN_VIEW] },
+      { kind: 'leaf', to: '/quality/qapi/pips', label: 'PIPs', anyOf: [PERMISSIONS.CLINICAL_QUALITY, PERMISSIONS.HOSPICE_QAPI_PLAN_VIEW] },
+      { kind: 'leaf', to: '/quality/qapi/adverse-events', label: 'Adverse Events', anyOf: [PERMISSIONS.CLINICAL_QUALITY, PERMISSIONS.HOSPICE_QAPI_PLAN_VIEW] },
+      { kind: 'leaf', to: '/quality/qapi/reviews', label: 'Reviews', anyOf: [PERMISSIONS.CLINICAL_QUALITY, PERMISSIONS.HOSPICE_QAPI_PLAN_VIEW] },
+      { kind: 'leaf', to: '/quality/qapi/plan', label: 'Plan', anyOf: [PERMISSIONS.CLINICAL_QUALITY, PERMISSIONS.HOSPICE_QAPI_PLAN_VIEW] },
+      { kind: 'leaf', to: '/quality/qapi/audit-triggers', label: 'Audit Triggers', anyOf: [PERMISSIONS.CLINICAL_QUALITY, PERMISSIONS.HOSPICE_QAPI_PLAN_VIEW] },
     ],
   },
   {
@@ -137,8 +145,10 @@ const navItems: NavEntry[] = [
     label: 'Compliance',
     items: [
       { kind: 'leaf', to: '/compliance/phi-access', label: 'PHI Access Review', perm: PERMISSIONS.COMPLIANCE_PHI_REVIEW },
+      { kind: 'leaf', to: '/compliance/anomalies', label: 'Audit Anomalies', perm: PERMISSIONS.COMPLIANCE_PHI_REVIEW },
       { kind: 'leaf', to: '/compliance/surveyor-bundle', label: 'Surveyor Bundle', perm: PERMISSIONS.COMPLIANCE_SURVEYOR_EXPORT },
       { kind: 'leaf', to: '/compliance/breaches', label: 'Breach Workflow', perm: PERMISSIONS.COMPLIANCE_BREACHES },
+      { kind: 'leaf', to: '/admin/consent', label: 'Consent Forms', perm: PERMISSIONS.COMPLIANCE_PHI_REVIEW },
     ],
   },
   { kind: 'leaf', to: '/platform', label: 'Platform', perm: PERMISSIONS.PLATFORM_ADMIN },
@@ -150,6 +160,12 @@ const navItems: NavEntry[] = [
       { kind: 'leaf', to: '/admin/users', label: 'Users', perm: PERMISSIONS.ADMIN_MANAGE_USERS },
       { kind: 'leaf', to: '/admin/roles', label: 'Roles & Permissions', perm: PERMISSIONS.ADMIN_MANAGE_ROLES },
       { kind: 'leaf', to: '/admin/audit-log', label: 'Audit Log', perm: PERMISSIONS.ADMIN_AUDIT_LOGS },
+      { kind: 'leaf', to: '/admin/onboarding', label: 'Onboarding', perm: PERMISSIONS.PLATFORM_ONBOARDING },
+      { kind: 'leaf', to: '/admin/inquiries', label: 'Inquiries', perm: PERMISSIONS.ADMIN_MANAGE_ORGS },
+      { kind: 'leaf', to: '/admin/import', label: 'Data Import', perm: PERMISSIONS.ADMIN_IMPORT },
+      { kind: 'leaf', to: '/admin/b2c-migration', label: 'B2C Migration', anyOf: [PERMISSIONS.ADMIN_MANAGE_ORGS, PERMISSIONS.PLATFORM_ADMIN] },
+      { kind: 'leaf', to: '/admin/ai-opt-in', label: 'AI Opt-In', perm: PERMISSIONS.ADMIN_SYSTEM_CONFIG },
+      { kind: 'leaf', to: '/admin/sla', label: 'SLA Monitor', perm: PERMISSIONS.ADMIN_SYSTEM_CONFIG },
     ],
   },
 ];
@@ -185,10 +201,20 @@ export function Layout() {
     const required = Array.isArray(perm) ? perm : [perm];
     return required.every((p) => granted.includes(p));
   };
+  // OR semantics for nav leaves that declare `anyOf` (e.g. a dashboard reachable by
+  // either clinical:quality or a qapi view perm).
+  const canSee = (leaf: NavLeaf): boolean => {
+    if (leaf.anyOf) {
+      const granted = roleData?.permissions;
+      if (!granted) return true;
+      return leaf.anyOf.some((p) => granted.includes(p));
+    }
+    return can(leaf.perm);
+  };
   const visibleNav: NavEntry[] = navItems
     .map((entry): NavEntry | null => {
-      if (entry.kind === 'leaf') return can(entry.perm) ? entry : null;
-      const items = entry.items.filter((i) => can(i.perm));
+      if (entry.kind === 'leaf') return canSee(entry) ? entry : null;
+      const items = entry.items.filter(canSee);
       return items.length > 0 ? { ...entry, items } : null;
     })
     .filter((e): e is NavEntry => e !== null);

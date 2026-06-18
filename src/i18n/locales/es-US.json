@@ -26,7 +26,16 @@
       "patient": "Paciente",
       "messages": "Mensajes",
       "care": "Plan de cuidado",
-      "billing": "Facturación"
+      "billing": "Facturación",
+      "visits": "Visitas",
+      "medications": "Medicamentos",
+      "documents": "Documentos",
+      "payments": "Pagos",
+      "chat": "Pregúntele a Mira™",
+      "preferences": "Preferencias",
+      "logout": "Cerrar sesión",
+      "brand": "Portal Familiar",
+      "menu": "Menú"
     },
     "login": {
       "title": "Acceso para familiares",

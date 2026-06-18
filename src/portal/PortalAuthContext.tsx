@@ -203,7 +203,8 @@ export function PortalAuthProvider({ children }: { children: ReactNode }) {
       });
     }
 
-    if (current?.kind === 'family-member') {
+    const isFamily = current?.kind === 'family-member';
+    if (isFamily) {
       clearFamilyStorage();
     } else {
       // Default to patient-self-service cleanup (covers null-session case too,
@@ -213,7 +214,9 @@ export function PortalAuthProvider({ children }: { children: ReactNode }) {
 
     setMe(null);
     setSession(null);
-    window.location.href = '/portal/login';
+    // Family members live under /family/* and have no /portal account, so
+    // send them back to their own login rather than the patient portal.
+    window.location.href = isFamily ? '/family/login' : '/portal/login';
   }, [session]);
 
   const value = useMemo<PortalAuthState>(
