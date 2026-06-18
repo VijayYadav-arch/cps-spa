@@ -4,9 +4,11 @@ import {
   createMedication,
   updateMedication,
   recordAdministration,
+  listAdministrations,
   type Medication,
   type CreateMedicationRequest,
   type AdministrationStatus,
+  type MedicationAdministration,
 } from '@/api/clinical';
 import { getPatients, type PatientSummary } from '@/api/patients';
 import { usePermission } from '@/permissions/usePermission';
@@ -58,6 +60,8 @@ export function MedicationsPage() {
   const [form, setForm] = useState<FormState | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [admin, setAdmin] = useState<AdminState | null>(null);
+  // eMAR history modal: items === null while loading.
+  const [history, setHistory] = useState<{ med: Medication; items: MedicationAdministration[] | null } | null>(null);
   const [adminMsg, setAdminMsg] = useState<string | null>(null);
 
   function refresh() {
@@ -132,6 +136,17 @@ export function MedicationsPage() {
       );
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function openHistory(m: Medication) {
+    setHistory({ med: m, items: null });
+    try {
+      const r = await listAdministrations({ patientId: m.patientId, medicationId: m.id });
+      setHistory({ med: m, items: r.data });
+    } catch {
+      setHistory({ med: m, items: [] });
+      setError('Could not load the administration history.');
     }
   }
 
@@ -273,6 +288,53 @@ export function MedicationsPage() {
                 {submitting ? 'Recording…' : 'Record'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {history && (
+        <div
+          role="dialog"
+          aria-label="Administration history"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+        >
+          <div className="max-h-[80vh] w-[560px] overflow-auto rounded-xl border border-slate-200 bg-white p-6 shadow-lg">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">MAR — {history.med.name}</h2>
+              <button
+                onClick={() => setHistory(null)}
+                className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
+              >
+                Close
+              </button>
+            </div>
+            <p className="mt-1 text-sm text-slate-500">{history.med.dosage} · {history.med.route} · {history.med.frequency}</p>
+            {history.items === null ? (
+              <p className="mt-4 text-sm text-slate-500">Loading…</p>
+            ) : history.items.length === 0 ? (
+              <p className="mt-4 text-sm text-slate-500">No administrations recorded.</p>
+            ) : (
+              <table className="mt-4 w-full border-collapse text-sm">
+                <thead>
+                  <tr className="text-left text-xs font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-100">
+                    <th className="py-2">When</th>
+                    <th className="py-2">Outcome</th>
+                    <th className="py-2">Dose</th>
+                    <th className="py-2">Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {history.items.map((a) => (
+                    <tr key={a.id} className="border-b border-slate-50">
+                      <td className="py-2 text-slate-700">{new Date(a.administeredAt).toLocaleString()}</td>
+                      <td className="py-2 capitalize text-slate-700">{a.status}</td>
+                      <td className="py-2 text-slate-500">{a.dose ?? '—'}</td>
+                      <td className="py-2 text-slate-500">{a.notes ?? '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
       )}
@@ -461,6 +523,12 @@ export function MedicationsPage() {
                             Administer
                           </button>
                         )}
+                        <button
+                          onClick={() => openHistory(m)}
+                          className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                        >
+                          MAR
+                        </button>
                         <button
                           onClick={() => openEdit(m)}
                           className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
