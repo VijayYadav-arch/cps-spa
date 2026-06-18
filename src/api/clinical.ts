@@ -45,6 +45,11 @@ export const updateCarePlan = (
     .put<{ data: CarePlan }>(`/clinical/care-plans/${id}`, req)
     .then((r) => r.data.data);
 
+export const signCarePlan = (id: number, signedBy: string): Promise<CarePlan> =>
+  apiClient
+    .post<{ data: CarePlan }>(`/clinical/care-plans/${id}/sign`, { signedBy })
+    .then((r) => r.data.data);
+
 /** Parse a JSON-array string into a string[]; tolerant of malformed/empty input. */
 export function parseJsonStringArray(json: string | null | undefined): string[] {
   if (!json) return [];
