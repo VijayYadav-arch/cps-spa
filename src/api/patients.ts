@@ -28,7 +28,7 @@ export interface PaginationMeta {
   totalPages: number;
 }
 
-export const getPatients = (params?: { page?: number; pageSize?: number; }): Promise<{ data: PatientSummary[]; pagination: PaginationMeta }> =>
+export const getPatients = (params?: { page?: number; pageSize?: number; q?: string; }): Promise<{ data: PatientSummary[]; pagination: PaginationMeta }> =>
   apiClient.get<{ data: PatientSummary[]; pagination: PaginationMeta }>('/patients', { params }).then((r) => r.data);
 
 export const getPatient = (id: number): Promise<PatientDetail> =>
