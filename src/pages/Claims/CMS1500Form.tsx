@@ -222,6 +222,13 @@ export default function CMS1500Form({ claim }: { claim: CmsClaimPayload }) {
     ? claim.serviceLines
     : [];
 
+  // Box 28 must equal the sum of the Box 24F line charges, not the claim header
+  // amount — a mismatch is a CMS-1500 rejection/audit trigger (L1). Fall back to
+  // the header amount only when there are no service lines.
+  const totalCharge = lines.length > 0
+    ? lines.reduce((sum, l) => sum + (l.charges ?? 0), 0)
+    : claim.amount;
+
   // Fallback: fill diagnosis codes from encounter if claim-level not set
   const dxCodes: (string | null)[] = [
     claim.diagnosisCodeA, claim.diagnosisCodeB, claim.diagnosisCodeC, claim.diagnosisCodeD,
@@ -711,7 +718,7 @@ export default function CMS1500Form({ claim }: { claim: CmsClaimPayload }) {
           </div>
           <div className="cms-cell total-cell" style={{ flex: 1 }}>
             <div className="cell-label">28. TOTAL CHARGE</div>
-            <div className="cell-value mono total-amt">$ {claim.amount.toFixed(2)}</div>
+            <div className="cell-value mono total-amt">$ {totalCharge.toFixed(2)}</div>
           </div>
           <div className="cms-cell" style={{ flex: 0.8 }}>
             <div className="cell-label">29. AMOUNT PAID</div>

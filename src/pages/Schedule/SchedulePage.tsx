@@ -11,6 +11,7 @@ import {
 import { getPatients, type PatientSummary } from '@/api/patients';
 import { usePermission } from '@/permissions/usePermission';
 import { PERMISSIONS } from '@/permissions/permissions';
+import { useAuth } from '@/auth/useAuth';
 
 const NO_PERMISSION = 'You do not have permission to perform this action';
 
@@ -44,6 +45,9 @@ function disciplineLabel(d: string) {
 
 export function SchedulePage() {
   const navigate = useNavigate();
+  const { auth } = useAuth();
+  const myUserId = auth.user?.userId ?? null;
+  const [mineOnly, setMineOnly] = useState(false);
   const canManage = usePermission(PERMISSIONS.CLINICAL_VISIT_NOTES);
   const [visits, setVisits] = useState<ScheduledVisit[]>([]);
   const [patients, setPatients] = useState<PatientSummary[]>([]);
@@ -84,13 +88,16 @@ export function SchedulePage() {
   }, [patients]);
 
   const grouped = useMemo(() => {
+    const source = mineOnly && myUserId != null
+      ? visits.filter((v) => v.assignedUserId === myUserId)
+      : visits;
     const groups = new Map<string, ScheduledVisit[]>();
-    for (const v of visits) {
+    for (const v of source) {
       const day = v.scheduledStart.slice(0, 10);
       (groups.get(day) ?? groups.set(day, []).get(day)!).push(v);
     }
     return [...groups.entries()].sort(([a], [b]) => a.localeCompare(b));
-  }, [visits]);
+  }, [visits, mineOnly, myUserId]);
 
   async function handleCreate() {
     if (!patientId || !start) return;
@@ -156,6 +163,16 @@ export function SchedulePage() {
           )}
         </div>
         <p className="text-slate-500">Upcoming visits across the agency (next 30 days).</p>
+        {myUserId != null && (
+          <label className="inline-flex items-center gap-2 text-sm text-slate-600">
+            <input
+              type="checkbox"
+              checked={mineOnly}
+              onChange={(e) => setMineOnly(e.target.checked)}
+            />
+            My visits only
+          </label>
+        )}
         <div className="section-line" />
       </header>
 
