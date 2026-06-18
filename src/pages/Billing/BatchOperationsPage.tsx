@@ -34,6 +34,7 @@ interface BatchResult {
   action: 'submit' | 'void';
   succeeded: number[];
   failed: number[];
+  skipped: number;
 }
 
 export function BatchOperationsPage() {
@@ -92,10 +93,10 @@ export function BatchOperationsPage() {
     try {
       if (action === 'submit') {
         const r = await batchSubmitClaims(ids);
-        setBatchResult({ action, succeeded: r.succeeded, failed: r.failed });
+        setBatchResult({ action, succeeded: r.succeeded, failed: r.failed, skipped: r.skipped?.length ?? 0 });
       } else {
         const r = await batchVoidClaims(ids);
-        setBatchResult({ action, succeeded: r.voided, failed: r.notFound });
+        setBatchResult({ action, succeeded: r.voided, failed: r.notFound, skipped: r.skipped?.length ?? 0 });
       }
       setSelectedIds(new Set());
       const refreshed = await getClaims({
@@ -151,6 +152,9 @@ export function BatchOperationsPage() {
           {batchResult.succeeded.length} succeeded
           {batchResult.failed.length > 0 && (
             <>, <span className="text-red-700">{batchResult.failed.length} failed</span></>
+          )}
+          {batchResult.skipped > 0 && (
+            <>, <span className="text-amber-700">{batchResult.skipped} skipped (ineligible status)</span></>
           )}
         </div>
       )}
