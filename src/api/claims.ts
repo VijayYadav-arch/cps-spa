@@ -203,14 +203,22 @@ export const downloadClaimPdf = async (claimId: number): Promise<Blob> => {
 
 // ─── Batch ops (POST /api/v2/billing/batch/*) ────────────────────────
 
+/** A claim the server declined to act on because of its status (M6 guard). */
+export interface BatchSkippedItem {
+  id: number;
+  reason: string;
+}
+
 export interface BatchSubmitResult {
   succeeded: number[];
   failed: number[];
+  skipped?: BatchSkippedItem[];
 }
 
 export interface BatchVoidResult {
   voided: number[];
   notFound: number[];
+  skipped?: BatchSkippedItem[];
 }
 
 export const batchSubmitClaims = (claimIds: number[]): Promise<BatchSubmitResult> =>
