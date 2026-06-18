@@ -10,7 +10,11 @@ vi.mock('@/api/analytics', () => ({
   getArAging: vi.fn(),
   getDenialAnalysis: vi.fn(),
   getStatementCollection: vi.fn(),
+  exportAnalyticsCsv: vi.fn(),
 }));
+
+// usePermission pulls from a TanStack Query hook needing a provider; stub it here.
+vi.mock('@/permissions/usePermission', () => ({ usePermission: () => false }));
 
 import {
   getDashboardSummary,
