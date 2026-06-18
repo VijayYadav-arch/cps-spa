@@ -15,6 +15,15 @@ interface ReportsEnvelope {
   data: Report[];
 }
 
+interface GeneratedReport {
+  reportId: number;
+  title: string;
+  type: string;
+  period: string;
+  generatedAt: string;
+  result: Record<string, unknown>;
+}
+
 const formatDate = (date: string) =>
   new Date(date).toLocaleDateString('en-US', {
     month: 'short',
@@ -31,10 +40,83 @@ const TYPE_LABEL: Record<string, string> = {
 
 const SECTION_ORDER = ['monthly', 'ar-aging', 'denials', 'custom'];
 
+const isMoney = (key: string) =>
+  /amount|paid|current|days\d|over\d/i.test(key);
+
+const formatValue = (key: string, value: unknown): string => {
+  if (typeof value === 'number') {
+    return isMoney(key)
+      ? value.toLocaleString('en-US', { style: 'currency', currency: 'USD' })
+      : value.toLocaleString('en-US');
+  }
+  return String(value);
+};
+
+const humanize = (key: string) =>
+  key
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/(\d+)to(\d+)/, '$1–$2 days')
+    .replace(/^./, (c) => c.toUpperCase());
+
+function ResultView({ result }: { result: Record<string, unknown> }) {
+  const scalars = Object.entries(result).filter(([, v]) => typeof v !== 'object' || v === null);
+  const groups = Object.entries(result).filter(([, v]) => Array.isArray(v)) as [string, Record<string, unknown>[]][];
+
+  return (
+    <div className="grid gap-4">
+      {scalars.length > 0 && (
+        <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+          {scalars.map(([k, v]) => (
+            <div key={k} className="flex justify-between border-b border-slate-100 py-1">
+              <dt className="text-slate-500">{humanize(k)}</dt>
+              <dd className="font-medium text-slate-800">{formatValue(k, v)}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+      {groups.map(([groupKey, rows]) => (
+        <div key={groupKey}>
+          <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">{humanize(groupKey)}</h4>
+          {rows.length === 0 ? (
+            <p className="text-sm text-slate-400">None.</p>
+          ) : (
+            <table className="w-full text-sm">
+              <tbody>
+                {rows.map((row, i) => (
+                  <tr key={i} className="border-b border-slate-100">
+                    {Object.entries(row).map(([ck, cv]) => (
+                      <td key={ck} className="py-1 pr-4 text-slate-700">
+                        {formatValue(ck, cv)}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function CommercialReportsPage() {
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [generated, setGenerated] = useState<GeneratedReport | null>(null);
+  const [generatingId, setGeneratingId] = useState<number | null>(null);
+  const [generateError, setGenerateError] = useState<string | null>(null);
+
+  function handleView(report: Report) {
+    setGeneratingId(report.id);
+    setGenerateError(null);
+    apiClient
+      .get<{ data: GeneratedReport }>(`/reports/${report.id}/generate`)
+      .then((res) => setGenerated(res.data.data))
+      .catch(() => setGenerateError('Could not generate this report. Please try again.'))
+      .finally(() => setGeneratingId(null));
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -100,6 +182,12 @@ export function CommercialReportsPage() {
         </p>
       </div>
 
+      {generateError && (
+        <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          {generateError}
+        </div>
+      )}
+
       {reports.length === 0 ? (
         <div className="rounded-xl border border-slate-200 bg-white p-12 text-center text-slate-400 shadow-sm">
           No reports available yet.
@@ -135,25 +223,68 @@ export function CommercialReportsPage() {
                     <span className="text-xs text-slate-400">
                       {formatDate(report.createdAt)}
                     </span>
-                    {report.url ? (
-                      <a
-                        data-testid="report-download"
-                        href={report.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs font-medium text-teal-700 hover:underline"
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        data-testid="report-view"
+                        onClick={() => handleView(report)}
+                        disabled={generatingId === report.id}
+                        className="text-xs font-medium text-teal-700 hover:underline disabled:cursor-not-allowed disabled:opacity-60"
                       >
-                        Download
-                      </a>
-                    ) : (
-                      <span className="text-xs italic text-slate-400">Not available</span>
-                    )}
+                        {generatingId === report.id ? 'Generating…' : 'View'}
+                      </button>
+                      {report.url && (
+                        <a
+                          data-testid="report-download"
+                          href={report.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs font-medium text-teal-700 hover:underline"
+                        >
+                          Download
+                        </a>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
           </div>
         ))
+      )}
+
+      {generated && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${generated.title} results`}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onClick={() => setGenerated(null)}
+        >
+          <div
+            className="max-h-[85vh] w-full max-w-[560px] overflow-y-auto rounded-xl bg-white p-6 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-4 flex items-start justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-slate-800">{generated.title}</h3>
+                <p className="text-xs text-slate-500">
+                  {TYPE_LABEL[generated.type] ?? generated.type} · Period {generated.period || '—'} ·
+                  Generated {new Date(generated.generatedAt).toLocaleString('en-US')}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setGenerated(null)}
+                aria-label="Close"
+                className="rounded-md px-2 py-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+              >
+                ✕
+              </button>
+            </div>
+            <ResultView result={generated.result} />
+          </div>
+        </div>
       )}
     </div>
   );

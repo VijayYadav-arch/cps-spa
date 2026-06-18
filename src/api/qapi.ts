@@ -103,6 +103,36 @@ export interface HospiceQapiReview {
   createdAt: string;
 }
 
+/** Trailing-90-day HOPE submission-timeliness summary (CMS HQRP). */
+export interface QapiHqrpSummary {
+  from: string;
+  to: string;
+  totalAssessments: number;
+  onTimeCount: number;
+  lateCount: number;
+  notYetSubmittedCount: number;
+  rejectedCount: number;
+  timelinessPercentage: number;
+  meetsThreshold: boolean;
+  thresholdPercentage: number;
+}
+
+/** Current-quarter CAHPS Hospice Survey submission summary. */
+export interface QapiCahpsSummary {
+  calendarYear: number;
+  quarter: number;
+  quarterFrom: string;
+  quarterTo: string;
+  totalDecedents: number;
+  eligibleCount: number;
+  ineligibleCount: number;
+  excludedCount: number;
+  submittedCount: number;
+  pendingCount: number;
+  notYetSubmittedCount: number;
+  submissionRatePercentage: number;
+}
+
 export interface QapiDashboard {
   planStatus: { currentVersion: number | null; status: HospiceQapiPlanStatus | null; effectiveDate: string | null };
   activePipCount: number;
@@ -111,8 +141,8 @@ export interface QapiDashboard {
   weekOverWeekTrend: { currentWeekCount: number; previousWeekCount: number; delta: number };
   daysSinceLastReview: number;
   reviewOverdue: boolean;
-  hqrpSummary: unknown;
-  cahpsSummary: unknown;
+  hqrpSummary: QapiHqrpSummary | null;
+  cahpsSummary: QapiCahpsSummary | null;
 }
 
 // ============ Plan ============
