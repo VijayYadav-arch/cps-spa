@@ -4,6 +4,7 @@ import {
   getCarePlans,
   createCarePlan,
   updateCarePlan,
+  signCarePlan,
   parseJsonStringArray,
   type CarePlan,
   type PaginationMeta,
@@ -96,6 +97,21 @@ export function CarePlansList() {
       interventionsText: parseJsonStringArray(cp.interventions).join('\n'),
       frequency: cp.frequency ?? '',
     });
+  }
+
+  async function handleSign(cp: CarePlan) {
+    const signer = window.prompt('Sign care plan — enter the signing clinician’s name:');
+    if (!signer || !signer.trim()) return;
+    setError(null);
+    try {
+      await signCarePlan(cp.id, signer.trim());
+      load();
+    } catch (e) {
+      setError(
+        (e as { response?: { data?: { error?: string } } })?.response?.data?.error ??
+          'Could not sign the care plan.',
+      );
+    }
   }
 
   async function handleSubmit() {
@@ -300,7 +316,12 @@ export function CarePlansList() {
                   <td className="px-4 py-3 font-medium text-slate-700">
                     #{cp.id} <span className="text-xs text-slate-400">v{cp.version}</span>
                   </td>
-                  <td className="px-4 py-3 text-slate-500">{cp.status}</td>
+                  <td className="px-4 py-3 text-slate-500">
+                    {cp.status}
+                    {cp.signedBy && (
+                      <span className="ml-1.5 text-xs font-semibold text-green-700" title={`Signed by ${cp.signedBy}`}>✓ signed</span>
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-slate-500">
                     {parseJsonStringArray(cp.goals).length} goal(s)
                   </td>
@@ -320,6 +341,14 @@ export function CarePlansList() {
                           className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
                         >
                           Edit
+                        </button>
+                      )}
+                      {canManage && !cp.signedBy && (
+                        <button
+                          onClick={() => handleSign(cp)}
+                          className="rounded-md border border-teal-200 bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-700 hover:bg-teal-100"
+                        >
+                          Sign
                         </button>
                       )}
                     </span>
