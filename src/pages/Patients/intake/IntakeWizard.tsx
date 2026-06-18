@@ -2,7 +2,7 @@ import '@/styles/intake.css';
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { intakeApi } from './intakeApi';
-import { initialForm, STEP_NAMES, type DraftResponse, type FormData } from './intakeTypes';
+import { initialForm, STEP_NAMES, toCertificationHandoff, type DraftResponse, type FormData } from './intakeTypes';
 import { DraftResumeBanner } from './DraftResumeBanner';
 import { StepShell } from './StepShell';
 import { Step1OrganizationAndBasics } from './steps/Step1OrganizationAndBasics';
@@ -143,11 +143,14 @@ export function IntakeWizard() {
           .catch(() => undefined);
       }
       // Hospice admissions hand off straight into the election wizard, pre-filling
-      // the election date from the admission date captured at intake.
+      // the election date from the admission date captured at intake and carrying
+      // the Step-5 certification details forward so they aren't dropped (H8).
       if (form.admissionType === 'hospice') {
         const electionDate = form.effectiveFrom || form.admittedAt;
         const q = electionDate ? `?electionDate=${electionDate}` : '';
-        navigate(`/patients/${result.id}/hospice/new${q}`);
+        navigate(`/patients/${result.id}/hospice/new${q}`, {
+          state: { intakeCertification: toCertificationHandoff(form) },
+        });
       } else {
         navigate(`/patients/${result.id}`);
       }
