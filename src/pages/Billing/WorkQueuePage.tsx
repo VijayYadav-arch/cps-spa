@@ -1,12 +1,29 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
+  assignWorkItem,
+  claimWorkItem,
+  completeWorkItem,
+  getAssignableUsers,
   getInbox,
   getWorkQueue,
   getWorkQueueStats,
+  snoozeWorkItem,
+  wakeWorkItem,
+  type AssignableUser,
   type WorkQueueItem,
   type WorkQueueStats,
 } from '@/api/billing';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const NO_PERMISSION = 'You do not have permission to perform this action';
+
+function tomorrowIso(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  return d.toISOString();
+}
 
 const TYPE_BADGE: Record<string, string> = {
   'new-encounter': 'bg-teal-100 text-teal-700',
@@ -36,8 +53,12 @@ export function WorkQueuePage() {
   const [filter, setFilter] = useState<FilterMode>('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [assignableUsers, setAssignableUsers] = useState<AssignableUser[]>([]);
+  const [actingId, setActingId] = useState<number | null>(null);
 
-  useEffect(() => {
+  const canManage = usePermission(PERMISSIONS.BILLING_QUEUE);
+
+  const refresh = useCallback(() => {
     let cancelled = false;
     setLoading(true);
     setError(null);
@@ -58,6 +79,26 @@ export function WorkQueuePage() {
       cancelled = true;
     };
   }, [filter]);
+
+  useEffect(() => refresh(), [refresh]);
+
+  // Assignable-users picker is loaded once; a 403 (no permission) just leaves it empty.
+  useEffect(() => {
+    getAssignableUsers().then(setAssignableUsers).catch(() => undefined);
+  }, []);
+
+  async function runAction(id: number, action: () => Promise<void>) {
+    setActingId(id);
+    setError(null);
+    try {
+      await action();
+      refresh();
+    } catch {
+      setError('That action could not be completed. Please try again.');
+    } finally {
+      setActingId(null);
+    }
+  }
 
   return (
     <section className="p-4 lg:p-8 max-w-6xl mx-auto">
@@ -130,6 +171,7 @@ export function WorkQueuePage() {
                 <th className="px-5 py-3">Status</th>
                 <th className="px-5 py-3">Due</th>
                 <th className="px-5 py-3">Claim</th>
+                <th className="px-5 py-3">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -171,6 +213,61 @@ export function WorkQueuePage() {
                       '—'
                     )}
                   </td>
+                  <td className="px-5 py-3 text-sm">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {it.assignedTo == null && (
+                        <ActionButton
+                          label="Claim"
+                          disabled={!canManage || actingId === it.id}
+                          title={!canManage ? NO_PERMISSION : undefined}
+                          onClick={() => runAction(it.id, () => claimWorkItem(it.id))}
+                        />
+                      )}
+                      {it.status !== 'completed' && (
+                        <ActionButton
+                          label="Complete"
+                          disabled={!canManage || actingId === it.id}
+                          title={!canManage ? NO_PERMISSION : undefined}
+                          onClick={() => runAction(it.id, () => completeWorkItem(it.id))}
+                        />
+                      )}
+                      {it.snoozeUntilUtc ? (
+                        <ActionButton
+                          label="Wake"
+                          disabled={!canManage || actingId === it.id}
+                          title={!canManage ? NO_PERMISSION : undefined}
+                          onClick={() => runAction(it.id, () => wakeWorkItem(it.id))}
+                        />
+                      ) : (
+                        <ActionButton
+                          label="Snooze 1d"
+                          disabled={!canManage || actingId === it.id}
+                          title={!canManage ? NO_PERMISSION : undefined}
+                          onClick={() => runAction(it.id, () => snoozeWorkItem(it.id, tomorrowIso()))}
+                        />
+                      )}
+                      {assignableUsers.length > 0 && (
+                        <select
+                          aria-label="Assign to"
+                          disabled={!canManage || actingId === it.id}
+                          title={!canManage ? NO_PERMISSION : undefined}
+                          value={it.assignedTo ?? ''}
+                          onChange={(e) =>
+                            e.target.value &&
+                            runAction(it.id, () => assignWorkItem(it.id, Number(e.target.value)))
+                          }
+                          className="rounded border border-slate-300 bg-white px-1.5 py-1 text-xs disabled:opacity-50"
+                        >
+                          <option value="">Assign…</option>
+                          {assignableUsers.map((u) => (
+                            <option key={u.id} value={u.id}>
+                              {u.firstName} {u.lastName}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -178,5 +275,29 @@ export function WorkQueuePage() {
         )}
       </div>
     </section>
+  );
+}
+
+function ActionButton({
+  label,
+  onClick,
+  disabled,
+  title,
+}: {
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+  title?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      className="rounded border border-slate-300 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      {label}
+    </button>
   );
 }
