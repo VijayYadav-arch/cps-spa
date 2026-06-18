@@ -185,13 +185,13 @@ export function EraPostingsPage() {
             </div>
           </div>
           <div className="card-hover rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="text-xs font-medium uppercase tracking-wide text-slate-500">Claims matched</div>
+            <div className="text-xs font-medium uppercase tracking-wide text-slate-500">Matched (this page)</div>
             <div className="mt-1.5 text-2xl font-bold text-navy-900">
               {totals.matched.toLocaleString()}
             </div>
           </div>
           <div className="card-hover rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="text-xs font-medium uppercase tracking-wide text-slate-500">Unmatched</div>
+            <div className="text-xs font-medium uppercase tracking-wide text-slate-500">Unmatched (this page)</div>
             <div
               className={`mt-1.5 text-2xl font-bold ${
                 totals.unmatched > 0 ? 'text-accent-600' : 'text-slate-600'

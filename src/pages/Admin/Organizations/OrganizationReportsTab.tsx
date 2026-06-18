@@ -95,7 +95,7 @@ export function OrganizationReportsTab() {
           <select
             aria-label="Filter by type"
             value={type}
-            onChange={(e) => setType(e.target.value)}
+            onChange={(e) => { setType(e.target.value); setPage(1); }}
             className="px-3 py-2 min-h-12 md:min-h-11 lg:min-h-10 rounded-md border border-navy-200 focus:border-teal-500"
           >
             <option value="">All types</option>

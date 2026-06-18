@@ -80,8 +80,8 @@ describe('EraPostingsPage', () => {
     renderPage();
 
     expect(await screen.findByText('$1,500.00')).toBeInTheDocument();
-    // "Claims matched" tile shows 3
-    expect(screen.getByText('Claims matched')).toBeInTheDocument();
+    // "Matched (this page)" tile — label clarifies totals are page-scoped (L9)
+    expect(screen.getByText('Matched (this page)')).toBeInTheDocument();
   });
 
   it('opens the upload form and posts a raw 835', async () => {
