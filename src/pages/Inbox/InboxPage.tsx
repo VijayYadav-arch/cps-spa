@@ -357,9 +357,10 @@ export function InboxPage() {
       {/* Stats row */}
       {stats && (
         <div className="mb-4 flex flex-wrap gap-3">
-          {statCard('Open', stats.pending + stats.inProgress)}
-          {statCard('Critical', stats.critical, stats.critical > 0 ? 'text-error' : undefined)}
-          {statCard('Overdue', stats.overdue, stats.overdue > 0 ? 'text-accent-500' : undefined)}
+          {/* Coalesce missing counts to 0 so the "Open" badge never renders NaN (L10). */}
+          {statCard('Open', (stats.pending ?? 0) + (stats.inProgress ?? 0))}
+          {statCard('Critical', stats.critical ?? 0, (stats.critical ?? 0) > 0 ? 'text-error' : undefined)}
+          {statCard('Overdue', stats.overdue ?? 0, (stats.overdue ?? 0) > 0 ? 'text-accent-500' : undefined)}
         </div>
       )}
 

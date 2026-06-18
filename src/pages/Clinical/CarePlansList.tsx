@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   getCarePlans,
@@ -82,6 +82,12 @@ export function CarePlansList() {
 
   const totalPages = pagination ? Math.max(1, Math.ceil(pagination.total / pagination.pageSize)) : 1;
   const editing = form?.id != null;
+
+  // Resolve patient names for the list so rows aren't keyed by opaque IDs (L5).
+  const nameById = useMemo(
+    () => new Map(patients.map((p) => [p.id, `${p.lastName}, ${p.firstName}`])),
+    [patients],
+  );
 
   function openAdd() {
     setForm({ ...blankForm });
@@ -303,6 +309,7 @@ export function CarePlansList() {
             <thead>
               <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
                 <th className="px-4 py-3">Care Plan</th>
+                <th className="px-4 py-3">Patient</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Goals</th>
                 <th className="px-4 py-3">Effective</th>
@@ -315,6 +322,9 @@ export function CarePlansList() {
                 <tr key={cp.id} className="border-t border-slate-100 hover:bg-slate-50">
                   <td className="px-4 py-3 font-medium text-slate-700">
                     #{cp.id} <span className="text-xs text-slate-400">v{cp.version}</span>
+                  </td>
+                  <td className="px-4 py-3 text-slate-700">
+                    {nameById.get(cp.patientId) ?? `Patient #${cp.patientId}`}
                   </td>
                   <td className="px-4 py-3 text-slate-500">
                     {cp.status}

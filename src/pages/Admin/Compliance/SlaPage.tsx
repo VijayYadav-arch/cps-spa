@@ -34,12 +34,14 @@ export function SlaPage() {
     };
   }, []);
 
-  // Defaults — used when summary is null (loading or empty backend response).
-  const uptimePercentage = summary?.uptimePercentage ?? 99.9;
   const avgResponseMs = summary?.avgResponseMs ?? 0;
   const totalChecks = summary?.totalChecks ?? 0;
   const upChecks = summary?.upChecks ?? 0;
-  const monthlyStatus = uptimePercentage >= 99.9 ? 'Met' : 'Not Met';
+  // Only treat the SLA as measurable once there are actual checks — a brand-new
+  // org with no probe data must not read as a passing 99.9% (L2).
+  const hasData = !loading && totalChecks > 0;
+  const uptimePercentage = summary?.uptimePercentage ?? 0;
+  const monthlyStatus = !hasData ? 'No data' : uptimePercentage >= 99.9 ? 'Met' : 'Not Met';
 
   const incidents = records.filter((r) => r.status !== 'up').slice(0, 10);
   const chartData = records.slice(0, 24).reverse();
@@ -64,14 +66,16 @@ export function SlaPage() {
           <p className="text-sm font-medium text-slate-500">Current Uptime</p>
           <p
             className={`text-3xl font-bold mt-1 ${
-              uptimePercentage >= 99.9
+              !hasData
+                ? 'text-slate-400'
+                : uptimePercentage >= 99.9
                 ? 'text-green-600'
                 : uptimePercentage >= 99
                 ? 'text-amber-600'
                 : 'text-red-600'
             }`}
           >
-            {loading ? '—' : `${uptimePercentage}%`}
+            {loading ? '—' : hasData ? `${uptimePercentage}%` : 'No data'}
           </p>
           <p className="text-xs text-slate-400 mt-1">Target: 99.9%</p>
         </div>
@@ -89,6 +93,8 @@ export function SlaPage() {
               className={`inline-flex px-2 py-0.5 rounded-full text-sm font-bold ${
                 monthlyStatus === 'Met'
                   ? 'bg-green-100 text-green-700'
+                  : monthlyStatus === 'No data'
+                  ? 'bg-slate-100 text-slate-500'
                   : 'bg-red-100 text-red-700'
               }`}
             >
