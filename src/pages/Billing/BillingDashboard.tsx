@@ -34,14 +34,15 @@ export function BillingDashboard() {
       {stats && (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
           {[
-            { label: 'Total Items', value: stats.total },
-            { label: 'Pending', value: stats.pending },
-            { label: 'In Progress', value: stats.inProgress },
-            { label: 'Overdue', value: stats.overdue },
-          ].map(({ label, value }) => (
+            { label: 'Total Items', value: stats.total, alert: false },
+            { label: 'Pending', value: stats.pending, alert: false },
+            { label: 'In Progress', value: stats.inProgress, alert: false },
+            { label: 'Critical', value: stats.critical, alert: stats.critical > 0 },
+            { label: 'Overdue', value: stats.overdue, alert: stats.overdue > 0 },
+          ].map(({ label, value, alert }) => (
             <div key={label} className="card-hover rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
               <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>
-              <p className="mt-1.5 text-2xl font-bold text-navy-900">{value}</p>
+              <p className={`mt-1.5 text-2xl font-bold ${alert ? 'text-red-600' : 'text-navy-900'}`}>{value}</p>
             </div>
           ))}
         </div>

@@ -72,6 +72,25 @@ describe('SlaPage', () => {
     });
   });
 
+  it('shows "No data" instead of a fabricated 99.9%/Met when there are no checks (L2)', async () => {
+    vi.mocked(listUptimeRecords).mockResolvedValueOnce({
+      data: [],
+      pagination: { total: 0, page: 1, pageSize: 50 },
+    });
+    vi.mocked(getUptimeSummary).mockResolvedValueOnce({
+      ...SUMMARY,
+      totalChecks: 0,
+      upChecks: 0,
+      uptimePercentage: 0,
+    });
+
+    renderPage();
+    await waitFor(() => {
+      expect(screen.getByText('No data')).toBeInTheDocument();
+    });
+    expect(screen.queryByText('Met')).not.toBeInTheDocument();
+  });
+
   it('renders incidents table when down/degraded records exist', async () => {
     vi.mocked(listUptimeRecords).mockResolvedValueOnce({
       data: [record(1, 'degraded', 800), record(2, 'down', 0)],
