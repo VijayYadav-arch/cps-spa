@@ -72,9 +72,21 @@ export interface PriorAuth {
   approvedDate: string | null;
   deniedDate: string | null;
   expirationDate: string | null;
-  payerName: string;
-  referenceNumber: string | null;
+  payer: string | null;
+  payerName: string | null;
+  authNumber: string | null;
+  // Clearinghouse reference id (the entity field is ReferenceId; the prior
+  // `referenceNumber` name never matched the payload and always read blank).
+  referenceId: string | null;
   createdAt: string;
+}
+
+export interface CreatePriorAuthInput {
+  patientId: number;
+  payer: string;
+  serviceType: string;
+  requestedDate?: string;
+  notes?: string | null;
 }
 
 export interface PaginationMeta {
@@ -109,6 +121,18 @@ export const getPriorAuths = (params?: {
   apiClient
     .get<{ data: PriorAuth[]; pagination: PaginationMeta }>('/clinical/prior-auth', { params })
     .then((r) => r.data);
+
+// POST /api/v2/clinical/prior-auth
+export const createPriorAuth = (input: CreatePriorAuthInput): Promise<PriorAuth> =>
+  apiClient
+    .post<{ data: PriorAuth }>('/clinical/prior-auth', { status: 'pending', ...input })
+    .then((r) => r.data.data);
+
+// PUT /api/v2/clinical/prior-auth/{id} — used here to record an approve/deny decision.
+export const updatePriorAuthStatus = (id: number, status: string): Promise<PriorAuth> =>
+  apiClient
+    .put<{ data: PriorAuth }>(`/clinical/prior-auth/${id}`, { status })
+    .then((r) => r.data.data);
 
 // --- Medications (GET/POST/PUT /api/v2/clinical/medications) ---
 export interface Medication {
