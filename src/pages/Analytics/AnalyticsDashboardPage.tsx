@@ -6,18 +6,30 @@ import {
   getArAging,
   getDenialAnalysis,
   getStatementCollection,
+  exportAnalyticsCsv,
   type DashboardSummary,
   type RevenueTimeSeries,
   type PayerMix,
   type AgingSnapshot,
   type DenialAnalysis,
   type StatementCollectionStats,
+  type AnalyticsReport,
 } from '@/api/analytics';
 import {
   getInboxAggregateTiming,
   formatDuration,
   type InboxAggregateTiming,
 } from '@/api/billing';
+import { usePermission } from '@/permissions/usePermission';
+import { PERMISSIONS } from '@/permissions/permissions';
+
+const EXPORTABLE: { report: AnalyticsReport; label: string }[] = [
+  { report: 'revenue', label: 'Revenue' },
+  { report: 'payer-mix', label: 'Payer Mix' },
+  { report: 'ar-aging', label: 'AR Aging' },
+  { report: 'denials', label: 'Denials' },
+  { report: 'statement-collection', label: 'Statements' },
+];
 
 function money(n: number): string {
   return n.toLocaleString(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
@@ -110,11 +122,42 @@ export function AnalyticsDashboardPage() {
   const revenuePoints = revenue?.points ?? [];
   const revenueMax = Math.max(1, ...revenuePoints.map((p) => p.billedAmount));
   const payerRows = payerMix?.rows.slice(0, 6) ?? [];
+  const canExport = usePermission(PERMISSIONS.REPORTS_EXPORT);
+
+  async function handleExport(report: AnalyticsReport) {
+    try {
+      const blob = await exportAnalyticsCsv(report);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${report}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setError('Export failed.');
+    }
+  }
 
   return (
     <div className="grid max-w-[1200px] gap-6 p-6">
       <header className="space-y-2">
-        <h1 className="text-2xl">Analytics</h1>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="text-2xl">Analytics</h1>
+          {canExport && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-xs font-medium text-slate-500">Export CSV:</span>
+              {EXPORTABLE.map((e) => (
+                <button
+                  key={e.report}
+                  onClick={() => handleExport(e.report)}
+                  className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                >
+                  {e.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         <div className="section-line" />
       </header>
 

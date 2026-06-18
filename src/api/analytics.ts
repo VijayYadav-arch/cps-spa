@@ -120,6 +120,20 @@ export async function getStatementCollection(from?: string, to?: string): Promis
   return r.data.data;
 }
 
+export type AnalyticsReport =
+  | 'revenue' | 'payer-mix' | 'ar-aging' | 'denials' | 'statement-collection';
+
+/** Downloads a report as CSV bytes (requires reports:export). */
+export async function exportAnalyticsCsv(
+  report: AnalyticsReport, from?: string, to?: string,
+): Promise<Blob> {
+  const p = new URLSearchParams({ report });
+  if (from) p.set('from', from);
+  if (to) p.set('to', to);
+  const r = await apiClient.get<Blob>(`${RANGE}/export?${p.toString()}`, { responseType: 'blob' });
+  return r.data;
+}
+
 export async function getDashboardSummary(): Promise<DashboardSummary> {
   const r = await apiClient.get<{ data: DashboardSummary }>(`${RANGE}/dashboard`);
   return r.data.data;
