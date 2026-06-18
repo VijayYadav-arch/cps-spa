@@ -50,7 +50,9 @@ export function ClinicianDashboard() {
       const [patientsR, visitsR, draftsR, meR] = await Promise.allSettled([
         getPatients({ pageSize: 200 }),
         listScheduledVisits(),
-        apiClient.get<{ data: { id: number; status: string }[] }>('/clinician/visits?pageSize=100'),
+        // Accurate pending-documentation count: ask the server for the draft total
+        // rather than counting drafts within a capped page (M11).
+        apiClient.get<{ pagination: { total: number } }>('/clinician/visits?status=draft&pageSize=1'),
         apiClient.get<{ email: string }>('/me'),
       ]);
       if (cancelled) return;
@@ -76,9 +78,7 @@ export function ClinicianDashboard() {
       }).length;
 
       const pendingDocumentation =
-        draftsR.status === 'fulfilled'
-          ? draftsR.value.data.data.filter((n) => n.status === 'draft').length
-          : null;
+        draftsR.status === 'fulfilled' ? draftsR.value.data.pagination.total : null;
 
       const email = meR.status === 'fulfilled' ? meR.value.data.email : '';
       const firstName = email ? email.split('@')[0] : 'there';
