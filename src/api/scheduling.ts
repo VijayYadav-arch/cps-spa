@@ -45,6 +45,8 @@ export interface UpdateScheduledVisitRequest {
   status?: ScheduledVisitStatus;
   notes?: string | null;
   visitNoteId?: number | null;
+  /** Per-diem level of care captured when completing a hospice visit: RHC/CHC/IRC/GIP. */
+  levelOfCare?: string;
 }
 
 export const listScheduledVisits = (params?: {
