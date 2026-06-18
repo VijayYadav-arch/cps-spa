@@ -7,6 +7,7 @@ import { HospiceCarePlanReviewLog } from '@/pages/Hospice/HospiceCarePlanReviewL
 vi.mock('@/api/hospice', () => ({
   listCarePlanReviews: vi.fn(),
   recordCarePlanReview: vi.fn(),
+  listUpcomingIdg: vi.fn().mockResolvedValue({ data: [] }),
 }));
 
 import { listCarePlanReviews, recordCarePlanReview } from '@/api/hospice';

@@ -4,7 +4,7 @@ import {
   verifyEligibility,
   type EligibilityCheck,
 } from '@/api/billing';
-import { usePermission } from '@/permissions/usePermission';
+import { useAnyPermission } from '@/permissions/useAnyPermission';
 import { PERMISSIONS } from '@/permissions/permissions';
 
 const NO_PERMISSION = 'You do not have permission to perform this action';
@@ -50,7 +50,8 @@ export function PatientEligibilityCard({
   dateOfBirth,
   insuranceId,
 }: Props) {
-  const canVerify = usePermission(PERMISSIONS.BILLING_SCRUB);
+  // Eligibility verify is now allowed for billing staff OR intake (coverage check at admission).
+  const canVerify = useAnyPermission([PERMISSIONS.BILLING_SCRUB, PERMISSIONS.PATIENTS_INTAKE]);
   const [checks, setChecks] = useState<EligibilityCheck[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [payerId, setPayerId] = useState(PAYERS[0].code);
