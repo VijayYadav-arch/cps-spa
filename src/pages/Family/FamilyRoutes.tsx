@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { usePortalAuth } from '@/portal/PortalAuthContext';
+import { FamilyLayout } from './FamilyLayout';
 import { FamilyLoginPage } from './FamilyLoginPage';
 import { FamilyDashboard } from './FamilyDashboard';
 import { FamilyBilling } from './FamilyBilling';
@@ -24,78 +25,24 @@ export function FamilyRoutes() {
   return (
     <Routes>
       <Route path="login" element={<FamilyLoginPage />} />
+      {/* Authenticated portal: gated once, then wrapped in the shared nav shell. */}
       <Route
-        path="dashboard"
         element={
           <RequireFamilyAuth>
-            <FamilyDashboard />
+            <FamilyLayout />
           </RequireFamilyAuth>
         }
-      />
-      <Route
-        path="billing"
-        element={
-          <RequireFamilyAuth>
-            <FamilyBilling />
-          </RequireFamilyAuth>
-        }
-      />
-      <Route
-        path="payments"
-        element={
-          <RequireFamilyAuth>
-            <FamilyPayments />
-          </RequireFamilyAuth>
-        }
-      />
-      <Route
-        path="care-plan"
-        element={
-          <RequireFamilyAuth>
-            <FamilyCarePlan />
-          </RequireFamilyAuth>
-        }
-      />
-      <Route
-        path="documents"
-        element={
-          <RequireFamilyAuth>
-            <FamilyDocuments />
-          </RequireFamilyAuth>
-        }
-      />
-      <Route
-        path="medications"
-        element={
-          <RequireFamilyAuth>
-            <FamilyMedications />
-          </RequireFamilyAuth>
-        }
-      />
-      <Route
-        path="preferences"
-        element={
-          <RequireFamilyAuth>
-            <FamilyPreferences />
-          </RequireFamilyAuth>
-        }
-      />
-      <Route
-        path="visits"
-        element={
-          <RequireFamilyAuth>
-            <FamilyVisits />
-          </RequireFamilyAuth>
-        }
-      />
-      <Route
-        path="chat"
-        element={
-          <RequireFamilyAuth>
-            <FamilyChat />
-          </RequireFamilyAuth>
-        }
-      />
+      >
+        <Route path="dashboard" element={<FamilyDashboard />} />
+        <Route path="visits" element={<FamilyVisits />} />
+        <Route path="medications" element={<FamilyMedications />} />
+        <Route path="care-plan" element={<FamilyCarePlan />} />
+        <Route path="documents" element={<FamilyDocuments />} />
+        <Route path="billing" element={<FamilyBilling />} />
+        <Route path="payments" element={<FamilyPayments />} />
+        <Route path="preferences" element={<FamilyPreferences />} />
+        <Route path="chat" element={<FamilyChat />} />
+      </Route>
       <Route path="*" element={<Navigate to="/family/login" replace />} />
     </Routes>
   );

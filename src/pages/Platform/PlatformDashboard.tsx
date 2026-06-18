@@ -42,6 +42,16 @@ export function PlatformDashboard() {
       </section>
 
       <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold">Background Jobs</h3>
+          <Link to="/platform/background-jobs" className="font-medium text-teal-700 hover:underline">View health</Link>
+        </div>
+        <p className="mt-1 text-sm text-slate-500">
+          Hosted-service health snapshot (retention purge, uptime probe, leader election, etc.).
+        </p>
+      </section>
+
+      <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="mb-3 flex justify-between">
           <h3 className="text-lg font-semibold">API Keys ({apiKeys.filter((k) => k.isActive).length} active)</h3>
           <Link to="/platform/api-keys" className="font-medium text-teal-700 hover:underline">Manage</Link>

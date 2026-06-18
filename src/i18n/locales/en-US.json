@@ -26,7 +26,16 @@
       "patient": "Patient",
       "messages": "Messages",
       "care": "Care plan",
-      "billing": "Billing"
+      "billing": "Billing",
+      "visits": "Visits",
+      "medications": "Medications",
+      "documents": "Documents",
+      "payments": "Payments",
+      "chat": "Ask Mira™",
+      "preferences": "Preferences",
+      "logout": "Sign out",
+      "brand": "Family Portal",
+      "menu": "Menu"
     },
     "login": {
       "title": "Family Login",
