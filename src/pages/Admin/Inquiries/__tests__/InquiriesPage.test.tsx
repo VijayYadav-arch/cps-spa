@@ -8,6 +8,7 @@ vi.mock('@/api/client', () => {
   return {
     apiClient: {
       get: vi.fn(),
+      put: vi.fn(),
     },
   };
 });
@@ -89,12 +90,36 @@ describe('InquiriesPage', () => {
     expect(screen.getByText('555-0100')).toBeInTheDocument();
   });
 
-  it('handles fetch failure gracefully (empty state, no crash)', async () => {
+  it('surfaces a load error instead of silently swallowing it (M14)', async () => {
     vi.mocked(apiClient.get).mockRejectedValueOnce(new Error('500'));
     renderPage();
 
     await waitFor(() => {
-      expect(screen.getByText(/no inquiries yet/i)).toBeInTheDocument();
+      expect(screen.getByRole('alert')).toHaveTextContent(/failed to load inquiries/i);
     });
+  });
+
+  it('triages an inquiry status via the dropdown (M14)', async () => {
+    vi.mocked(apiClient.get).mockResolvedValue({
+      data: {
+        data: [inquiry(7)],
+        pagination: { total: 1, page: 1, pageSize: 25, totalPages: 1 },
+      },
+    } as never);
+    vi.mocked(apiClient.put).mockResolvedValue({
+      data: { data: inquiry(7, 'contacted') },
+    } as never);
+
+    const user = userEvent.setup();
+    renderPage();
+    await waitFor(() => screen.getByText('First7 Last7'));
+    await user.click(screen.getByRole('button', { name: /First7 Last7/i }));
+
+    const select = await screen.findByRole('combobox');
+    await user.selectOptions(select, 'contacted');
+
+    await waitFor(() =>
+      expect(apiClient.put).toHaveBeenCalledWith('/inquiries/7', { status: 'contacted' }),
+    );
   });
 });
