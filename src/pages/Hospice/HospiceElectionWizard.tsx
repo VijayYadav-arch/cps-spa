@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { createElection } from '@/api/hospice';
+import type { IntakeCertificationHandoff } from '@/pages/Patients/intake/intakeTypes';
 import { usePermission } from '@/permissions/usePermission';
 import { PERMISSIONS } from '@/permissions/permissions';
 
@@ -27,9 +28,14 @@ function computeNoeDeadline(electionDate: string): string {
 export function HospiceElectionWizard() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
-  // Pre-fill from intake's admission date when handed off from the intake wizard.
-  const prefillDate = searchParams.get('electionDate');
+  // Certification details captured at intake Step 5, handed off via router state
+  // so they're carried forward instead of dropped at the intake→election boundary (H8).
+  const cert = (location.state as { intakeCertification?: IntakeCertificationHandoff } | null)
+    ?.intakeCertification ?? null;
+  // Pre-fill from intake's admission/effective date when handed off from the intake wizard.
+  const prefillDate = searchParams.get('electionDate') ?? cert?.effectiveFrom ?? null;
   const [step, setStep] = useState(1);
   const [electionDate, setElectionDate] = useState(
     prefillDate && /^\d{4}-\d{2}-\d{2}$/.test(prefillDate) ? prefillDate : todayIso(),
@@ -180,6 +186,30 @@ export function HospiceElectionWizard() {
             </dt>
             <dd className="text-slate-800">{computeNoeDeadline(electionDate)}</dd>
           </dl>
+
+          {cert && (
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+              <h4 className="mb-2 text-sm font-semibold text-slate-700">
+                Certification details (captured at intake)
+              </h4>
+              <p className="mb-3 text-xs text-slate-500">
+                Carried over from intake Step 5. Use these to complete the certifying-physician
+                and face-to-face records in the hospice workflow once the physician is assigned.
+              </p>
+              <dl className="grid grid-cols-[180px_1fr] gap-x-4 gap-y-1.5 text-sm">
+                <CertRow label="Level of care" value={cert.levelOfCare} />
+                <CertRow label="Benefit period" value={cert.benefitPeriod} />
+                <CertRow label="Certifying physician" value={joinNameNpi(cert.certifiedByName, cert.certifiedByNPI)} />
+                <CertRow label="2nd physician" value={joinNameNpi(cert.secondCertifiedByName, cert.secondCertifiedByNPI)} />
+                <CertRow label="Certification date" value={cert.certificationDate} />
+                <CertRow label="Effective" value={joinRange(cert.effectiveFrom, cert.effectiveTo)} />
+                <CertRow label="Face-to-face date" value={cert.faceToFaceDate} />
+                <CertRow label="Face-to-face provider" value={cert.faceToFaceProvider} />
+                <CertRow label="Notes" value={cert.certificationNotes} />
+              </dl>
+            </div>
+          )}
+
           <div className="flex gap-2">
             <button
               onClick={() => setStep(2)}
@@ -200,5 +230,24 @@ export function HospiceElectionWizard() {
         </div>
       )}
     </div>
+  );
+}
+
+function joinNameNpi(name: string, npi: string): string {
+  if (!name && !npi) return '';
+  return npi ? `${name} (NPI ${npi})`.trim() : name;
+}
+
+function joinRange(from: string, to: string): string {
+  if (!from && !to) return '';
+  return `${from || '—'} → ${to || '—'}`;
+}
+
+function CertRow({ label, value }: { label: string; value: string }) {
+  return (
+    <>
+      <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</dt>
+      <dd className="text-slate-800">{value || <span className="text-slate-400">—</span>}</dd>
+    </>
   );
 }

@@ -294,7 +294,7 @@ describe('IntakeWizard', () => {
     expect(effectiveTo.value).toBe(expectedTo(3, '2026-01-01'));
   });
 
-  it('on final submit: calls submitFinal, deletes draft, navigates to /patients/:id', async () => {
+  it('on final submit (hospice): calls submitFinal, deletes draft, hands off to the election wizard with the Step-5 certification', async () => {
     vi.mocked(intakeApi.getMyOpenDraft).mockResolvedValueOnce({
       id: 12,
       ownerUserId: 'u1',
@@ -331,7 +331,16 @@ describe('IntakeWizard', () => {
       expect(intakeApi.deleteDraft).toHaveBeenCalledWith(12);
     });
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/patients/555');
+      // Hospice admission hands off to the election wizard (election date prefilled
+      // from effectiveFrom) carrying the Step-5 certification block in router state (H8).
+      expect(mockNavigate).toHaveBeenCalledWith(
+        '/patients/555/hospice/new?electionDate=2026-06-02',
+        expect.objectContaining({
+          state: expect.objectContaining({
+            intakeCertification: expect.objectContaining({ certifiedByName: 'Dr. Smith' }),
+          }),
+        }),
+      );
     });
   });
 

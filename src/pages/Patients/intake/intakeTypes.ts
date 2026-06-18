@@ -81,6 +81,45 @@ export interface DraftResponse {
   completedAt: string | null;
 }
 
+/**
+ * Hospice certification details captured at intake Step 5, handed off to the
+ * election wizard via router state so they aren't lost at the intake→election
+ * boundary (H8). These are free-text/coordinator-entered values; structured
+ * HospiceCertification / FaceToFace records are created later in the hospice
+ * workflow once the certifying physician is resolved to a user.
+ */
+export interface IntakeCertificationHandoff {
+  benefitPeriod: string;
+  levelOfCare: string;
+  certifiedByName: string;
+  certifiedByNPI: string;
+  secondCertifiedByName: string;
+  secondCertifiedByNPI: string;
+  certificationDate: string;
+  effectiveFrom: string;
+  effectiveTo: string;
+  faceToFaceDate: string;
+  faceToFaceProvider: string;
+  certificationNotes: string;
+}
+
+export function toCertificationHandoff(form: FormData): IntakeCertificationHandoff {
+  return {
+    benefitPeriod: form.benefitPeriod,
+    levelOfCare: form.levelOfCare,
+    certifiedByName: form.certifiedByName,
+    certifiedByNPI: form.certifiedByNPI,
+    secondCertifiedByName: form.secondCertifiedByName,
+    secondCertifiedByNPI: form.secondCertifiedByNPI,
+    certificationDate: form.certificationDate,
+    effectiveFrom: form.effectiveFrom,
+    effectiveTo: form.effectiveTo,
+    faceToFaceDate: form.faceToFaceDate,
+    faceToFaceProvider: form.faceToFaceProvider,
+    certificationNotes: form.certificationNotes,
+  };
+}
+
 export const STEP_NAMES = [
   'Organization & Patient',
   'Contact & Facility',

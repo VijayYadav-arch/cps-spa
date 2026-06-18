@@ -28,6 +28,11 @@ export const intakeApi = {
     for (const [key, value] of Object.entries(form)) {
       payload[key] = value === '' ? null : value;
     }
+    // Field-name reconciliation: the intake form field is `secondaryDiagnosesText`
+    // but CreatePatientRequest binds `SecondaryDiagnoses` — without this rename the
+    // secondary diagnoses the coordinator typed were silently dropped on submit (H8).
+    payload.secondaryDiagnoses = payload.secondaryDiagnosesText ?? null;
+    delete payload.secondaryDiagnosesText;
     // POST /patients responds with an enveloped body: { data: { id, ... } }.
     return apiClient
       .post<{ data: { id: number } }>('/patients', payload)
