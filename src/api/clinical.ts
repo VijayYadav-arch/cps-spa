@@ -249,3 +249,8 @@ export const updateOrder = (
   apiClient
     .put<{ data: PhysicianOrder }>(`/clinical/orders/${id}`, req)
     .then((r) => r.data.data);
+
+export const signOrder = (id: number, signedBy: string): Promise<PhysicianOrder> =>
+  apiClient
+    .post<{ data: PhysicianOrder }>(`/clinical/orders/${id}/sign`, { signedBy })
+    .then((r) => r.data.data);

@@ -7,6 +7,11 @@ import { HospiceElectionDetail } from '@/pages/Hospice/HospiceElectionDetail';
 vi.mock('@/api/hospice', () => ({
   getElection: vi.fn(),
   submitNoe: vi.fn(),
+  beginRecertification: vi.fn(),
+  startCertification: vi.fn(),
+  listCertificationsByElection: vi.fn().mockResolvedValue({ data: [] }),
+  downloadNoeDocument: vi.fn(),
+  recordDeath: vi.fn(),
 }));
 
 vi.mock('@/auth/useAuth', () => ({

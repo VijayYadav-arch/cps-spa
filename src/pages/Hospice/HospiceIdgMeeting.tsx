@@ -6,7 +6,7 @@ import {
   cancelIdgMeeting,
   type IdgMeeting,
 } from '@/api/hospice';
-import { usePermission } from '@/permissions/usePermission';
+import { useAnyPermission } from '@/permissions/useAnyPermission';
 import { PERMISSIONS } from '@/permissions/permissions';
 
 const NO_PERMISSION = 'You do not have permission to perform this action';
@@ -22,8 +22,8 @@ export function HospiceIdgMeeting() {
   const [working, setWorking] = useState(false);
 
   // Complete & cancel hit POST /hospice/idg-meetings/{id}/{complete|cancel}
-  // → [Authorize(hospice:manage)].
-  const canManage = usePermission(PERMISSIONS.HOSPICE_MANAGE);
+  // → IdgManage policy (hospice:manage OR hospice:idg_manage).
+  const canManage = useAnyPermission([PERMISSIONS.HOSPICE_MANAGE, PERMISSIONS.HOSPICE_IDG_MANAGE]);
 
   useEffect(() => {
     if (!meetingId) return;

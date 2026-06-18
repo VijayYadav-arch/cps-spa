@@ -3,6 +3,7 @@ import {
   getOrders,
   createOrder,
   updateOrder,
+  signOrder,
   type PhysicianOrder,
   type CreatePhysicianOrderRequest,
 } from '@/api/clinical';
@@ -97,6 +98,21 @@ export function OrdersPage() {
   }
 
   const editing = form?.id != null;
+
+  async function handleSign(o: PhysicianOrder) {
+    const signer = window.prompt('Sign order — enter the signing physician’s name:');
+    if (!signer || !signer.trim()) return;
+    setError(null);
+    try {
+      await signOrder(o.id, signer.trim());
+      refresh();
+    } catch (e) {
+      setError(
+        (e as { response?: { data?: { error?: string } } })?.response?.data?.error ??
+          'Could not sign the order.',
+      );
+    }
+  }
 
   async function handleSubmit() {
     if (!form) return;
@@ -305,12 +321,22 @@ export function OrdersPage() {
                   <td className="px-5 py-4"><StatusBadge status={o.status} /></td>
                   <td className="px-5 py-4 text-sm">
                     {canManage && (
-                      <button
-                        onClick={() => openEdit(o)}
-                        className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
-                      >
-                        Edit
-                      </button>
+                      <span className="flex gap-2">
+                        <button
+                          onClick={() => openEdit(o)}
+                          className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                        >
+                          Edit
+                        </button>
+                        {!o.signedBy && (
+                          <button
+                            onClick={() => handleSign(o)}
+                            className="rounded-md border border-teal-200 bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-700 hover:bg-teal-100"
+                          >
+                            Sign
+                          </button>
+                        )}
+                      </span>
                     )}
                   </td>
                 </tr>

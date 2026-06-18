@@ -95,6 +95,7 @@ export const PERMISSIONS = {
 
   // Hospice benefit management (Sub-system A)
   HOSPICE_MANAGE: 'hospice:manage',
+  HOSPICE_IDG_MANAGE: 'hospice:idg_manage',
   HOSPICE_VIEW: 'hospice:view',
 
   // Hospice live-discharge management (Sub-system E)
