@@ -86,15 +86,44 @@ describe('QapiDashboardPage', () => {
     expect(screen.getByRole('link', { name: /Start one/i })).toBeInTheDocument();
   });
 
-  it('HqrpAndCahpsSections_RenderWhenPresent — shows both headings', async () => {
+  it('HqrpAndCahpsSections_RenderWhenPresent — shows both headings and KPIs', async () => {
     vi.mocked(qapiApi.getQapiDashboard).mockResolvedValueOnce(
-      makeDashboard({ hqrpSummary: { a: 1 }, cahpsSummary: { b: 2 } }),
+      makeDashboard({
+        hqrpSummary: {
+          from: '2026-03-01',
+          to: '2026-05-30',
+          totalAssessments: 10,
+          onTimeCount: 9,
+          lateCount: 1,
+          notYetSubmittedCount: 0,
+          rejectedCount: 0,
+          timelinessPercentage: 90,
+          meetsThreshold: true,
+          thresholdPercentage: 90,
+        },
+        cahpsSummary: {
+          calendarYear: 2026,
+          quarter: 2,
+          quarterFrom: '2026-04-01',
+          quarterTo: '2026-06-30',
+          totalDecedents: 8,
+          eligibleCount: 6,
+          ineligibleCount: 1,
+          excludedCount: 1,
+          submittedCount: 4,
+          pendingCount: 0,
+          notYetSubmittedCount: 2,
+          submissionRatePercentage: 66.67,
+        },
+      }),
     );
 
     render(<MemoryRouter><QapiDashboardPage /></MemoryRouter>);
 
-    await waitFor(() => expect(screen.getByText('HQRP Summary')).toBeInTheDocument());
-    expect(screen.getByText('CAHPS Summary')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText(/HQRP Timeliness/i)).toBeInTheDocument());
+    expect(screen.getByText(/CAHPS Survey/i)).toBeInTheDocument();
+    expect(screen.getByText('On-time submission')).toBeInTheDocument();
+    expect(screen.getByText('Submission rate')).toBeInTheDocument();
   });
 
   it('ErrorState_OnRejection — shows alert on fetch failure', async () => {

@@ -88,15 +88,41 @@ export function QapiDashboardPage() {
 
       {dashboard.hqrpSummary != null && (
         <section className="hqrp-summary">
-          <h2>HQRP Summary</h2>
-          <pre>{JSON.stringify(dashboard.hqrpSummary, null, 2)}</pre>
+          <h2>HQRP Timeliness (last 90 days)</h2>
+          <div className="kpi-row" aria-label="HQRP timeliness tiles">
+            <QapiKpiTile
+              label="On-time submission"
+              value={`${dashboard.hqrpSummary.timelinessPercentage}%`}
+              linkTo="/hospice/hqrp"
+            />
+            <QapiKpiTile label="HOPE assessments" value={dashboard.hqrpSummary.totalAssessments} />
+            <QapiKpiTile label="On time" value={dashboard.hqrpSummary.onTimeCount} />
+            <QapiKpiTile label="Late / not on file" value={dashboard.hqrpSummary.lateCount + dashboard.hqrpSummary.notYetSubmittedCount + dashboard.hqrpSummary.rejectedCount} />
+          </div>
+          <p className={dashboard.hqrpSummary.meetsThreshold ? 'qapi-threshold--ok' : 'qapi-threshold--warning'}>
+            CMS threshold is {dashboard.hqrpSummary.thresholdPercentage}% on-time.{' '}
+            {dashboard.hqrpSummary.totalAssessments === 0
+              ? 'No assessments in this window.'
+              : dashboard.hqrpSummary.meetsThreshold
+                ? 'Currently meeting the threshold.'
+                : 'Below threshold — at risk of a 4-pp APU reduction.'}
+          </p>
         </section>
       )}
 
       {dashboard.cahpsSummary != null && (
         <section className="cahps-summary">
-          <h2>CAHPS Summary</h2>
-          <pre>{JSON.stringify(dashboard.cahpsSummary, null, 2)}</pre>
+          <h2>CAHPS Survey (Q{dashboard.cahpsSummary.quarter} {dashboard.cahpsSummary.calendarYear})</h2>
+          <div className="kpi-row" aria-label="CAHPS summary tiles">
+            <QapiKpiTile
+              label="Submission rate"
+              value={`${dashboard.cahpsSummary.submissionRatePercentage}%`}
+              linkTo="/hospice/cahps"
+            />
+            <QapiKpiTile label="Eligible decedents" value={dashboard.cahpsSummary.eligibleCount} />
+            <QapiKpiTile label="Submitted to vendor" value={dashboard.cahpsSummary.submittedCount} />
+            <QapiKpiTile label="Not yet submitted" value={dashboard.cahpsSummary.notYetSubmittedCount} />
+          </div>
         </section>
       )}
     </div>
