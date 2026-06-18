@@ -18,6 +18,7 @@ export function FamilyDocuments() {
   const patientId = session?.patientId;
   const [docs, setDocs] = useState<Doc[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [downloadingId, setDownloadingId] = useState<number | null>(null);
 
   useEffect(() => {
     if (!patientId) return;
@@ -28,6 +29,29 @@ export function FamilyDocuments() {
         setError('Unable to load documents. Please refresh or contact your care team.'),
       );
   }, [patientId]);
+
+  async function handleDownload(doc: Doc) {
+    if (!patientId) return;
+    setDownloadingId(doc.id);
+    try {
+      const res = await familyApi.get<Blob>(
+        `/patients/${patientId}/documents/${doc.id}/download`,
+        { responseType: 'blob' },
+      );
+      const url = URL.createObjectURL(res.data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = doc.fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      setError('Could not download that document. Please try again or contact your care team.');
+    } finally {
+      setDownloadingId(null);
+    }
+  }
 
   if (error) {
     return (
@@ -60,6 +84,7 @@ export function FamilyDocuments() {
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Category</th>
               <th className="px-4 py-3">Date</th>
+              <th className="px-4 py-3" />
             </tr>
           </thead>
           <tbody data-testid="documents-rows">
@@ -70,12 +95,22 @@ export function FamilyDocuments() {
                 <td className="px-4 py-3 text-slate-700">
                   {new Date(d.createdAt).toLocaleDateString()}
                 </td>
+                <td className="px-4 py-3 text-right">
+                  <button
+                    type="button"
+                    onClick={() => handleDownload(d)}
+                    disabled={downloadingId === d.id}
+                    className="rounded-md border border-teal-200 bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-700 hover:bg-teal-100 disabled:opacity-60"
+                  >
+                    {downloadingId === d.id ? 'Downloading…' : 'Download'}
+                  </button>
+                </td>
               </tr>
             ))}
             {docs.length === 0 && (
               <tr>
                 <td
-                  colSpan={3}
+                  colSpan={4}
                   className="px-4 py-6 text-center text-slate-500"
                   data-testid="documents-empty"
                 >

@@ -1,5 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { apiClient } from '@/api/client';
+
+const STATUS_OPTIONS = ['new', 'reviewed', 'contacted', 'closed'];
+const PAGE_SIZE = 25;
 
 interface Inquiry {
   id: number;
@@ -39,35 +42,57 @@ export function InquiriesPage() {
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Inquiry | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [updating, setUpdating] = useState(false);
 
-  useEffect(() => {
-    let cancelled = false;
+  const load = useCallback(() => {
+    setLoading(true);
+    setError(null);
     apiClient
-      .get<InquiriesResponse>('/inquiries')
+      .get<InquiriesResponse>('/inquiries', { params: { page, pageSize: PAGE_SIZE } })
       .then((res) => {
-        if (cancelled) return;
         const list = Array.isArray(res.data?.data) ? res.data.data : [];
         setInquiries(list);
+        setTotalPages(res.data?.pagination?.totalPages ?? 1);
       })
-      .catch(() => {
-        /* keep empty */
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+      .catch(() => setError('Failed to load inquiries. Please refresh or try again.'))
+      .finally(() => setLoading(false));
+  }, [page]);
+
+  useEffect(() => load(), [load]);
+
+  async function updateStatus(status: string) {
+    if (!selected) return;
+    setUpdating(true);
+    setError(null);
+    try {
+      const res = await apiClient.put<{ data: Inquiry }>(`/inquiries/${selected.id}`, { status });
+      const updated = res.data.data;
+      setInquiries((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
+      setSelected(updated);
+    } catch {
+      setError('Could not update the inquiry status.');
+    } finally {
+      setUpdating(false);
+    }
+  }
 
   return (
     <section className="p-4 lg:p-8 max-w-7xl mx-auto">
       <header className="mb-6">
         <h1 className="text-2xl font-serif text-slate-900">Inquiries</h1>
         <p className="text-slate-600 mt-1">
-          {inquiries.length} total inquiries from the public website
+          Inquiries from the public website
         </p>
       </header>
+
+      {error && (
+        <div role="alert" className="mb-4 p-4 rounded-md bg-red-50 border border-red-200 text-sm text-red-800">
+          {error}
+        </div>
+      )}
 
       {loading ? (
         <div className="text-center py-20">
@@ -174,7 +199,24 @@ export function InquiriesPage() {
                     <dd className="text-slate-600 whitespace-pre-wrap">{selected.message}</dd>
                   </div>
                 </dl>
-                <div className="mt-4 pt-4 border-t border-slate-100 flex gap-2">
+                <div className="mt-4 pt-4 border-t border-slate-100">
+                  <label className="block text-xs text-slate-400 uppercase tracking-wider mb-1">
+                    Status
+                  </label>
+                  <select
+                    value={selected.status}
+                    disabled={updating}
+                    onChange={(e) => updateStatus(e.target.value)}
+                    className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm disabled:opacity-60"
+                  >
+                    {STATUS_OPTIONS.map((s) => (
+                      <option key={s} value={s}>
+                        {s.charAt(0).toUpperCase() + s.slice(1)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="mt-4 flex gap-2">
                   <a
                     href={`mailto:${selected.email}`}
                     className="px-4 py-2 bg-teal-600 text-white text-sm rounded-md hover:bg-teal-700 flex-1 text-center"
@@ -189,6 +231,28 @@ export function InquiriesPage() {
               </div>
             )}
           </aside>
+        </div>
+      )}
+
+      {!loading && totalPages > 1 && (
+        <div className="mt-6 flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page <= 1}
+            className="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Previous
+          </button>
+          <span className="text-sm text-slate-500">Page {page} of {totalPages}</span>
+          <button
+            type="button"
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page >= totalPages}
+            className="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Next
+          </button>
         </div>
       )}
     </section>
