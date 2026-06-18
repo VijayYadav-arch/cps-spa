@@ -133,16 +133,25 @@ export function ClinicianVisits() {
                 {v.visitType} · {formatDate(v.visitDate)} · {v.status}
               </div>
             </div>
-            <button
-              type="button"
-              data-testid={`summarize-${v.id}`}
-              onClick={() => setSummarizing(v)}
-              disabled={!canSummarize}
-              title={!canSummarize ? NO_PERMISSION : undefined}
-              className="rounded-md border border-teal-200 bg-teal-50 px-2.5 py-1.5 text-[13px] font-medium text-teal-700 transition-colors hover:bg-teal-100 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              AI summary
-            </button>
+            <div className="flex items-center gap-2">
+              <Link
+                to={`/clinician/visits/${v.id}`}
+                data-testid={`view-${v.id}`}
+                className="rounded-md border border-slate-300 px-2.5 py-1.5 text-[13px] font-medium text-slate-700 transition-colors hover:bg-slate-50"
+              >
+                View
+              </Link>
+              <button
+                type="button"
+                data-testid={`summarize-${v.id}`}
+                onClick={() => setSummarizing(v)}
+                disabled={!canSummarize}
+                title={!canSummarize ? NO_PERMISSION : undefined}
+                className="rounded-md border border-teal-200 bg-teal-50 px-2.5 py-1.5 text-[13px] font-medium text-teal-700 transition-colors hover:bg-teal-100 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                AI summary
+              </button>
+            </div>
           </li>
         ))}
       </ul>
