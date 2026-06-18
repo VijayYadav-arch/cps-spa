@@ -4,6 +4,8 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { WorkQueuePage } from '@/pages/Billing/WorkQueuePage';
 
+vi.mock('@/permissions/usePermission', () => ({ usePermission: () => true }));
+
 vi.mock('@/api/billing', async () => {
   const actual = await vi.importActual<typeof import('@/api/billing')>('@/api/billing');
   return {
@@ -11,10 +13,19 @@ vi.mock('@/api/billing', async () => {
     getWorkQueue: vi.fn(),
     getInbox: vi.fn(),
     getWorkQueueStats: vi.fn(),
+    getAssignableUsers: vi.fn(),
+    claimWorkItem: vi.fn(),
+    completeWorkItem: vi.fn(),
   };
 });
 
-import { getInbox, getWorkQueue, getWorkQueueStats } from '@/api/billing';
+import {
+  getInbox,
+  getWorkQueue,
+  getWorkQueueStats,
+  getAssignableUsers,
+  claimWorkItem,
+} from '@/api/billing';
 
 function item(id: number, priority = 'urgent', type = 'denied') {
   return {
@@ -48,6 +59,8 @@ describe('WorkQueuePage', () => {
     vi.mocked(getWorkQueue).mockResolvedValue({ data: [item(1), item(2, 'high')], stats });
     vi.mocked(getInbox).mockResolvedValue({ data: [item(1)], stats });
     vi.mocked(getWorkQueueStats).mockResolvedValue(stats);
+    vi.mocked(getAssignableUsers).mockResolvedValue([]);
+    vi.mocked(claimWorkItem).mockResolvedValue(undefined);
   });
 
   it('renders heading + stats cards + items', async () => {
@@ -79,5 +92,15 @@ describe('WorkQueuePage', () => {
     vi.mocked(getWorkQueue).mockRejectedValueOnce(new Error('500'));
     renderPage();
     await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
+  });
+
+  it('claims an unassigned item via the row action (M4)', async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await waitFor(() => expect(screen.getAllByText('Item 1 description')[0]).toBeInTheDocument());
+
+    await user.click(screen.getAllByRole('button', { name: 'Claim' })[0]);
+
+    await waitFor(() => expect(claimWorkItem).toHaveBeenCalledWith(1));
   });
 });
