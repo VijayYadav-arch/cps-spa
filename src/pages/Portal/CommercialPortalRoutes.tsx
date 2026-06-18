@@ -7,6 +7,7 @@ import { CommercialReportsPage } from './CommercialReportsPage';
 import { CommercialSettingsPage } from './CommercialSettingsPage';
 import { CommercialSettingsBrandingPage } from './CommercialSettingsBrandingPage';
 import { CommercialSettingsSSOPage } from './CommercialSettingsSSOPage';
+import { CommercialSettingsUsersPage } from './CommercialSettingsUsersPage';
 
 export function CommercialPortalRoutes() {
   return (
@@ -20,6 +21,7 @@ export function CommercialPortalRoutes() {
       <Route path="settings" element={<CommercialSettingsPage />} />
       <Route path="settings/branding" element={<CommercialSettingsBrandingPage />} />
       <Route path="settings/sso" element={<CommercialSettingsSSOPage />} />
+      <Route path="settings/users" element={<CommercialSettingsUsersPage />} />
       <Route path="login" element={<Navigate to="/login" replace />} />
     </Routes>
   );

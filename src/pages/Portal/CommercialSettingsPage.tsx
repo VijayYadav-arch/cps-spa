@@ -14,6 +14,12 @@ const SETTINGS_CARDS = [
     testid: 'setting-card-sso',
   },
   {
+    href: '/portal/settings/users',
+    title: 'Team',
+    description: 'Invite teammates, set their access level, and deactivate accounts.',
+    testid: 'setting-card-users',
+  },
+  {
     href: '/portal/dashboard',
     title: 'Account',
     description: 'Manage your account details, password, and preferences.',
