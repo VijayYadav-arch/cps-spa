@@ -1,13 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiClient } from '@/api/client';
+import { getPatients } from '@/api/patients';
+import { listScheduledVisits } from '@/api/scheduling';
 
-interface Patient {
-  id: number;
-  firstName: string;
-  lastName: string;
-  active: boolean;
-}
 interface Visit {
   id: number;
   patientName: string;
@@ -15,79 +11,93 @@ interface Visit {
   visitType: string;
   address: string | null;
 }
-interface Encounter {
-  id: number;
-  pendingDocumentation: boolean;
-}
-interface PatientsEnvelope {
-  data: Patient[];
-  pagination?: { totalCount: number };
-}
-interface VisitsEnvelope {
-  data: Visit[];
-}
-interface EncountersEnvelope {
-  data: Encounter[];
-  pagination?: { totalCount: number };
-}
-interface UserEnvelope {
-  data: { firstName: string; lastName: string; role: string };
-}
 
 interface DashboardData {
-  user: { firstName: string; lastName: string; role: string };
-  assignedPatients: number;
+  firstName: string;
+  assignedPatients: number | null;
   todaysVisits: Visit[];
-  pendingDocumentation: number;
+  pendingDocumentation: number | null;
   visitsThisWeek: number;
+}
+
+const DISCIPLINE_LABEL: Record<string, string> = {
+  'skilled-nursing': 'Skilled Nursing',
+  'social-work': 'Social Work',
+  chaplain: 'Chaplain',
+  aide: 'Home Health Aide',
+  physician: 'Physician',
+  other: 'Other',
+};
+
+function dayKey(iso: string): string {
+  return iso.slice(0, 10);
 }
 
 export function ClinicianDashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
-  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([
-      apiClient.get<PatientsEnvelope>('/patients?limit=12&active=true'),
-      apiClient.get<VisitsEnvelope>('/visits?upcoming=true&limit=5'),
-      apiClient.get<EncountersEnvelope>('/encounters?pending_documentation=true&limit=10'),
-      apiClient.get<UserEnvelope>('/users/me'),
-    ])
-      .then(([patientsRes, visitsRes, encountersRes, meRes]) => {
-        if (cancelled) return;
-        const user = meRes.data.data;
-        const assignedPatients =
-          patientsRes.data.pagination?.totalCount ?? patientsRes.data.data.length;
-        const todaysVisits = visitsRes.data.data;
-        const pendingDocumentation =
-          encountersRes.data.pagination?.totalCount ?? encountersRes.data.data.length;
-        const visitsThisWeek = todaysVisits.length;
-        setData({
-          user,
-          assignedPatients,
-          todaysVisits,
-          pendingDocumentation,
-          visitsThisWeek,
-        });
-      })
-      .catch((e: Error) => {
-        if (!cancelled) setError(e);
+
+    // Each source loads independently — one failing endpoint must not blank the
+    // whole dashboard (the previous Promise.all died on a single 404).
+    async function load() {
+      const today = new Date();
+      const todayKey = today.toISOString().slice(0, 10);
+      const weekEnd = new Date(today);
+      weekEnd.setDate(weekEnd.getDate() + 7);
+
+      const [patientsR, visitsR, draftsR, meR] = await Promise.allSettled([
+        getPatients({ pageSize: 200 }),
+        listScheduledVisits(),
+        apiClient.get<{ data: { id: number; status: string }[] }>('/clinician/visits?pageSize=100'),
+        apiClient.get<{ email: string }>('/me'),
+      ]);
+      if (cancelled) return;
+
+      const patients = patientsR.status === 'fulfilled' ? patientsR.value : null;
+      const nameById = new Map<number, string>(
+        (patients?.data ?? []).map((p) => [p.id, `${p.lastName}, ${p.firstName}`]),
+      );
+
+      const scheduled = visitsR.status === 'fulfilled' ? visitsR.value.data : [];
+      const todaysVisits: Visit[] = scheduled
+        .filter((v) => dayKey(v.scheduledStart) === todayKey)
+        .map((v) => ({
+          id: v.id,
+          patientName: nameById.get(v.patientId) ?? `Patient #${v.patientId}`,
+          scheduledTime: v.scheduledStart,
+          visitType: `${DISCIPLINE_LABEL[v.discipline] ?? v.discipline} · ${v.visitType}`,
+          address: null,
+        }));
+      const visitsThisWeek = scheduled.filter((v) => {
+        const d = new Date(v.scheduledStart);
+        return d >= today && d <= weekEnd;
+      }).length;
+
+      const pendingDocumentation =
+        draftsR.status === 'fulfilled'
+          ? draftsR.value.data.data.filter((n) => n.status === 'draft').length
+          : null;
+
+      const email = meR.status === 'fulfilled' ? meR.value.data.email : '';
+      const firstName = email ? email.split('@')[0] : 'there';
+
+      setData({
+        firstName,
+        assignedPatients: patients?.pagination.total ?? null,
+        todaysVisits,
+        pendingDocumentation,
+        visitsThisWeek,
       });
+    }
+
+    void load();
     return () => {
       cancelled = true;
     };
   }, []);
 
-  if (error)
-    return (
-      <div
-        className="m-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800"
-        role="alert"
-      >
-        Failed to load dashboard.
-      </div>
-    );
   if (!data)
     return (
       <div role="status" className="p-4 text-slate-500">
@@ -98,12 +108,13 @@ export function ClinicianDashboard() {
   const hour = new Date().getHours();
   const greeting =
     hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const user = { firstName: data.firstName };
 
   return (
     <div className="mx-auto grid max-w-[640px] gap-6 p-4">
       <div>
         <h1 data-testid="page-title" className="text-2xl">
-          {greeting}, <span data-testid="user-firstname">{data.user.firstName}</span>
+          {greeting}, <span data-testid="user-firstname">{user.firstName}</span>
         </h1>
         <p className="mt-1 text-sm text-slate-500">
           {new Date().toLocaleDateString('en-US', {
@@ -120,7 +131,7 @@ export function ClinicianDashboard() {
             data-testid="stat-assigned-patients"
             className="text-2xl font-bold text-navy-900"
           >
-            {data.assignedPatients}
+            {data.assignedPatients ?? '—'}
           </div>
           <div className="mt-1 text-xs text-slate-500">Patients</div>
         </div>
@@ -138,7 +149,7 @@ export function ClinicianDashboard() {
             data-testid="stat-pending-documentation"
             className="text-2xl font-bold text-teal-700"
           >
-            {data.pendingDocumentation}
+            {data.pendingDocumentation ?? '—'}
           </div>
           <div className="mt-1 text-xs text-slate-500">Pending Docs</div>
         </div>
