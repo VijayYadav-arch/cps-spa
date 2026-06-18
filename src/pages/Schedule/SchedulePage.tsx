@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   listScheduledVisits,
   createScheduledVisit,
@@ -12,6 +13,13 @@ import { usePermission } from '@/permissions/usePermission';
 import { PERMISSIONS } from '@/permissions/permissions';
 
 const NO_PERMISSION = 'You do not have permission to perform this action';
+
+const LEVELS_OF_CARE: { value: string; label: string }[] = [
+  { value: 'RHC', label: 'Routine Home Care' },
+  { value: 'CHC', label: 'Continuous Home Care' },
+  { value: 'IRC', label: 'Inpatient Respite Care' },
+  { value: 'GIP', label: 'General Inpatient' },
+];
 
 const DISCIPLINES: { value: VisitDiscipline; label: string }[] = [
   { value: 'skilled-nursing', label: 'Skilled Nursing' },
@@ -35,12 +43,17 @@ function disciplineLabel(d: string) {
 }
 
 export function SchedulePage() {
+  const navigate = useNavigate();
   const canManage = usePermission(PERMISSIONS.CLINICAL_VISIT_NOTES);
   const [visits, setVisits] = useState<ScheduledVisit[]>([]);
   const [patients, setPatients] = useState<PatientSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  // Completion modal: the nurse picks the per-diem level of care before the
+  // visit is marked complete (it used to silently auto-charge Routine Home Care).
+  const [completing, setCompleting] = useState<ScheduledVisit | null>(null);
+  const [completingLoc, setCompletingLoc] = useState('RHC');
 
   // Create-form state
   const [patientId, setPatientId] = useState('');
@@ -106,13 +119,24 @@ export function SchedulePage() {
     }
   }
 
-  async function setStatus(v: ScheduledVisit, status: ScheduledVisit['status']) {
+  async function setStatus(
+    v: ScheduledVisit,
+    status: ScheduledVisit['status'],
+    levelOfCare?: string,
+  ) {
     try {
-      await updateScheduledVisit(v.id, { status });
+      await updateScheduledVisit(v.id, { status, ...(levelOfCare ? { levelOfCare } : {}) });
       refresh();
     } catch {
       setError('Could not update the visit.');
     }
+  }
+
+  async function confirmComplete() {
+    if (!completing) return;
+    const visit = completing;
+    setCompleting(null);
+    await setStatus(visit, 'completed', completingLoc);
   }
 
   return (
@@ -270,7 +294,7 @@ export function SchedulePage() {
                         {v.status === 'scheduled' && canManage && (
                           <span className="flex justify-end gap-2">
                             <button
-                              onClick={() => setStatus(v, 'completed')}
+                              onClick={() => { setCompleting(v); setCompletingLoc('RHC'); }}
                               className="rounded-md border border-green-200 bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700 hover:bg-green-100"
                             >
                               Complete
@@ -283,6 +307,14 @@ export function SchedulePage() {
                             </button>
                           </span>
                         )}
+                        {v.status === 'completed' && canManage && (
+                          <button
+                            onClick={() => navigate(`/clinician/visits/new?patientId=${v.patientId}`)}
+                            className="rounded-md border border-teal-200 bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-700 hover:bg-teal-100"
+                          >
+                            Document visit
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -291,6 +323,50 @@ export function SchedulePage() {
             </div>
           </section>
         ))
+      )}
+
+      {completing && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Complete visit"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onClick={() => setCompleting(null)}
+        >
+          <div
+            className="grid w-full max-w-sm gap-4 rounded-xl bg-white p-6 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold text-slate-800">Complete visit</h3>
+            <p className="text-sm text-slate-500">
+              For a hospice patient this records a billable attendance day. Confirm the level of
+              care for {new Date(completing.scheduledStart).toLocaleDateString()}.
+            </p>
+            <label className="grid gap-1 text-sm">
+              <span className="font-medium text-slate-600">Level of care</span>
+              <select
+                value={completingLoc}
+                onChange={(e) => setCompletingLoc(e.target.value)}
+                className="form-input"
+              >
+                {LEVELS_OF_CARE.map((l) => (
+                  <option key={l.value} value={l.value}>{l.label}</option>
+                ))}
+              </select>
+            </label>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setCompleting(null)}
+                className="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+              <button onClick={confirmComplete} className="btn-primary">
+                Complete visit
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
