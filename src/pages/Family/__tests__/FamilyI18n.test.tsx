@@ -10,6 +10,8 @@ import i18n from '@/i18n';
 import { FamilyLoginPage } from '../FamilyLoginPage';
 import { FamilyMedications } from '../FamilyMedications';
 import { FamilyVisits } from '../FamilyVisits';
+import { FamilyDocuments } from '../FamilyDocuments';
+import { FamilyBilling } from '../FamilyBilling';
 
 // Stub the portal auth context + family API the pages use. Keep the surface
 // minimal: only what each page touches in render.
@@ -25,6 +27,8 @@ vi.mock('@/portal/familyApi', () => ({
     get: vi.fn(async (path: string) => {
       if (path.endsWith('/medications')) return { data: { data: [] } };
       if (path.endsWith('/visits')) return { data: { data: [] } };
+      if (path.endsWith('/documents')) return { data: { data: [] } };
+      if (path.endsWith('/billing')) return { data: { data: [] } };
       return { data: {} };
     }),
   },
@@ -83,5 +87,29 @@ describe('family portal i18n', () => {
       expect(screen.getByText('Historial de visitas')).toBeInTheDocument();
     });
     expect(screen.getByText('No se encontraron visitas')).toBeInTheDocument();
+  });
+
+  it('documents page renders English then Spanish (M15)', async () => {
+    renderWithRouter(<FamilyDocuments />);
+    await waitFor(() => expect(screen.getByText('Documents')).toBeInTheDocument());
+    expect(screen.getByText('No documents')).toBeInTheDocument();
+    cleanup();
+
+    await i18n.changeLanguage('es-US');
+    renderWithRouter(<FamilyDocuments />);
+    await waitFor(() => expect(screen.getByText('Documentos')).toBeInTheDocument());
+    expect(screen.getByText('No hay documentos')).toBeInTheDocument();
+  });
+
+  it('billing page renders English then Spanish (M15)', async () => {
+    renderWithRouter(<FamilyBilling />);
+    await waitFor(() => expect(screen.getByText('Billing')).toBeInTheDocument());
+    expect(screen.getByText('No billing records')).toBeInTheDocument();
+    cleanup();
+
+    await i18n.changeLanguage('es-US');
+    renderWithRouter(<FamilyBilling />);
+    await waitFor(() => expect(screen.getByText('Facturación')).toBeInTheDocument());
+    expect(screen.getByText('No hay registros de facturación')).toBeInTheDocument();
   });
 });

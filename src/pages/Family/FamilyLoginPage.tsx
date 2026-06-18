@@ -105,6 +105,9 @@ export function FamilyLoginPage() {
         >
           {submitting ? t('family.login.submitting') : t('family.login.submit')}
         </button>
+        <p className="mt-3 text-center text-xs text-slate-500">
+          {t('family.login.forgotPin')}
+        </p>
         <div className="mt-4 text-slate-500">
           <LanguagePicker />
         </div>

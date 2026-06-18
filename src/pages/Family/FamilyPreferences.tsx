@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { familyApi } from '@/portal/familyApi';
 import { usePortalAuth } from '@/portal/PortalAuthContext';
 
@@ -21,17 +22,18 @@ interface PreferencesResponse {
 
 const DEFAULT_PREFS: ChannelPrefs = { sms: true, email: true };
 
-const EVENT_LABELS: Array<{ key: keyof Prefs; label: string }> = [
-  { key: 'visit_scheduled', label: 'Visit Scheduled' },
-  { key: 'visit_completed', label: 'Visit Completed' },
-  { key: 'care_plan_updated', label: 'Care Plan Updated' },
-  { key: 'medication_changed', label: 'Medication Changed' },
-  { key: 'document_uploaded', label: 'Document Uploaded' },
+const EVENT_KEYS: Array<keyof Prefs> = [
+  'visit_scheduled',
+  'visit_completed',
+  'care_plan_updated',
+  'medication_changed',
+  'document_uploaded',
 ];
 
 export function FamilyPreferences() {
   const { session } = usePortalAuth();
   const patientId = session?.patientId;
+  const { t } = useTranslation();
   const [prefs, setPrefs] = useState<Prefs>({});
   const [loaded, setLoaded] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -51,8 +53,8 @@ export function FamilyPreferences() {
         }
         setLoaded(true);
       })
-      .catch(() => setFetchError('Unable to load preferences. Please refresh.'));
-  }, [patientId]);
+      .catch(() => setFetchError(t('family.preferences.loadFailed')));
+  }, [patientId, t]);
 
   async function save(updated: Prefs): Promise<void> {
     if (!patientId) return;
@@ -72,7 +74,7 @@ export function FamilyPreferences() {
     try {
       await save(updated);
     } catch {
-      setSaveError('Could not save your preferences. Please try again.');
+      setSaveError(t('family.preferences.saveFailed'));
       setPrefs(previous);
     }
   }
@@ -91,7 +93,7 @@ export function FamilyPreferences() {
   if (!loaded) {
     return (
       <p data-testid="family-loading" role="status" className="p-4 text-slate-500">
-        Loading…
+        {t('common.loading')}
       </p>
     );
   }
@@ -99,14 +101,14 @@ export function FamilyPreferences() {
   return (
     <section className="grid max-w-[1200px] gap-6 p-6">
       <h1 data-testid="page-title" className="text-2xl">
-        Notification Preferences
+        {t('family.preferences.title')}
       </h1>
       {saved && (
         <p
           data-testid="preferences-saved"
           className="rounded-lg border-l-4 border-success bg-green-50 px-4 py-3 text-sm font-semibold text-green-800"
         >
-          Saved.
+          {t('family.preferences.saved')}
         </p>
       )}
       {saveError && (
@@ -122,14 +124,15 @@ export function FamilyPreferences() {
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr className="bg-navy-900 text-xs font-semibold uppercase tracking-wide text-white">
-              <th className="px-4 py-3 text-left">Event</th>
-              <th className="px-4 py-3 text-center">SMS</th>
-              <th className="px-4 py-3 text-center">Email</th>
+              <th className="px-4 py-3 text-left">{t('family.preferences.columnEvent')}</th>
+              <th className="px-4 py-3 text-center">{t('family.preferences.columnSms')}</th>
+              <th className="px-4 py-3 text-center">{t('family.preferences.columnEmail')}</th>
             </tr>
           </thead>
           <tbody>
-            {EVENT_LABELS.map(({ key, label }) => {
+            {EVENT_KEYS.map((key) => {
               const ch = prefs[key] ?? DEFAULT_PREFS;
+              const label = t(`family.preferences.events.${key}`);
               return (
                 <tr key={key} className="border-t border-slate-100 hover:bg-slate-50">
                   <td className="px-4 py-3 text-slate-700">{label}</td>
@@ -140,7 +143,7 @@ export function FamilyPreferences() {
                       onChange={() => {
                         void toggle(key, 'sms');
                       }}
-                      aria-label={`${label} via SMS`}
+                      aria-label={t('family.preferences.smsAria', { event: label })}
                       data-testid={`pref-${key}-sms`}
                     />
                   </td>
@@ -151,7 +154,7 @@ export function FamilyPreferences() {
                       onChange={() => {
                         void toggle(key, 'email');
                       }}
-                      aria-label={`${label} via Email`}
+                      aria-label={t('family.preferences.emailAria', { event: label })}
                       data-testid={`pref-${key}-email`}
                     />
                   </td>

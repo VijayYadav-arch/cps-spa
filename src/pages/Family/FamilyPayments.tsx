@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { familyApi } from '@/portal/familyApi';
 import { usePortalAuth } from '@/portal/PortalAuthContext';
 
@@ -31,12 +32,13 @@ interface PayResult {
   newBalanceRemaining: number;
 }
 
-const usd = (n: number) =>
-  Number(n).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-
 export function FamilyPayments() {
   const { session } = usePortalAuth();
   const patientId = session?.patientId;
+  const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage ?? 'en-US';
+  const usd = (n: number) =>
+    Number(n).toLocaleString(locale, { style: 'currency', currency: 'USD' });
   const [statements, setStatements] = useState<Statement[] | null>(null);
   const [payments, setPayments] = useState<PaymentItem[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -55,7 +57,7 @@ export function FamilyPayments() {
     familyApi
       .get<{ data: Statement[] }>(`/patients/${patientId}/statements`)
       .then((r) => setStatements(r.data.data ?? []))
-      .catch(() => setError('Unable to load statements. Please refresh or contact your care team.'));
+      .catch(() => setError(t('family.payments.loadFailed')));
     familyApi
       .get<{ data: PaymentItem[] }>(`/patients/${patientId}/payments`)
       .then((r) => setPayments(r.data.data ?? []))
@@ -93,7 +95,7 @@ export function FamilyPayments() {
     } catch (e) {
       setError(
         (e as { response?: { data?: { error?: string } } })?.response?.data?.error ??
-          'Payment could not be processed.',
+          t('family.payments.failed'),
       );
     } finally {
       setSubmitting(false);
@@ -108,15 +110,15 @@ export function FamilyPayments() {
     );
   }
   if (statements === null) {
-    return <p data-testid="family-loading" role="status" className="p-4 text-slate-500">Loading…</p>;
+    return <p data-testid="family-loading" role="status" className="p-4 text-slate-500">{t('common.loading')}</p>;
   }
 
   return (
     <section className="grid max-w-[1200px] gap-6 p-6">
       <div className="flex items-center justify-between">
-        <h1 data-testid="page-title" className="text-2xl">Statements &amp; Payments</h1>
+        <h1 data-testid="page-title" className="text-2xl">{t('family.payments.title')}</h1>
         <Link to="/family/billing" className="text-sm font-medium text-teal-700 hover:underline">
-          View billing →
+          {t('family.payments.billingLink')}
         </Link>
       </div>
 
@@ -125,41 +127,41 @@ export function FamilyPayments() {
       )}
       {confirmation && (
         <p className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-          Payment received — confirmation <strong>{confirmation}</strong>. Thank you.
+          {t('family.payments.received', { code: confirmation })}
         </p>
       )}
 
       <div>
-        <h2 className="mb-2 text-lg font-semibold">Statements</h2>
+        <h2 className="mb-2 text-lg font-semibold">{t('family.payments.statementsHeading')}</h2>
         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
-                <th className="px-4 py-3">Statement Date</th>
-                <th className="px-4 py-3">Due</th>
-                <th className="px-4 py-3">Balance</th>
-                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">{t('family.payments.columnStatementDate')}</th>
+                <th className="px-4 py-3">{t('family.payments.columnDue')}</th>
+                <th className="px-4 py-3">{t('family.payments.columnBalance')}</th>
+                <th className="px-4 py-3">{t('family.payments.columnStatus')}</th>
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
             <tbody>
               {statements.map((s) => (
                 <tr key={s.id} className="border-t border-slate-100 hover:bg-slate-50">
-                  <td className="px-4 py-3 text-slate-700">{new Date(s.statementDate).toLocaleDateString()}</td>
-                  <td className="px-4 py-3 text-slate-700">{new Date(s.dueDate).toLocaleDateString()}</td>
+                  <td className="px-4 py-3 text-slate-700">{new Date(s.statementDate).toLocaleDateString(locale)}</td>
+                  <td className="px-4 py-3 text-slate-700">{new Date(s.dueDate).toLocaleDateString(locale)}</td>
                   <td className="px-4 py-3 text-slate-700">{usd(s.balanceRemaining)}</td>
                   <td className="px-4 py-3 capitalize text-slate-700">{s.status}</td>
                   <td className="px-4 py-3 text-right">
                     {s.balanceRemaining > 0 && (
                       <button onClick={() => openPay(s)} className="btn-primary px-3 py-1 text-xs">
-                        Make a payment
+                        {t('family.payments.makePayment')}
                       </button>
                     )}
                   </td>
                 </tr>
               ))}
               {statements.length === 0 && (
-                <tr><td colSpan={5} className="px-4 py-6 text-center text-slate-500">No statements.</td></tr>
+                <tr><td colSpan={5} className="px-4 py-6 text-center text-slate-500">{t('family.payments.noStatements')}</td></tr>
               )}
             </tbody>
           </table>
@@ -167,21 +169,21 @@ export function FamilyPayments() {
       </div>
 
       <div>
-        <h2 className="mb-2 text-lg font-semibold">Payment history</h2>
+        <h2 className="mb-2 text-lg font-semibold">{t('family.payments.historyHeading')}</h2>
         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr className="bg-navy-900 text-left text-xs font-semibold uppercase tracking-wide text-white">
-                <th className="px-4 py-3">Date</th>
-                <th className="px-4 py-3">Amount</th>
-                <th className="px-4 py-3">Method</th>
-                <th className="px-4 py-3">Confirmation</th>
+                <th className="px-4 py-3">{t('family.payments.columnDate')}</th>
+                <th className="px-4 py-3">{t('family.payments.columnAmount')}</th>
+                <th className="px-4 py-3">{t('family.payments.columnMethod')}</th>
+                <th className="px-4 py-3">{t('family.payments.columnConfirmation')}</th>
               </tr>
             </thead>
             <tbody>
               {payments.map((p) => (
                 <tr key={p.id} className="border-t border-slate-100">
-                  <td className="px-4 py-3 text-slate-700">{new Date(p.paidAtUtc).toLocaleDateString()}</td>
+                  <td className="px-4 py-3 text-slate-700">{new Date(p.paidAtUtc).toLocaleDateString(locale)}</td>
                   <td className="px-4 py-3 text-slate-700">{usd(p.amount)}</td>
                   <td className="px-4 py-3 capitalize text-slate-700">
                     {p.method}{p.last4 ? ` ••${p.last4}` : ''}
@@ -190,7 +192,7 @@ export function FamilyPayments() {
                 </tr>
               ))}
               {payments.length === 0 && (
-                <tr><td colSpan={4} className="px-4 py-6 text-center text-slate-500">No payments yet.</td></tr>
+                <tr><td colSpan={4} className="px-4 py-6 text-center text-slate-500">{t('family.payments.noPayments')}</td></tr>
               )}
             </tbody>
           </table>
@@ -198,39 +200,39 @@ export function FamilyPayments() {
       </div>
 
       {paying && (
-        <div role="dialog" aria-label="Make a payment" className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+        <div role="dialog" aria-label={t('family.payments.dialogTitle')} className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="w-[420px] rounded-xl border border-slate-200 bg-white p-6 shadow-lg grid gap-4">
-            <h2 className="text-lg font-semibold">Pay statement</h2>
-            <p className="text-sm text-slate-500">Balance due {usd(paying.balanceRemaining)}</p>
+            <h2 className="text-lg font-semibold">{t('family.payments.dialogTitle')}</h2>
+            <p className="text-sm text-slate-500">{t('family.payments.balanceDue', { amount: usd(paying.balanceRemaining) })}</p>
             <label className="grid gap-1.5">
-              <span className="text-sm font-medium text-slate-600">Amount</span>
+              <span className="text-sm font-medium text-slate-600">{t('family.payments.amountLabel')}</span>
               <input type="number" min="0" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} className="form-input w-40" />
             </label>
             <label className="grid gap-1.5">
-              <span className="text-sm font-medium text-slate-600">Method</span>
+              <span className="text-sm font-medium text-slate-600">{t('family.payments.methodLabel')}</span>
               <select value={method} onChange={(e) => setMethod(e.target.value as 'demo' | 'card' | 'ach')} className="form-input w-40">
-                <option value="demo">Demo</option>
-                <option value="card">Card</option>
-                <option value="ach">Bank (ACH)</option>
+                <option value="demo">{t('family.payments.methodDemo')}</option>
+                <option value="card">{t('family.payments.methodCard')}</option>
+                <option value="ach">{t('family.payments.methodAch')}</option>
               </select>
             </label>
             {method === 'card' && (
               <>
                 <label className="grid gap-1.5">
-                  <span className="text-sm font-medium text-slate-600">Card number</span>
+                  <span className="text-sm font-medium text-slate-600">{t('family.payments.cardNumberLabel')}</span>
                   <input value={cardNumber} onChange={(e) => setCardNumber(e.target.value)} className="form-input" />
                 </label>
                 <label className="grid gap-1.5">
-                  <span className="text-sm font-medium text-slate-600">Name on card</span>
+                  <span className="text-sm font-medium text-slate-600">{t('family.payments.nameOnCardLabel')}</span>
                   <input value={nameOnCard} onChange={(e) => setNameOnCard(e.target.value)} className="form-input" />
                 </label>
               </>
             )}
             <div className="flex justify-end gap-2">
               <button onClick={() => setPaying(null)} disabled={submitting}
-                className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60">Cancel</button>
+                className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60">{t('family.payments.cancel')}</button>
               <button onClick={submitPayment} disabled={submitting || !(Number(amount) > 0)} className="btn-primary disabled:opacity-60">
-                {submitting ? 'Processing…' : `Pay ${usd(Number(amount) || 0)}`}
+                {submitting ? t('family.payments.processing') : t('family.payments.payAmount', { amount: usd(Number(amount) || 0) })}
               </button>
             </div>
           </div>
