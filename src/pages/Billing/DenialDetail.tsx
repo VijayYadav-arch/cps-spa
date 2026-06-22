@@ -10,6 +10,7 @@ import {
   resolveDenial,
   startDenialAppeal,
   submitDenialAppeal,
+  writeOffDenial,
   type DenialAnalysisResult,
   type DenialItem,
 } from '@/api/billing';
@@ -38,7 +39,7 @@ const CATEGORY_BADGE: Record<string, string> = {
   other: 'bg-slate-100 text-slate-600',
 };
 
-type ModalType = 'appeal' | 'submit-appeal' | 'escalate' | 'resolve' | 'assign' | null;
+type ModalType = 'appeal' | 'submit-appeal' | 'escalate' | 'resolve' | 'assign' | 'write-off' | null;
 
 function getActionForStatus(status: string): ModalType {
   if (status === 'new') return 'appeal';
@@ -74,9 +75,12 @@ function ActionModal({
     escalate: 'Escalate Denial',
     resolve: 'Resolve Denial',
     assign: 'Assign Denial',
+    'write-off': 'Write Off Denial',
   };
   const isResolve = type === 'resolve';
   const isAssign = type === 'assign';
+  const isWriteOff = type === 'write-off';
+  const requiresText = isResolve || isWriteOff;
 
   return (
     <div
@@ -87,16 +91,16 @@ function ActionModal({
     >
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md mx-4">
         <h2 className="text-xl font-semibold text-navy-900 mb-4">{titles[type]}</h2>
-        {isResolve ? (
+        {requiresText ? (
           <label className="block">
             <span className="block text-sm font-medium text-navy-700 mb-1">
-              Resolution <span className="text-red-600">*</span>
+              {isWriteOff ? 'Reason' : 'Resolution'} <span className="text-red-600">*</span>
             </span>
             <textarea
               value={text}
               onChange={(e) => setText(e.target.value)}
               rows={4}
-              placeholder="Describe how this denial was resolved..."
+              placeholder={isWriteOff ? 'Why is this denial being written off?' : 'Describe how this denial was resolved...'}
               className="w-full border border-navy-200 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-navy-500"
             />
           </label>
@@ -134,7 +138,7 @@ function ActionModal({
           <button
             type="button"
             onClick={() => onConfirm(text)}
-            disabled={saving || (isResolve && !text.trim()) || (isAssign && !text.trim())}
+            disabled={saving || (requiresText && !text.trim()) || (isAssign && !text.trim())}
             className="px-5 py-2 bg-navy-900 text-white text-sm rounded-lg hover:bg-navy-800 disabled:opacity-50"
           >
             {saving ? 'Saving...' : 'Confirm'}
@@ -262,6 +266,7 @@ export function DenialDetail() {
       else if (modal === 'submit-appeal') await submitDenialAppeal(item.id, text || null);
       else if (modal === 'escalate') await escalateDenial(item.id, text || null);
       else if (modal === 'resolve') await resolveDenial(item.id, text);
+      else if (modal === 'write-off') await writeOffDenial(item.id, text);
       else if (modal === 'assign') await assignDenial(item.id, parseInt(text, 10));
       const refreshed = await getDenialById(item.id);
       setItem(refreshed);
@@ -496,7 +501,21 @@ export function DenialDetail() {
             >
               Assign
             </button>
+            <button
+              type="button"
+              onClick={() => setModal('write-off')}
+              disabled={!canManageDenials}
+              title={!canManageDenials ? NO_PERMISSION : undefined}
+              className="px-5 py-2 bg-red-50 text-red-700 text-sm rounded-lg hover:bg-red-100 disabled:opacity-50"
+            >
+              Write off
+            </button>
           </div>
+        </div>
+      )}
+      {item.status === 'written-off' && (
+        <div className="bg-navy-50 rounded-xl border border-navy-100 p-6 text-center text-navy-600 font-medium">
+          Written off {item.resolvedAt ? `on ${new Date(item.resolvedAt).toLocaleDateString()}` : ''}
         </div>
       )}
       {item.status === 'resolved' && (

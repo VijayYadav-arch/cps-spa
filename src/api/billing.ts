@@ -384,6 +384,11 @@ export const escalateDenial = (
 ): Promise<{ data: unknown }> =>
   apiClient.put<{ data: unknown }>(`/billing/denials/${denialId}/escalate`, { notes }).then((r) => r.data);
 
+export const writeOffDenial = (
+  denialId: number, reason: string,
+): Promise<{ data: unknown }> =>
+  apiClient.put<{ data: unknown }>(`/billing/denials/${denialId}/write-off`, { reason }).then((r) => r.data);
+
 export const getDenialById = (denialId: number): Promise<DenialItem> =>
   apiClient.get<{ data: DenialItem }>(`/billing/denials/${denialId}`).then((r) => r.data.data);
 

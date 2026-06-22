@@ -24,6 +24,7 @@ vi.mock('@/api/billing', async () => {
     escalateDenial: vi.fn(),
     resolveDenial: vi.fn(),
     assignDenial: vi.fn(),
+    writeOffDenial: vi.fn(),
     draftDenialAppealStreaming: vi.fn(),
   };
 });
@@ -37,6 +38,7 @@ import {
   resolveDenial,
   startDenialAppeal,
   submitDenialAppeal,
+  writeOffDenial,
 } from '@/api/billing';
 import type { DenialAppealDraftStreamHandlers } from '@/api/billing';
 
@@ -161,6 +163,24 @@ describe('DenialDetail', () => {
 
     await waitFor(() => {
       expect(startDenialAppeal).toHaveBeenCalledWith(7, 'Submitting medical records');
+    });
+  });
+
+  it('writes off a denial with a reason (E3)', async () => {
+    vi.mocked(getDenialById).mockResolvedValueOnce(buildDenial());
+    vi.mocked(writeOffDenial).mockResolvedValueOnce({ data: null });
+    vi.mocked(getDenialById).mockResolvedValueOnce({ ...buildDenial(), status: 'written-off' });
+
+    const user = userEvent.setup();
+    renderAt();
+    await waitFor(() => screen.getByRole('button', { name: /write off/i }));
+    await user.click(screen.getByRole('button', { name: /write off/i }));
+
+    await user.type(screen.getByRole('textbox'), 'Below appeal-cost threshold');
+    await user.click(screen.getByRole('button', { name: /confirm/i }));
+
+    await waitFor(() => {
+      expect(writeOffDenial).toHaveBeenCalledWith(7, 'Below appeal-cost threshold');
     });
   });
 
