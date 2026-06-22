@@ -18,6 +18,7 @@ export interface PatientDetail extends PatientSummary {
   state: string | null;
   zip: string | null;
   insuranceId: string | null;
+  admissionType: string | null;
   updatedAt: string | null;
 }
 
