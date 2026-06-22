@@ -65,3 +65,43 @@ export const signPlanOfCare = (pocId: number, signedBy: string): Promise<HomeHea
 
 export const recertifyEpisode = (episodeId: number): Promise<HomeHealthEpisode> =>
   apiClient.post<HomeHealthEpisode>(`/home-health/episodes/${episodeId}/recertify`, {}).then((r) => r.data);
+
+/** OASIS-E assessment (pragmatic — PDGM functional items + lifecycle). */
+export interface OasisFunctional {
+  grooming: number;
+  dressUpper: number;
+  dressLower: number;
+  bathing: number;
+  toiletTransferring: number;
+  transferring: number;
+  ambulation: number;
+}
+
+export interface HomeHealthOasis {
+  id: number;
+  episodeId: number;
+  periodNumber: number;
+  assessmentType: string;
+  assessmentDate: string;
+  status: string; // "draft" | "completed" | "submitted"
+  functional: OasisFunctional;
+  functionalPoints: number;
+  functionalLevel: string; // "low" | "medium" | "high"
+  completedAt: string | null;
+}
+
+export interface CreateOasisInput extends OasisFunctional {
+  assessmentType: string;
+  assessmentDate: string;
+}
+
+export const listOasis = (episodeId: number): Promise<HomeHealthOasis[]> =>
+  apiClient
+    .get<{ data: HomeHealthOasis[] }>(`/home-health/episodes/${episodeId}/oasis`)
+    .then((r) => r.data.data ?? []);
+
+export const createOasis = (episodeId: number, input: CreateOasisInput): Promise<HomeHealthOasis> =>
+  apiClient.post<HomeHealthOasis>(`/home-health/episodes/${episodeId}/oasis`, input).then((r) => r.data);
+
+export const completeOasis = (oasisId: number): Promise<HomeHealthOasis> =>
+  apiClient.put<HomeHealthOasis>(`/home-health/oasis/${oasisId}/complete`, {}).then((r) => r.data);

@@ -11,6 +11,7 @@ import {
 } from '@/api/homehealth';
 import { usePermission } from '@/permissions/usePermission';
 import { PERMISSIONS } from '@/permissions/permissions';
+import { HomeHealthOasisSection } from './HomeHealthOasisSection';
 
 const NO_PERMISSION = 'You do not have permission to perform this action';
 
@@ -219,7 +220,9 @@ export function HomeHealthEpisodeDetail() {
         )}
       </section>
 
-      <p className="text-sm text-slate-400">OASIS assessment and PDGM billing arrive in later phases of the home-health build.</p>
+      <HomeHealthOasisSection episodeId={epId} canManage={canManage} />
+
+      <p className="text-sm text-slate-400">PDGM billing (HIPPS, NOA, 837I) arrives in a later phase of the home-health build.</p>
     </div>
   );
 }
