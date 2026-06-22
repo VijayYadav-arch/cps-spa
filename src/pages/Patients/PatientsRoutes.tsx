@@ -5,6 +5,8 @@ import { PatientHistory } from './PatientHistory';
 import { IntakeWizard } from './intake/IntakeWizard';
 import { NewPatientForm } from './NewPatientForm';
 import { HospiceElectionWizard } from '@/pages/Hospice/HospiceElectionWizard';
+import { HomeHealthEpisodeWizard } from '@/pages/HomeHealth/HomeHealthEpisodeWizard';
+import { HomeHealthEpisodeDetail } from '@/pages/HomeHealth/HomeHealthEpisodeDetail';
 import { HospiceElectionDetail } from '@/pages/Hospice/HospiceElectionDetail';
 import { HospiceRevocation } from '@/pages/Hospice/HospiceRevocation';
 import { HospiceAttendanceGrid } from '@/pages/Hospice/HospiceAttendanceGrid';
@@ -38,6 +40,8 @@ export function PatientsRoutes() {
       <Route path=":id" element={<PatientDetail />} />
       <Route path=":id/history" element={<PatientHistory />} />
       <Route path=":id/hospice/new" element={<HospiceElectionWizard />} />
+      <Route path=":id/home-health/new" element={<HomeHealthEpisodeWizard />} />
+      <Route path=":id/home-health/:episodeId" element={<HomeHealthEpisodeDetail />} />
       <Route path=":id/hospice/:electionId" element={<HospiceElectionDetail />} />
       <Route path=":id/hospice/:electionId/revoke" element={<HospiceRevocation />} />
       <Route path=":id/hospice/:electionId/attendance" element={<HospiceAttendanceGrid />} />

@@ -151,6 +151,12 @@ export function IntakeWizard() {
         navigate(`/patients/${result.id}/hospice/new${q}`, {
           state: { intakeCertification: toCertificationHandoff(form) },
         });
+      } else if (form.admissionType === 'home_health') {
+        // Home-health admissions hand off into the HH episode wizard, prefilling the
+        // Start of Care from the admission date (closes the former dead-end — E2).
+        const soc = form.startOfCare || form.admittedAt;
+        const q = soc ? `?soc=${soc}` : '';
+        navigate(`/patients/${result.id}/home-health/new${q}`);
       } else {
         navigate(`/patients/${result.id}`);
       }

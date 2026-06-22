@@ -98,6 +98,10 @@ export const PERMISSIONS = {
   HOSPICE_IDG_MANAGE: 'hospice:idg_manage',
   HOSPICE_VIEW: 'hospice:view',
 
+  // Home health (PDGM episode management)
+  HOMEHEALTH_MANAGE: 'homehealth:manage',
+  HOMEHEALTH_VIEW: 'homehealth:view',
+
   // Hospice live-discharge management (Sub-system E)
   HOSPICE_DISCHARGE_MANAGE: 'hospice:discharge_manage',
   HOSPICE_DISCHARGE_VIEW: 'hospice:discharge_view',

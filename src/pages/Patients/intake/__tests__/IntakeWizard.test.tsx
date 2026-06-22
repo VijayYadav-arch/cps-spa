@@ -344,6 +344,37 @@ describe('IntakeWizard', () => {
     });
   });
 
+  it('on final submit (home health): hands off to the home-health episode wizard (E2)', async () => {
+    vi.mocked(intakeApi.getMyOpenDraft).mockResolvedValueOnce({
+      id: 13,
+      ownerUserId: 'u1',
+      organizationId: 7,
+      currentStep: 4,
+      formJson: JSON.stringify({
+        organizationId: '7',
+        firstName: 'Jo',
+        lastName: 'Doe',
+        admissionType: 'home_health',
+        admittedAt: '2026-06-02',
+        startOfCare: '2026-06-03',
+      }),
+      createdAt: '2026-06-01T00:00:00Z',
+      updatedAt: '2026-06-02T00:00:00Z',
+      completedAt: null,
+    });
+    vi.mocked(intakeApi.submitFinal).mockResolvedValueOnce({ id: 777 });
+    vi.mocked(intakeApi.deleteDraft).mockResolvedValueOnce(undefined);
+
+    const user = userEvent.setup();
+    renderWizard();
+    await user.click(await screen.findByRole('button', { name: /resume draft/i }));
+    await user.click(await screen.findByRole('button', { name: /complete intake/i }));
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith('/patients/777/home-health/new?soc=2026-06-03');
+    });
+  });
+
   describe('permission gating', () => {
     // A non-hospice draft on its final step (4) so "Complete intake" is visible.
     const finalDraft = {

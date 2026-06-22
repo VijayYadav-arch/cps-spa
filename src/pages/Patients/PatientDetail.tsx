@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getPatient, type PatientDetail as PatientDetailType } from '@/api/patients';
 import { HospiceSummaryCard } from '@/components/HospiceSummaryCard';
+import { HomeHealthSummaryCard } from '@/components/HomeHealthSummaryCard';
 import { PatientEligibilityCard } from '@/components/PatientEligibilityCard';
 import { FamilyAccessCard } from '@/components/FamilyAccessCard';
 
@@ -67,7 +68,9 @@ export function PatientDetail() {
         insuranceId={patient.insuranceId}
       />
       <FamilyAccessCard patientId={parseInt(id!, 10)} />
-      <HospiceSummaryCard patientId={parseInt(id!, 10)} />
+      {patient.admissionType === 'home_health'
+        ? <HomeHealthSummaryCard patientId={parseInt(id!, 10)} />
+        : <HospiceSummaryCard patientId={parseInt(id!, 10)} />}
     </div>
   );
 }
