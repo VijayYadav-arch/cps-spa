@@ -83,4 +83,19 @@ describe('HomeHealthEpisodeDetail', () => {
 
     await waitFor(() => expect(hhApi.signPlanOfCare).toHaveBeenCalledWith(9, 'Dr. Smith'));
   });
+
+  it('discharges the episode (Phase 5)', async () => {
+    vi.mocked(hhApi.dischargeEpisode).mockResolvedValue({
+      id: 1, episodeId: 42, dischargeDate: '2026-07-15', reason: 'goals-met', isTransfer: false, notes: null,
+    });
+    renderDetail();
+    await waitFor(() => screen.getByText('Home Health Episode #42'));
+
+    fireEvent.click(screen.getByRole('button', { name: /^discharge$/i }));
+    fireEvent.click(screen.getByRole('button', { name: /confirm discharge/i }));
+
+    await waitFor(() =>
+      expect(hhApi.dischargeEpisode).toHaveBeenCalledWith(42, expect.objectContaining({ reason: 'goals-met', isTransfer: false })),
+    );
+  });
 });

@@ -6,6 +6,7 @@ import {
   createPlanOfCare,
   signPlanOfCare,
   recertifyEpisode,
+  dischargeEpisode,
   type HomeHealthEpisode,
   type HomeHealthPlanOfCare,
 } from '@/api/homehealth';
@@ -35,6 +36,8 @@ export function HomeHealthEpisodeDetail() {
   const [busy, setBusy] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ certifyingPhysicianName: '', certifyingPhysicianNpi: '', faceToFaceDate: '', orders: '', goals: '' });
+  const [showDischarge, setShowDischarge] = useState(false);
+  const [dischargeForm, setDischargeForm] = useState({ dischargeDate: new Date().toISOString().slice(0, 10), reason: 'goals-met', isTransfer: false, notes: '' });
 
   const load = useCallback(() => {
     if (!epId) return;
@@ -78,6 +81,19 @@ export function HomeHealthEpisodeDetail() {
     void run(() => signPlanOfCare(poc.id, signer.trim()));
   }
 
+  async function handleDischarge(e: React.FormEvent) {
+    e.preventDefault();
+    await run(async () => {
+      await dischargeEpisode(epId, {
+        dischargeDate: dischargeForm.dischargeDate,
+        reason: dischargeForm.reason,
+        isTransfer: dischargeForm.isTransfer,
+        notes: dischargeForm.notes || null,
+      });
+      setShowDischarge(false);
+    });
+  }
+
   if (error && !episode)
     return <div role="alert" className="m-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">{error}</div>;
   if (!episode) return <div role="status" className="p-6 text-slate-500">Loading…</div>;
@@ -96,6 +112,16 @@ export function HomeHealthEpisodeDetail() {
           <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${STATUS_TINT[episode.status] ?? 'bg-slate-100 text-slate-600'}`}>
             {episode.status}
           </span>
+          {episode.status === 'active' && !showDischarge && (
+            <button
+              onClick={() => setShowDischarge(true)}
+              disabled={!canManage}
+              title={!canManage ? NO_PERMISSION : undefined}
+              className="ml-auto rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+            >
+              Discharge
+            </button>
+          )}
         </div>
         <div className="section-line" />
       </header>
@@ -112,6 +138,48 @@ export function HomeHealthEpisodeDetail() {
         <dt className="font-medium text-slate-600">Certification period</dt>
         <dd className="text-slate-800">{episode.certFromDate} → {episode.certToDate} (period {episode.periodNumber})</dd>
       </dl>
+
+      {showDischarge && (
+        <form onSubmit={handleDischarge} className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <h3 className="text-lg font-semibold">Discharge episode</h3>
+          <div className="flex flex-wrap gap-3">
+            <label className="grid gap-1 text-sm">
+              <span className="font-medium text-slate-600">Discharge date</span>
+              <input type="date" value={dischargeForm.dischargeDate}
+                onChange={(e) => setDischargeForm((f) => ({ ...f, dischargeDate: e.target.value }))} className="form-input w-44" />
+            </label>
+            <label className="grid gap-1 text-sm">
+              <span className="font-medium text-slate-600">Reason</span>
+              <select value={dischargeForm.reason}
+                onChange={(e) => setDischargeForm((f) => ({ ...f, reason: e.target.value }))} className="form-input w-52">
+                <option value="goals-met">Goals met</option>
+                <option value="transferred">Transferred</option>
+                <option value="hospitalized">Hospitalized</option>
+                <option value="deceased">Deceased</option>
+                <option value="moved">Moved</option>
+                <option value="other">Other</option>
+              </select>
+            </label>
+            <label className="flex items-end gap-2 pb-2 text-sm text-slate-600">
+              <input type="checkbox" checked={dischargeForm.isTransfer}
+                onChange={(e) => setDischargeForm((f) => ({ ...f, isTransfer: e.target.checked }))} />
+              Transfer to another agency
+            </label>
+          </div>
+          <label className="grid gap-1 text-sm">
+            <span className="font-medium text-slate-600">Notes</span>
+            <textarea rows={2} value={dischargeForm.notes}
+              onChange={(e) => setDischargeForm((f) => ({ ...f, notes: e.target.value }))} className="form-input" />
+          </label>
+          <div className="flex gap-2">
+            <button type="button" onClick={() => setShowDischarge(false)} disabled={busy}
+              className="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50">Cancel</button>
+            <button type="submit" disabled={busy} className="btn-primary disabled:opacity-60">
+              {busy ? 'Discharging…' : 'Confirm discharge'}
+            </button>
+          </div>
+        </form>
+      )}
 
       <section className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="flex items-center justify-between">
