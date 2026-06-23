@@ -12,6 +12,7 @@ import {
 import { usePermission } from '@/permissions/usePermission';
 import { PERMISSIONS } from '@/permissions/permissions';
 import { HomeHealthOasisSection } from './HomeHealthOasisSection';
+import { HomeHealthNoaCard } from './HomeHealthNoaCard';
 import { HomeHealthPaymentPeriodsSection } from './HomeHealthPaymentPeriodsSection';
 
 const NO_PERMISSION = 'You do not have permission to perform this action';
@@ -222,6 +223,8 @@ export function HomeHealthEpisodeDetail() {
       </section>
 
       <HomeHealthOasisSection episodeId={epId} canManage={canManage} />
+
+      <HomeHealthNoaCard episodeId={epId} canManage={canManage} />
 
       <HomeHealthPaymentPeriodsSection episodeId={epId} canManage={canManage} />
 

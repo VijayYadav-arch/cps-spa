@@ -29,6 +29,9 @@ describe('HomeHealthEpisodeDetail', () => {
     vi.mocked(hhApi.listPlansOfCare).mockResolvedValue([]);
     vi.mocked(hhApi.listOasis).mockResolvedValue([]);
     vi.mocked(hhApi.listPaymentPeriods).mockResolvedValue([]);
+    vi.mocked(hhApi.getNoa).mockResolvedValue({
+      id: 1, episodeId: 42, deadlineDate: '2026-06-06', status: 'pending', submissionMode: null, submittedAt: null,
+    });
   });
 
   it('renders episode details + empty POC state', async () => {

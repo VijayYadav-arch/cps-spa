@@ -129,3 +129,19 @@ export const listPaymentPeriods = (episodeId: number): Promise<HomeHealthPayment
 
 export const createPaymentPeriod = (episodeId: number): Promise<HomeHealthPaymentPeriod> =>
   apiClient.post<HomeHealthPaymentPeriod>(`/home-health/episodes/${episodeId}/payment-periods`, {}).then((r) => r.data);
+
+/** Notice of Admission (one per episode, 5-day timely filing). */
+export interface HomeHealthNoa {
+  id: number;
+  episodeId: number;
+  deadlineDate: string;
+  status: string; // "pending" | "submitted" | "late"
+  submissionMode: string | null;
+  submittedAt: string | null;
+}
+
+export const getNoa = (episodeId: number): Promise<HomeHealthNoa> =>
+  apiClient.get<HomeHealthNoa>(`/home-health/episodes/${episodeId}/noa`).then((r) => r.data);
+
+export const submitNoa = (episodeId: number, mode: string): Promise<HomeHealthNoa> =>
+  apiClient.post<HomeHealthNoa>(`/home-health/episodes/${episodeId}/noa/submit`, { mode }).then((r) => r.data);
