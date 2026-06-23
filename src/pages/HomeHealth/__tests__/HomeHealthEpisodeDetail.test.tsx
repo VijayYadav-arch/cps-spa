@@ -28,6 +28,7 @@ describe('HomeHealthEpisodeDetail', () => {
     vi.mocked(hhApi.getHomeHealthEpisode).mockResolvedValue(episode);
     vi.mocked(hhApi.listPlansOfCare).mockResolvedValue([]);
     vi.mocked(hhApi.listOasis).mockResolvedValue([]);
+    vi.mocked(hhApi.listPaymentPeriods).mockResolvedValue([]);
   });
 
   it('renders episode details + empty POC state', async () => {
