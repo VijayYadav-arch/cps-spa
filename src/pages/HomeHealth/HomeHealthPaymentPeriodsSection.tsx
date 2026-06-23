@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
-import { listPaymentPeriods, createPaymentPeriod, type HomeHealthPaymentPeriod } from '@/api/homehealth';
+import { Link } from 'react-router-dom';
+import {
+  listPaymentPeriods,
+  createPaymentPeriod,
+  buildClaimForPeriod,
+  type HomeHealthPaymentPeriod,
+} from '@/api/homehealth';
 
 const NO_PERMISSION = 'You do not have permission to perform this action';
 
@@ -12,6 +18,7 @@ const LEVEL_TINT: Record<string, string> = {
 export function HomeHealthPaymentPeriodsSection({ episodeId, canManage }: { episodeId: number; canManage: boolean }) {
   const [periods, setPeriods] = useState<HomeHealthPaymentPeriod[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(() => {
@@ -33,6 +40,23 @@ export function HomeHealthPaymentPeriodsSection({ episodeId, canManage }: { epis
     }
   }
 
+  async function buildClaim(periodId: number) {
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    try {
+      const r = await buildClaimForPeriod(periodId);
+      setNotice(
+        `Built claim ${r.claimNumber} — ${r.isLupa ? `LUPA, ${r.visitCount} visit(s)` : 'full case-mix'}, $${r.amount.toLocaleString()}.`,
+      );
+      load();
+    } catch (e) {
+      setError((e as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Could not build the claim.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <section className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
       <div className="flex items-center justify-between">
@@ -48,6 +72,7 @@ export function HomeHealthPaymentPeriodsSection({ episodeId, canManage }: { epis
       </div>
 
       {error && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{error}</div>}
+      {notice && <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800">{notice}</div>}
 
       {periods.length === 0 ? (
         <p className="text-sm text-slate-500">No payment periods yet.</p>
@@ -61,6 +86,7 @@ export function HomeHealthPaymentPeriodsSection({ episodeId, canManage }: { epis
               <th className="py-1.5">Functional</th>
               <th className="py-1.5">HIPPS</th>
               <th className="py-1.5">Status</th>
+              <th className="py-1.5"></th>
             </tr>
           </thead>
           <tbody>
@@ -76,6 +102,22 @@ export function HomeHealthPaymentPeriodsSection({ episodeId, canManage }: { epis
                 </td>
                 <td className="py-2 font-mono text-slate-800">{p.hippsCode}</td>
                 <td className="py-2 text-slate-600 capitalize">{p.status}</td>
+                <td className="py-2 text-right">
+                  {p.status === 'open' ? (
+                    <button
+                      onClick={() => buildClaim(p.id)}
+                      disabled={!canManage || busy}
+                      title={!canManage ? NO_PERMISSION : undefined}
+                      className="rounded-md border border-teal-200 bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-700 hover:bg-teal-100 disabled:opacity-60"
+                    >
+                      Build claim
+                    </button>
+                  ) : p.claimId ? (
+                    <Link to={`/claims/${p.claimId}`} className="text-xs font-medium text-teal-700 hover:underline">
+                      View claim →
+                    </Link>
+                  ) : null}
+                </td>
               </tr>
             ))}
           </tbody>

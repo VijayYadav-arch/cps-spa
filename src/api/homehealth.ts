@@ -145,3 +145,18 @@ export const getNoa = (episodeId: number): Promise<HomeHealthNoa> =>
 
 export const submitNoa = (episodeId: number, mode: string): Promise<HomeHealthNoa> =>
   apiClient.post<HomeHealthNoa>(`/home-health/episodes/${episodeId}/noa/submit`, { mode }).then((r) => r.data);
+
+/** Result of building the 837I final claim for a 30-day period. */
+export interface HomeHealthClaimResult {
+  claimId: number;
+  claimNumber: string;
+  periodId: number;
+  hippsCode: string;
+  visitCount: number;
+  isLupa: boolean;
+  amount: number;
+  warnings: string[];
+}
+
+export const buildClaimForPeriod = (periodId: number): Promise<HomeHealthClaimResult> =>
+  apiClient.post<HomeHealthClaimResult>(`/home-health/payment-periods/${periodId}/build-claim`, {}).then((r) => r.data);
