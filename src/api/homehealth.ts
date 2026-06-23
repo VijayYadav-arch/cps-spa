@@ -105,3 +105,27 @@ export const createOasis = (episodeId: number, input: CreateOasisInput): Promise
 
 export const completeOasis = (oasisId: number): Promise<HomeHealthOasis> =>
   apiClient.put<HomeHealthOasis>(`/home-health/oasis/${oasisId}/complete`, {}).then((r) => r.data);
+
+/** A PDGM 30-day payment period with its computed HIPPS code. */
+export interface HomeHealthPaymentPeriod {
+  id: number;
+  episodeId: number;
+  periodSequence: number;
+  fromDate: string;
+  toDate: string;
+  admissionTiming: string; // "early" | "late"
+  clinicalGroupCode: string;
+  functionalLevel: string;
+  comorbidityLevel: string;
+  hippsCode: string;
+  status: string; // "open" | "claimed"
+  claimId: number | null;
+}
+
+export const listPaymentPeriods = (episodeId: number): Promise<HomeHealthPaymentPeriod[]> =>
+  apiClient
+    .get<{ data: HomeHealthPaymentPeriod[] }>(`/home-health/episodes/${episodeId}/payment-periods`)
+    .then((r) => r.data.data ?? []);
+
+export const createPaymentPeriod = (episodeId: number): Promise<HomeHealthPaymentPeriod> =>
+  apiClient.post<HomeHealthPaymentPeriod>(`/home-health/episodes/${episodeId}/payment-periods`, {}).then((r) => r.data);

@@ -12,6 +12,7 @@ import {
 import { usePermission } from '@/permissions/usePermission';
 import { PERMISSIONS } from '@/permissions/permissions';
 import { HomeHealthOasisSection } from './HomeHealthOasisSection';
+import { HomeHealthPaymentPeriodsSection } from './HomeHealthPaymentPeriodsSection';
 
 const NO_PERMISSION = 'You do not have permission to perform this action';
 
@@ -222,7 +223,9 @@ export function HomeHealthEpisodeDetail() {
 
       <HomeHealthOasisSection episodeId={epId} canManage={canManage} />
 
-      <p className="text-sm text-slate-400">PDGM billing (HIPPS, NOA, 837I) arrives in a later phase of the home-health build.</p>
+      <HomeHealthPaymentPeriodsSection episodeId={epId} canManage={canManage} />
+
+      <p className="text-sm text-slate-400">NOA and the 837I final claim (with LUPA) arrive in the next phase of the home-health build.</p>
     </div>
   );
 }
