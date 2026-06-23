@@ -160,3 +160,23 @@ export interface HomeHealthClaimResult {
 
 export const buildClaimForPeriod = (periodId: number): Promise<HomeHealthClaimResult> =>
   apiClient.post<HomeHealthClaimResult>(`/home-health/payment-periods/${periodId}/build-claim`, {}).then((r) => r.data);
+
+/** Episode discharge / transfer. */
+export interface HomeHealthDischarge {
+  id: number;
+  episodeId: number;
+  dischargeDate: string;
+  reason: string;
+  isTransfer: boolean;
+  notes: string | null;
+}
+
+export interface DischargeInput {
+  dischargeDate: string;
+  reason: string;
+  isTransfer: boolean;
+  notes?: string | null;
+}
+
+export const dischargeEpisode = (episodeId: number, input: DischargeInput): Promise<HomeHealthDischarge> =>
+  apiClient.post<HomeHealthDischarge>(`/home-health/episodes/${episodeId}/discharge`, input).then((r) => r.data);
