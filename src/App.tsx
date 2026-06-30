@@ -49,6 +49,7 @@ import { EncountersRoutes } from '@/pages/Admin/Encounters/EncountersRoutes';
 import { B2cMigrationPage } from '@/pages/Admin/B2cMigration/B2cMigrationPage';
 import { AiOptInPage } from '@/pages/Admin/AiOptIn/AiOptInPage';
 import { SubmissionRolloutPage } from '@/pages/Admin/SubmissionRollout/SubmissionRolloutPage';
+import { HelpPage } from '@/pages/Help/HelpPage';
 import { InquiriesPage } from '@/pages/Admin/Inquiries/InquiriesPage';
 import { ImportPage } from '@/pages/Admin/Import/ImportPage';
 import { OnboardingPage } from '@/pages/Admin/Onboarding/OnboardingPage';
@@ -466,6 +467,9 @@ export default function App() {
                 </RoleRoute>
               }
             />
+            {/* In-app help — available to every authenticated user. */}
+            <Route path="help" element={<HelpPage />} />
+            <Route path="help/:topicId" element={<HelpPage />} />
             <Route
               path="admin/inquiries"
               element={

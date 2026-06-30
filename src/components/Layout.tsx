@@ -169,6 +169,7 @@ const navItems: NavEntry[] = [
       { kind: 'leaf', to: '/admin/sla', label: 'SLA Monitor', perm: PERMISSIONS.ADMIN_SYSTEM_CONFIG },
     ],
   },
+  { kind: 'leaf', to: '/help', label: 'Help' },
 ];
 
 function leafStyle({ isActive }: { isActive: boolean }, indented = false): React.CSSProperties {
