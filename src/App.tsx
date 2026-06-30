@@ -48,6 +48,7 @@ import { OrganizationsRoutes } from '@/pages/Admin/Organizations/OrganizationsRo
 import { EncountersRoutes } from '@/pages/Admin/Encounters/EncountersRoutes';
 import { B2cMigrationPage } from '@/pages/Admin/B2cMigration/B2cMigrationPage';
 import { AiOptInPage } from '@/pages/Admin/AiOptIn/AiOptInPage';
+import { SubmissionRolloutPage } from '@/pages/Admin/SubmissionRollout/SubmissionRolloutPage';
 import { InquiriesPage } from '@/pages/Admin/Inquiries/InquiriesPage';
 import { ImportPage } from '@/pages/Admin/Import/ImportPage';
 import { OnboardingPage } from '@/pages/Admin/Onboarding/OnboardingPage';
@@ -454,6 +455,14 @@ export default function App() {
               element={
                 <RoleRoute required={PERMISSIONS.ADMIN_SYSTEM_CONFIG}>
                   <AiOptInPage />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="admin/submission-rollout"
+              element={
+                <RoleRoute required={PERMISSIONS.ADMIN_SYSTEM_CONFIG}>
+                  <SubmissionRolloutPage />
                 </RoleRoute>
               }
             />
