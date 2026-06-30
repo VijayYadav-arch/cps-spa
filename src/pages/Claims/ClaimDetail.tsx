@@ -8,6 +8,7 @@ import {
 } from '@/api/claims';
 import { usePermission } from '@/permissions/usePermission';
 import { PERMISSIONS } from '@/permissions/permissions';
+import { isClaimSubmittable } from './claimStatus';
 
 const NO_PERMISSION = 'You do not have permission to perform this action';
 
@@ -261,7 +262,7 @@ export function ClaimDetail() {
             ? 'Re-run AI prediction'
             : 'Predict denial risk (AI)'}
         </button>
-        {claim.status !== 'submitted' && claim.status !== 'paid' && (
+        {isClaimSubmittable(claim.status) && (
           <button
             onClick={() => { void handleSubmit(); }}
             disabled={isSubmitting || !canSubmit}
