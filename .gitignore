@@ -11,3 +11,6 @@ src/api/types.ts
 coverage/
 playwright-report/
 test-results/
+
+# screenshot capture artifacts (committed to cps-docs, not here)
+tests/e2e/screenshots/
