@@ -165,6 +165,7 @@ const navItems: NavEntry[] = [
       { kind: 'leaf', to: '/admin/import', label: 'Data Import', perm: PERMISSIONS.ADMIN_IMPORT },
       { kind: 'leaf', to: '/admin/b2c-migration', label: 'B2C Migration', anyOf: [PERMISSIONS.ADMIN_MANAGE_ORGS, PERMISSIONS.PLATFORM_ADMIN] },
       { kind: 'leaf', to: '/admin/ai-opt-in', label: 'AI Opt-In', perm: PERMISSIONS.ADMIN_SYSTEM_CONFIG },
+      { kind: 'leaf', to: '/admin/submission-rollout', label: 'Submission Rollout', perm: PERMISSIONS.ADMIN_SYSTEM_CONFIG },
       { kind: 'leaf', to: '/admin/sla', label: 'SLA Monitor', perm: PERMISSIONS.ADMIN_SYSTEM_CONFIG },
     ],
   },
