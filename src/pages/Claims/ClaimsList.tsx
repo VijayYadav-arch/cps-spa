@@ -6,6 +6,7 @@ import {
   getClaims,
   type ClaimSummary,
 } from '@/api/claims';
+import { CLAIM_STATUS_OPTIONS, claimStatusBadgeClass } from './claimStatus';
 import { usePermission } from '@/permissions/usePermission';
 import { PERMISSIONS } from '@/permissions/permissions';
 
@@ -109,11 +110,9 @@ export function ClaimsList() {
           className="form-input w-auto"
         >
           <option value="">All statuses</option>
-          <option value="draft">Draft</option>
-          <option value="pending">Pending</option>
-          <option value="submitted">Submitted</option>
-          <option value="paid">Paid</option>
-          <option value="denied">Denied</option>
+          {CLAIM_STATUS_OPTIONS.map((o) => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
         </select>
       </div>
 
@@ -196,13 +195,7 @@ export function ClaimsList() {
                   <td className="px-4 py-3 text-slate-700">{c.id}</td>
                   <td className="px-4 py-3 text-slate-700">{c.patientName}</td>
                   <td className="px-4 py-3">
-                    <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${
-                      c.status === 'paid'
-                        ? 'bg-green-100 text-green-800'
-                        : c.status === 'denied'
-                        ? 'bg-red-100 text-red-800'
-                        : 'bg-slate-100 text-slate-600'
-                    }`}>
+                    <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${claimStatusBadgeClass(c.status)}`}>
                       {c.status}
                     </span>
                   </td>

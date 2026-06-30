@@ -5,6 +5,7 @@ import {
   type ClaimLifecycle,
   type ClaimLifecycleEvent,
 } from '@/api/claims';
+import { claimStatusTone } from './claimStatus';
 
 const EVENT_COLOR: Record<ClaimLifecycleEvent['eventType'], string> = {
   'created': '#64748b',
@@ -26,12 +27,7 @@ function badge(text: string, bg: string, color = '#fff') {
 }
 
 function statusBadge(status: string) {
-  const tone =
-    status === 'paid' ? '#15803d'
-      : status === 'submitted' ? '#0369a1'
-      : status === 'rejected' || status === 'denied' ? '#b91c1c'
-      : '#64748b';
-  return badge(status, tone);
+  return badge(status, claimStatusTone(status));
 }
 
 export function ClaimLifecyclePage() {
