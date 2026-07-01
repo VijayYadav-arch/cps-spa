@@ -313,3 +313,19 @@ export const getPatientVisits = (patientId: number): Promise<PatientVisitSummary
   apiClient
     .get<{ data: PatientVisitSummary[] }>('/clinician/visits', { params: { patientId, pageSize: 50 } })
     .then((r) => r.data.data ?? []);
+
+/** Visit note in a worklist context — patientName is included by the list endpoint. */
+export interface VisitNoteListItem {
+  id: number;
+  patientId: number;
+  patientName?: string | null;
+  visitDate?: string;
+  status?: string;
+  visitType?: string | null;
+}
+
+/** Visit notes filtered by status (e.g. 'draft' for the documentation-due worklist). */
+export const getVisits = (params?: { status?: string; clinicianId?: number; pageSize?: number }): Promise<VisitNoteListItem[]> =>
+  apiClient
+    .get<{ data: VisitNoteListItem[] }>('/clinician/visits', { params: { pageSize: 100, ...params } })
+    .then((r) => r.data.data ?? []);

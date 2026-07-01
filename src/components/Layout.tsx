@@ -84,6 +84,7 @@ const navItems: NavEntry[] = [
     items: [
       { kind: 'leaf', to: '/clinical', label: 'Overview', exact: true, perm: PERMISSIONS.CLINICAL_VISIT_NOTES },
       { kind: 'leaf', to: '/clinician/dashboard', label: 'My Day', perm: PERMISSIONS.CLINICAL_VISIT_NOTES },
+      { kind: 'leaf', to: '/clinical/tasks', label: 'My Tasks', perm: PERMISSIONS.CLINICAL_VISIT_NOTES },
       { kind: 'leaf', to: '/clinician/visits', label: 'My Visits', perm: PERMISSIONS.CLINICAL_VISIT_NOTES },
       { kind: 'leaf', to: '/clinician/patients', label: 'My Patients', perm: PERMISSIONS.CLINICAL_VISIT_NOTES },
       { kind: 'leaf', to: '/schedule', label: 'Schedule', perm: PERMISSIONS.CLINICAL_VISIT_NOTES },
