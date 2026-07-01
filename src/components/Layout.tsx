@@ -103,6 +103,13 @@ const navItems: NavEntry[] = [
   },
   {
     kind: 'group',
+    label: 'Home Health',
+    items: [
+      { kind: 'leaf', to: '/home-health', label: 'Episodes', perm: PERMISSIONS.HOMEHEALTH_VIEW },
+    ],
+  },
+  {
+    kind: 'group',
     label: 'Billing',
     items: [
       { kind: 'leaf', to: '/billing', label: 'Dashboard', perm: PERMISSIONS.BILLING_QUEUE },
