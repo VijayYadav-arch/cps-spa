@@ -2,6 +2,7 @@ import '@/styles/denials.css';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getDenials, type DenialItem } from '@/api/billing';
+import { DocsLink } from '@/components/DocsLink';
 
 const STATUS_TABS = [
   { label: 'All', value: null },
@@ -114,6 +115,12 @@ export function DenialsList() {
           </Link>
           <h1 className="text-2xl font-serif text-navy-900 mt-2">Denial Management</h1>
           <p className="text-navy-600 mt-1">Track, appeal, and resolve denied claims by status.</p>
+          <DocsLink
+            path="user-guide/billing-denials-era/"
+            className="inline-block text-sm font-medium text-teal-700 hover:underline mt-1"
+          >
+            Denials &amp; appeals guide ↗
+          </DocsLink>
         </div>
         <Link
           to="/billing/denials/queue"

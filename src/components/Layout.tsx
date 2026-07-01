@@ -4,6 +4,7 @@ import { useAuth } from '@/auth/useAuth';
 import { InboxBadge } from '@/components/InboxBadge';
 import { NotificationToasts } from '@/components/NotificationToasts';
 import { LanguagePicker } from '@/i18n/LanguagePicker';
+import { DocsLink } from '@/components/DocsLink';
 import { MiraWordmark } from '@/components/MiraWordmark';
 import { useUserRoles } from '@/permissions/useUserRoles';
 import { PERMISSIONS, type Permission } from '@/permissions';
@@ -424,6 +425,12 @@ export function Layout() {
         </ul>
 
         <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(255,255,255,0.08)', flexShrink: 0 }}>
+          <DocsLink
+            path=""
+            className="mb-3 block text-xs text-slate-400 transition-colors hover:text-white"
+          >
+            Documentation ↗
+          </DocsLink>
           <div style={{ marginBottom: 12, color: '#94a3b8' }}>
             <LanguagePicker />
           </div>
