@@ -12,6 +12,7 @@ import {
 } from '@/api/homehealth';
 import { usePermission } from '@/permissions/usePermission';
 import { PERMISSIONS } from '@/permissions/permissions';
+import { HomeHealthFaceToFaceSection } from './HomeHealthFaceToFaceSection';
 import { HomeHealthOasisSection } from './HomeHealthOasisSection';
 import { HomeHealthNoaCard } from './HomeHealthNoaCard';
 import { HomeHealthPaymentPeriodsSection } from './HomeHealthPaymentPeriodsSection';
@@ -289,6 +290,8 @@ export function HomeHealthEpisodeDetail() {
           </table>
         )}
       </section>
+
+      <HomeHealthFaceToFaceSection episodeId={epId} canManage={canManage} />
 
       <HomeHealthOasisSection episodeId={epId} canManage={canManage} />
 
