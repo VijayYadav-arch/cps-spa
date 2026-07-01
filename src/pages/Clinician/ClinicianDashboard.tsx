@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { apiClient } from '@/api/client';
 import { getPatients } from '@/api/patients';
 import { listScheduledVisits } from '@/api/scheduling';
+import { Breadcrumb } from '@/components/Breadcrumb';
 
 interface Visit {
   id: number;
@@ -112,6 +113,7 @@ export function ClinicianDashboard() {
 
   return (
     <div className="mx-auto grid max-w-[640px] gap-6 p-4">
+      <Breadcrumb items={[{ label: 'Clinical', to: '/clinical' }, { label: 'My Day' }]} />
       <div>
         <h1 data-testid="page-title" className="text-2xl">
           {greeting}, <span data-testid="user-firstname">{user.firstName}</span>

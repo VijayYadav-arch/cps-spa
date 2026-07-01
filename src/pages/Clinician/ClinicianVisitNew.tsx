@@ -4,6 +4,7 @@ import { apiClient } from '@/api/client';
 import { useAuth } from '@/auth/useAuth';
 import { usePermission } from '@/permissions/usePermission';
 import { PERMISSIONS } from '@/permissions/permissions';
+import { Breadcrumb } from '@/components/Breadcrumb';
 
 const NO_PERMISSION = 'You do not have permission to perform this action';
 
@@ -150,6 +151,7 @@ export function ClinicianVisitNew() {
 
   return (
     <div className="mx-auto max-w-[640px] p-4">
+      <Breadcrumb items={[{ label: 'Clinical', to: '/clinical' }, { label: 'My Visits', to: '/clinician/visits' }, { label: 'New Visit' }]} />
       <header className="flex items-center pb-4">
         <button
           type="button"

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { apiClient } from '@/api/client';
 import { usePermission } from '@/permissions/usePermission';
 import { PERMISSIONS } from '@/permissions/permissions';
+import { Breadcrumb } from '@/components/Breadcrumb';
 
 interface VisitNote {
   id: number;
@@ -73,6 +74,7 @@ export function ClinicianVisitDetail() {
 
   return (
     <div className="mx-auto grid max-w-[800px] gap-6 p-6">
+      <Breadcrumb items={[{ label: 'Clinical', to: '/clinical' }, { label: 'My Visits', to: '/clinician/visits' }, { label: 'Visit' }]} />
       <header className="space-y-2">
         <button
           onClick={() => navigate(-1)}

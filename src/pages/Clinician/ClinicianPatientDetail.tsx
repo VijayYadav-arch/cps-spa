@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { apiClient } from '@/api/client';
+import { Breadcrumb } from '@/components/Breadcrumb';
 import {
   getCarePlans, getMedications, getOrders, getPatientVitals, getPatientVisits,
   type CarePlan, type Medication, type PhysicianOrder, type PatientVitalsEntry, type PatientVisitSummary,
@@ -88,6 +89,7 @@ export function ClinicianPatientDetail() {
 
   return (
     <div className="mx-auto max-w-[900px] p-4">
+      <Breadcrumb items={[{ label: 'Clinical', to: '/clinical' }, { label: 'My Patients', to: '/clinician/patients' }, { label: `${patient.lastName}, ${patient.firstName}` }]} />
       <div className="mb-4 flex items-center gap-3">
         <Link to="/clinician/patients" aria-label="Back to patients" data-testid="back-link" className="rounded-md p-2 text-slate-600 no-underline hover:bg-slate-50">‹</Link>
         <h1 data-testid="page-title" className="text-xl font-serif text-navy-900">

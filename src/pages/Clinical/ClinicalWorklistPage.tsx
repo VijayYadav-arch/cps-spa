@@ -4,6 +4,7 @@ import {
   getVisits, getOrders, getCarePlans,
   type VisitNoteListItem, type PhysicianOrder, type CarePlan,
 } from '@/api/clinical';
+import { Breadcrumb } from '@/components/Breadcrumb';
 
 function fmt(iso?: string | null): string {
   return iso ? new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
@@ -45,6 +46,7 @@ export function ClinicalWorklistPage() {
 
   return (
     <div className="grid max-w-[1000px] gap-6 p-6">
+      <Breadcrumb items={[{ label: 'Clinical', to: '/clinical' }, { label: 'My Tasks' }]} />
       <header className="space-y-2">
         <h1 className="text-2xl font-serif text-navy-900">My Tasks</h1>
         <div className="section-line" />
