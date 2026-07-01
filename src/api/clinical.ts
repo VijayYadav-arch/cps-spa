@@ -283,3 +283,33 @@ export const signOrder = (id: number, signedBy: string): Promise<PhysicianOrder>
   apiClient
     .post<{ data: PhysicianOrder }>(`/clinical/orders/${id}/sign`, { signedBy })
     .then((r) => r.data.data);
+
+// --- Patient clinical chart aggregation ---
+
+/** A visit note's recorded vitals (vitals is a free-text field on the visit note today). */
+export interface PatientVitalsEntry {
+  id: number;
+  patientId: number;
+  visitDate: string;
+  vitals: string | null;
+  clinicianId: number | null;
+}
+
+export const getPatientVitals = (patientId: number): Promise<PatientVitalsEntry[]> =>
+  apiClient
+    .get<{ data: PatientVitalsEntry[] }>('/clinician/vitals', { params: { patientId, pageSize: 50 } })
+    .then((r) => r.data.data ?? []);
+
+/** Visit-note summary for a patient (fields typed permissively — the list shape varies by status). */
+export interface PatientVisitSummary {
+  id: number;
+  visitDate?: string;
+  scheduledStart?: string;
+  status?: string;
+  visitType?: string | null;
+}
+
+export const getPatientVisits = (patientId: number): Promise<PatientVisitSummary[]> =>
+  apiClient
+    .get<{ data: PatientVisitSummary[] }>('/clinician/visits', { params: { patientId, pageSize: 50 } })
+    .then((r) => r.data.data ?? []);
