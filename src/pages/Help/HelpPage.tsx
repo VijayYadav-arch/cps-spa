@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { HELP_SECTIONS, findTopic, type HelpBlock } from './helpContent';
+import { DocsLink } from '@/components/DocsLink';
 
 /**
  * In-app user documentation. A sidebar of task-based topics grouped by product area, plus a
@@ -35,6 +36,12 @@ export function HelpPage() {
         <p className="max-w-3xl text-slate-500">
           Task-based guides for everyday work in CPS. Pick a topic on the left.
         </p>
+        <DocsLink
+          path="user-guide/getting-started/"
+          className="inline-block text-sm font-medium text-teal-700 hover:underline"
+        >
+          Browse the full documentation ↗
+        </DocsLink>
       </header>
 
       <div className="grid gap-6 md:grid-cols-[260px_1fr]">

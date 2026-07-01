@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { apiClient } from '@/api/client';
 import { usePermission } from '@/permissions/usePermission';
 import { PERMISSIONS } from '@/permissions/permissions';
+import { DocsLink } from '@/components/DocsLink';
 
 const NO_PERMISSION = 'You do not have permission to perform this action';
 
@@ -146,6 +147,12 @@ export function SubmissionRolloutPage() {
           credentials and at least one active payer enrollment. Until then, claims follow the legacy
           status-flip path.
         </p>
+        <DocsLink
+          path="user-guide/administration/"
+          className="inline-block text-sm font-medium text-teal-700 hover:underline"
+        >
+          Go-live guide: readiness & rollout ↗
+        </DocsLink>
       </header>
 
       {loading && <div role="status" className="text-slate-500">Loading…</div>}
