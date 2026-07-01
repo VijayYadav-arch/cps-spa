@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiClient } from '@/api/client';
 import { VisitNoteSummaryModal } from '@/components/VisitNoteSummaryModal';
+import { Breadcrumb } from '@/components/Breadcrumb';
 import { usePermission } from '@/permissions/usePermission';
 import { PERMISSIONS } from '@/permissions/permissions';
 
@@ -88,6 +89,7 @@ export function ClinicianVisits() {
 
   return (
     <div className="mx-auto max-w-[720px] p-4">
+      <Breadcrumb items={[{ label: 'Clinical', to: '/clinical' }, { label: 'My Visits' }]} />
       <div className="mb-4 flex items-center justify-between">
         <h1 data-testid="page-title" className="text-xl">
           Recent Visits

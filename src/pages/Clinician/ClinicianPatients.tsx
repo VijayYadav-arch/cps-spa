@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiClient } from '@/api/client';
+import { Breadcrumb } from '@/components/Breadcrumb';
 
 interface Patient {
   id: number;
@@ -65,6 +66,7 @@ export function ClinicianPatients() {
 
   return (
     <div className="mx-auto max-w-[640px] p-4">
+      <Breadcrumb items={[{ label: 'Clinical', to: '/clinical' }, { label: 'My Patients' }]} />
       <div className="mb-4 flex items-center justify-between">
         <h1 data-testid="page-title" className="text-xl">
           My Patients
