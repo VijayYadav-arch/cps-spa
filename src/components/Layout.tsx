@@ -82,8 +82,15 @@ const navItems: NavEntry[] = [
     kind: 'group',
     label: 'Clinical',
     items: [
-      { kind: 'leaf', to: '/clinical', label: 'Clinical', perm: PERMISSIONS.CLINICAL_VISIT_NOTES },
+      { kind: 'leaf', to: '/clinical', label: 'Overview', exact: true, perm: PERMISSIONS.CLINICAL_VISIT_NOTES },
+      { kind: 'leaf', to: '/clinician/dashboard', label: 'My Day', perm: PERMISSIONS.CLINICAL_VISIT_NOTES },
+      { kind: 'leaf', to: '/clinician/visits', label: 'My Visits', perm: PERMISSIONS.CLINICAL_VISIT_NOTES },
+      { kind: 'leaf', to: '/clinician/patients', label: 'My Patients', perm: PERMISSIONS.CLINICAL_VISIT_NOTES },
       { kind: 'leaf', to: '/schedule', label: 'Schedule', perm: PERMISSIONS.CLINICAL_VISIT_NOTES },
+      { kind: 'leaf', to: '/clinical/care-plans', label: 'Care Plans', perm: PERMISSIONS.CLINICAL_CARE_PLANS },
+      { kind: 'leaf', to: '/admin/medications', label: 'Medications', perm: PERMISSIONS.CLINICAL_MEDICATIONS },
+      { kind: 'leaf', to: '/admin/orders', label: 'Orders', perm: PERMISSIONS.CLINICAL_ORDERS },
+      { kind: 'leaf', to: '/admin/referrals', label: 'Referrals', perm: PERMISSIONS.CLINICAL_REFERRALS },
     ],
   },
   {
