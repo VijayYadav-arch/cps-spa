@@ -106,14 +106,6 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/clinician/*"
-            element={
-              <ProtectedRoute>
-                <ClinicianRoutes />
-              </ProtectedRoute>
-            }
-          />
           {/* Family portal uses its own auth (FamilyJwt) — RequireFamilyAuth lives inside FamilyRoutes */}
           <Route path="/family/*" element={<FamilyRoutes />} />
           <Route
@@ -154,6 +146,17 @@ export default function App() {
               element={
                 <RoleRoute required={PERMISSIONS.CLINICAL_VISIT_NOTES}>
                   <ClinicalRoutes />
+                </RoleRoute>
+              }
+            />
+            {/* Clinician workspace — now rendered inside the Layout so the sidebar (and thus
+                app navigation) is always present. Previously a standalone top-level route with
+                no sidebar, which stranded users with no way back. */}
+            <Route
+              path="clinician/*"
+              element={
+                <RoleRoute required={PERMISSIONS.CLINICAL_VISIT_NOTES}>
+                  <ClinicianRoutes />
                 </RoleRoute>
               }
             />
