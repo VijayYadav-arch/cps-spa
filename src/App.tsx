@@ -50,6 +50,7 @@ import { B2cMigrationPage } from '@/pages/Admin/B2cMigration/B2cMigrationPage';
 import { AiOptInPage } from '@/pages/Admin/AiOptIn/AiOptInPage';
 import { SubmissionRolloutPage } from '@/pages/Admin/SubmissionRollout/SubmissionRolloutPage';
 import { HelpPage } from '@/pages/Help/HelpPage';
+import { HomeHealthDashboardPage } from '@/pages/HomeHealth/HomeHealthDashboardPage';
 import { InquiriesPage } from '@/pages/Admin/Inquiries/InquiriesPage';
 import { ImportPage } from '@/pages/Admin/Import/ImportPage';
 import { OnboardingPage } from '@/pages/Admin/Onboarding/OnboardingPage';
@@ -464,6 +465,15 @@ export default function App() {
               element={
                 <RoleRoute required={PERMISSIONS.ADMIN_SYSTEM_CONFIG}>
                   <SubmissionRolloutPage />
+                </RoleRoute>
+              }
+            />
+            {/* Agency-level Home Health dashboard + episode list. */}
+            <Route
+              path="home-health"
+              element={
+                <RoleRoute required={PERMISSIONS.HOMEHEALTH_VIEW}>
+                  <HomeHealthDashboardPage />
                 </RoleRoute>
               }
             />

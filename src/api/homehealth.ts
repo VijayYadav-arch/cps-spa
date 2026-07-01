@@ -29,6 +29,40 @@ export const listHomeHealthEpisodesForPatient = (patientId: number): Promise<Hom
     .get<{ data: HomeHealthEpisode[] }>(`/home-health/patients/${patientId}/episodes`)
     .then((r) => r.data.data ?? []);
 
+/** Agency-wide episode row (episode + patient name + recert-due flag) for the ops dashboard. */
+export interface HomeHealthEpisodeListItem {
+  id: number;
+  patientId: number;
+  patientName: string;
+  status: string;
+  admissionSource: string;
+  periodNumber: number;
+  startOfCareDate: string;
+  certFromDate: string;
+  certToDate: string;
+  recertDueSoon: boolean;
+}
+
+export interface HomeHealthDashboard {
+  activeCount: number;
+  dischargedCount: number;
+  communityCount: number;
+  institutionalCount: number;
+  recertDueSoonCount: number;
+  startedLast30Count: number;
+}
+
+/** Agency-wide episode list. status: 'active' | 'discharged' | 'transferred' | 'all'. */
+export const listHomeHealthEpisodes = (status = 'active'): Promise<HomeHealthEpisodeListItem[]> =>
+  apiClient
+    .get<{ data: HomeHealthEpisodeListItem[] }>('/home-health/episodes', { params: { status } })
+    .then((r) => r.data.data ?? []);
+
+export const getHomeHealthDashboard = (): Promise<HomeHealthDashboard> =>
+  apiClient
+    .get<{ data: HomeHealthDashboard }>('/home-health/dashboard')
+    .then((r) => r.data.data);
+
 /** Home-health Plan of Care (CMS-485) for one certification period. */
 export interface HomeHealthPlanOfCare {
   id: number;
