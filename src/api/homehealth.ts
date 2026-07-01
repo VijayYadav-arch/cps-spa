@@ -29,7 +29,7 @@ export const listHomeHealthEpisodesForPatient = (patientId: number): Promise<Hom
     .get<{ data: HomeHealthEpisode[] }>(`/home-health/patients/${patientId}/episodes`)
     .then((r) => r.data.data ?? []);
 
-/** Agency-wide episode row (episode + patient name + recert-due flag) for the ops dashboard. */
+/** Agency-wide episode row (episode + patient name + worklist flags) for the ops dashboard. */
 export interface HomeHealthEpisodeListItem {
   id: number;
   patientId: number;
@@ -41,6 +41,10 @@ export interface HomeHealthEpisodeListItem {
   certFromDate: string;
   certToDate: string;
   recertDueSoon: boolean;
+  noaSubmitted: boolean;
+  noaDueDate: string;
+  noaOverdue: boolean;
+  oasisComplete: boolean;
 }
 
 export interface HomeHealthDashboard {
@@ -50,7 +54,52 @@ export interface HomeHealthDashboard {
   institutionalCount: number;
   recertDueSoonCount: number;
   startedLast30Count: number;
+  noaOverdueCount: number;
+  oasisIncompleteCount: number;
 }
+
+export interface HomeHealthBillingWorklistItem {
+  periodId: number;
+  episodeId: number;
+  patientId: number;
+  patientName: string;
+  periodSequence: number;
+  hippsCode: string;
+  status: string;
+}
+
+export const listHomeHealthBillingWorklist = (): Promise<HomeHealthBillingWorklistItem[]> =>
+  apiClient
+    .get<{ data: HomeHealthBillingWorklistItem[] }>('/home-health/worklist/billing')
+    .then((r) => r.data.data ?? []);
+
+/** Home-health certification Face-to-Face encounter (42 CFR 424.22). */
+export interface HomeHealthFaceToFace {
+  id: number;
+  episodeId: number;
+  encounterDate: string;
+  clinicianUserId: number;
+  clinicianType: string;
+  attestationText: string;
+  createdAt: string;
+}
+
+export interface RecordFaceToFaceInput {
+  encounterDate: string;
+  clinicianUserId: number;
+  clinicianType: 'Physician' | 'NursePractitioner';
+  attestationText: string;
+}
+
+export const listFaceToFace = (episodeId: number): Promise<HomeHealthFaceToFace[]> =>
+  apiClient
+    .get<{ data: HomeHealthFaceToFace[] }>(`/home-health/episodes/${episodeId}/face-to-face`)
+    .then((r) => r.data.data ?? []);
+
+export const recordFaceToFace = (episodeId: number, input: RecordFaceToFaceInput): Promise<HomeHealthFaceToFace> =>
+  apiClient
+    .post<{ data: HomeHealthFaceToFace }>(`/home-health/episodes/${episodeId}/face-to-face`, input)
+    .then((r) => r.data.data);
 
 /** Agency-wide episode list. status: 'active' | 'discharged' | 'transferred' | 'all'. */
 export const listHomeHealthEpisodes = (status = 'active'): Promise<HomeHealthEpisodeListItem[]> =>
