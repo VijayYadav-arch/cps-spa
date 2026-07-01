@@ -63,10 +63,12 @@ interface NavGroup {
 
 type NavEntry = NavLeaf | NavGroup;
 
+// Ordered by the clinical → revenue lifecycle, with a consistent rule: only the universal
+// entries (Dashboard, Inbox, Documents, Help) are top-level leaves; everything else lives in a
+// titled group. Perms are preserved from the pre-reorg config.
 const navItems: NavEntry[] = [
   { kind: 'leaf', to: '/', label: 'Dashboard', exact: true },
   { kind: 'leaf', to: '/inbox', label: 'Inbox' },
-  { kind: 'leaf', to: '/claims', label: 'Claims', perm: PERMISSIONS.CLAIMS_VIEW },
   {
     kind: 'group',
     label: 'Patients',
@@ -76,24 +78,14 @@ const navItems: NavEntry[] = [
       { kind: 'leaf', to: '/admin/encounters', label: 'Encounters', perm: PERMISSIONS.CLINICAL_VISIT_NOTES },
     ],
   },
-  { kind: 'leaf', to: '/analytics', label: 'Analytics', perm: PERMISSIONS.REPORTS_VIEW },
   {
     kind: 'group',
-    label: 'Billing',
+    label: 'Clinical',
     items: [
-      { kind: 'leaf', to: '/billing', label: 'Dashboard', perm: PERMISSIONS.BILLING_QUEUE },
-      { kind: 'leaf', to: '/billing/denials/queue', label: 'Denial Queue', perm: PERMISSIONS.BILLING_QUEUE },
-      { kind: 'leaf', to: '/billing/ar', label: 'AR Follow-Up', perm: PERMISSIONS.BILLING_QUEUE },
-      { kind: 'leaf', to: '/billing/secondary', label: 'Secondary Claims', perm: PERMISSIONS.BILLING_QUEUE },
-      { kind: 'leaf', to: '/billing/statements', label: 'Patient Statements', perm: PERMISSIONS.BILLING_QUEUE },
-      { kind: 'leaf', to: '/billing/eligibility', label: 'Eligibility', perm: PERMISSIONS.BILLING_QUEUE },
-      { kind: 'leaf', to: '/billing/prior-auth', label: 'Prior Auth', perm: PERMISSIONS.BILLING_QUEUE },
-      { kind: 'leaf', to: '/billing/charges', label: 'Charge Entry', perm: PERMISSIONS.BILLING_QUEUE },
+      { kind: 'leaf', to: '/clinical', label: 'Clinical', perm: PERMISSIONS.CLINICAL_VISIT_NOTES },
+      { kind: 'leaf', to: '/schedule', label: 'Schedule', perm: PERMISSIONS.CLINICAL_VISIT_NOTES },
     ],
   },
-  { kind: 'leaf', to: '/clinical', label: 'Clinical', perm: PERMISSIONS.CLINICAL_VISIT_NOTES },
-  { kind: 'leaf', to: '/schedule', label: 'Schedule', perm: PERMISSIONS.CLINICAL_VISIT_NOTES },
-  { kind: 'leaf', to: '/prior-auth', label: 'Prior Authorizations', perm: PERMISSIONS.CLINICAL_PRIOR_AUTH },
   {
     kind: 'group',
     label: 'Hospice',
@@ -101,30 +93,39 @@ const navItems: NavEntry[] = [
       // anyOf clinical:quality OR hospice:manage — surfaces the ops dashboards to the
       // client admin (holds hospice:manage) too; client_viewer (view-only) stays out.
       { kind: 'leaf', to: '/hospice/work-queue', label: 'Work Queue', anyOf: [PERMISSIONS.CLINICAL_QUALITY, PERMISSIONS.HOSPICE_MANAGE] },
+      { kind: 'leaf', to: '/admin/idg-meetings', label: 'IDG Meetings', anyOf: [PERMISSIONS.CLINICAL_QUALITY, PERMISSIONS.HOSPICE_MANAGE] },
       { kind: 'leaf', to: '/hospice/bereavement', label: 'Bereavement', anyOf: [PERMISSIONS.CLINICAL_QUALITY, PERMISSIONS.HOSPICE_MANAGE] },
       { kind: 'leaf', to: '/hospice/volunteers', label: 'Volunteers', anyOf: [PERMISSIONS.CLINICAL_QUALITY, PERMISSIONS.HOSPICE_MANAGE] },
       { kind: 'leaf', to: '/hospice/hqrp', label: 'HQRP Timeliness', anyOf: [PERMISSIONS.CLINICAL_QUALITY, PERMISSIONS.HOSPICE_MANAGE] },
       { kind: 'leaf', to: '/hospice/medicare-cap', label: 'Medicare Cap', anyOf: [PERMISSIONS.CLINICAL_QUALITY, PERMISSIONS.HOSPICE_MANAGE] },
       { kind: 'leaf', to: '/hospice/cahps', label: 'CAHPS Survey', anyOf: [PERMISSIONS.CLINICAL_QUALITY, PERMISSIONS.HOSPICE_MANAGE] },
-      { kind: 'leaf', to: '/admin/idg-meetings', label: 'IDG Meetings', anyOf: [PERMISSIONS.CLINICAL_QUALITY, PERMISSIONS.HOSPICE_MANAGE] },
     ],
   },
   {
     kind: 'group',
-    label: 'Time',
+    label: 'Billing',
     items: [
-      { kind: 'leaf', to: '/me/time', label: 'My Time' },
-      { kind: 'leaf', to: '/time', label: 'Team (admin)', perm: PERMISSIONS.ADMIN_DASHBOARD },
+      { kind: 'leaf', to: '/billing', label: 'Dashboard', perm: PERMISSIONS.BILLING_QUEUE },
+      { kind: 'leaf', to: '/claims', label: 'Claims', perm: PERMISSIONS.CLAIMS_VIEW },
+      { kind: 'leaf', to: '/billing/charges', label: 'Charge Entry', perm: PERMISSIONS.BILLING_QUEUE },
+      { kind: 'leaf', to: '/billing/codes', label: 'Billing Codes', perm: PERMISSIONS.BILLING_QUEUE },
+      { kind: 'leaf', to: '/billing/batch', label: 'Batch Operations', perm: PERMISSIONS.BILLING_QUEUE },
+      { kind: 'leaf', to: '/billing/eligibility', label: 'Eligibility', perm: PERMISSIONS.BILLING_QUEUE },
+      // Single Prior Auth entry (was duplicated as a top-level leaf + this one, both → PriorAuthPage).
+      { kind: 'leaf', to: '/billing/prior-auth', label: 'Prior Auth', anyOf: [PERMISSIONS.BILLING_QUEUE, PERMISSIONS.CLINICAL_PRIOR_AUTH] },
+      { kind: 'leaf', to: '/billing/era', label: 'ERA / Payments', perm: PERMISSIONS.BILLING_QUEUE },
+      { kind: 'leaf', to: '/billing/secondary', label: 'Secondary Claims', perm: PERMISSIONS.BILLING_QUEUE },
+      { kind: 'leaf', to: '/billing/denials/queue', label: 'Denial Queue', perm: PERMISSIONS.BILLING_QUEUE },
+      { kind: 'leaf', to: '/billing/ar', label: 'AR Follow-Up', perm: PERMISSIONS.BILLING_QUEUE },
+      { kind: 'leaf', to: '/billing/statements', label: 'Patient Statements', perm: PERMISSIONS.BILLING_QUEUE },
+      { kind: 'leaf', to: '/billing/superbills', label: 'Superbills', perm: PERMISSIONS.BILLING_QUEUE },
     ],
   },
-  { kind: 'leaf', to: '/documents', label: 'Documents' },
   {
     kind: 'group',
-    label: 'Organization',
+    label: 'Reporting',
     items: [
-      { kind: 'leaf', to: '/admin/organizations', label: 'Organizations', perm: PERMISSIONS.ADMIN_MANAGE_ORGS },
-      { kind: 'leaf', to: '/admin/branches', label: 'Branches', perm: PERMISSIONS.ADMIN_MANAGE_BRANCHES },
-      { kind: 'leaf', to: '/org/rollup', label: 'Parent-Org Rollup', perm: PERMISSIONS.ORG_ROLLUP_VIEW },
+      { kind: 'leaf', to: '/analytics', label: 'Analytics', perm: PERMISSIONS.REPORTS_VIEW },
     ],
   },
   {
@@ -152,24 +153,37 @@ const navItems: NavEntry[] = [
       { kind: 'leaf', to: '/admin/consent', label: 'Consent Forms', perm: PERMISSIONS.COMPLIANCE_PHI_REVIEW },
     ],
   },
-  { kind: 'leaf', to: '/platform', label: 'Platform', perm: PERMISSIONS.PLATFORM_ADMIN },
   {
+    kind: 'group',
+    label: 'Time',
+    items: [
+      { kind: 'leaf', to: '/me/time', label: 'My Time' },
+      { kind: 'leaf', to: '/time', label: 'Team (admin)', perm: PERMISSIONS.ADMIN_DASHBOARD },
+    ],
+  },
+  {
+    // Organization + Platform folded in — all back-office administration in one place.
     kind: 'group',
     label: 'Administration',
     items: [
       { kind: 'leaf', to: '/admin', label: 'Dashboard', perm: PERMISSIONS.ADMIN_DASHBOARD, exact: true },
       { kind: 'leaf', to: '/admin/users', label: 'Users', perm: PERMISSIONS.ADMIN_MANAGE_USERS },
       { kind: 'leaf', to: '/admin/roles', label: 'Roles & Permissions', perm: PERMISSIONS.ADMIN_MANAGE_ROLES },
-      { kind: 'leaf', to: '/admin/audit-log', label: 'Audit Log', perm: PERMISSIONS.ADMIN_AUDIT_LOGS },
+      { kind: 'leaf', to: '/admin/organizations', label: 'Organizations', perm: PERMISSIONS.ADMIN_MANAGE_ORGS },
+      { kind: 'leaf', to: '/admin/branches', label: 'Branches', perm: PERMISSIONS.ADMIN_MANAGE_BRANCHES },
+      { kind: 'leaf', to: '/org/rollup', label: 'Parent-Org Rollup', perm: PERMISSIONS.ORG_ROLLUP_VIEW },
       { kind: 'leaf', to: '/admin/onboarding', label: 'Onboarding', perm: PERMISSIONS.PLATFORM_ONBOARDING },
       { kind: 'leaf', to: '/admin/inquiries', label: 'Inquiries', perm: PERMISSIONS.ADMIN_MANAGE_ORGS },
       { kind: 'leaf', to: '/admin/import', label: 'Data Import', perm: PERMISSIONS.ADMIN_IMPORT },
+      { kind: 'leaf', to: '/admin/audit-log', label: 'Audit Log', perm: PERMISSIONS.ADMIN_AUDIT_LOGS },
       { kind: 'leaf', to: '/admin/b2c-migration', label: 'B2C Migration', anyOf: [PERMISSIONS.ADMIN_MANAGE_ORGS, PERMISSIONS.PLATFORM_ADMIN] },
       { kind: 'leaf', to: '/admin/ai-opt-in', label: 'AI Opt-In', perm: PERMISSIONS.ADMIN_SYSTEM_CONFIG },
       { kind: 'leaf', to: '/admin/submission-rollout', label: 'Submission Rollout', perm: PERMISSIONS.ADMIN_SYSTEM_CONFIG },
       { kind: 'leaf', to: '/admin/sla', label: 'SLA Monitor', perm: PERMISSIONS.ADMIN_SYSTEM_CONFIG },
+      { kind: 'leaf', to: '/platform', label: 'Platform', perm: PERMISSIONS.PLATFORM_ADMIN },
     ],
   },
+  { kind: 'leaf', to: '/documents', label: 'Documents' },
   { kind: 'leaf', to: '/help', label: 'Help' },
 ];
 
