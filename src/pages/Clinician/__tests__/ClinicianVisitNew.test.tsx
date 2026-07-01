@@ -52,6 +52,38 @@ describe('ClinicianVisitNew', () => {
       expect(screen.getByTestId('visit-form')).toBeInTheDocument();
     });
     expect(screen.getByTestId('submit-visit')).toBeInTheDocument();
+    expect(screen.getByTestId('submit-visit-sign')).toBeInTheDocument();
+  });
+
+  it('"Sign & complete" creates the draft then signs it (create → sign)', async () => {
+    const { default: userEvent } = await import('@testing-library/user-event');
+    vi.mocked(apiClient.post)
+      .mockResolvedValueOnce({ data: { data: { id: 77 } } } as never) // create
+      .mockResolvedValueOnce({ data: { data: {} } } as never); // sign
+
+    renderPage();
+    await waitFor(() => screen.getByTestId('submit-visit-sign'));
+    await userEvent.click(screen.getByTestId('submit-visit-sign'));
+
+    await waitFor(() =>
+      expect(vi.mocked(apiClient.post)).toHaveBeenCalledWith('/clinician/visits', expect.objectContaining({ status: 'draft' })),
+    );
+    await waitFor(() =>
+      expect(vi.mocked(apiClient.post)).toHaveBeenCalledWith('/clinician/visits/77/sign'),
+    );
+  });
+
+  it('"Save draft" creates without signing', async () => {
+    const { default: userEvent } = await import('@testing-library/user-event');
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { data: { id: 88 } } } as never);
+
+    renderPage();
+    await waitFor(() => screen.getByTestId('submit-visit'));
+    await userEvent.click(screen.getByTestId('submit-visit'));
+
+    await waitFor(() => expect(vi.mocked(apiClient.post)).toHaveBeenCalledTimes(1));
+    expect(vi.mocked(apiClient.post)).toHaveBeenCalledWith('/clinician/visits', expect.objectContaining({ status: 'draft' }));
+    expect(vi.mocked(apiClient.post)).not.toHaveBeenCalledWith('/clinician/visits/88/sign');
   });
 });
 

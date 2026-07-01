@@ -89,8 +89,10 @@ export function ClinicianVisitNew() {
     };
   }, []);
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
+  // Save the visit note. When `sign` is true, the freshly-created draft is immediately signed
+  // (create → sign) so the clinician can finish documentation in one step rather than saving a
+  // draft and signing separately from the detail view.
+  const save = async (sign: boolean) => {
     setError('');
     setLoading(true);
 
@@ -110,7 +112,7 @@ export function ClinicianVisitNew() {
         painLevel: Number(painLevel),
       };
 
-      await apiClient.post('/clinician/visits', {
+      const res = await apiClient.post<{ data?: { id?: number } }>('/clinician/visits', {
         patientId: Number(patientId),
         clinicianId: user.userId,
         visitType,
@@ -121,6 +123,11 @@ export function ClinicianVisitNew() {
         status: 'draft',
       });
 
+      if (sign) {
+        const newId = res.data?.data?.id;
+        if (newId) await apiClient.post(`/clinician/visits/${newId}/sign`);
+      }
+
       setSuccess(true);
       setTimeout(() => navigate('/clinician/dashboard'), 1500);
     } catch (err) {
@@ -130,6 +137,11 @@ export function ClinicianVisitNew() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    void save(false);
   };
 
   const labelClass = 'mb-1 block text-sm font-medium text-slate-700';
@@ -383,15 +395,28 @@ export function ClinicianVisitNew() {
           </div>
         </div>
 
-        <button
-          type="submit"
-          disabled={loading || success || !canCreate}
-          title={!canCreate ? NO_PERMISSION : undefined}
-          data-testid="submit-visit"
-          className="flex min-h-[56px] w-full items-center justify-center rounded-xl bg-teal-600 p-4 text-base font-semibold text-white transition-colors hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {loading ? 'Saving...' : success ? 'Saved!' : 'Save Visit Note'}
-        </button>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <button
+            type="button"
+            onClick={() => void save(false)}
+            disabled={loading || success || !canCreate}
+            title={!canCreate ? NO_PERMISSION : undefined}
+            data-testid="submit-visit"
+            className="flex min-h-[56px] flex-1 items-center justify-center rounded-xl border border-teal-600 bg-white p-4 text-base font-semibold text-teal-700 transition-colors hover:bg-teal-50 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {loading ? 'Saving...' : success ? 'Saved!' : 'Save draft'}
+          </button>
+          <button
+            type="button"
+            onClick={() => void save(true)}
+            disabled={loading || success || !canCreate}
+            title={!canCreate ? NO_PERMISSION : undefined}
+            data-testid="submit-visit-sign"
+            className="flex min-h-[56px] flex-1 items-center justify-center rounded-xl bg-teal-600 p-4 text-base font-semibold text-white transition-colors hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {loading ? 'Saving...' : success ? 'Saved!' : 'Sign & complete'}
+          </button>
+        </div>
       </form>
     </div>
   );
