@@ -88,6 +88,14 @@ export interface CreateOrgRequest {
   taxId?: string | null;
   active: boolean;
   parentOrganizationId?: number | null;
+  /** Service-line modules to entitle the new org to (see permissions/modules.ts). */
+  modules?: string[];
+}
+
+/** Response of GET/PUT /api/v2/admin/organizations/{orgId}/modules. */
+export interface OrgModulesResponse {
+  enabled: string[];
+  all: string[];
 }
 
 export type UpdateOrgRequest = CreateOrgRequest;
@@ -111,4 +119,7 @@ export const initialOrgForm: CreateOrgRequest = {
   taxId: null,
   active: true,
   parentOrganizationId: null,
+  // Default to the full platform; the provisioning UI lets the admin narrow via bundle presets
+  // or à-la-carte toggles before submitting.
+  modules: ['hospice', 'home_health', 'clinical', 'billing', 'ai'],
 };
