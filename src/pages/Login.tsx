@@ -14,7 +14,7 @@ export function Login() {
       <header className="flex flex-col items-center text-center">
         <MiraWordmark className="h-14 w-auto" />
         <p className="mt-2 max-w-xs text-sm font-medium tracking-wide text-slate-500">
-          The AI-native platform for hospice &amp; home-health.
+          From clarity to confidence.
         </p>
       </header>
 
