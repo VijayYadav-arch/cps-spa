@@ -77,7 +77,7 @@ import { CommercialPortalRoutes } from '@/pages/Portal/CommercialPortalRoutes';
 import { FamilyRoutes } from '@/pages/Family/FamilyRoutes';
 import { PortalAuthProvider } from '@/portal/PortalAuthContext';
 import Unauthorized from '@/pages/Unauthorized';
-import { RoleRoute, PERMISSIONS } from '@/permissions';
+import { RoleRoute, PERMISSIONS, MODULES } from '@/permissions';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -144,7 +144,7 @@ export default function App() {
             <Route
               path="clinical/*"
               element={
-                <RoleRoute required={PERMISSIONS.CLINICAL_VISIT_NOTES}>
+                <RoleRoute required={PERMISSIONS.CLINICAL_VISIT_NOTES} module={MODULES.CLINICAL}>
                   <ClinicalRoutes />
                 </RoleRoute>
               }
@@ -155,7 +155,7 @@ export default function App() {
             <Route
               path="clinician/*"
               element={
-                <RoleRoute required={PERMISSIONS.CLINICAL_VISIT_NOTES}>
+                <RoleRoute required={PERMISSIONS.CLINICAL_VISIT_NOTES} module={MODULES.CLINICAL}>
                   <ClinicianRoutes />
                 </RoleRoute>
               }
@@ -475,7 +475,7 @@ export default function App() {
             <Route
               path="home-health"
               element={
-                <RoleRoute required={PERMISSIONS.HOMEHEALTH_VIEW}>
+                <RoleRoute required={PERMISSIONS.HOMEHEALTH_VIEW} module={MODULES.HOME_HEALTH}>
                   <HomeHealthDashboardPage />
                 </RoleRoute>
               }
