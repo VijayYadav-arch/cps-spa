@@ -131,6 +131,14 @@ export function OrganizationDetail() {
           </Link>
           {!org.isDeleted && (
             <Link
+              to={`/admin/organizations/${org.id}/modules`}
+              className={`${btnCls} border border-navy-200 text-teal-700 hover:bg-teal-50`}
+            >
+              Manage modules
+            </Link>
+          )}
+          {!org.isDeleted && (
+            <Link
               to={`/admin/organizations/${org.id}/edit`}
               className={`${btnCls} border border-navy-200 text-navy-700 hover:bg-navy-50`}
             >

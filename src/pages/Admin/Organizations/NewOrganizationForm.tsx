@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { orgsApi } from './orgsApi';
 import { initialOrgForm, type CreateOrgRequest } from './orgsTypes';
+import { ModuleSelector } from './ModuleSelector';
 import { usePermission } from '@/permissions/usePermission';
 import { PERMISSIONS } from '@/permissions/permissions';
 
@@ -151,6 +152,18 @@ export function NewOrganizationForm() {
           />
           <span className="text-sm text-navy-700">Active</span>
         </label>
+
+        <div className="md:col-span-2 flex flex-col gap-2 pt-2 border-t border-navy-100">
+          <span className="text-sm text-navy-700">Service-line modules</span>
+          <p className="text-xs text-navy-500">
+            Choose which service lines this organization has purchased. Pick a bundle preset, then
+            fine-tune. This can be changed later from the organization's Modules page.
+          </p>
+          <ModuleSelector
+            value={form.modules ?? []}
+            onChange={(modules) => set('modules', modules)}
+          />
+        </div>
 
         {error && (
           <p role="alert" className="md:col-span-2 text-red-600 text-sm">

@@ -23,6 +23,7 @@ import type {
   CreateOrgRequest,
   DocumentSummary,
   OrgListResponse,
+  OrgModulesResponse,
   OrganizationDetail,
   PaginationMeta,
   ReportSummary,
@@ -47,6 +48,21 @@ export const orgsApi = {
     apiClient.delete(`${BASE}/${id}`).then(() => undefined),
   restore: (id: number) =>
     apiClient.post(`${BASE}/${id}/restore`).then(() => undefined),
+
+  /**
+   * Per-org module entitlements (platform-admin only). Hits
+   *   GET/PUT /api/v2/admin/organizations/{orgId}/modules
+   * (cps-dotnet OrganizationModulesController, admin:system_config). GET returns
+   * the enabled set + full catalog; PUT sets the exact allowlist.
+   */
+  getModules: (orgId: number): Promise<OrgModulesResponse> =>
+    apiClient
+      .get<{ data: OrgModulesResponse }>(`/admin/organizations/${orgId}/modules`)
+      .then((r) => r.data.data),
+  setModules: (orgId: number, modules: string[]): Promise<OrgModulesResponse> =>
+    apiClient
+      .put<{ data: OrgModulesResponse }>(`/admin/organizations/${orgId}/modules`, { modules })
+      .then((r) => r.data.data),
   /**
    * Cross-org-admin fetch of an organization's claims. Hits
    *   GET /api/v2/claims?organizationId={orgId}&status=&page=&pageSize=

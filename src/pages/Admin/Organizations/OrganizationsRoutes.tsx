@@ -8,6 +8,7 @@ import { OrganizationPatientsTab } from './OrganizationPatientsTab';
 import { OrganizationEncountersTab } from './OrganizationEncountersTab';
 import { OrganizationDocumentsTab } from './OrganizationDocumentsTab';
 import { OrganizationReportsTab } from './OrganizationReportsTab';
+import { OrganizationModulesTab } from './OrganizationModulesTab';
 
 /**
  * Nested routes for /admin/organizations/*.
@@ -40,6 +41,7 @@ export function OrganizationsRoutes() {
       <Route path=":id/encounters" element={<OrganizationEncountersTab />} />
       <Route path=":id/documents" element={<OrganizationDocumentsTab />} />
       <Route path=":id/reports" element={<OrganizationReportsTab />} />
+      <Route path=":id/modules" element={<OrganizationModulesTab />} />
       <Route path=":id/edit" element={<EditOrganizationForm />} />
       <Route path=":id" element={<OrganizationDetail />} />
       <Route path="*" element={<Navigate to="/admin/organizations" replace />} />
