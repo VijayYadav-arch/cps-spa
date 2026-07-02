@@ -7,7 +7,7 @@ import { LanguagePicker } from '@/i18n/LanguagePicker';
 import { DocsLink } from '@/components/DocsLink';
 import { MiraWordmark } from '@/components/MiraWordmark';
 import { useUserRoles } from '@/permissions/useUserRoles';
-import { PERMISSIONS, type Permission } from '@/permissions';
+import { PERMISSIONS, MODULES, type Permission, type ModuleKey } from '@/permissions';
 
 const COLLAPSE_KEY = 'mira_nav_collapsed';
 const OPEN_GROUPS_KEY = 'mira_nav_open_groups';
@@ -59,6 +59,8 @@ interface NavGroup {
   kind: 'group';
   label: string;
   items: NavLeaf[];
+  /** Org-level service-line entitlement required to show this whole group (mirrors backend). */
+  module?: ModuleKey;
 }
 
 type NavEntry = NavLeaf | NavGroup;
@@ -81,6 +83,7 @@ const navItems: NavEntry[] = [
   {
     kind: 'group',
     label: 'Clinical',
+    module: MODULES.CLINICAL,
     items: [
       { kind: 'leaf', to: '/clinical', label: 'Overview', exact: true, perm: PERMISSIONS.CLINICAL_VISIT_NOTES },
       { kind: 'leaf', to: '/clinician/dashboard', label: 'My Day', perm: PERMISSIONS.CLINICAL_VISIT_NOTES },
@@ -97,6 +100,7 @@ const navItems: NavEntry[] = [
   {
     kind: 'group',
     label: 'Hospice',
+    module: MODULES.HOSPICE,
     items: [
       // anyOf clinical:quality OR hospice:manage — surfaces the ops dashboards to the
       // client admin (holds hospice:manage) too; client_viewer (view-only) stays out.
@@ -112,6 +116,7 @@ const navItems: NavEntry[] = [
   {
     kind: 'group',
     label: 'Home Health',
+    module: MODULES.HOME_HEALTH,
     items: [
       { kind: 'leaf', to: '/home-health', label: 'Episodes', perm: PERMISSIONS.HOMEHEALTH_VIEW },
     ],
@@ -243,9 +248,18 @@ export function Layout() {
     }
     return can(leaf.perm);
   };
+  // Org-level service-line entitlement. Mirrors the backend gate; fail-open while /me is loading or
+  // when the API predates the `modules` field (undefined) so nothing is hidden spuriously.
+  const moduleOn = (module?: ModuleKey): boolean => {
+    if (!module) return true;
+    const mods = roleData?.modules;
+    if (!mods) return true;
+    return mods.includes(module);
+  };
   const visibleNav: NavEntry[] = navItems
     .map((entry): NavEntry | null => {
       if (entry.kind === 'leaf') return canSee(entry) ? entry : null;
+      if (!moduleOn(entry.module)) return null;
       const items = entry.items.filter(canSee);
       return items.length > 0 ? { ...entry, items } : null;
     })
