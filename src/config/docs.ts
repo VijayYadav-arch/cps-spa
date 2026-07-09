@@ -3,7 +3,7 @@
  *
  * Gated on the build-time env var VITE_DOCS_URL, mirroring the go-live gating pattern used
  * elsewhere: until ops sets it (once the docs.* domain is deployed), every docs link is hidden so
- * no dead link ships. Set e.g. VITE_DOCS_URL=https://docs.mira.ai to light them up.
+ * no dead link ships. Set e.g. VITE_DOCS_URL=https://docs.usemirahealth.com to light them up.
  *
  * The in-app /help section is always available regardless; this only controls the external
  * "full documentation" deep-links.
