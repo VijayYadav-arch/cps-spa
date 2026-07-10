@@ -1,7 +1,17 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { useDevAuth } from './msalConfig';
 import { setDevClaims, getDevClaims } from './devLogin';
 import { DevClaimsValidationError } from './errors';
+
+/** Shape of GET /api/v2/dev/identities (dev-only) — one seeded demo user per role. */
+interface DevIdentity {
+  userId: number;
+  email: string;
+  displayName: string;
+  organizationId: number | null;
+  roles: string[];
+  permissions: string[];
+}
 
 export function DevLoginForm() {
   const isDevAuth = useDevAuth();
@@ -11,6 +21,30 @@ export function DevLoginForm() {
   const [roles, setRoles] = useState((initial?.roles ?? ['system_admin']).join(', '));
   const [perms, setPerms] = useState((initial?.permissions ?? []).join(', '));
   const [error, setError] = useState<DevClaimsValidationError | null>(null);
+  const [identities, setIdentities] = useState<DevIdentity[]>([]);
+
+  // Load the seeded demo users so the picker can offer one-click "log in as <role>" presets.
+  // The endpoint is dev-only (404s in prod) — on any failure we silently fall back to manual entry.
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/v2/dev/identities')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((json) => {
+        if (!cancelled && Array.isArray(json?.data)) setIdentities(json.data as DevIdentity[]);
+      })
+      .catch(() => { /* endpoint unavailable — manual entry still works */ });
+    return () => { cancelled = true; };
+  }, []);
+
+  const applyPreset = (id: string) => {
+    const ident = identities.find((i) => String(i.userId) === id);
+    if (!ident) return;
+    setUserId(String(ident.userId));
+    setOrgId(ident.organizationId != null ? String(ident.organizationId) : '');
+    setRoles(ident.roles.join(', '));
+    setPerms(ident.permissions.join(', '));
+    setError(null);
+  };
 
   if (!isDevAuth) return null;
 
@@ -62,6 +96,26 @@ export function DevLoginForm() {
           Dev mode: B2C is not active in this environment.
         </p>
       </div>
+
+      {identities.length > 0 && (
+        <div className="flex flex-col gap-1">
+          <label htmlFor="dev-preset" className={labelClass}>Quick login (seeded roles)</label>
+          <select
+            id="dev-preset"
+            defaultValue=""
+            onChange={(e) => applyPreset(e.target.value)}
+            className={inputClass}
+          >
+            <option value="" disabled>Pick a role…</option>
+            {identities.map((i) => (
+              <option key={i.userId} value={String(i.userId)}>
+                {(i.roles[0] ?? 'user')} — {i.displayName || i.email}
+              </option>
+            ))}
+          </select>
+          <span className="text-xs text-slate-500">Fills the fields below; edit if needed, then sign in.</span>
+        </div>
+      )}
 
       <div className="flex flex-col gap-1">
         <label htmlFor="dev-userid" className={labelClass}>User ID</label>

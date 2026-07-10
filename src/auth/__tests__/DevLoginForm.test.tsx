@@ -9,11 +9,15 @@ describe('DevLoginForm', () => {
     sessionStorage.clear();
     (import.meta.env as any).VITE_B2C_CLIENT_ID = '';
     (import.meta.env as any).VITE_DEV_LOGIN = 'false';
+    // Default: the dev-identities endpoint is unavailable → no presets, manual entry only.
+    // Individual tests override this to exercise the picker.
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('no dev endpoint')));
   });
 
   afterEach(() => {
     sessionStorage.clear();
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   it('renders nothing when useDevAuth() is false (B2C configured, override off)', () => {
@@ -28,6 +32,40 @@ describe('DevLoginForm', () => {
     expect(screen.getByLabelText(/organization id/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/roles/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/permissions/i)).toBeInTheDocument();
+  });
+
+  it('preset picker fills the fields from a seeded identity and submits them', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        data: [
+          {
+            userId: 5, email: 'nurse@demohospice.com', displayName: 'Emily Rodriguez',
+            organizationId: 1, roles: ['nurse'],
+            permissions: ['clinical:visit_notes', 'clinical:vitals'],
+          },
+        ],
+      }),
+    }));
+    render(<DevLoginForm />);
+    const user = userEvent.setup();
+
+    const select = await screen.findByLabelText(/quick login/i);
+    await user.selectOptions(select, '5');
+
+    expect(screen.getByLabelText(/user id/i)).toHaveValue('5');
+    expect(screen.getByLabelText(/roles \(comma-separated\)/i)).toHaveValue('nurse');
+    expect(screen.getByLabelText(/permissions/i)).toHaveValue('clinical:visit_notes, clinical:vitals');
+
+    await act(async () => {
+      await user.click(screen.getByRole('button', { name: /sign in as dev/i }));
+    });
+    expect(getDevClaims()).toEqual({
+      userId: 5,
+      organizationId: 1,
+      roles: ['nurse'],
+      permissions: ['clinical:visit_notes', 'clinical:vitals'],
+    });
   });
 
   it('submit calls setDevClaims with parsed values', async () => {
